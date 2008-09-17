@@ -1,0 +1,7 @@
+    t = Type.array(type, length)
+
+Creates a new [[Type]] object representing a fixed-size _array_. The
+first argument is the Type of array elements and the second is the number of elements.
+
+Types created with this function have a read-only property named "0" which contains
+the type of its members.

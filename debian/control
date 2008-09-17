@@ -1,0 +1,17 @@
+Source: jsext
+Section: main/devel
+Priority: optional
+Maintainer: Svein Berge <sveinb@pvv.org>
+Build-Depends: debhelper (>= 5), autotools-dev, libreadline5-dev, libmysqlclient15-dev, libfcgi-dev, libsqlite3-dev, libcdb-dev, libpq-dev, zlib1g-dev, flex, bison, gcc, make, autoconf, libffi-dev
+Standards-Version: 3.7.2
+
+Package: jsext
+Architecture: any
+Depends: libcdb1, libreadline5, ${shlibs:Depends}, ${misc:Depends}
+Suggests: libsqlite3-0, libmysqlclient15off, libfcgi0ldbl, zlib1g, libpq5
+Description: Server-side libraries and frontend for JavaScript.
+ JSEXT provides libraries for server-side scripting in JavaScript.
+ JSEXT uses SpiderMonkey, which is included in the package. Can
+ be used with fastcgi to run web sites fronted by Apache or
+ Lighttpd and backed with MySQL or Sqlite. Can also be used for
+ general-purpose scripting and client-side scripting.

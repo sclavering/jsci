@@ -1,0 +1,310 @@
+The Pointer Constructor Called as a Function
+---
+
+
+When Pointer is called as a function rather than as a constructor, it creates
+and initialises a new Pointer object. Thus the function call Pointer(...)
+is equivalent to the object creation expression new Pointer(...) with
+the same arguments.
+
+The Constructor
+---
+
+
+    new Pointer (type [, value])
+
+Allocates memory for one object of the specified type.
+
+* _type_: A [[Type]] object specifying the kind of object to allocate.
+* _value_: A JavaScript value which will be used to initialize the newly created object.
+May be omitted or left _undefined_, in which case the newly created object is
+left uninitialized. If the value is _null_, the newly allocated memory is
+zero-filled.
+
+NOTE
+---
+
+
+The address pointed to is a memory location which is allocated and (optionally) initialized by the Pointer
+constructor. When the pointer object is garbage collected, that memory is freed.
+
+NOTE 2
+---
+
+
+If the value is a JavaScript function, the constructor
+creates a new C function which will invoke the given JavaScript function when called. The
+pointer points to this C function, and can be passed to functions
+expecting a callback function as one of its arguments. The _type_ should be either 'function' or
+'function *'. The returned pointer will have type 'function' in either case. Function types
+also contain information about the types of their arguments and return value.
+
+The memory containing the C function is freed when the pointer object is garbage collected. Therefore, it is
+important that the JavaScript program maintains a reference to the pointer object for as long
+as a callback may occur. Failure to do so may cause your program to crash, but only after
+garbage collection, reallocation of the same memory area, overwriting and callback, which
+makes this kind of error particularly hard to trace.
+
+NOTE 3
+---
+
+
+To obtain the pointer to a an imported native function, use the __ptr__ property which is automatically
+assigned to all such functions. Creating a callback pointer to such a function also
+works, but causes arguments
+and return values to be converted to JavaScript types and back each time the function
+is called.
+
+Properties of Pointer Objects
+---
+
+
+All Pointer objects have a property named _$_ which gives access to the underlying
+C object. This property plays the same role as the * unary operator in C.
+
+Pointer objects also have numerical properties, giving access to neighbouring C objects.
+pointer[0] is equal to pointer.$.
+
+Conversion between C and JavaScript
+---
+
+
+Whenever you access the $ property of a pointer to dereference it or
+call a C function, values are automatically converted back and forth between JavaScript and native
+types. In some cases, the JavaScript type and the C types are both known, like when
+you call a function with a declared parameter list. At other times, only the JavaScript type
+is known, and not the C type, like when you pass an optional parameter to a function or
+when you pass an array as a valist parameter. And then there are the cases then the C
+type is known, but the JavaScript type is not, like when reading the $ property of a pointer.
+
+The conversions are all listed in the following table:
+
+<style>
+.checked {
+           background-color: rgb(80,200,80);
+           text-align: center;
+}
+</style>
+<table>
+<tr>
+<td colspan='2' rowspan='2'> </td>
+<th colspan='9' align='center'>JavaScript type</th>
+</tr>
+<tr>
+<td>undefined</td>
+<td>null</td>
+<td>Boolean</td>
+<td>Number</td>
+<td>String</td>
+<td>Object</td>
+<td>Array</td>
+<td>Pointer</td>
+<td>Function</td>
+</tr>
+<tr>
+<th rowspan='15'>C type</th>
+<td>unknown</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td>ints</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td> </td>
+</tr>
+<tr>
+<td>floats</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td>function</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+</tr>
+<tr>
+<td>struct</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td>union</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td>valist</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td>void</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td>char *</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+</tr>
+<tr>
+<td>short *</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+</tr>
+<tr>
+<td>void *</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+</tr>
+<tr>
+<td>other *</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+</tr>
+<tr>
+<td>char[n]</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+</tr>
+<tr>
+<td>short[n]</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+</tr>
+<tr>
+<td>other[n]</td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td class='checked'>x</td>
+<td class='checked'>x</td>
+<td> </td>
+</tr>
+<tr>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+</tr>
+</table>
+
+Assigning _null_ to a C value will fill its memory area with zero characters. Assigning _undefined_
+to a C value has no effect. There is no conversion function from a C _void_, as it never appears
+as a direct type.
+
+When passing argument lists and valists, you can place a type object directly ahead of a value
+in order to control its conversion.
+
+See also
+---
+
+
+[[Dl.prototype.pointer]]

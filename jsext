@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# This script runs the jsext interpreter from the development source tree,
+# avoiding pre-installed libraries.
+
+cd `dirname $0`
+dn=`pwd`
+cd - > /dev/null
+export LD_LIBRARY_PATH=$dn/js/src/Linux_All_OPT.OBJ/:/home/pvv/d/sveinb/jsext/libffi-3.0.5/.libs:/home/pvv/d/sveinb/jsext/tinycdb-0.76:$dn/dist/Linux_All_OPT.OBJ/lib:$dn/libjsext
+exec $dn/libjsext/jsext --rcfile $dn/global/0-init.js $*

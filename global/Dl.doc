@@ -1,0 +1,26 @@
+The Dl Constructor Called as a Function
+---
+
+When Dl is called as a function rather than as a constructor, it creates
+and initialises a new dl object. Thus the function call Dl(...)
+is equivalent to the object creation expression new Dl(...) with
+the same arguments.
+
+The Dl Constructor
+---
+
+When Pointer is called as part of a new expression, it is a constructor:
+it initialises the newly created object.
+
+    new Dl (filename)
+
+The filename refers to the dynamic library to open. On Linux, these are
+known as .so files, and on Windows, they are .dll files.
+
+On all operating systems, the filename may or may not contain a path. If
+it does contain a path, the library will be loaded from that location.
+Otherwise, the library will be searched for in a search path which depends
+on the operating system.
+
+If _filename_ is omitted, undefined or null, the returned Dl represents
+the jsext main executable.

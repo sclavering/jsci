@@ -1,0 +1,6 @@
+dl
+---
+
+
+This read-only property contains the dl object which this pointer
+is attached to, or undefined if it is not attached to a dl object.

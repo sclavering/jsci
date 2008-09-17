@@ -1,0 +1,14 @@
+Type Objects
+---
+
+Type objects represent C types, used for calling native functions in
+dynamic libraries.
+
+The Type Constructor
+---
+
+The type constructor can not be called directly. Instead, use
+the predefined types [[Type.int]], [[Type.char]] etc. or the
+functions [[Type.pointer]], [[Type.array]], [[Type.function]], [[Type.struct]] or [[Type.union]],
+which create new types.
+

@@ -1,0 +1,2 @@
+Object containing one key per environment variable. Altering properties
+of this object alters the underlying environment variable.

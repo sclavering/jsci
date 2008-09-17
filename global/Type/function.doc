@@ -1,0 +1,43 @@
+    t = Type['function'](returnType, params [, elipsis] [, callConv])
+
+Creates a new [[Type]] object representing a _function_.
+
+* _returnType_: A [[Type]] object.
+* _params_: Array of Objects containing a _type_ property, an optional _name_ property identifying the name of the parameter and an
+optional _const_, which can be true or false (default).
+* _elipsis_: Can be false (default), true or undefined
+* _callConv_: Can be 'cdecl' (default), 'stdcall' or undefined.
+
+Types created with this function have read-only properties with the same
+names as the parameters, containing the argument objects passed to this
+function. These objects are augmented with read-only property _index_.
+Also, function types have read-only properties named 0 through
+_n_, which point to the same objects. Furthermore, there is a _returnType_,
+_callConv_ and an _elipsis_ property.
+
+NOTE 1
+---
+
+
+Function types with no parameters
+
+    int myfunc(void);
+
+are created by calling _function_ with an empty array as the _params_ argument.
+
+Function types with undefined parameter lists
+
+    int myfunc();
+
+are created by calling _function_ with an empty
+array as the _params_ argument and setting _elipsis_ to true.
+
+NOTE 2
+---
+
+
+Because 'function' is a reserved word, you will need to call this function with a syntax
+like this:
+
+    Type['function'](...)
+

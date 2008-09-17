@@ -1,0 +1,38 @@
+This is jsext:
+
+* A set of native Spidermonkey objects for interacting with the host.
+* A library, libjsext, which initializes these objects.
+* A command-line program which gives access to Spidermonkey and the jsext modules
+
+The purpose of the project is to facilitate the use of JavaScript as an
+interface language between different pre-existing resources.
+
+==Embedding JavaScript in C==
+
+Jsext is based on Spidermonkey, Mozilla's JavaScript interpreter, which is
+written in C. This interpreter is available as a separate component which
+is easy to embed in a C program. A guide exists on how to do this:
+
+http://developer.mozilla.org/en/docs/JavaScript_C_Engine_Embedder's_Guide
+
+A program which embeds SpiderMonkey can use the jsext modules simply by
+calling the initialization function in libjsext.
+
+==Embedding C in JavaScript==
+
+Jsext can parse C header files and call functions in dynamic libraries, i.e.
+dlls on Windows and so files on Linux.
+
+==Getting jsext==
+
+The lastest release of jsext can be found at:
+
+http://sourceforge.net/projects/jsext
+
+The tar file distributables contain the latest version of SpiderMonkey without modifications.
+If you download the CVS repository, you need to fetch SpiderMonkey and untar it in the jsext
+root directory (the one where this file is).
+
+==Making deb package==
+
+Run dpkg-buildpackage -rfakeroot in this directory. For rpm-package, fakeroot alien -r ../<...>.deb

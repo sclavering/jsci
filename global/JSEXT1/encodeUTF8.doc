@@ -1,0 +1,11 @@
+    encodeUTF8 (str [, modified])
+
+The encodeUTF8 function computes a new version of a string in which each instance of certain
+characters is replaced by one, two or three 8-bit characters representing the 16-bit input
+character.
+
+If the optional _modified_ argument is given and is _true_, any zero characters in the
+input string are encoded as 0xc0 0x80 to avoid zero characters in the output string. No such
+flag is necessary for the UTF8 decoder, since the regular decoding algorithm will
+decode 0xc0 0x80 to the zero character.
+

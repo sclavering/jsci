@@ -1,0 +1,4 @@
+    str2 = decodeBase64 (str)
+
+Decodes a string encoded in base-64 encoding.
+

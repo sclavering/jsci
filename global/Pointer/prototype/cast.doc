@@ -1,0 +1,9 @@
+cast(type)
+---
+
+
+Creates and returns a new pointer which points to the same address location as the original one.
+The new pointer is assigned the type passed to the function.
+
+
+

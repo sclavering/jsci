@@ -1,0 +1,65 @@
+$
+---
+
+
+This property gives access to the underlying C object. Reading the property causes
+the pointer to be dereferenced and converted into a JavaScript value. Writing to
+this property causes the JavaScript value to be converted into a C object and
+stored to memory at the address pointed to by the pointer object.
+
+Function pointers
+---
+
+
+Function pointers are used when importing native functions and, more
+rarely, for callback functions.
+
+A dl library typically contains pointers to functions. These are available as
+Pointer objects of type 'function'.
+
+* The $ property of pointers of type 'function' returns a Function object which
+can be called to invoke the underlying native function. The Function object will
+have a read-only property named __ptr__ containing the pointer.
+* The $ property of pointers of type 'function' is read-only.
+
+C functions can not, by the definition of the C language, return or receive functions.
+They can, however, return and receive pointers to functions, which will be represented
+by a Pointer object of type 'function *'.
+
+* The $ property of pointers of type 'function *' returns a Pointer object of type 'function'.
+* The $ property of pointers of type 'function *' can be assigned a Pointer object or an integer.
+
+NOTE
+---
+
+
+Not all JavaScript values can be converted into all C values. For instance, there
+is no conversion from a JavaScript Array to a C int. An exception will be
+thrown if no conversion exists.
+
+NOTE 2
+---
+
+
+The value is converted each time the $ property is accessed. This is a
+cheap operation except for large structs and large arrays, but it is recommended to store the result of the conversion if
+it is used more than once. For instance, calling a C function with the form
+
+    pointer.$() // bad
+
+creates a new function each time it is called. Iterating over a fixed-size C array with
+
+    for (...)
+      pointer.$[i] // bad
+
+converts the whole array into JavaScript for each element, which causes unnecessary overhead and effectively
+converts an O(n) algorithm into O(n^2). Better convert
+once, use many:
+
+    func=pointer.$;
+    func(); // good
+
+    array=pointer.$;
+    for (...)
+      array[i]; // good
+

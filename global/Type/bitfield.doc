@@ -1,0 +1,7 @@
+    t = Type.bitfield(type, length)
+
+Creates a new [[Type]] object representing a _bitfield_. The
+first argument is the base int type and the second is the number of bits.
+
+Types created with this function have a read-only property named "0" which contains
+the base int type.

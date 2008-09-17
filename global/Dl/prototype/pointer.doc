@@ -1,0 +1,17 @@
+    obj.pointer(symbol, type)
+
+Creates and returns a new pointer.
+
+* _symbol_: [[String]] containing the name the object within the dynamic library. On Windows, the
+symbol may also be a [[Number]] containing the object's ordinal value. If the symbol
+is a string, it has to match the regexp /^[a-zA-Z\_][a-zA-Z\_0-9@]*$/.
+* _type_: A [[Type]] object.
+
+NOTE
+---
+
+The symbol is not actually resolved until the first time the pointer is dereferenced.
+Function pointers are not resolved until the they are dereferenced and called for
+the first time. If the symbol
+is not found, a [[ReferenceError]] will be thrown at that time.
+

@@ -1,0 +1,1 @@
+shlibs:Depends=libffi4 (>= 4.2.1-4), libcdb1, libc6 (>= 2.4)

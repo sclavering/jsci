@@ -1,0 +1,1 @@
+Runs garbage collection. Normally, garbage collection is run automatically when memory consumtion exceeds a limit given at compile-time. Use this function to force garbage collection.

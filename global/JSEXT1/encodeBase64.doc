@@ -1,0 +1,5 @@
+    str2 = encodeBase64 (str)
+
+Encodes a string in base-64 encoding.
+
+

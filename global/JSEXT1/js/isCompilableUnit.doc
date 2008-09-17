@@ -1,0 +1,5 @@
+    bool = isCompilableUnit( src )
+
+Returns false if the passed source code will cause a syntax
+error when passed to _eval_, but can become a valid JavaScript
+expression if more code is added.  Otherwise returns true.

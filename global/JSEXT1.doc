@@ -1,0 +1,3 @@
+Contains nearly all JSEXT objects. JSEXT1 is for production, and new releases will be
+backwards-compatible. JSEXT2 will be for development, and new releases may not be backwards-compatible.
+JSEXT2 will be renamed JSEXT3 when it is deemed ready.
