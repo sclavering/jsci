@@ -67,11 +67,6 @@
      The special argument names _$get_, _$post_ and _$cookie_ will receive
      an object containing all get, post and cookie values, respectively.
 
-     The special argument name _$session_ will receive an object containing
-     all session variables for the current session, or an empty object if
-     no session exists.
-     See separate artible on [[Sessions]].
-
      If the Content-Type is neither "text/JSON", "application/x-www-form-urlencoded"
      or "multipart/form-data", the body of the request is not read by execScript.
      In that case, the script can read from [[stdin]] in phase 3.
@@ -168,53 +163,14 @@ return function (refresh) {
 	var get=getGetData.call(this);
 	var post=getPostData.call(this);
 
-	var session;
-	if (script.names.indexOf("$session") != -1) {
-	  var sessionid;
-	  var sessionobj;
-	  var sessionConfig=curdir.sessionConfig;
-	  var w;
-	  if (!sessionConfig && (w=curdir['with']))
-	    for (var i=0; i<w.length; i++)
-	      if ((sessionConfig=w[i].sessionConfig))
-		break;
-
-	  if (!curdir.$sessionobj)
-	    curdir.$sessionobj=new Session(curdir.$path, curdir.sessionConfig);
-	  sessionobj=curdir.$sessionobj;
-
-	  sessionid=post[sessionobj.idField] ||
-	    get[sessionobj.idField] ||
-	    cookies[sessionobj.idField];
-
-	  if (sessionid) {
-	    session=sessionobj.load(sessionid);
-	  }
-
-	  if (!session) {
-	    sessionid=sessionobj.newId();
-	    cookies[sessionobj.idField]=sessionid;
-	    session={};
-	  }
-
-	  this.cookie=sessionobj.idField+"="+sessionid+"; expires="+
-	    new Date(new Date().valueOf()+sessionobj.linger*1000).toUTCString()+
-	    (sessionobj.path?"; path="+sessionobj.path:"");
-
-	}
-
 	var args=getFormDataByNames.call(this, script.names, 
 					 {$cookie: cookies,
 					  $post: post,
 					  $get: get,
-					  $session: session},
+					 },
 					 post, get, cookies);
 
         var ret=func.apply(this, args);
-
-	if (session) {
-	  sessionobj.save(sessionid, session);
-	}
       }
 
       switch(typeof(ret)) {
