@@ -178,15 +178,9 @@ return function (refresh) {
   cx.filename="/"+pathParts.slice(pathParts.length-i).join(JSEXT_config.sep);
   //  cx.responseLine="200 OK";
   
-  // 2008-09-17-11-55 steve: modified this to not leak the source code of pages
-  // pre-steve: if (extension==="jsx" && (cx.requestURL.indexOf("?")!==-1 || cx.method!="GET")) {
-  if(extension === 'jsx') { // <- post-steve
-    http.execScript.call(cx, refresh);
-  } else if (extension==="js" && (cx.requestURL.indexOf("?")!==-1 || cx.method!="GET")) {
-    http.exportScript.call(cx, refresh);
-  } else {
-    http.sendFile.call(cx);
-  }
+  // 2008-09-28-22-26 steve: entirely removed the dispatching based on file extension.
+  http.execScript.call(cx, refresh);
+
   } catch(x) {
     print(' <br/>\n');
     if (x.fileName && x.lineNumber)
