@@ -298,6 +298,7 @@ decodeMultipart:function(stream, boundary) {
     */
 
 nameValuePairDecode: function(str) {
+  if(!str) str = '';
   var ret=new String(gettoken());
   while (str!="") {
     var name=gettoken();
