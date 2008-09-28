@@ -1,0 +1,6 @@
+({
+	prompt: "> ",
+	histfile: undefined
+})
+
+
