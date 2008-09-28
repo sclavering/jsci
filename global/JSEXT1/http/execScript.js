@@ -157,21 +157,10 @@ return function (refresh) {
       var cookies=this.requestCookies;
       delete this.requestCookies;
 
-      if (script.names.length==0) {
-        var ret=func.call(this);
-      } else {
-	var get=getGetData.call(this);
-	var post=getPostData.call(this);
-
-	var args=getFormDataByNames.call(this, script.names, 
-					 {$cookie: cookies,
-					  $post: post,
-					  $get: get,
-					 },
-					 post, get, cookies);
-
-        var ret=func.apply(this, args);
-      }
+      this.GET_data = getGetData.call(this);
+      this.POST_data = getPostData.call(this);
+      this.cookie_data = cookies;
+      var ret = func.call(this);
 
       switch(typeof(ret)) {
 

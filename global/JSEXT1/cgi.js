@@ -54,6 +54,9 @@
      * _remoteAddress_
      * _method_: "GET" or "POST"
      * _requestURL_
+     * _GET_data_: the decoded data from the query string
+     * _POST_data_: the decoded data from a POST request, if any
+     * _cookie_data_: the request cookies, as a name–value mapping
 
      For details about the execution context of _.jsx_ files,
      see [[How to write a JSEXT webpage]].
@@ -99,6 +102,10 @@ return function (refresh) {
   cx.remoteAddress = environment.REMOTE_ADDR;
   cx.method = environment.REQUEST_METHOD;
   cx.requestURL = "http://" + (cx.requestHeaders.host || '') + environment.REQUEST_URI;
+  // these are currently set in execScript.js
+  cx.POST_data = null;
+  cx.GET_data = null
+  cx.cookie_data = null;
   
   // Set a default content type.
   cx.responseHeaders = { contentType: 'text/html' };
