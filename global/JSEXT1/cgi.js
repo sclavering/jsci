@@ -69,21 +69,16 @@ var hostDirCache={};
 var clientDirCache={};
  
 return function (refresh) {
-
-  
   var sendcookies;
 
-  function writeHeaders(stream) {
+  stdout = new http.FlashWriter(stdout, function(stream) {
     stdin.close();
-    if (cx.responseHeaders.location)
-      cx.responseLine="302 Found";
-    if (cx.responseLine)
-      stream.write("Status: "+cx.responseLine+"\r\n");
+    if(cx.responseHeaders.location) cx.responseLine="302 Found";
+    if(cx.responseLine) stream.write("Status: "+cx.responseLine+"\r\n");
     sendcookies(stream);
     mime.writeHeaders(stream, cx.responseHeaders);
     delete cx.responseHeaders;
-  }
-  stdout=new http.FlashWriter(stdout, writeHeaders);
+  });
   
   try {
 
@@ -98,23 +93,15 @@ return function (refresh) {
 		      )]=environment[i];
   }
 
-  if (environment.CONTENT_TYPE)
-    headers.contentType=environment.CONTENT_TYPE;
-  if (environment.CONTENT_LENGTH)
-    headers.contentLength=environment.CONTENT_LENGTH;
-  cx.requestHeaders=headers;
-  cx.remoteAddress=environment.REMOTE_ADDR;
-  cx.method=environment.REQUEST_METHOD;
+  if(environment.CONTENT_TYPE) headers.contentType = environment.CONTENT_TYPE;
+  if(environment.CONTENT_LENGTH) headers.contentLength = environment.CONTENT_LENGTH;
+  cx.requestHeaders = headers;
+  cx.remoteAddress = environment.REMOTE_ADDR;
+  cx.method = environment.REQUEST_METHOD;
+  cx.requestURL = "http://" + (cx.requestHeaders.host || '') + environment.REQUEST_URI;
   
-  var url="http://";
-  if (cx.requestHeaders.host)
-    url+=cx.requestHeaders.host;
-  url+=environment.REQUEST_URI;
-  
-  cx.requestURL = url;
-    
   // Set a default content type.
-  cx.responseHeaders={contentType: 'text/html'};
+  cx.responseHeaders = { contentType: 'text/html' };
 
 
   sendcookies=http.Cookie.bake.call(cx);
