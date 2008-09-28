@@ -114,8 +114,6 @@ function (conn) {
       forbidden.call(cx);
     } else if (extension=="jsx" && (parts.qryString!==undefined || cx.method!="GET")) {
       execScript.call(cx, this.activeRequests==1);
-    } else if (extension=="js" && (parts.qryString!==undefined || cx.method!="GET")) {
-      exportScript.call(cx, this.activeRequests==1);
     } else {
       sendFile.call(cx);
     }

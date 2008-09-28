@@ -7,9 +7,6 @@
      and quotes like above. That is, _http.function_ is a syntax error,
      while _http['function']_ works.
 
-     _http.function_ is normally called for you by the code generated
-     by [[$curdir.exportScript]].
-
      ### Arguments ###
 
      * _url_: A string containing the url to the function,
