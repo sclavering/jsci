@@ -50,23 +50,6 @@
      * _cookie_: A read/write property giving access to cookies. See separate
        article on [[Cookies]].
 
-     Parameters from the HTTP request are passed as arguments to the
-     function. If
-     the function takes an argument whose name corresponds to the name
-     of an HTTP parameter, that parameter is passed as that argument. If
-     there are HTTP parameters with a numerical name ("0", "1" etc.),
-     those parameter are passed as the corresponding arguments to the
-     function. All arguments will be strings unless they are JSON-encoded.
-     JSON-encoding in HTTP GET and POST (url-encoded) can be done by providing a query string
-     which consists of the innards of a JSON array (i.e. 1,"2",3) instead of
-     the usual name/value-pairs.
-     For HTTP POST multipart/form-data,
-     it is possible to use Content-Type: text/JSON for
-     some or all of the parameters to encode other types.
-
-     The special argument names _$get_, _$post_ and _$cookie_ will receive
-     an object containing all get, post and cookie values, respectively.
-
      If the Content-Type is neither "text/JSON", "application/x-www-form-urlencoded"
      or "multipart/form-data", the body of the request is not read by execScript.
      In that case, the script can read from [[stdin]] in phase 3.
@@ -80,10 +63,6 @@
      The default Content-Type is text/html. Note that the connection is
      buffered, so you may need to use stdout.flush() in order to actually
      send data over the network connection.
-
-     If the function returns a string, that string is sent to the client.
-     If the function returns another type of value, the Content-Type is set to text/JSON
-     and the value is sent in the JSON format.
 
      Any exceptions produced during the execution of a script are
      caught and sent as HTML text to the client.
@@ -160,29 +139,7 @@ return function (refresh) {
       this.GET_data = getGetData.call(this);
       this.POST_data = getPostData.call(this);
       this.cookie_data = cookies;
-      var ret = func.call(this);
-
-      switch(typeof(ret)) {
-
-      case 'string':
-	print(ret);
-	break;
-
-      case 'xml':
-	this.responseHeaders.contentType='text/xml; charset="UTF-8"';
-	print('<?xml version="1.0" encoding="UTF-8"?>\n');
-	print($parent.encodeUTF8(String(ret)));
-	break;
-
-      case 'undefined':
-	break;
-
-      default:
-	this.responseHeaders.contentType="text/JSON";
-	print($parent.encodeJSON(ret));
-	break;
-      }
-
+      func.call(this);
       setTimeout.exec();
     }
     
