@@ -2,7 +2,7 @@
 
       obj = http.request(method, url, headers, body, options)
 
-  Used by [[$curdir.get]], [[$curdir.post]] and [[$curdir.soap]] to send a request.
+  Used by [[$curdir.get]] and [[$curdir.post]] to send a request.
 
   ### Arguments ###
 
