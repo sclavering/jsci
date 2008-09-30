@@ -1,0 +1,5 @@
+    val = decodeJSON (str)
+
+Decodes a string in JSON format into a JavaScript object,
+array, string, number or null. Written in C for maximum
+speed. See <http://www.json.org>.

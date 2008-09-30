@@ -1,0 +1,2 @@
+Object which contains functions that open files automatically when
+they are used.

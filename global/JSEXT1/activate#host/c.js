@@ -59,7 +59,7 @@ function(name, extension) {
   }
 
   // 4. Build pch file if possible and necessary
-/*
+
   if (timestamp.h && timestamp.h > timestamp.pch) {
     JSEXT1.chdirLock(this.$path);
     var ps=new JSEXT1.Progress;
@@ -87,5 +87,5 @@ function(name, extension) {
       return ret.main;
     return ret;
   }
-*/
+
 }
