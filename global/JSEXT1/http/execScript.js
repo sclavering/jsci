@@ -125,14 +125,6 @@ return function (refresh) {
     var func=script;
 
     if (typeof(func)==="function" && (func.name==="" || func.name==="anonymous")) {
-
-      if (!script.names) {
-	var src=func.toSource();
-	var names=src.match(/\(([^()]*)\)/)[1].split(", ");
-	if (names[0]=="") names=[];
-	script.names=names;
-      }
-
       var cookies=this.requestCookies;
       delete this.requestCookies;
 
