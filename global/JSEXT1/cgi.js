@@ -265,7 +265,7 @@
       if(typeof(func) === "function" && (func.name === "" || func.name === "anonymous")) {
         var cookies = cx.requestCookies;
         delete cx.requestCookies;
-        cx.GET_data = http.getGetData.call(cx);
+        cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
         cx.POST_data = http.getPostData.call(cx);
         cx.cookie_data = cookies;
         func.call(cx);
