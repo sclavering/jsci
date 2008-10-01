@@ -1,3 +1,4 @@
+({
 /*
          cgi([refresh=false])
 
@@ -65,7 +66,7 @@
      see [[Running JSEXT programs in a browser]].
 
     */
-
+run:
 (function() {
 
 var hostDirCache={};
@@ -192,5 +193,4 @@ return function (refresh) {
 
 })()
 
-
-
+})

@@ -45,7 +45,7 @@ function() {
   if (environment.JSEXT_FCGI) {
     return JSEXT1.fcgi();
   } else if (environment.GATEWAY_INTERFACE) {
-    return JSEXT1.cgi();
+    return JSEXT1.cgi.run();
   } else if (arguments.length) { // execute a program
     var progdir=JSEXT1.path(arguments[0]);
     var progfile=JSEXT1.filename(arguments[0]);
