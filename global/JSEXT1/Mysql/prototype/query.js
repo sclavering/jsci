@@ -77,7 +77,7 @@ function(qry) {
   conn.exec.apply(conn, arguments);
   
   if (lib.mysql_field_count(conn.mysql)==0)
-    return;
+    return lib.mysql_insert_id(conn.mysql) || null;
   
   conn.result=lib.mysql_store_result(conn.mysql);
   if (!conn.result) {
