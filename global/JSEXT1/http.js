@@ -114,18 +114,21 @@
       return $parent.decodeJSON("[" + this.decode(qry) + "]");
     } catch(x) {
       // normal a=x&b=y format
-      var get = {};
-      var vars = qry.split("&");
-      for(var i = 0; i < vars.length; i++) {
-        var pair = this.decode(vars[i]).match(/([^=\[\]]*)(\[\])?(=([^]*))?/);
-        if(pair[2]) { // array[] parameter
-          if(!get[pair[1]]) get[pair[1]] = [];
-          get[pair[1]].push(pair[4]);
-        } else {
-          get[pair[1]] = pair[4];
-        }
-      }
+      const get = {};
+      const vars = qry.split("&");
+      for(var i = 0; i != vars.length; ++i) this.add_form_var_to(this.decode(vars[i]), get);
       return get;
+    }
+    return {};
+  },
+
+  add_form_var_to: function(name_and_value, object) {
+    const pair = name_and_value.match(/([^=\[\]]*)(\[\])?(=([^]*))?/);
+    if(pair[2]) { // array[] parameter
+      if(!object[pair[1]]) object[pair[1]] = [];
+      object[pair[1]].push(pair[4]);
+    } else {
+      object[pair[1]] = pair[4];
     }
   },
 })
