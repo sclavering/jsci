@@ -231,9 +231,8 @@
      output on [[stdout]].
   */
   _execScript: function(cx, refresh) {
+    if(refresh) this._execScript_cache = {};
     try {
-      if(refresh) this._execScript_cache = {};
-
       var dir = cx.hostdir;
       var filename = cx.filename;
 
