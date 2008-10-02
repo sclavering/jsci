@@ -266,7 +266,7 @@
         var cookies = cx.requestCookies;
         delete cx.requestCookies;
         cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
-        cx.POST_data = http.getPostData.call(cx);
+        cx.POST_data = this.getPostData(cx);
         cx.cookie_data = cookies;
         func.call(cx);
         setTimeout.exec();
@@ -282,4 +282,18 @@
     }
   },
   _execScript_cache: {},
+
+
+  // Returns an object with the name/value pairs given by the posted data in [[stdin]]
+  getPostData: function(cx) {
+    if(cx.method != "POST") return {};
+    var ct = mime.nameValuePairDecode(cx.requestHeaders.contentType);
+    if(ct == "text/JSON") return decodeJSON(stdin.read()) || {};
+    if(ct == "application/x-www-form-urlencoded") return http.decodeQry(stdin.read()) || {};
+    if(ct == "multipart/form-data") {
+      var stream = new StringFile(stdin.read()); // Sorry, must read into ram because readln is not bin-safe.
+      return mime.decodeMultipart(stream, ct.boundary) || {};
+    }
+    return {};
+  },
 })
