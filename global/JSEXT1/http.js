@@ -122,13 +122,32 @@
     return {};
   },
 
+  // Given "foo.bar.42.x=val", ensures foo.bar and foo.bar[42] are objects, and sets object.foo.bar[42].x = "val"
+  // Given "foo.bar[]=val", ensures object.foo.bar is an array, and appends "val" to it.
+  // The [] only has special meaning just before the [] at present.
+  // Will reject names starting with "__" to avoid setting __proto__ and other magic properties
   add_form_var_to: function(name_and_value, object) {
-    const pair = name_and_value.match(/([^=\[\]]*)(\[\])?(=([^]*))?/);
-    if(pair[2]) { // array[] parameter
-      if(!object[pair[1]]) object[pair[1]] = [];
-      object[pair[1]].push(pair[4]);
+    const eq_ix = name_and_value.indexOf('=');
+    const val = name_and_value.slice(eq_ix + 1);
+    var full_name = name_and_value.slice(0, eq_ix);
+    const is_array_var = /\[\]$/.test(full_name);
+    if(is_array_var) full_name = full_name.slice(0, full_name.length - 2);
+
+    const name_bits = full_name.split(".");
+    var obj = object;
+    for(var i = 0; i != name_bits.length - 1; ++i) {
+      var name_bit = name_bits[i];
+      if(/^__/.test(name_bit)) return;
+      if(!((name_bit in obj) && typeof obj[name_bit] == "object" && obj[name_bit])) obj[name_bit] = {};
+      obj = obj[name_bit];
+    }
+    const last_bit = name_bits[name_bits.length - 1];
+    if(is_array_var) {
+      // note: use |new Array| here rather than just [] so that the instanceof works
+      if(!((last_bit in obj) && obj[last_bit] instanceof Array)) obj[last_bit] = new Array();
+      obj[last_bit].push(val);
     } else {
-      object[pair[1]] = pair[4];
+      obj[last_bit] = val;
     }
   },
 })
