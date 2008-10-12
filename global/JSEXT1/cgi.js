@@ -53,7 +53,6 @@
       delete cx.responseHeaders;
     });
 
-    try {
       var cx = {};
       cx.requestHeaders = this._get_request_headers();
       cx.remoteAddress = environment.REMOTE_ADDR;
@@ -111,15 +110,6 @@
       //  cx.responseLine="200 OK";
 
       this._execScript(cx, refresh);
-    } catch(x) {
-      print(' <br/>\n');
-      if(x.fileName && x.lineNumber) print('Line ' + x.lineNumber + ' in ' + x.fileName + ':');
-      print(x + ' <br/>\n');
-      if(x.stack) {
-        var stack = x.stack.split('\n');
-        if(stack.length > 6) print(stack.slice(1, stack.length - 5).join(' <br/>\n') + ' <br/>\n');
-      }
-    }
     stdout.close();
   },
   _hostDirCache: {},
@@ -222,7 +212,6 @@
   */
   _execScript: function(cx, refresh) {
     if(refresh) this._execScript_cache = {};
-    try {
       var dir = cx.hostdir;
       var filename = cx.filename;
 
@@ -246,9 +235,16 @@
         var cookies = cx.requestCookies;
         delete cx.requestCookies;
         cx.cookie_data = cookies;
-        func.call(cx);
-        setTimeout.exec();
       }
+
+      this._exec_page_function(func, cx);
+  },
+  _execScript_cache: {},
+
+  _exec_page_function: function(func, cx) {
+    try {
+      func.call(cx);
+      setTimeout.exec();
     } catch(x) {
       print(' <br/>\n');
       if(x.fileName && x.lineNumber) print('Line ' + x.lineNumber + ' in ' + x.fileName + ':');
@@ -259,7 +255,6 @@
       }
     }
   },
-  _execScript_cache: {},
 
 
   // Returns an object with the name/value pairs given by the posted data in [[stdin]]
