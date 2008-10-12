@@ -248,15 +248,7 @@
       var mtime = stat(curdir.$path + JSEXT_config.sep + onlyFilename).mtime;
 
       if(!script || mtime > script.mtime) {
-        var w;
-        if(onlyFilename != "with.js" && onlyFilename != "with.jsx" && (w = curdir['with'])) {
-          var before="";
-          for(var i = w.length; i--; ) before += "with(this['with'][" + i + "])";
-          before += "with(this){";
-          script = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename, before, "}");
-        } else {
-          script = load.call(curdir, curdir.$path+JSEXT_config.sep + onlyFilename);
-        }
+        script = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
         script.mtime = mtime;
         this._execScript_cache[curdir.$path+JSEXT_config.sep + onlyFilename] = script;
       }
