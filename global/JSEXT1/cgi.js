@@ -109,7 +109,7 @@
       cx.filename = "/" + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
       //  cx.responseLine="200 OK";
 
-      this._execScript(cx, refresh);
+      this._execScript(cx);
     stdout.close();
   },
   _hostDirCache: {},
@@ -209,9 +209,7 @@
      This function does not return a value, but prints its
      output on [[stdout]].
   */
-  _execScript: function(cx, refresh) {
-    if(refresh) this._execScript_cache = {};
-
+  _execScript: function(cx) {
       var filename = cx.filename;
 
       var pathparts = filename.split(JSEXT_config.sep);
@@ -220,14 +218,7 @@
 
       var onlyFilename = JSEXT1.filename(filename);
 
-      var script = this._execScript_cache[curdir.$path + JSEXT_config.sep + onlyFilename];
-      var mtime = stat(curdir.$path + JSEXT_config.sep + onlyFilename).mtime;
-
-      if(!script || mtime > script.mtime) {
-        script = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
-        script.mtime = mtime;
-        this._execScript_cache[curdir.$path + JSEXT_config.sep + onlyFilename] = script;
-      }
+      const script = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
 
       var func = script;
       if(typeof(func) === "function" && (func.name === "" || func.name === "anonymous")) {
@@ -238,7 +229,7 @@
 
       this._exec_page_function(func, cx);
   },
-  _execScript_cache: {},
+
 
   _exec_page_function: function(func, cx) {
     try {
