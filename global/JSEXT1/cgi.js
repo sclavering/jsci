@@ -55,18 +55,7 @@
 
     try {
       var cx = {};
-      var headers = {};
-      for(var i in environment) {
-        if(i.substr(0,5) != "HTTP_") continue;
-        var mangled = i.substr(5).toLowerCase().replace(/_./g, function(a) {
-            return a.toUpperCase().substr(1);
-          });
-        headers[mangled] = environment[i];
-      }
-
-      if(environment.CONTENT_TYPE) headers.contentType = environment.CONTENT_TYPE;
-      if(environment.CONTENT_LENGTH) headers.contentLength = environment.CONTENT_LENGTH;
-      cx.requestHeaders = headers;
+      cx.requestHeaders = this._get_request_headers();
       cx.remoteAddress = environment.REMOTE_ADDR;
       cx.method = environment.REQUEST_METHOD;
       cx.requestURL = "http://" + (cx.requestHeaders.host || '') + environment.REQUEST_URI;
@@ -149,6 +138,22 @@
   },
   _hostDirCache: {},
   _clientDirCache: {},
+
+
+  _get_request_headers: function() {
+    const headers = {};
+    for(var i in environment) {
+      if(i.substr(0,5) != "HTTP_") continue;
+      var mangled = i.substr(5).toLowerCase().replace(/_./g, function(a) {
+          return a.toUpperCase().substr(1);
+        });
+      headers[mangled] = environment[i];
+    }
+
+    if(environment.CONTENT_TYPE) headers.contentType = environment.CONTENT_TYPE;
+    if(environment.CONTENT_LENGTH) headers.contentLength = environment.CONTENT_LENGTH;
+    return headers;
+  },
 
 
   /*
