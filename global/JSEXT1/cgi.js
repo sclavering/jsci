@@ -226,8 +226,6 @@
       var dir = cx.hostdir;
       var filename = cx.filename;
 
-      cx.responseHeaders.cacheControl = "no-cache";
-
       var pathparts = filename.split(JSEXT_config.sep);
       var curdir = dir;
       for(var i = 1; i < pathparts.length - 1; i++) curdir = curdir[pathparts[i]];
