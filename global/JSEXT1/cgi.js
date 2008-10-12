@@ -211,11 +211,11 @@
   */
   _execScript: function(cx, refresh) {
     if(refresh) this._execScript_cache = {};
-      var dir = cx.hostdir;
+
       var filename = cx.filename;
 
       var pathparts = filename.split(JSEXT_config.sep);
-      var curdir = dir;
+      var curdir = cx.hostdir;
       for(var i = 1; i < pathparts.length - 1; i++) curdir = curdir[pathparts[i]];
 
       var onlyFilename = JSEXT1.filename(filename);
@@ -226,7 +226,7 @@
       if(!script || mtime > script.mtime) {
         script = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
         script.mtime = mtime;
-        this._execScript_cache[curdir.$path+JSEXT_config.sep + onlyFilename] = script;
+        this._execScript_cache[curdir.$path + JSEXT_config.sep + onlyFilename] = script;
       }
 
       var func = script;
