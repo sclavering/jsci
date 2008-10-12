@@ -95,7 +95,6 @@
       if(refresh) {
         var global = (function() { return this; })();
         this._hostDirCache = {};
-        this._clientDirCache = {};
         global.$checkdates();
         js['export'].global.$checkdates();
       }
@@ -107,19 +106,6 @@
         this._hostDirCache[rooturl] = hostdir;
       }
 
-      var clientdir = this._clientDirCache[rooturl];
-      if(!clientdir) {
-        clientdir = {};
-        ActiveDirectory.call(clientdir, root, js['export'].handlers, js['export'].platform);
-        this._clientDirCache[rooturl] = clientdir;
-        var relroot = $curdir.path(urlpath.replace(/\//g, JSEXT_config.sep));
-        relroot = relroot.split(JSEXT_config.sep);
-        relroot = relroot.slice(0, relroot.length - i + 1).join("/");
-        if(relroot!="/") relroot += "/";
-        clientdir.$url = relroot;
-      }
-
-      cx.clientdir = clientdir;
       cx.hostdir = hostdir;
       cx.filename = "/" + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
       //  cx.responseLine="200 OK";
@@ -137,7 +123,6 @@
     stdout.close();
   },
   _hostDirCache: {},
-  _clientDirCache: {},
 
 
   _get_request_headers: function() {
