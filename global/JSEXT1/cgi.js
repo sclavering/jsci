@@ -60,8 +60,8 @@
       cx.method = environment.REQUEST_METHOD;
       cx.requestURL = "http://" + (cx.requestHeaders.host || '') + environment.REQUEST_URI;
       // set in _execScript
-      cx.POST_data = null;
-      cx.GET_data = null
+      cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
+      cx.POST_data = this.getPostData(cx);
       cx.cookie_data = null;
 
       // Set a default content type.
@@ -262,8 +262,6 @@
       if(typeof(func) === "function" && (func.name === "" || func.name === "anonymous")) {
         var cookies = cx.requestCookies;
         delete cx.requestCookies;
-        cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
-        cx.POST_data = this.getPostData(cx);
         cx.cookie_data = cookies;
         func.call(cx);
         setTimeout.exec();
