@@ -60,7 +60,7 @@
       cx.requestURL = "http://" + (cx.requestHeaders.host || '') + environment.REQUEST_URI;
       // set in _execScript
       cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
-      cx.POST_data = this.getPostData(cx);
+      cx.POST_data = this._get_POST_data(cx);
       cx.cookie_data = null;
 
       // Set a default content type.
@@ -258,7 +258,7 @@
 
 
   // Returns an object with the name/value pairs given by the posted data in [[stdin]]
-  getPostData: function(cx) {
+  _get_POST_data: function(cx) {
     if(cx.method != "POST") return {};
     var ct = mime.nameValuePairDecode(cx.requestHeaders.contentType);
     if(ct == "text/JSON") return decodeJSON(stdin.read()) || {};
