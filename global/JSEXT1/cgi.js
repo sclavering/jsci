@@ -29,7 +29,7 @@
      * _responseHeaders_: An object containing the following property:
        * _contentType_: "text/html"
      * _remoteAddress_
-     * _method_: "GET" or "POST"
+     * _method_: A string containing the HTTP method (usually "GET" or "POST").
      * _requestURL_
      * _GET_data_: the decoded data from the query string
      * _POST_data_: the decoded data from a POST request, if any
@@ -176,7 +176,6 @@
        correspond to header field names, whose case is normalized
        to Capitalized-Hyphen-Case.
      * _responseHeaders_: An object containing response headers to be sent.
-     * _method_: A string containing the HTTP method (usually "GET" or "POST").
      * _requestURL_: A string
      * _remoteAddress_: A string
      * _cookie_: A read/write property giving access to cookies. See separate
