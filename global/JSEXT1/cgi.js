@@ -1,7 +1,20 @@
 (function() {
 
 function CGI(refresh) {
+  this.requestHeaders = this._get_request_headers();
+
+  this.remoteAddress = environment.REMOTE_ADDR;
+  this.method = environment.REQUEST_METHOD;
+  this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
+
+  this.GET_data = http.decodeURI(this.requestURL).qry || {};
+  this.POST_data = this._get_POST_data();
+  this.cookie_data = this._parse_cookie_header(this.requestHeaders.cookie);
+
   this.response_cookies = {};
+  // Set a default content type.
+  this.responseHeaders = { contentType: 'text/html' };
+
   this.run(refresh);
 }
 
@@ -17,17 +30,6 @@ CGI.prototype = {
       mime.writeHeaders(stream, cx.responseHeaders);
       delete cx.responseHeaders;
     });
-
-      cx.requestHeaders = this._get_request_headers();
-      cx.remoteAddress = environment.REMOTE_ADDR;
-      cx.method = environment.REQUEST_METHOD;
-      cx.requestURL = "http://" + (cx.requestHeaders.host || '') + environment.REQUEST_URI;
-      cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
-      cx.POST_data = this._get_POST_data(cx);
-      cx.cookie_data = this._parse_cookie_header(cx.requestHeaders.cookie);
-
-      // Set a default content type.
-      cx.responseHeaders = { contentType: 'text/html' };
 
       var filename=environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
       var path = $curdir.path(filename);
