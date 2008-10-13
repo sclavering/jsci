@@ -42,11 +42,14 @@ function() {
     newglob.__proto__=oldglob;
   }
 
-  if (environment.JSEXT_FCGI) {
+  if(environment.JSEXT_FCGI) {
     return JSEXT1.fcgi();
-  } else if (environment.GATEWAY_INTERFACE) {
-    return JSEXT1.cgi.run();
-  } else if (arguments.length) { // execute a program
+  }
+  if(environment.GATEWAY_INTERFACE) {
+    new JSEXT1.CGI();
+    return;
+  }
+  if(arguments.length) { // execute a program
     var progdir=JSEXT1.path(arguments[0]);
     var progfile=JSEXT1.filename(arguments[0]);
     

@@ -1,4 +1,11 @@
-({
+(function() {
+
+function CGI(refresh) {
+  this.response_cookies = {};
+  this.run(refresh);
+}
+
+CGI.prototype = {
   /* cgi.run([refresh=false])
 
      Interprets the environment variables given in
@@ -42,18 +49,17 @@
        were last loaded.
   */
   run: function(refresh) {
-    var sendcookies;
+    const cx = this;
 
     stdout = new http.FlashWriter(stdout, function(stream) {
       stdin.close();
       if(cx.responseHeaders.location) cx.responseLine = "302 Found";
       if(cx.responseLine) stream.write("Status: " + cx.responseLine + "\r\n");
-      sendcookies(stream);
+      cx.output_cookies(stream);
       mime.writeHeaders(stream, cx.responseHeaders);
       delete cx.responseHeaders;
     });
 
-      var cx = {};
       cx.requestHeaders = this._get_request_headers();
       cx.remoteAddress = environment.REMOTE_ADDR;
       cx.method = environment.REQUEST_METHOD;
@@ -61,17 +67,10 @@
       // set in _execScript
       cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
       cx.POST_data = this._get_POST_data(cx);
-      cx.cookie_data = null;
+      cx.cookie_data = this._parse_cookie_header(cx.requestHeaders.cookie);
 
       // Set a default content type.
       cx.responseHeaders = { contentType: 'text/html' };
-
-      sendcookies = http.Cookie.bake.call(cx);
-
-      var cookies = cx.requestCookies;
-      delete cx.requestCookies;
-      cx.cookie_data = cookies;
-
 
       var filename=environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
       var path = $curdir.path(filename);
@@ -183,8 +182,6 @@
      * _responseHeaders_: An object containing response headers to be sent.
      * _requestURL_: A string
      * _remoteAddress_: A string
-     * _cookie_: A read/write property giving access to cookies. See separate
-       article on [[Cookies]].
 
      If the Content-Type is neither "text/JSON", "application/x-www-form-urlencoded"
      or "multipart/form-data", the body of the request is not read by execScript.
@@ -258,4 +255,53 @@
     }
     return {};
   },
-})
+
+
+  _parse_cookie_header: function(cookie_header) {
+    const r = {};
+    if(!cookie_header) return r;
+    const parts = cookie_header.split(/;\s+/);
+    for(var i = 0; i != parts.length; i++) {
+      var kv = parts[i].split('=');
+      r[kv[0]] = kv[1] || '';
+    }
+    return r;
+  },
+
+
+  _create_context: function() {
+    const cx = { __proto__: this._context_proto };
+    cx._response_cookie
+  },
+
+
+  set_cookie: function(name, value, options) {
+    this.response_cookies[name] = { value: value, __proto__: options }
+  },
+
+  _set_cookie_too_late: function() {
+    throw new Error("Too late to set cookie after writing to page");
+  },
+
+  delete_cookie: function(name) {
+    // xxx should maybe do nothing if there is no matching request cookie
+    // Yes, in HTTP you delete cookies by forcing them to expire
+    this.response_cookies[name] = { value: 'delete', expires: new Date(0) };
+  },
+
+  output_cookies: function(stream) {
+    this.set_cookie = this._set_cookie_too_late;
+    for(var name in this.response_cookies) {
+      var c = this.response_cookies[name];
+      var h = "Set-Cookie: " + name + "=" + c.value;
+      if(c.expires && c.expires instanceof Date) h += "; expires=" + c.expires.toUTCString();
+      if(c.path) h += "; path=" + c.path;
+      if(c.domain) h += "; domain=" + c.domain;
+      stream.write(h + "\r\n");
+    }
+  },
+};
+
+return CGI;
+
+})()

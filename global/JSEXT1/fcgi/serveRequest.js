@@ -2,7 +2,7 @@
          serveRequest(req)
 
      Handles an HTTP request. Sets up stdin, stdout and environment
-     and calls cgi.run[[$parent.cgi.serverRequest]].
+     and calls new CGI[[$parent.CGI]].
 
      ### Arguments ###
 
@@ -23,7 +23,7 @@
     stdout=req['out'];
     environment=req['env'];
     
-    $parent.cgi.run(activeRequests==1 && JSEXT_config.JS_THREADSAFE);
+    new $parent.CGI(activeRequests==1 && JSEXT_config.JS_THREADSAFE);
     req.close();
     activeRequests--;
   }
