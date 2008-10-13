@@ -6,48 +6,6 @@ function CGI(refresh) {
 }
 
 CGI.prototype = {
-  /* cgi.run([refresh=false])
-
-     Interprets the environment variables given in
-     _environment_ according to the CGI/1.1 specification:
-     <http://hoohoo.ncsa.uiuc.edu/cgi/env.html>.
-
-     The CGI standard treats some HTTP headers differently
-     from others. That distinction is reversed by the _run_
-     function. All headers are placed in the
-     requestHeaders property of the created context object.
-
-     This function uses the web server's url-to-path translation.
-
-     It should only be used for _.jsx_ files, which should contain a single
-     anonymous javascript function.  The function will be called with no
-     arguments, but with _this_ set to a context object with the following
-     properties:
-
-     ### Context object ###
-
-     When _cgi_ calls a _.jsx_ function, it passes a _context object_
-     as _this_, which contains the following properties:
-
-     * _requestHeaders_: An object containing the following properties:
-       * _contentType_
-       * _contentLength_
-       * all other HTTP headers passed from the HTTP server
-     * _responseHeaders_: An object containing the following property:
-       * _contentType_: "text/html"
-     * _remoteAddress_
-     * _method_: A string containing the HTTP method (usually "GET" or "POST").
-     * _requestURL_
-     * _GET_data_: the decoded data from the query string
-     * _POST_data_: the decoded data from a POST request, if any
-     * _cookie_data_: the request cookies, as a name–value mapping
-
-     ### Arguments ###
-
-     * _refresh_: Boolean. If true, _cgi_ will attempt to reload
-       ActiveDirectory objects that have been changed since they
-       were last loaded.
-  */
   run: function(refresh) {
     const cx = this;
 
