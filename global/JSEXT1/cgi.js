@@ -22,7 +22,6 @@ CGI.prototype = {
       cx.remoteAddress = environment.REMOTE_ADDR;
       cx.method = environment.REQUEST_METHOD;
       cx.requestURL = "http://" + (cx.requestHeaders.host || '') + environment.REQUEST_URI;
-      // set in _execScript
       cx.GET_data = http.decodeURI(cx.requestURL).qry || {};
       cx.POST_data = this._get_POST_data(cx);
       cx.cookie_data = this._parse_cookie_header(cx.requestHeaders.cookie);
@@ -71,7 +70,7 @@ CGI.prototype = {
       cx.filename = "/" + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
       //  cx.responseLine="200 OK";
 
-      this._execScript(cx);
+    this._execScript();
     stdout.close();
   },
   _hostDirCache: {},
@@ -169,11 +168,11 @@ CGI.prototype = {
      This function does not return a value, but prints its
      output on [[stdout]].
   */
-  _execScript: function(cx) {
-      var filename = cx.filename;
+  _execScript: function() {
+      var filename = this.filename;
 
       var pathparts = filename.split(JSEXT_config.sep);
-      var curdir = cx.hostdir;
+      var curdir = this.hostdir;
       for(var i = 1; i < pathparts.length - 1; i++) curdir = curdir[pathparts[i]];
 
       var onlyFilename = JSEXT1.filename(filename);
@@ -181,11 +180,11 @@ CGI.prototype = {
       const func = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
       if(typeof func != "function") return;
 
-      this._exec_page_function(func, cx);
+      this._exec_page_function(func);
   },
 
 
-  _exec_page_function: function(func, cx) {
+  _exec_page_function: function(func) {
     try {
       func(this);
       setTimeout.exec();
@@ -202,7 +201,8 @@ CGI.prototype = {
 
 
   // Returns an object with the name/value pairs given by the posted data in [[stdin]]
-  _get_POST_data: function(cx) {
+  _get_POST_data: function() {
+    const cx = this;
     if(cx.method != "POST") return {};
     var ct = mime.nameValuePairDecode(cx.requestHeaders.contentType);
     if(ct == "text/JSON") return decodeJSON(stdin.read()) || {};
