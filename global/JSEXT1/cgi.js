@@ -147,6 +147,8 @@ CGI.prototype = {
     try {
       func(this);
       setTimeout.exec();
+    } catch(x if x == this._finish_token) {
+      // do nothing, since we're just using exceptions for control flow
     } catch(x) {
       print(' <br/>\n');
       if(x.fileName && x.lineNumber) print('Line ' + x.lineNumber + ' in ' + x.fileName + ':');
@@ -185,6 +187,15 @@ CGI.prototype = {
     return r;
   },
 
+  finish: function() {
+    throw this._finish_token;
+  },
+  _finish_token: {},
+
+  redirect: function(url) {
+    this.responseHeaders.location = url;
+    this.finish();
+  },
 
   set_cookie: function(name, value, options) {
     this.response_cookies[name] = { value: value, __proto__: options }
