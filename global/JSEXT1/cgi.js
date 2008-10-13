@@ -187,7 +187,7 @@ CGI.prototype = {
 
   _exec_page_function: function(func, cx) {
     try {
-      func.call(cx);
+      func(this);
       setTimeout.exec();
     } catch(x) {
       print(' <br/>\n');
