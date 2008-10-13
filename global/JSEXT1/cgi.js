@@ -1,3 +1,40 @@
+/*
+new CGI([refresh = false])
+
+Interprets the environment variables given in _environment_ according to the
+CGI/1.1 specification: <http://hoohoo.ncsa.uiuc.edu/cgi/env.html>.
+
+The .jsx file to be executed should contain a single anonymous function, which
+will be called with the _CGI_ instance as its only argument.
+
+### Arguments ###
+
+* _refresh_: Boolean. If true, _cgi_ will attempt to reload ActiveDirectory
+  objects that have been changed since they were last loaded.
+
+### Properties ###
+
+* _GET_data_: the decoded data from the query string
+* _POST_data_: the decoded data from a POST request, if any
+
+* _requestHeaders_: An object containing the following properties:
+  * _contentType_
+  * _contentLength_
+  * all other HTTP headers passed from the HTTP server
+* _responseHeaders_: An object containing the following property:
+  * _contentType_: "text/html"
+* _remoteAddress_: A string
+* _method_: A string containing the HTTP method (usually "GET" or "POST").
+* _requestURL_: A string
+* _cookie_data_: the request cookies, as a name-value mapping
+* _filename_: A string containing an absolute path, where root is the specified
+  host directory, not the filesystem root.
+* _hostdir_: An [[ActiveDirectory]] object for the root directory where the
+  file is stored.
+
+### Methods ###
+*/
+
 (function() {
 
 function CGI(refresh) {
@@ -95,18 +132,6 @@ CGI.prototype = {
 
 
   /*
-     This function executes a JavaScript file on a web server.
-
-         execScript([refresh=false])
-
-     No parameters are passed to the function, but it must be
-     passed a _this_ object which contains the following properties:
-
-     * _hostdir_: An [[ActiveDirectory]] object representing the root directory
-      where the file is stored.
-     * _filename_: A string containing an absolute path, where root is
-      the specified host directory, not the filesystem root.
-
      The script in _filename_ can access $parent.$parent... up to
      the level of _hostdir_, but not above it.
 
@@ -135,12 +160,7 @@ CGI.prototype = {
      In phase 3, the _this_ object passed to the function
      is an object containing the following properties:
 
-     * _requestHeaders_: An object containing request headers. The property names
-       correspond to header field names, whose case is normalized
-       to Capitalized-Hyphen-Case.
      * _responseHeaders_: An object containing response headers to be sent.
-     * _requestURL_: A string
-     * _remoteAddress_: A string
 
      If the Content-Type is neither "text/JSON", "application/x-www-form-urlencoded"
      or "multipart/form-data", the body of the request is not read by execScript.
@@ -158,17 +178,6 @@ CGI.prototype = {
 
      Any exceptions produced during the execution of a script are
      caught and sent as HTML text to the client.
-
-     execScript returns no value.
-
-     ### Arguments ###
-
-     * _refresh_: Boolean. If true, empties script cache.
-
-     ### Return value ###
-
-     This function does not return a value, but prints its
-     output on [[stdout]].
   */
   _execScript: function() {
       var filename = this.filename;
