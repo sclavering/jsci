@@ -68,6 +68,11 @@
 
       sendcookies = http.Cookie.bake.call(cx);
 
+      var cookies = cx.requestCookies;
+      delete cx.requestCookies;
+      cx.cookie_data = cookies;
+
+
       var filename=environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
       var path = $curdir.path(filename);
       var onlyFilename = $curdir.filename(filename);
@@ -218,14 +223,8 @@
 
       var onlyFilename = JSEXT1.filename(filename);
 
-      const script = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
-
-      var func = script;
-      if(typeof(func) === "function" && (func.name === "" || func.name === "anonymous")) {
-        var cookies = cx.requestCookies;
-        delete cx.requestCookies;
-        cx.cookie_data = cookies;
-      }
+      const func = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
+      if(typeof func != "function") return;
 
       this._exec_page_function(func, cx);
   },
