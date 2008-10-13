@@ -186,12 +186,6 @@ CGI.prototype = {
   },
 
 
-  _create_context: function() {
-    const cx = { __proto__: this._context_proto };
-    cx._response_cookie
-  },
-
-
   set_cookie: function(name, value, options) {
     this.response_cookies[name] = { value: value, __proto__: options }
   },
