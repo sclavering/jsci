@@ -71,6 +71,9 @@
             var len = lib.mysql_real_escape_string(self.mysql, to, str, str.length);
             return "'" + to.string(len) + "'";
           }
+          if(typeof val.length == "number") {
+            return '(' + Array.map(val, escape_val).join(', ') + ')';
+          }
           break;
         default:
           return String(val);
