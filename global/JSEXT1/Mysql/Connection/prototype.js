@@ -48,6 +48,11 @@
       }
 
       switch(typeof(val)) {
+        case "number":
+        case "boolean":
+          return String(val);
+        case "undefined":
+          return "NULL";
         case "string": // Escape and quote string
           val = $parent.$parent.encodeUTF8(val);
           var to = Pointer.malloc(val.length * 2 + 1);
