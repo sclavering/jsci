@@ -60,7 +60,7 @@
           return "'" + to.string(len) + "'";
         case "object": // Must be date or file
           if(val instanceof Date) {
-            return "'" + val.getFullYear() + "-" + val.getMonth() + "-" + val.getDate + " " + val.getHours() + ":" + val.getMinutes + ":" + val.getSeconds + "'";
+            return "'" + val.getFullYear() + "-" + val.getMonth() + "-" + val.getDate() + " " + val.getHours() + ":" + val.getMinutes() + ":" + val.getSeconds() + "'";
           }
           if(val === null) {
             return "null";
