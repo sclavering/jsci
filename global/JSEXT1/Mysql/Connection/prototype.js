@@ -55,11 +55,6 @@
         case "number":
         case "boolean":
           return String(val);
-        case "string": // Escape and quote string
-          val = $parent.$parent.encodeUTF8(val);
-          var to = Pointer.malloc(val.length * 2 + 1);
-          var len = lib.mysql_real_escape_string(self.mysql, to, val, val.length);
-          return "'" + to.string(len) + "'";
         case "object": // Must be date or file
           if(val instanceof Date) {
             return "'" + val.getFullYear() + "-" + val.getMonth() + "-" + val.getDate() + " " + val.getHours() + ":" + val.getMinutes() + ":" + val.getSeconds() + "'";
@@ -75,11 +70,14 @@
             return '(' + Array.map(val, escape_val).join(', ') + ')';
           }
           break;
-        default:
-          return String(val);
       }
 
-      return val;
+      // Use a safe default of stringifying then escaping then quoting
+      val = String(val);
+      val = $parent.$parent.encodeUTF8(val);
+      var to = Pointer.malloc(val.length * 2 + 1);
+      var len = lib.mysql_real_escape_string(self.mysql, to, val, val.length);
+      return "'" + to.string(len) + "'";
     }
   },
 
