@@ -46,13 +46,15 @@
       } else {
         var val = args[++maxarg];
       }
+      return escape_val(val);
+    }
 
+    function escape_val(val) {
+      if(val === null || val === undefined) return 'null';
       switch(typeof(val)) {
         case "number":
         case "boolean":
           return String(val);
-        case "undefined":
-          return "NULL";
         case "string": // Escape and quote string
           val = $parent.$parent.encodeUTF8(val);
           var to = Pointer.malloc(val.length * 2 + 1);
@@ -61,9 +63,6 @@
         case "object": // Must be date or file
           if(val instanceof Date) {
             return "'" + val.getFullYear() + "-" + val.getMonth() + "-" + val.getDate() + " " + val.getHours() + ":" + val.getMinutes() + ":" + val.getSeconds() + "'";
-          }
-          if(val === null) {
-            return "null";
           }
           if (typeof val.read == "function") {
             var str = val.read();
