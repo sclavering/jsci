@@ -167,12 +167,33 @@ CGI.prototype = {
     if(cx.method != "POST") return {};
     var ct = mime.nameValuePairDecode(cx.requestHeaders.contentType);
     if(ct == "text/JSON") return decodeJSON(stdin.read()) || {};
-    if(ct == "application/x-www-form-urlencoded") return http.decodeQry(stdin.read()) || {};
+    if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(http.decodeQry(stdin.read()) || {});
     if(ct == "multipart/form-data") {
       var stream = new StringFile(stdin.read()); // Sorry, must read into ram because readln is not bin-safe.
-      return mime.decodeMultipart(stream, ct.boundary) || {};
+      return this._reinterpret_form_data(mime.decodeMultipart(stream, ct.boundary) || {});
     }
     return {};
+  },
+
+
+  // http.decodeQry does the basic parsing of the foo=bar part of a query string, but only special-cases foo[]
+  // Here we reinterpret names data like { 'foo.42.bar': 'quux' } to { foo: { 42: { bar: 'quux' }}}.
+  // This is done here because we also want it to apply to multipart/form-data form submissions.
+  _reinterpret_form_data: function(data) {
+    const res = {};
+    for(var key in data) this._reinterpret_form_value(key.split("."), data[key], res);
+    return res;
+  },
+
+  _reinterpret_form_value: function(name_bits, val, obj) {
+    const last_bit = name_bits.pop();
+    for each(var name_bit in name_bits) {
+      if(name_bit in Object.prototype) return; // avoid replacing __proto__ and suchlike
+      if(!((name_bit in obj) && typeof obj[name_bit] == "object" && obj[name_bit])) obj[name_bit] = {};
+      obj = obj[name_bit];
+    }
+    if(last_bit in Object.prototype) return;
+    obj[last_bit] = val;
   },
 
 
