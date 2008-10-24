@@ -17,9 +17,15 @@
     var inquote = false;
     var self = this;
 
+    if(!this.mysql) throw new Error("Not connected");
+
     qry = $parent.$parent.encodeUTF8(qry).replace(/(\\?[\"\'])|(\?([0-9]*))/g, replaceFunc);
 
-    if(!this.mysql) throw new Error("Not connected");
+    /*
+    stderr.write('Query log: ');
+    stderr.write(qry);
+    stderr.write("\n");
+    */
 
     var res = lib.mysql_real_query(this.mysql, qry, qry.length);
     if(res) this.throwError();
