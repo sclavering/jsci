@@ -267,6 +267,7 @@ decodeMultipart:function(stream, boundary) {
       val=buf;
 
     if (name.substr(-2)=="[]") {
+      name = name.slice(0, -2);
       if (!ret[name])
 	ret[name]=[];
       ret[name].push(val);
