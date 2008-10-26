@@ -53,7 +53,7 @@ function CGI(refresh) {
   this.method = environment.REQUEST_METHOD;
   this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
 
-  this.GET_data = http.decodeURI(this.requestURL).qry || {};
+  this.GET_data = this._reinterpret_form_data(http.decodeURI(this.requestURL).qry || {});
   this.POST_data = this._get_POST_data();
   this.cookie_data = this._parse_cookie_header(this.requestHeaders.cookie);
 
