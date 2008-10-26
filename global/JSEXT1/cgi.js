@@ -37,6 +37,15 @@ will be called with the _CGI_ instance as its only argument.
 
 (function() {
 
+/*
+A nonce type used in CGI.GET_data and CGI.POST_data so that an object arising
+from dots in the submitted field names can be distinguished easily from e.g.
+File-like objects that come from <input type="file"/> (by using instanceof).
+*/
+function FormData() {
+}
+
+
 function CGI(refresh) {
   this.requestHeaders = this._get_request_headers();
 
@@ -180,7 +189,7 @@ CGI.prototype = {
   // Here we reinterpret names data like { 'foo.42.bar': 'quux' } to { foo: { 42: { bar: 'quux' }}}.
   // This is done here because we also want it to apply to multipart/form-data form submissions.
   _reinterpret_form_data: function(data) {
-    const res = {};
+    const res = new FormData();
     for(var key in data) this._reinterpret_form_value(key.split("."), data[key], res);
     return res;
   },
@@ -189,7 +198,8 @@ CGI.prototype = {
     const last_bit = name_bits.pop();
     for each(var name_bit in name_bits) {
       if(name_bit in Object.prototype) return; // avoid replacing __proto__ and suchlike
-      if(!((name_bit in obj) && typeof obj[name_bit] == "object" && obj[name_bit])) obj[name_bit] = {};
+      // We use instanceof rather than e.g. typeof because we don't want to add fields to an uploaded file object or similar
+      if(!(name_bit in obj) || !(obj[name_bit] instanceof FormData)) obj[name_bit] = new FormData();
       obj = obj[name_bit];
     }
     if(last_bit in Object.prototype) return;
@@ -244,6 +254,8 @@ CGI.prototype = {
     }
   },
 };
+
+CGI.FormData = FormData;
 
 return CGI;
 
