@@ -63,7 +63,7 @@
           return String(val);
         case "object": // Must be date or file
           if(val instanceof Date) {
-            return "'" + val.getFullYear() + "-" + val.getMonth() + "-" + val.getDate() + " " + val.getHours() + ":" + val.getMinutes() + ":" + val.getSeconds() + "'";
+            return "'" + val.toLocaleFormat('%Y-%m-%d %H:%M:%S') + "'";
           }
           if (typeof val.read == "function") {
             var str = val.read();
