@@ -162,39 +162,44 @@
       } else {
         var val = args[++maxarg];
       }
-      return escape_val(val);
+      return self.quote_value(val);
     }
+  },
 
-    function escape_val(val) {
-      if(val === null || val === undefined) return 'null';
-      switch(typeof(val)) {
-        case "number":
-        case "boolean":
-          return String(val);
-        case "object": // Must be date or file
-          if(val instanceof Date) {
-            return "'" + val.toLocaleFormat('%Y-%m-%d %H:%M:%S') + "'";
-          }
-          if (typeof val.read == "function") {
-            var str = val.read();
-            val.close();
-            var to = Pointer.malloc(str.length * 2 + 1);
-            var len = lib.mysql_real_escape_string(self.mysql, to, str, str.length);
-            return "'" + to.string(len) + "'";
-          }
-          if(typeof val.length == "number") {
-            return '(' + Array.map(val, escape_val).join(', ') + ')';
-          }
-          break;
+
+  /*
+  */
+  quote_value: function(val) {
+    if(val === null || val === undefined) return 'null';
+    const type = typeof(val);
+    if(type == "number" || type == "boolean") return String(val);
+    // String would match the array case below
+    if(type == "object" && !(val instanceof String)) {
+      if(val instanceof Date) return "'" + val.toLocaleFormat('%Y-%m-%d %H:%M:%S') + "'";
+
+      if(typeof val.read == "function") {
+        var str = val.read();
+        val.close();
+        var to = Pointer.malloc(str.length * 2 + 1);
+        var len = lib.mysql_real_escape_string(this.mysql, to, str, str.length);
+        return "'" + to.string(len) + "'";
       }
 
-      // Use a safe default of stringifying then escaping then quoting
-      val = String(val);
-      val = $parent.encodeUTF8(val);
-      var to = Pointer.malloc(val.length * 2 + 1);
-      var len = lib.mysql_real_escape_string(self.mysql, to, val, val.length);
-      return "'" + to.string(len) + "'";
+      if(typeof val.length == "number") return this.quote_array(val);
     }
+
+    // Use a safe default of stringifying then escaping then quoting
+    val = String(val);
+    val = $parent.encodeUTF8(val);
+    var to = Pointer.malloc(val.length * 2 + 1);
+    var len = libmysql.mysql_real_escape_string(this.mysql, to, val, val.length);
+    return "'" + to.string(len) + "'";
+  },
+
+  quote_array: function(values) {
+    const quoted = [];
+    for(var i = 0; i != values.length; ++i) quoted[i] = this.quote_value(values[i]);
+    return '(' + quoted.join(', ') + ')';
   },
 
 
