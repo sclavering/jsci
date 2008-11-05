@@ -37,7 +37,5 @@ function(params) {
   if (params.clientflag===undefined) params.clientflag=0;
   
   this.params = params;
-  this.freeConnections = [];
-  this.connections = [];
-
+  this._connection = new Mysql.Connection(this, this.params);
 }

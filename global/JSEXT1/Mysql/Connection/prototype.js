@@ -107,7 +107,6 @@
       this.result.finalize = null;
       delete this.result;
     }
-    this.parent.freeConnections.push(this);
   },
 
 

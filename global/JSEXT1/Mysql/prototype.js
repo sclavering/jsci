@@ -1,4 +1,7 @@
 ({
+  // a Mysql.Connection
+  _connection: null,
+
   /*
   db.close()
 
@@ -7,9 +10,7 @@
   made.
   */
   close: function() {
-    var conn;
-    while((conn = this.connections.pop())) conn.close();
-    this.freeConnections = [];
+    if(this._connection) this._connection.close();
   },
 
 
@@ -21,20 +22,9 @@
   as with [[$curdir.query]].
   */
   exec: function(qry) {
-    var conn = this.getConnection();
+    var conn = this._connection;
     conn.exec.apply(conn, arguments);
     conn.free();
-  },
-
-
-  getConnection: function() {
-    var conn = this.freeConnections.pop();
-    if(!conn) {
-      conn = new Connection(this, this.params);
-      this.connections.push(conn);
-    }
-    if(conn.result) conn.free();
-    return conn;
   },
 
 
@@ -110,7 +100,7 @@
   * Support for file-like blobs was introduced in version 1.1.
   */
   query: function(qry) {
-    var conn = this.getConnection();
+    var conn = this._connection;
     conn.exec.apply(conn, arguments);
 
     if(lib.mysql_field_count(conn.mysql) == 0) {
