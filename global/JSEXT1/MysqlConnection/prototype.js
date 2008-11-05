@@ -109,6 +109,33 @@
   },
 
 
+  insert_object: function(table, object) {
+    return this.insert_multiple_objects(table, [object]);
+  },
+
+
+  insert_multiple_objects: function(table, object_list) {
+    if(!object_list || !object_list.length) return null;
+    const keys = object.keys(object_list[0]);
+    const row_len = keys.length;
+    const data = new Array();
+    for(var i = 0; i != object_list.length; ++i) {
+      var obj = object_list[i];
+      var row = data[i] = new Array(row_len);
+      for(var k = 0; k != row_len; ++k) row[k] = obj[keys[k]] || '';
+    }
+    return this.insert_multiple_rows(table, keys, data);
+  },
+
+
+  insert_multiple_rows: function(table, field_names, data) {
+    const q = 'INSERT INTO ' + table + ' (' + field_names.join(', ') + ') VALUES ';
+    const escaped = new Array(data.length);
+    for(var i = 0; i != data.length; ++i) escaped[i] = this.quote_array(data[i]);
+    return this.query(q + escaped.join(', '));
+  },
+
+
   close: function() {
     if(this.result) this.free();
     libmysql.mysql_close(this._mysql);
