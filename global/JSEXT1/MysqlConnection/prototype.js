@@ -71,28 +71,27 @@
   * Support for file-like blobs was introduced in version 1.1.
   */
   query: function(qry) {
-    const lib = libmysql, conn = this;
     this._exec(arguments);
 
-    if(lib.mysql_field_count(conn.mysql) == 0) {
-      conn.free();
-      return lib.mysql_insert_id(conn.mysql) || null;
+    if(libmysql.mysql_field_count(this._mysql) == 0) {
+      this.free();
+      return libmysql.mysql_insert_id(this._mysql) || null;
     }
 
-    conn.result = lib.mysql_store_result(conn.mysql);
-    if(!conn.result) {
-      conn.release();
-      conn.throwError();
+    this.result = libmysql.mysql_store_result(this._mysql);
+    if(!this.result) {
+      this.release();
+      this.throwError();
     }
-    conn.result.finalize = lib.mysql_free_result;
+    this.result.finalize = libmysql.mysql_free_result;
 
-    conn.rowNumber = 0;
-    conn.getFields();
+    this.rowNumber = 0;
+    this.getFields();
 
     const ret = [];
     var row;
-    while((row = conn.row()) !== undefined) ret.push(row);
-    conn.free();
+    while((row = this.row()) !== undefined) ret.push(row);
+    this.free();
     return ret;
   },
 
@@ -111,23 +110,21 @@
 
 
   close: function() {
-    const lib = libmysql;
     if(this.result) this.free();
-    lib.mysql_close(this.mysql);
-    this.mysql.finalize = null;
-    delete this.mysql;
+    libmysql.mysql_close(this._mysql);
+    this._mysql.finalize = null;
+    delete this._mysql;
   },
 
 
   // internal!
   _exec: function(args) {
-    const lib = libmysql;
     var qry = args[0];
     var maxarg = 0;
     var inquote = false;
     var self = this;
 
-    if(!this.mysql) throw new Error("Not connected");
+    if(!this._mysql) throw new Error("Not connected");
 
     qry = $parent.encodeUTF8(qry).replace(/(\\?[\"\'])|(\?([0-9]*))/g, replaceFunc);
 
@@ -137,7 +134,7 @@
     stderr.write("\n");
     */
 
-    var res = lib.mysql_real_query(this.mysql, qry, qry.length);
+    var res = libmysql.mysql_real_query(this._mysql, qry, qry.length);
     if(res) this.throwError();
 
     function replaceFunc(q, a, b, c) {
@@ -181,7 +178,7 @@
         var str = val.read();
         val.close();
         var to = Pointer.malloc(str.length * 2 + 1);
-        var len = lib.mysql_real_escape_string(this.mysql, to, str, str.length);
+        var len = libmysql.mysql_real_escape_string(this._mysql, to, str, str.length);
         return "'" + to.string(len) + "'";
       }
 
@@ -192,7 +189,7 @@
     val = String(val);
     val = $parent.encodeUTF8(val);
     var to = Pointer.malloc(val.length * 2 + 1);
-    var len = libmysql.mysql_real_escape_string(this.mysql, to, val, val.length);
+    var len = libmysql.mysql_real_escape_string(this._mysql, to, val, val.length);
     return "'" + to.string(len) + "'";
   },
 
@@ -204,7 +201,7 @@
 
 
   /*
-  conn.free()
+  mysql.free()
 
   Frees the resources associated with a MySQL result set. Use with
   the [[$parent.prototype.prepare]] function:
@@ -217,9 +214,8 @@
       res.free();
   */
   free: function() {
-    const lib = libmysql;
     if(this.result) {
-      lib.mysql_free_result(this.result);
+      libmysql.mysql_free_result(this.result);
       this.result.finalize = null;
       delete this.result;
     }
@@ -227,13 +223,12 @@
 
 
   getFields: function() {
-    const lib = libmysql;
     this.fieldNames = [];
     this.fieldTypes = [];
     this.fieldCharSet = [];
 
     var field;
-    while((field = lib.mysql_fetch_field(this.result)) != null) {
+    while((field = libmysql.mysql_fetch_field(this.result)) != null) {
       this.fieldTypes.push(field.member(0, 'type').$);
       this.fieldCharSet.push(field.member(0, 'charsetnr').$);
       this.fieldNames.push(field.member(0, 'name').$.string(field.member(0, 'name_length').$));
@@ -258,15 +253,14 @@
       res.free();
   */
   row: function() {
-    const lib = libmysql;
     var nfields = this.fieldNames.length;
 
-    var row = lib.mysql_fetch_row(this.result);
+    var row = libmysql.mysql_fetch_row(this.result);
     if(!row) return;
 
     var outval;
 
-    var lengths = lib.mysql_fetch_lengths(this.result);
+    var lengths = libmysql.mysql_fetch_lengths(this.result);
 
     var outrow = {};
     for(var j = 0; j < nfields; j++) {
@@ -275,40 +269,40 @@
         val = val.string(lengths.member(j).$);
 
         switch(this.fieldTypes[j]) {
-          case lib.MYSQL_TYPE_DATE:
+          case libmysql.MYSQL_TYPE_DATE:
             var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*)/);
             outval = new Date(date[1], date[2], date[3]);
             break;
-          // case lib.MYSQL_TYPE_TIME:
+          // case libmysql.MYSQL_TYPE_TIME:
           //   var date = val.match(/([0-9]*):([0-9]*):([0-9]*)/);
           //   outval = new Date(new Date(1970, 0, 1, date[1], date[2], date[3]).valueOf() % (24 * 3600000));
           //   break;
-          case lib.MYSQL_TYPE_DATETIME:
+          case libmysql.MYSQL_TYPE_DATETIME:
             var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*) ([0-9]*):([0-9]*):([0-9]*)/);
             outval = new Date(date[1], date[2] - 1, date[3], date[4], date[5], date[6]);
             break;
-          case lib.MYSQL_TYPE_DECIMAL:
-          case lib.MYSQL_TYPE_TINY:
-          case lib.MYSQL_TYPE_SHORT:
-          case lib.MYSQL_TYPE_LONG:
-          case lib.MYSQL_TYPE_FLOAT:
-          case lib.MYSQL_TYPE_DOUBLE:
-          case lib.MYSQL_TYPE_LONGLONG:
-          case lib.MYSQL_TYPE_INT24:
+          case libmysql.MYSQL_TYPE_DECIMAL:
+          case libmysql.MYSQL_TYPE_TINY:
+          case libmysql.MYSQL_TYPE_SHORT:
+          case libmysql.MYSQL_TYPE_LONG:
+          case libmysql.MYSQL_TYPE_FLOAT:
+          case libmysql.MYSQL_TYPE_DOUBLE:
+          case libmysql.MYSQL_TYPE_LONGLONG:
+          case libmysql.MYSQL_TYPE_INT24:
             outval = Number(val);
             break;
-          case lib.MYSQL_TYPE_TINY_BLOB:
-          case lib.MYSQL_TYPE_MEDIUM_BLOB:
-          case lib.MYSQL_TYPE_LONG_BLOB:
-          case lib.MYSQL_TYPE_BLOB:
+          case libmysql.MYSQL_TYPE_TINY_BLOB:
+          case libmysql.MYSQL_TYPE_MEDIUM_BLOB:
+          case libmysql.MYSQL_TYPE_LONG_BLOB:
+          case libmysql.MYSQL_TYPE_BLOB:
             if(this.fieldCharSet[j] == 63) {
               outval = new $parent.StringFile(val);
               break;
-            } 
+            }
             // is a text field, fall through
-          case lib.MYSQL_VAR_STRING:
-          case lib.MYSQL_STRING:
-          case lib.MYSQL_VARCHAR:
+          case libmysql.MYSQL_VAR_STRING:
+          case libmysql.MYSQL_STRING:
+          case libmysql.MYSQL_VARCHAR:
             outval = $parent.decodeUTF8(val);
             break;
           default:
@@ -327,31 +321,28 @@
 
 
   /*
-  num = conn.rowCount()
+  num = mysql.rowCount()
 
   Returns the number of rows in the result set.
   */
   rowCount: function() {
-    const lib = libmysql;
-    if(this.result) return lib.mysql_num_rows(this.result);
+    if(this.result) return libmysql.mysql_num_rows(this.result);
   },
 
 
   /*
-  conn.seek(num)
+  mysql.seek(num)
 
   Moves the cursor backwards or forwards in the result set.
   */
   seek: function(number) {
-    const lib = libmysql;
-    lib.mysql_data_seek(this.result, number);
+    libmysql.mysql_data_seek(this.result, number);
     this.rowNumber = number;
   },
 
 
   // Used for reporting errors from the mysql api (private)
   throwError: function() {
-    const lib = libmysql;
-    throw new Error("mysql: " + $parent.decodeUTF8(lib.mysql_error(this.mysql).string()));
+    throw new Error("mysql: " + $parent.decodeUTF8(libmysql.mysql_error(this._mysql).string()));
   },
 })

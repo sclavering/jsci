@@ -16,7 +16,7 @@ An object representing a single connection to a MySQL database.
 */
 
 function(params) {
-  params = params || {};
+  this.params = params = params || {};
 
   if (params.host===undefined) params.host=null;
   if (params.user===undefined) params.user=null;
@@ -26,13 +26,10 @@ function(params) {
   if (params.unix_socket===undefined) params.unix_socket=null;
   if (params.clientflag===undefined) params.clientflag=0;
   
-  this.params = params;
-
-  const lib = JSEXT1.libmysql;
-  this.mysql=lib.mysql_init(null);
-  this.mysql.finalize=lib.mysql_close;
-  lib.mysql_options(this.mysql, lib.MYSQL_OPT_RECONNECT, Type.pointer(Type.int), [1]); // automatic reconnect
-  if (!lib.mysql_real_connect(this.mysql,
+  this._mysql = libmysql.mysql_init(null);
+  this._mysql.finalize = libmysql.mysql_close;
+  libmysql.mysql_options(this._mysql, libmysql.MYSQL_OPT_RECONNECT, Type.pointer(Type.int), [1]); // automatic reconnect
+  if (!libmysql.mysql_real_connect(this._mysql,
 				    params.host,
 				    params.user,
 				    params.passwd,
