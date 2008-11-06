@@ -265,47 +265,7 @@
       val = row.member(j).$;
       if(val) {
         val = val.string(lengths.member(j).$);
-
-        switch(this.fieldTypes[j]) {
-          case libmysql.MYSQL_TYPE_DATE:
-            var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*)/);
-            outval = new Date(date[1], date[2], date[3]);
-            break;
-          // case libmysql.MYSQL_TYPE_TIME:
-          //   var date = val.match(/([0-9]*):([0-9]*):([0-9]*)/);
-          //   outval = new Date(new Date(1970, 0, 1, date[1], date[2], date[3]).valueOf() % (24 * 3600000));
-          //   break;
-          case libmysql.MYSQL_TYPE_DATETIME:
-            var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*) ([0-9]*):([0-9]*):([0-9]*)/);
-            outval = new Date(date[1], date[2] - 1, date[3], date[4], date[5], date[6]);
-            break;
-          case libmysql.MYSQL_TYPE_DECIMAL:
-          case libmysql.MYSQL_TYPE_TINY:
-          case libmysql.MYSQL_TYPE_SHORT:
-          case libmysql.MYSQL_TYPE_LONG:
-          case libmysql.MYSQL_TYPE_FLOAT:
-          case libmysql.MYSQL_TYPE_DOUBLE:
-          case libmysql.MYSQL_TYPE_LONGLONG:
-          case libmysql.MYSQL_TYPE_INT24:
-            outval = Number(val);
-            break;
-          case libmysql.MYSQL_TYPE_TINY_BLOB:
-          case libmysql.MYSQL_TYPE_MEDIUM_BLOB:
-          case libmysql.MYSQL_TYPE_LONG_BLOB:
-          case libmysql.MYSQL_TYPE_BLOB:
-            if(this.fieldCharSet[j] == 63) {
-              outval = new $parent.StringFile(val);
-              break;
-            }
-            // is a text field, fall through
-          case libmysql.MYSQL_VAR_STRING:
-          case libmysql.MYSQL_STRING:
-          case libmysql.MYSQL_VARCHAR:
-            outval = $parent.decodeUTF8(val);
-            break;
-          default:
-            outval = val;
-        }
+        outval = this._decode_result_value(val, this.fieldTypes[j], this.fieldCharSet[j]);
       } else {
         outval = null;
       }
@@ -315,6 +275,40 @@
 
     this.rowNumber++;
     return outrow;
+  },
+
+  _decode_result_value: function(val, field_type, field_charset) {
+    switch(field_type) {
+      case libmysql.MYSQL_TYPE_DATE:
+        var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*)/);
+        return new Date(date[1], date[2], date[3]);
+      // case libmysql.MYSQL_TYPE_TIME:
+      //   var date = val.match(/([0-9]*):([0-9]*):([0-9]*)/);
+      //   return new Date(new Date(1970, 0, 1, date[1], date[2], date[3]).valueOf() % (24 * 3600000));
+      case libmysql.MYSQL_TYPE_DATETIME:
+        var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*) ([0-9]*):([0-9]*):([0-9]*)/);
+        return new Date(date[1], date[2] - 1, date[3], date[4], date[5], date[6]);
+      case libmysql.MYSQL_TYPE_DECIMAL:
+      case libmysql.MYSQL_TYPE_TINY:
+      case libmysql.MYSQL_TYPE_SHORT:
+      case libmysql.MYSQL_TYPE_LONG:
+      case libmysql.MYSQL_TYPE_FLOAT:
+      case libmysql.MYSQL_TYPE_DOUBLE:
+      case libmysql.MYSQL_TYPE_LONGLONG:
+      case libmysql.MYSQL_TYPE_INT24:
+        return Number(val);
+      case libmysql.MYSQL_TYPE_TINY_BLOB:
+      case libmysql.MYSQL_TYPE_MEDIUM_BLOB:
+      case libmysql.MYSQL_TYPE_LONG_BLOB:
+      case libmysql.MYSQL_TYPE_BLOB:
+        if(field_charset == 63) return new $parent.StringFile(val);
+        // it's a text field, fall through
+      case libmysql.MYSQL_VAR_STRING:
+      case libmysql.MYSQL_STRING:
+      case libmysql.MYSQL_VARCHAR:
+        return $parent.decodeUTF8(val);
+    }
+    return val;
   },
 
 
