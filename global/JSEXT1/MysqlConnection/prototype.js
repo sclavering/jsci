@@ -313,27 +313,6 @@
   },
 
 
-  /*
-  num = mysql.rowCount()
-
-  Returns the number of rows in the result set.
-  */
-  rowCount: function() {
-    if(this.result) return libmysql.mysql_num_rows(this.result);
-  },
-
-
-  /*
-  mysql.seek(num)
-
-  Moves the cursor backwards or forwards in the result set.
-  */
-  seek: function(number) {
-    libmysql.mysql_data_seek(this.result, number);
-    this.rowNumber = number;
-  },
-
-
   // Used for reporting errors from the mysql api (private)
   throwError: function() {
     throw new Error("mysql: " + $parent.decodeUTF8(libmysql.mysql_error(this._mysql).string()));
