@@ -136,7 +136,6 @@
   },
 
 
-  // internal!
   _exec: function(args) {
     var qry = args[0];
     var maxarg = 0;
@@ -190,6 +189,7 @@
     var len = libmysql.mysql_real_escape_string(this._mysql, to, val, val.length);
     return "'" + to.string(len) + "'";
   },
+
 
   quote_array: function(values) {
     const quoted = [];
@@ -276,6 +276,7 @@
     this.rowNumber++;
     return outrow;
   },
+
 
   _decode_result_value: function(val, field_type, field_charset) {
     switch(field_type) {
