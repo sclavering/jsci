@@ -65,11 +65,16 @@
     }
     this.result.finalize = libmysql.mysql_free_result;
 
-    this.fields_metadata = this._get_fields();
+    const fields = this._get_fields();
 
     const ret = [];
-    var row;
-    while((row = this.row()) !== undefined) ret.push(row);
+    while(true) {
+      var row = libmysql.mysql_fetch_row(this.result);
+      if(!row) break;
+      var lengths = libmysql.mysql_fetch_lengths(this.result);
+      ret.push(this._decode_result_row(row, lengths, fields));
+    }
+
     this.free();
     return ret;
   },
@@ -235,41 +240,15 @@
   },
 
 
-  /*
-  Returns one row from the query: An object
-  whose keys are field names and values are field values.
-
-  If there are no more fields, the return value is _undefined_.
-
-  Use with
-  the [[$parent.prototype.prepare]] function:
-
-      var res = db.prepare(qry);
-      var row;
-      while (row = res.row()) {
-        ...
-      }
-      res.free();
-  */
-  row: function() {
-    var nfields = this.fields_metadata.length;
-
-    var row = libmysql.mysql_fetch_row(this.result);
-    if(!row) return;
-
-    var outval;
-
-    var lengths = libmysql.mysql_fetch_lengths(this.result);
-
+  _decode_result_row: function(row, lengths, fields) {
     var outrow = {};
-    for(var j = 0; j < nfields; j++) {
-      var field = this.fields_metadata[j];
+    for(var j = 0; j != fields.length; ++j) {
+      var outval = null;
+      var field = fields[j];
       val = row.member(j).$;
       if(val) {
         val = val.string(lengths.member(j).$);
         outval = this._decode_result_value(val, field);
-      } else {
-        outval = null;
       }
       outrow[field.name] = outval;
     }
