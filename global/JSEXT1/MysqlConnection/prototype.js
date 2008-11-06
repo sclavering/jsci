@@ -73,7 +73,6 @@
 
     this.result = libmysql.mysql_store_result(this._mysql);
     if(!this.result) {
-      this.release();
       this.throwError();
     }
     this.result.finalize = libmysql.mysql_free_result;
