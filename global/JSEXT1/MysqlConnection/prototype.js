@@ -60,9 +60,7 @@
     if(libmysql.mysql_field_count(this._mysql) == 0) return undefined;
 
     this.result = libmysql.mysql_store_result(this._mysql);
-    if(!this.result) {
-      this.throwError();
-    }
+    if(!this.result) this._throw_error();
     this.result.finalize = libmysql.mysql_free_result;
 
     const fields = this._get_fields();
@@ -157,7 +155,7 @@
     */
 
     var res = libmysql.mysql_real_query(this._mysql, qry, qry.length);
-    if(res) this.throwError();
+    if(res) this._throw_error();
 
     function replaceFunc(q, a, b, c) {
       var val = args[++maxarg];
@@ -292,7 +290,7 @@
 
 
   // Used for reporting errors from the mysql api (private)
-  throwError: function() {
+  _throw_error: function() {
     throw new Error("mysql: " + $parent.decodeUTF8(libmysql.mysql_error(this._mysql).string()));
   },
 })
