@@ -11,16 +11,9 @@
 
   ### Parameter substitution ###
 
-  Each question mark in the query string (which is not inside quotes,
-  version >= 1.1)
-  is replaced with the corresponding
-  parameter in the argument list, following the query string. Parameters
+  Each question mark in the query string is replaced with the corresponding
+  parameter in the argument list, following the query string.  Parameters
   are properly escaped during substitution.
-
-  Question marks immediately followed by a number (?1 ?2 ?3) are replaced
-  by the corresponding parameter number, starting at 1. Subsequent question
-  marks without numbers are replaced by the parameter following the
-  highest-numbered parameter used so far. (version >= 1.1)
 
   ---
 
@@ -148,12 +141,11 @@
   _exec: function(args) {
     var qry = args[0];
     var maxarg = 0;
-    var inquote = false;
     var self = this;
 
     if(!this._mysql) throw new Error("Not connected");
 
-    qry = $parent.encodeUTF8(qry).replace(/(\\?[\"\'])|(\?([0-9]*))/g, replaceFunc);
+    qry = $parent.encodeUTF8(qry).replace(/\?/g, replaceFunc);
 
     /*
     stderr.write('Query log: ');
@@ -165,27 +157,7 @@
     if(res) this.throwError();
 
     function replaceFunc(q, a, b, c) {
-      if(a) {
-        if(a[0] != '\\') {
-          if(inquote) {
-            if(inquote == a)
-              inquote = false;
-          } else {
-            inquote = a;
-          }
-        }
-        return q;
-      }
-
-      if(inquote) return q;
-
-      if(c) {
-        c = Number(c);
-        var val = args[c];
-        if(c > maxarg) maxarg = c;
-      } else {
-        var val = args[++maxarg];
-      }
+      var val = args[++maxarg];
       return self.quote_value(val);
     }
   },
