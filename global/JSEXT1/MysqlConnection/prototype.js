@@ -65,8 +65,7 @@
     }
     this.result.finalize = libmysql.mysql_free_result;
 
-    this.rowNumber = 0;
-    this.getFields();
+    this.fields_metadata = this._get_fields();
 
     const ret = [];
     var row;
@@ -221,16 +220,18 @@
   },
 
 
-  getFields: function() {
-    const fm = this.fields_metadata = [];
-    var field;
-    while((field = libmysql.mysql_fetch_field(this.result)) != null) {
+  _get_fields: function() {
+    const fm = [];
+    while(true) {
+      var field = libmysql.mysql_fetch_field(this.result);
+      if(!field) break;
       fm.push({
         mysql_type: field.member(0, 'type').$,
         charset: field.member(0, 'charsetnr').$,
         name: field.member(0, 'name').$.string(field.member(0, 'name_length').$),
       });
     }
+    return fm;
   },
 
 
@@ -272,8 +273,6 @@
       }
       outrow[field.name] = outval;
     }
-
-    this.rowNumber++;
     return outrow;
   },
 
