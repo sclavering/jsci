@@ -57,6 +57,8 @@
   query: function(qry) {
     this._exec(arguments);
 
+    if(libmysql.mysql_field_count(this._mysql) == 0) return undefined;
+
     this.result = libmysql.mysql_store_result(this._mysql);
     if(!this.result) {
       this.throwError();
