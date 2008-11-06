@@ -220,15 +220,14 @@
 
 
   getFields: function() {
-    this.fieldNames = [];
-    this.fieldTypes = [];
-    this.fieldCharSet = [];
-
+    const fm = this.fields_metadata = [];
     var field;
     while((field = libmysql.mysql_fetch_field(this.result)) != null) {
-      this.fieldTypes.push(field.member(0, 'type').$);
-      this.fieldCharSet.push(field.member(0, 'charsetnr').$);
-      this.fieldNames.push(field.member(0, 'name').$.string(field.member(0, 'name_length').$));
+      fm.push({
+        mysql_type: field.member(0, 'type').$,
+        charset: field.member(0, 'charsetnr').$,
+        name: field.member(0, 'name').$.string(field.member(0, 'name_length').$),
+      });
     }
   },
 
@@ -250,7 +249,7 @@
       res.free();
   */
   row: function() {
-    var nfields = this.fieldNames.length;
+    var nfields = this.fields_metadata.length;
 
     var row = libmysql.mysql_fetch_row(this.result);
     if(!row) return;
@@ -261,15 +260,15 @@
 
     var outrow = {};
     for(var j = 0; j < nfields; j++) {
+      var field = this.fields_metadata[j];
       val = row.member(j).$;
       if(val) {
         val = val.string(lengths.member(j).$);
-        outval = this._decode_result_value(val, this.fieldTypes[j], this.fieldCharSet[j]);
+        outval = this._decode_result_value(val, field);
       } else {
         outval = null;
       }
-
-      outrow[this.fieldNames[j]] = outval;
+      outrow[field.name] = outval;
     }
 
     this.rowNumber++;
@@ -277,8 +276,8 @@
   },
 
 
-  _decode_result_value: function(val, field_type, field_charset) {
-    switch(field_type) {
+  _decode_result_value: function(val, field) {
+    switch(field.mysql_type) {
       case libmysql.MYSQL_TYPE_DATE:
         var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*)/);
         return new Date(date[1], date[2], date[3]);
@@ -301,7 +300,7 @@
       case libmysql.MYSQL_TYPE_MEDIUM_BLOB:
       case libmysql.MYSQL_TYPE_LONG_BLOB:
       case libmysql.MYSQL_TYPE_BLOB:
-        if(field_charset == 63) return new $parent.StringFile(val);
+        if(field.charset == 63) return new $parent.StringFile(val);
         // it's a text field, fall through
       case libmysql.MYSQL_VAR_STRING:
       case libmysql.MYSQL_STRING:
