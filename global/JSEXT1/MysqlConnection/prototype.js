@@ -57,11 +57,6 @@
   query: function(qry) {
     this._exec(arguments);
 
-    if(libmysql.mysql_field_count(this._mysql) == 0) {
-      this.free();
-      return libmysql.mysql_insert_id(this._mysql) || null;
-    }
-
     this.result = libmysql.mysql_store_result(this._mysql);
     if(!this.result) {
       this.throwError();
@@ -76,6 +71,19 @@
     while((row = this.row()) !== undefined) ret.push(row);
     this.free();
     return ret;
+  },
+
+
+  /*
+  db.insert(qry, [param1, [...]])
+  
+  Like .exec(), except it returns the result of mysql_insert_id(), avoiding the
+  need for a 'SELECT LAST_INSERT_ID()'.
+  */
+  insert: function(qry) {
+    this._exec(arguments);
+    this.free();
+    return libmysql.mysql_insert_id(this._mysql) || null;
   },
 
 
@@ -115,7 +123,7 @@
     const q = 'INSERT INTO ' + table + ' (' + field_names.join(', ') + ') VALUES ';
     const escaped = new Array(data.length);
     for(var i = 0; i != data.length; ++i) escaped[i] = this.quote_array(data[i]);
-    return this.query(q + escaped.join(', '));
+    return this.insert(q + escaped.join(', '));
   },
 
 
