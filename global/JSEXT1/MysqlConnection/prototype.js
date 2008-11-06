@@ -53,15 +53,6 @@
                       "o'hara");
 
       print(res[0].id); // Prints a number or throws an exception
-
-  ---
-
-
-  ### Version differences ###
-
-  * Version 1.0 also replaced question marks inside strings
-  * Support for 16-bit characters was introduced in version 1.1.
-  * Support for file-like blobs was introduced in version 1.1.
   */
   query: function(qry) {
     this._exec(arguments);
