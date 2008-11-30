@@ -266,6 +266,7 @@
         var date = val.match(/([0-9]*)-([0-9]*)-([0-9]*) ([0-9]*):([0-9]*):([0-9]*)/);
         return new Date(date[1], date[2] - 1, date[3], date[4], date[5], date[6]);
       case libmysql.MYSQL_TYPE_DECIMAL:
+      case libmysql.MYSQL_TYPE_NEWDECIMAL: // Precision math DECIMAL or NUMERIC field (MySQL 5.0.3 and up)
       case libmysql.MYSQL_TYPE_TINY:
       case libmysql.MYSQL_TYPE_SHORT:
       case libmysql.MYSQL_TYPE_LONG:
@@ -280,14 +281,25 @@
       case libmysql.MYSQL_TYPE_BLOB:
         if(field.charset == 63) return new $parent.StringFile(val);
         // it's a text field, fall through
-      case libmysql.MYSQL_VAR_STRING:
+      case libmysql.MYSQL_VAR_STRING: // VARCHAR or VARBINARY field
       case libmysql.MYSQL_STRING:
       case libmysql.MYSQL_VARCHAR:
-        return $parent.decodeUTF8(val);
+        return val;
     }
     return val;
   },
 
+/*
+MYSQL_TYPE_BIT: // BIT field (MySQL 5.0.3 and up)
+MYSQL_TYPE_TIMESTAMP: // TIMESTAMP field
+MYSQL_TYPE_YEAR: // YEAR field
+MYSQL_TYPE_STRING: // CHAR or BINARY field
+MYSQL_TYPE_VAR_STRING:
+MYSQL_TYPE_SET: // SET field
+MYSQL_TYPE_ENUM: // ENUM field
+MYSQL_TYPE_GEOMETRY: // Spatial field
+MYSQL_TYPE_NULL:
+*/
 
   // Used for reporting errors from the mysql api (private)
   _throw_error: function() {
