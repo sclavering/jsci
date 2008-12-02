@@ -281,9 +281,8 @@
       case libmysql.MYSQL_TYPE_BLOB:
         if(field.charset == 63) return new $parent.StringFile(val);
         // it's a text field, fall through
-      case libmysql.MYSQL_VAR_STRING: // VARCHAR or VARBINARY field
-      case libmysql.MYSQL_STRING:
-      case libmysql.MYSQL_VARCHAR:
+      case libmysql.MYSQL_TYPE_VAR_STRING: // VARCHAR or VARBINARY field
+      case libmysql.MYSQL_TYPE_STRING: // CHAR or BINARY per docs, but also TEXT
         return val;
     }
     return val;
@@ -293,8 +292,6 @@
 MYSQL_TYPE_BIT: // BIT field (MySQL 5.0.3 and up)
 MYSQL_TYPE_TIMESTAMP: // TIMESTAMP field
 MYSQL_TYPE_YEAR: // YEAR field
-MYSQL_TYPE_STRING: // CHAR or BINARY field
-MYSQL_TYPE_VAR_STRING:
 MYSQL_TYPE_SET: // SET field
 MYSQL_TYPE_ENUM: // ENUM field
 MYSQL_TYPE_GEOMETRY: // Spatial field
