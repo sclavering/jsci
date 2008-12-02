@@ -37,7 +37,7 @@ function(params) {
 				    params.port,
 				    params.unix_socket,
 				    params.clientflag)) {
-    this.throwError();
+    this._throw_error();
   }
-  this._exec(["SET NAMES 'utf8'"]);
+  this._exec(["SET NAMES utf8"]);
 }
