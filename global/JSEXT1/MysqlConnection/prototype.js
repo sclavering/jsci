@@ -149,10 +149,15 @@
     var qry = args[0];
     var maxarg = 0;
     var self = this;
+    const named_args = args.length > 1 ? args[args.length - 1] : {};
 
     if(!this._mysql) throw new Error("Not connected");
 
-    qry = $parent.encodeUTF8(qry).replace(/\?/g, replaceFunc);
+    // We have to escape before doing substitution, because the quoting during
+    // substitution uses libmysql functions that expect 8-bit strings.
+    qry = $parent.encodeUTF8(qry);
+    qry = qry.replace(/\?/g, replace_by_position);
+    qry = qry.replace(/\{([^}]*)\}/g, replace_by_name)
 
     /*
     stderr.write('Query log: ');
@@ -163,9 +168,14 @@
     var res = libmysql.mysql_real_query(this._mysql, qry, qry.length);
     if(res) this._throw_error();
 
-    function replaceFunc(q, a, b, c) {
+    function replace_by_position(q, a, b, c) {
       var val = args[++maxarg];
       return self.quote_value(val);
+    }
+
+    function replace_by_name(full_match, name_match) {
+      if(!(name_match in named_args)) throw new Error("MysqlConnection: missing named query arg: " + name_match);
+      return self.quote_value(named_args[name_match]);
     }
   },
 
