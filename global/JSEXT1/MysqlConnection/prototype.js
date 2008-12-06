@@ -188,7 +188,7 @@
     if(type == "number" || type == "boolean") return String(val);
     // String would match the array case below
     if(type == "object" && !(val instanceof String)) {
-      if("toMysqlString" in val) return val.toMysqlString();
+      if("toMysqlString" in val) return val.toMysqlString(this);
 
       if(val instanceof Date) return "'" + val.toLocaleFormat('%Y-%m-%d %H:%M:%S') + "'";
 
@@ -212,9 +212,10 @@
   },
 
 
-  quote_array: function(values) {
+  quote_array: function(values, without_parentheses) {
     const quoted = [];
     for(var i = 0; i != values.length; ++i) quoted[i] = this.quote_value(values[i]);
+    if(without_parentheses) return quoted.join(', ');
     return '(' + quoted.join(', ') + ')';
   },
 
