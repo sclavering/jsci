@@ -26,6 +26,12 @@
 
   ---
 
+  Escaping rules are hard-coded for most built-in types (e.g. arrays, integers
+  strings, and Date objects).  Objects can define a _.toMysqlString()_ method
+  to control their own escaping during substitution.  If this method exists it
+  will be called and the result used unmodified (e.g. no quote marks will be
+  added).
+
   ### Return value ###
 
   If the query _can_ return rows, the return value is an array, where
@@ -172,6 +178,8 @@
     if(type == "number" || type == "boolean") return String(val);
     // String would match the array case below
     if(type == "object" && !(val instanceof String)) {
+      if("toMysqlString" in val) return val.toMysqlString();
+
       if(val instanceof Date) return "'" + val.toLocaleFormat('%Y-%m-%d %H:%M:%S') + "'";
 
       if(typeof val.read == "function") {
