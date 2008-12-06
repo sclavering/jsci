@@ -7,6 +7,7 @@ _MysqlConnection.query()_.
 (function() {
 
 function Name(str) {
+  if(!(this instanceof Name)) return new Name(str);
   this.str = str;
 }
 

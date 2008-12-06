@@ -10,6 +10,7 @@ _new InsertionValues(x)_ instead solves this.
 (function() {
 
 function InsertionValues(array) {
+  if(!(this instanceof InsertionValues)) return new InsertionValues(array);
   this.array = array;
 }
 

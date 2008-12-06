@@ -1,4 +1,7 @@
 ({
+  InsertionValues: $curdir.InsertionValues,
+  Name: $curdir.Name,
+
   /*
   array = db.query(qry, [param, param, ...])
 
