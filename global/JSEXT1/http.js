@@ -3,7 +3,7 @@
     Similar to [[decodeURIComponent]], but also decodes + characters
     to spaces.
   */
-  decode: function(qry) {
+  _url_decode: function(qry) {
     if(qry === undefined) return;
     qry = qry.replace(/\+/g, " ");
     qry = qry.replace(/%../g, function(nn) { return String.fromCharCode(parseInt(nn.substr(1), 16)); });
@@ -64,7 +64,7 @@
             path: parts[11] ? parts[11].replace(/%../g, function(nn){return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
             qry: this.decodeQry(parts[13]),
             qryString: parts[13],
-            section: parts[14] ? this.decode(parts[15]) : undefined,
+            section: parts[14] ? this._url_decode(parts[15]) : undefined,
             fullPath: parts[11] + (parts[12] || "") + (parts[14] || ""),
           };
       }
@@ -76,7 +76,7 @@
       path: parts[1] ? parts[1].replace(/%../g, function(nn){ return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
       qry: this.decodeQry(parts[3]),
       qryString: parts[3],
-      section: parts[5] ? this.decode(parts[5]) : undefined,
+      section: parts[5] ? this._url_decode(parts[5]) : undefined,
       fullPath: uri,
     };
   },
@@ -111,12 +111,12 @@
   decodeQry: function(qry) {
     if(qry == undefined) return;
     try {
-      return $parent.decodeJSON("[" + this.decode(qry) + "]");
+      return $parent.decodeJSON("[" + this._url_decode(qry) + "]");
     } catch(x) {
       // normal a=x&b=y format
       const get = {};
       const vars = qry.split("&");
-      for(var i = 0; i != vars.length; ++i) this._add_form_var_to(this.decode(vars[i]), get);
+      for(var i = 0; i != vars.length; ++i) this._add_form_var_to(this._url_decode(vars[i]), get);
       return get;
     }
     return {};
