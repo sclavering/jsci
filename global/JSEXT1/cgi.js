@@ -53,7 +53,7 @@ function CGI(refresh) {
   this.method = environment.REQUEST_METHOD;
   this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
 
-  this.GET_data = this._reinterpret_form_data(http.decodeURI(this.requestURL).qry || {});
+  this.GET_data = this._reinterpret_form_data(url.parse(this.requestURL).qry || {});
   this.POST_data = this._get_POST_data();
   this.cookie_data = this._parse_cookie_header(this.requestHeaders.cookie);
 
@@ -176,7 +176,7 @@ CGI.prototype = {
     if(cx.method != "POST") return {};
     var ct = mime.nameValuePairDecode(cx.requestHeaders.contentType);
     if(ct == "text/JSON") return decodeJSON(stdin.read()) || {};
-    if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(http.decodeQry(stdin.read()) || {});
+    if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(url.parse_query(stdin.read()) || {});
     if(ct == "multipart/form-data") {
       var stream = new StringFile(stdin.read()); // Sorry, must read into ram because readln is not bin-safe.
       return this._reinterpret_form_data(mime.decodeMultipart(stream, ct.boundary) || {});
@@ -185,7 +185,7 @@ CGI.prototype = {
   },
 
 
-  // http.decodeQry does the basic parsing of the foo=bar part of a query string, but only special-cases foo[]
+  // url.parse_query does the basic parsing of the foo=bar part of a query string, but only special-cases foo[]
   // Here we reinterpret names data like { 'foo.42.bar': 'quux' } to { foo: { 42: { bar: 'quux' }}}.
   // This is done here because we also want it to apply to multipart/form-data form submissions.
   _reinterpret_form_data: function(data) {

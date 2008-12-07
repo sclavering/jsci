@@ -31,7 +31,7 @@ function(method, url, headers, body, options) {
   headers=headers || {};
 
   for (i=0; i<5; i++) {
-    parts=decodeURI(url);
+    parts = url.parse(url);
 
     var ret=tryagain();
 

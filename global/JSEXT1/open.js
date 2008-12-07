@@ -13,7 +13,7 @@ about each protocol.
 
 (function(curdir){
   return function(uri) {
-    uri=http.decodeURI(uri);
+    uri = url.parse(uri);
 
     var clas=arguments.callee[uri.protocol || "file"];
     if (!clas)
