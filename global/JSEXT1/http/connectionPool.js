@@ -25,7 +25,7 @@
 
 	if (body) {
 	  if (typeof body==="function")
-	    bodyFunc(conn);
+	    body(conn);
 	  else
 	    conn.write(body);
 	  conn.write("\r\n"); // footers
@@ -62,7 +62,7 @@
     switch(typeof body) {
     case 'function':
       var chunkStream=new ChunkWriter(conn);
-      bodyFunc(chunkStream);
+      body(chunkStream);
       chunkStream.close();
       conn.write("\r\n"); // footers
       break;
