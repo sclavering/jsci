@@ -136,7 +136,7 @@
     const q = 'INSERT INTO ' + table + ' (' + field_names.join(', ') + ') VALUES ';
     const escaped = new Array(data.length);
     for(var i = 0; i != data.length; ++i) escaped[i] = this.quote_array(data[i]);
-    return this.insert(q + escaped.join(', '));
+    return this.insert('?', { _str: q + escaped.join(', '), toMysqlString: function() { return this._str; } });
   },
 
 
@@ -158,9 +158,7 @@
 
     // We have to escape before doing substitution, because the quoting during
     // substitution uses libmysql functions that expect 8-bit strings.
-    qry = $parent.encodeUTF8(qry);
-    qry = qry.replace(/\?/g, replace_by_position);
-    qry = qry.replace(/\{([^}]*)\}/g, replace_by_name)
+    qry = $parent.encodeUTF8(qry).replace(/\?|\{([^}]*)\}/g, replace);
 
     /*
     stderr.write('Query log: ');
@@ -170,6 +168,10 @@
 
     var res = libmysql.mysql_real_query(this._mysql, qry, qry.length);
     if(res) this._throw_error();
+
+    function replace(full_match, name_match) {
+      return full_match === '?' ? replace_by_position() : replace_by_name('', name_match);
+    }
 
     function replace_by_position(q, a, b, c) {
       var val = args[++maxarg];
