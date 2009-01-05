@@ -65,6 +65,19 @@ function CGI(refresh) {
 }
 
 CGI.prototype = {
+  /*
+  Called when an uncaught exception occcurs within the CGI page, and used for
+  logging or debugging.  Pages should assign a function to .onerror as one of
+  the first things they do.
+  
+  Any exceptions occurring in .onerror() will be ignored.
+  
+  The default implementation does nothing with the exception.
+  */
+  onerror: function() {
+  },
+
+
   run: function(refresh) {
     const cx = this;
 
@@ -157,16 +170,42 @@ CGI.prototype = {
       func(this);
       setTimeout.exec();
     } catch(x if x == this._finish_token) {
-      // do nothing, since we're just using exceptions for control flow
+      // do nothing, since we're just using this exception for control flow
     } catch(x) {
-      print(' <br/>\n');
-      if(x.fileName && x.lineNumber) print('Line ' + x.lineNumber + ' in ' + x.fileName + ':');
-      print(x + ' <br/>\n');
-      if(x.stack) {
-        var stack = x.stack.split('\n');
-        if(stack.length > 6) print(stack.slice(1, stack.length - 5).join(' <br/>\n') + ' <br/>\n');
+      try {
+        this.onerror(x);
+      } catch(e) {
       }
     }
+  },
+
+
+  /*
+  Helper for use in .onerror().  Logs the exception to a specified log file.
+  */
+  log_error: function(exception, logfile_path) {
+    const f = new File(logfile_path, 'a');
+    f.write(this._format_error_as_string(exception));
+    if(f) f.close();
+  },
+
+
+  /*
+  For use as .onerror() when debugging.  Outputs the error in the response body (and sets the content-type to text for readability).
+  */
+  print_error: function(exception) {
+    this.responseHeaders.contentType = 'text/plain; charset=UTF-8';
+    print(this._format_error_as_string(exception));
+  },
+
+
+  _format_error_as_string: function(exception) {
+    const x = exception;
+    var s = "";
+    s += new Date().toLocaleFormat('%Y-%m-%d %T') + ' ' + (Date.now() % 1000) + ":\n";
+    if(x.fileName && x.lineNumber) s += '  Line ' + x.lineNumber + ' in ' + x.fileName + ':\n';
+    if(x.stack) s += '    ' + x.stack.replace('\n', '\n    ', 'g') + '\n';
+    return s;
   },
 
 
