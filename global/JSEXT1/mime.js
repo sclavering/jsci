@@ -316,35 +316,24 @@ nameValuePairEncode: function(obj) {
   return ret;
 },
 
-/*
-         attribValueDecode( str )
 
-     Removes quotes around a string if they are there.
-     Otherwise leaves the string untouched.
+  /*
+  attribValueDecode(str)
 
-     ### Arguments ###
+  Removes quotes around a string if they are there. Otherwise leaves the string untouched.
+  */
+  attribValueDecode: function(str) {
+    if(str[0] == '"') return str.substr(1, str.length - 2);
+    return str;
+  },
 
-     * _str_: A string, possibly surrounded in quotes.
 
-     ### Return value ###
+  /*
+  attribValueEncode( str )
 
-     A string without surrounding quotes
-
-    */
-
-attribValueDecode: function(str) {
-  if (str[0]=="\"") return str.substr(1,str.length-2);
-  else return str;
-},
-
-/*
-         attribValueEncode( str )
-
-     Returns _str_, enclosed in quotes.
-    */
-
-attribValueEncode: function(str) {
-  return "\""+str+"\"";
-}
-
+  Returns _str_, enclosed in quotes.
+  */
+  attribValueEncode: function(str) {
+    return '"' + str + '"';
+  },
 })
