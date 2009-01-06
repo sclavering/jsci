@@ -87,54 +87,41 @@ See [RFC 2045].
   },
 
 
-/*
-         decode(lines)
+  /*
+  decode(lines)
 
-     Decodes a block of mime headers. Mime headers are of the
-     form
+  Decodes a block of mime headers. Mime headers are of the form
 
-         Name-name: Value
+      Name-name: Value
 
-     ### Arguments ###
+  ### Arguments ###
 
-     * _lines_: An array containing lines
-     
-     ### Return value ###
-     
-     An object of name/value pairs. Mime names are case-insensitive,
-     so the case is normalized: Nnames are first converted to all lower case.
-     Letters immediately following hyphens are then converted to upper case
-     and the hyphen is removed. Example:
+  * _lines_: An array containing lines
+  
+  ### Return value ###
+  
+  An object of name/value pairs. Mime names are case-insensitive,
+  so the case is normalized: Nnames are first converted to all lower case.
+  Letters immediately following hyphens are then converted to upper case
+  and the hyphen is removed. Example:
 
-         ["Content-Type: text/html"]
+      ["Content-Type: text/html"]
 
-     becomes...
+  becomes...
 
-         {contentType: "text/html"}
-
-*/
-
-decode:function(lines) {
-  var ret={};
-
-  for (var i=0; i<lines.length; i++) {
-    var line=lines[i];
-    
-    var colonpos=line.indexOf(':');
-    if (colonpos==-1)
-      throw new Error("decode: Malformed document");
-    
-    ret[line.
-	substr(0,colonpos).
-	toLowerCase().
-	replace(/-./g,
-		function(a) {  return a.toUpperCase().substr(1) }
-		)
-       ]=line.substr(colonpos+2);
-  }
-
-  return ret;
-},
+      { contentType: "text/html" }
+  */
+  decode:function(lines) {
+    var ret = {};
+    for(var i = 0; i < lines.length; ++i) {
+      var line = lines[i];
+      var colonpos = line.indexOf(':');
+      if(colonpos == -1) throw new Error("decode: Malformed document");
+      var key = line.substr(0, colonpos).toLowerCase().replace(/-./g, function(a) { return a.toUpperCase().substr(1) });
+      ret[key] = line.substr(colonpos + 2);
+    }
+    return ret;
+  },
 
 
   /*
