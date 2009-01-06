@@ -90,46 +90,46 @@ CGI.prototype = {
       delete cx.responseHeaders;
     });
 
-      var filename=environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
-      var path = $curdir.path(filename);
-      var onlyFilename = $curdir.filename(filename);
-      var urlpath = environment.PATH_INFO || environment.SCRIPT_NAME;
-      var pathParts = path.split(JSEXT_config.sep);
-      var urlParts = cx.requestURL.split("/");
-      urlParts.pop();
+    var filename = environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
+    var path = $curdir.path(filename);
+    var onlyFilename = $curdir.filename(filename);
+    var urlpath = environment.PATH_INFO || environment.SCRIPT_NAME;
+    var pathParts = path.split(JSEXT_config.sep);
+    var urlParts = this.requestURL.split("/");
+    urlParts.pop();
 
-      var i;
-      for(i = 1; i <= urlParts.length; i++)
-        if(pathParts[pathParts.length-i] != urlParts[urlParts.length-i])
-          break;
+    var i;
+    for(i = 1; i <= urlParts.length; i++) {
+      if(pathParts[pathParts.length - i] != urlParts[urlParts.length - i]) break;
+    }
 
-      var root = pathParts.slice(0, pathParts.length - i + 1).join(JSEXT_config.sep);
-      var rooturl = urlParts.slice(0, urlParts.length - i + 1).join("/");
-      if(rooturl != "/") rooturl += "/";
+    var root = pathParts.slice(0, pathParts.length - i + 1).join(JSEXT_config.sep);
+    var rooturl = urlParts.slice(0, urlParts.length - i + 1).join("/");
+    if(rooturl != "/") rooturl += "/";
 
-      pathParts.push(onlyFilename);
-      var relFilename = JSEXT_config.sep+pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
+    pathParts.push(onlyFilename);
+    var relFilename = JSEXT_config.sep + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
 
-      var extension = relFilename.match(/\.([^.]*)$/);
-      if(extension) extension = extension[1];
+    var extension = relFilename.match(/\.([^.]*)$/);
+    if(extension) extension = extension[1];
 
-      if(refresh) {
-        var global = (function() { return this; })();
-        this._hostDirCache = {};
-        global.$checkdates();
-        js['export'].global.$checkdates();
-      }
+    if(refresh) {
+      var global = (function() { return this; })();
+      this._hostDirCache = {};
+      global.$checkdates();
+      js['export'].global.$checkdates();
+    }
 
-      var hostdir = this._hostDirCache[rooturl];
-      if(!hostdir) {
-        hostdir = {};
-        ActiveDirectory.call(hostdir, root);
-        this._hostDirCache[rooturl] = hostdir;
-      }
+    var hostdir = this._hostDirCache[rooturl];
+    if(!hostdir) {
+      hostdir = {};
+      ActiveDirectory.call(hostdir, root);
+      this._hostDirCache[rooturl] = hostdir;
+    }
 
-      cx.hostdir = hostdir;
-      cx.filename = "/" + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
-      //  cx.responseLine="200 OK";
+    this.hostdir = hostdir;
+    this.filename = "/" + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
+    // this.responseLine = "200 OK";
 
     var filename = this.filename;
 
