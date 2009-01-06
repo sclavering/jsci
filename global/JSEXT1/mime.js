@@ -286,35 +286,26 @@ nameValuePairDecode: function(str) {
   }
 },
 
-/*
 
-          nameValuePairEncode( obj )
-
-      Should be called with a String object containing string properties.
-
-      ### Example ###
-
-          var S=new String("Hello");
-          S.a="b";
-          S.c="d";
-          var x=nameValuePairEncode( S );
-
-      returns
-
-          'Hello; a="b"; c="d"'
-
-    */
-
-nameValuePairEncode: function(obj) {
-  var ret=String(obj);
-  if (typeof(obj)=="object") {
-    var i;
-    for (i in obj) {
-      ret+="; "+i+"="+mime.attribValueEncode(obj[i]);
+  /*
+  nameValuePairEncode(obj)
+  
+  Should be called with a String object containing string properties.
+  
+  ### Example ###
+  
+      var s = new String("Hello"); s.a = "b"; s.c = "d";
+      nameValuePairEncode(s);
+  
+  returns 'Hello; a="b"; c="d"'
+  */
+  nameValuePairEncode: function(obj) {
+    var ret = String(obj);
+    if(typeof obj == "object") {
+      for(var i in obj) ret += "; " + i + "=" + mime.attribValueEncode(obj[i]);
     }
-  }
-  return ret;
-},
+    return ret;
+  },
 
 
   /*
