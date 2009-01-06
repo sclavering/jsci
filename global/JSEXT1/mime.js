@@ -178,23 +178,20 @@ decode:function(lines) {
     return mime.decode(lines);
   },
 
-/* 
 
-         writeHeaders( stream, obj )
+  /*
+  writeHeaders(stream, obj)
 
-     Does the precise opposite of [[$curdir.readHeaders]].
-
-    */
-
-writeHeaders: function(conn, headers) {
-    
-  var lines=mime.encode(headers);
-  for (var i=0; i<lines.length; i++) {
-    var line=lines[i].replace(/(.{78,998}) /g,"$1\r\n "); // folding
-    conn.write(line+"\r\n");
-  }
-  conn.write("\r\n");
-},
+  Does the precise opposite of [[$curdir.readHeaders]].
+  */
+  writeHeaders: function(conn, headers) {
+    var lines = mime.encode(headers);
+    for(var i = 0; i < lines.length; i++) {
+      var line = lines[i].replace(/(.{78,998}) /g, "$1\r\n "); // folding
+      conn.write(line + "\r\n");
+    }
+    conn.write("\r\n");
+  },
 
 
 /*
