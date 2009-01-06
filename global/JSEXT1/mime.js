@@ -242,49 +242,46 @@ See [RFC 2045].
     return ret;
   },
 
-/* 
-          nameValuePairDecode( str )
 
-      Returns a String object with properties corresponding to the
-      attributes of the mime string.
+  /*
+  nameValuePairDecode(str)
 
-      ### Example ###
+  Returns a String object with properties corresponding to the attributes of
+  the mime string.
 
-          nameValuePairDecode( 'Hello; a="b"; c="d"' )
+  ### Example ###
 
-      returns a String object whose value is "Hello" and which as
-      the following properties:
+      nameValuePairDecode( 'Hello; a="b"; c="d"' )
 
-      * _a_: "b"
-      * _c_: "d"
+  returns a String object whose value is "Hello", and with the properties:
 
-    */
+    * _a_: "b"
+    * _c_: "d"
+  */
+  nameValuePairDecode: function(str) {
+    if(!str) str = '';
+    var ret = new String(gettoken());
+    while(str != "") {
+      var name = gettoken();
+      var value = gettoken();
+      ret[name] = value;
+    }
+    return ret;
 
-nameValuePairDecode: function(str) {
-  if(!str) str = '';
-  var ret=new String(gettoken());
-  while (str!="") {
-    var name=gettoken();
-    var value=gettoken();
-    ret[name]=value;
-  }
-  return ret;
-
-  function gettoken() {
-    str=str.replace(/^[()<>@,;:\\\[\]?={} \t]*/,""); // remove whitespace
-    if (str.substr(0,1)=='"') {
-      var endQuote=str.indexOf('"',1);
-      if (endQuote==-1)
-	endQuote=str.length;
-      var ret=str.substr(1,endQuote-1);
-      str=str.substr(endQuote+1);
+    function gettoken() {
+      str = str.replace(/^[()<>@,;:\\\[\]?={} \t]*/, ""); // remove whitespace
+      if(str.substr(0, 1) == '"') {
+        var endQuote = str.indexOf('"', 1);
+        if(endQuote == -1) endQuote = str.length;
+        var ret=str.substr(1, endQuote - 1);
+        str = str.substr(endQuote + 1);
+        return ret;
+      }
+      var ret=str.match(/^[^()<>@,;:\\\[\]?={} \t]*/)[0];
+      str = str.substr(ret.length);
       return ret;
     }
-    var ret=str.match(/^[^()<>@,;:\\\[\]?={} \t]*/)[0];
-    str=str.substr(ret.length)
-    return ret;
-  }
-},
+  },
 
 
   /*
