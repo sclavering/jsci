@@ -49,7 +49,7 @@ See [RFC 2045].
 
               var extension = obj[i].name.match(/\.([^.]*)$/);
               if(extension) extension = extension[1];
-              if(extension && mime.type[extension]) {
+              if(extension && JSEXT1.mime_types[extension]) {
                 conn.write('Content-Type: '+mime.type[extension]+"\r\n\r\n");
               } else {
                 conn.write('Content-Type: binary\r\n');
