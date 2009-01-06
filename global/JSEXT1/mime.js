@@ -194,72 +194,66 @@ decode:function(lines) {
   },
 
 
-/*
+  /*
+  decodeMultipart(stream, boundary)
+  
+  Decodes a mime multipart message.
 
-         decodeMultipart( stream, boundary )
+  ### Arguments ###
 
-     Decodes a mime multipart message.
+  * _stream_: A stream to read objects from
+  * _boundary_: A string containing the boundary between objects
+  
+  ### Return value ###
+  
+  An object containing properties by the same names as the parts of the mime
+  message. Files that are encoded in the message are returned as _StringFile_
+  objects. Objects are decoded as strings unless they have Content-Type
+  "text/JSON", in which case they are decoded as JSON objects.
+  */
+  decodeMultipart: function(stream, boundary) {
+    var ret = {};
 
-     ### Arguments ###
+    stream.readline(); // "--"+boundary;
+    if(stream.eof()) return ret;
 
-     * _stream_: A stream to read objects from
-     * _boundary_: A string containing the boundary between objects
+    for(;;) {
+      var headers = mime.readHeaders(stream);
+      var cd = mime.nameValuePairDecode(headers.contentDisposition);
+      var name = cd.name;
 
-     ### Return value ###
+      var buf = "";
+      while(!stream.eof()) {
+        var line = stream.readline();
+        if(line.substr(2, boundary.length) == boundary) break;
+        buf += line;
+      }
 
-     An object containing properties by the same names
-     as the parts of the mime message. Files that are encoded in the
-     message are returned as _StringFile_ objects. Objects are decoded
-     as strings unless they have Content-Type "text/JSON", in which case
-     they are decoded as JSON objects.
+      buf = buf.substr(0, buf.length - 2);
 
-    */
+      var val;
+      if(cd.filename) {
+        val = new StringFile(buf);
+        val.name = cd.filename;
+      } else if(headers.contentType == "text/JSON") {
+        val = decodeJSON(buf);
+      } else {
+        val = buf;
+      }
 
-decodeMultipart:function(stream, boundary) {
+      if(name.substr(-2) == "[]") {
+        name = name.slice(0, -2);
+        if(!ret[name]) ret[name]=[];
+        ret[name].push(val);
+      } else {
+        ret[name] = val;
+      }
 
-  var ret={};
-
-  stream.readline(); // "--"+boundary;
-  if (stream.eof())
-    return ret;
-
-  for (;;) {
-    var headers=mime.readHeaders(stream);
-    var cd=mime.nameValuePairDecode(headers.contentDisposition);
-    var name=cd.name;
-
-    var buf="";
-    while (!stream.eof()) {
-      var line=stream.readline();
-      if (line.substr(2,boundary.length)==boundary)
-	break;
-      buf+=line;
+      if(stream.eof() || line.substr(-4) == "--\r\n") break;
     }
 
-    buf=buf.substr(0,buf.length-2);
-
-    var val;
-    if (cd.filename) {
-      val=new StringFile(buf);
-      val.name=cd.filename;
-    } else if (headers.contentType=="text/JSON") 
-      val=decodeJSON(buf);
-    else
-      val=buf;
-
-    if (name.substr(-2)=="[]") {
-      name = name.slice(0, -2);
-      if (!ret[name])
-	ret[name]=[];
-      ret[name].push(val);
-    } else
-      ret[name]=val;
-
-    if (stream.eof() || line.substr(-4)=="--\r\n") break;
-  }
-
-  return ret;
-},
+    return ret;
+  },
 
 /* 
           nameValuePairDecode( str )
