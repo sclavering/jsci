@@ -157,28 +157,26 @@ decode:function(lines) {
   },
 
 
-/* 
+  /*
+  readHeaders(stream)
 
-         readHeaders( stream )
+  Reads headers from a stream, i.e. until eof or an empty line.
+  Lines should be terminated by chr(13) chr(10).
 
-     Reads headers from a stream, i.e. until eof or an empty line.
-     Lines should be terminated by chr(13) chr(10).
-
-     Calls [[$curdir.decode]] to decode the headers.
-
-    */
-
-readHeaders: function(conn) {
-  var lines=[];
-  var line;
-  while (!conn.eof() && (line=conn.readline())!="\r\n") {
-    if (line.substr(0,1)==" ") // folding
-      lines[lines.length-1]+=line.substr(0,line.length-2);
-    else
-      lines.push(line.substr(0,line.length-2));
-  }
-  return mime.decode(lines);
-},
+  Calls [[$curdir.decode]] to decode the headers.
+  */
+  readHeaders: function(conn) {
+    var lines = [];
+    var line;
+    while(!conn.eof() && (line = conn.readline()) != "\r\n") {
+      if(line.substr(0,1) == " ") { // folding
+        lines[lines.length - 1] += line.substr(0, line.length - 2);
+      } else {
+        lines.push(line.substr(0, line.length - 2));
+      }
+    }
+    return mime.decode(lines);
+  },
 
 /* 
 
