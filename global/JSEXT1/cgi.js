@@ -203,6 +203,7 @@ CGI.prototype = {
     const x = exception;
     var s = "";
     s += new Date().toLocaleFormat('%Y-%m-%d %T') + ' ' + (Date.now() % 1000) + ":\n";
+    s += '  ' + String(x) + '\n';
     if(x.fileName && x.lineNumber) s += '  Line ' + x.lineNumber + ' in ' + x.fileName + ':\n';
     if(x.stack) s += '    ' + x.stack.replace('\n', '\n    ', 'g') + '\n';
     return s;
