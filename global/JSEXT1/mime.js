@@ -1,103 +1,91 @@
 /*
-     Contains various functions encode and decode mime headers and messages.
-     See [RFC 2045].
+Contains various functions encode and decode mime headers and messages.
+See [RFC 2045].
 
-     [RFC 2045]: http://www.faqs.org/rfcs/rfc2045
-    */
-
+[RFC 2045]: http://www.faqs.org/rfcs/rfc2045
+*/
 ({
-
   /*
-        encodeMultipart(obj, stream, boundary, [options])
+  encodeMultipart(obj, stream, boundary, [options])
 
-    Encodes all properties of _obj_ as a multipart mime message
-    and writes them to _stream_, using _boundary_ as the boundary.
-    File-like properties are sent as files and closed.
+  Encodes all properties of _obj_ as a multipart mime message
+  and writes them to _stream_, using _boundary_ as the boundary.
+  File-like properties are sent as files and closed.
 
-    ### Options ###
+  ### Options ###
 
-    * _disposition: String, default "form-data".
-    * _close_: Default true. Send end-marker (but don't close the stream)
-    * _binsafe_: Default true. Stream is binary-safe. Otherwise, uses base 64-encoding
-
+  * _disposition: String, default "form-data".
+  * _close_: Default true. Send end-marker (but don't close the stream)
+  * _binsafe_: Default true. Stream is binary-safe. Otherwise, uses base 64-encoding
   */
+  encodeMultipart: function(obj, conn, boundary, options) {
+    options = options || {};
+    options.disposition = options.disposition || "form-data";
+    if(options.close === undefined) options.close = true;
+    if(options.binsafe === undefined) options.binsafe = true;
 
-  encodeMultipart:function(obj, conn, boundary, options) {
-  options=options || {};
-  options.disposition = options.disposition || "form-data";
-  if (options.close===undefined)
-    options.close=true;
-  if (options.binsafe===undefined)
-    options.binsafe=true;
+    const hasOwnProperty = Object.prototype.hasOwnProperty;
 
-  var hasOwnProperty=Object.prototype.hasOwnProperty;
+    for(var i in obj) {
+      if(hasOwnProperty.call(obj, i)) {
+        conn.write("--" + boundary + "\r\n");
+        switch(typeof obj[i]) {
+          case "string":
+            conn.write('Content-Disposition: ' + options.disposition + '; name="' + i + '"\r\n');
+            conn.write('Content-Type: text/plain\r\n');
+            if(options.binsafe) {
+              conn.write("\r\n");
+              conn.write(obj[i]);
+            } else {
+              conn.write("Content-Transfer-Encoding: quoted-printable\r\n\r\n");
+              conn.write(encodeQuotedPrintable(obj[i]));
+            }
+            conn.write("\r\n");
+            break;
 
-  for (var i in obj) {
-    if (hasOwnProperty.call(obj,i)) {
-      conn.write("--"+boundary+"\r\n");
-      switch(typeof obj[i]) {
-	
-      case "string":
-	conn.write('Content-Disposition: '+options.disposition+'; name="'+i+'"\r\n');
-	conn.write('Content-Type: text/plain\r\n');
-	if (options.binsafe) {
-	  conn.write("\r\n");
-	  conn.write(obj[i]);
-	} else {
-	  conn.write("Content-Transfer-Encoding: quoted-printable\r\n\r\n");
-	  conn.write(encodeQuotedPrintable(obj[i]));
-	}
-	conn.write("\r\n");
-	break;
-	
-      case "object":
-	if (typeof obj[i].write == 'function') {
-	  conn.write('Content-Disposition: '+options.disposition+'; name="'+i+'"; filename="'+obj[i].name+'"\r\n');
-	  var extension=obj[i].name.match(/\.([^.]*)$/);
-	  if (extension)
-	    extension=extension[1];
-	  if (extension && mime.type[extension])
-	    conn.write('Content-Type: '+mime.type[extension]+"\r\n\r\n");
-	  else
-	    conn.write('Content-Type: binary\r\n');
+          case "object":
+            if(typeof obj[i].write == 'function') {
+              conn.write('Content-Disposition: ' + options.disposition + '; name="' + i + '"; filename="' + obj[i].name + '"\r\n');
 
-	  if (options.binsafe) {
-	    conn.write("\r\n");
-	    while (!obj[i].eof()) {
-	      conn.write(obj[i].read(65536));
-	    }
-	  } else {
-	    conn.write("Content-Transfer-Encoding: base64\r\n\r\n");
-	    while (!obj[i].eof()) {
-	      conn.write(encodeBase64(obj[i].read(65536)));
-	    }
-	  }
-	  obj[i].close();
-	  conn.write("\r\n");
-	  
-	  break;
-	}
+              var extension = obj[i].name.match(/\.([^.]*)$/);
+              if(extension) extension = extension[1];
+              if(extension && mime.type[extension]) {
+                conn.write('Content-Type: '+mime.type[extension]+"\r\n\r\n");
+              } else {
+                conn.write('Content-Type: binary\r\n');
+              }
 
-	// fall through
+              if (options.binsafe) {
+                conn.write("\r\n");
+                while(!obj[i].eof()) conn.write(obj[i].read(65536));
+              } else {
+                conn.write("Content-Transfer-Encoding: base64\r\n\r\n");
+                while(!obj[i].eof()) conn.write(encodeBase64(obj[i].read(65536)));
+              }
+              obj[i].close();
+              conn.write("\r\n");
 
-      case "number":  
-      case "array":
-      case "null":
-      default:  // why doesn't opera do this with number...
-	conn.write('Content-Disposition: '+options.disposition+'; name="'+i+'"\r\n');
-	conn.write('Content-Type: text/JSON\r\n\r\n');
-	conn.write(encodeJSON(obj[i]));
-	conn.write("\r\n");
-	break;
-	
-	
+              break;
+            }
+
+            // fall through
+
+          case "number":
+          case "array":
+          case "null":
+          default:  // why doesn't opera do this with number...
+            conn.write('Content-Disposition: '+options.disposition+'; name="'+i+'"\r\n');
+            conn.write('Content-Type: text/JSON\r\n\r\n');
+            conn.write(encodeJSON(obj[i]));
+            conn.write("\r\n");
+            break;
+        }
       }
     }
-  }
-  
-  if (options.close)
-    conn.write("--"+boundary+"--\r\n");
-},
+
+    if(options.close) conn.write("--" + boundary + "--\r\n");
+  },
+
 
 /*
          decode(lines)
