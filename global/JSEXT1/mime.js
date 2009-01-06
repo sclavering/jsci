@@ -136,27 +136,25 @@ decode:function(lines) {
   return ret;
 },
 
-/*
-         encode( obj )
 
-     Performs the exact opposite of _decode_.
-*/
-
-encode:function(obj) {
-  var ret=[];
-  var hasOwnProperty=Object.prototype.hasOwnProperty;
-
-  for (var i in obj) {
-    if (hasOwnProperty.call(obj, i)) {
-      var e=i.substr(1);
-      e=e.replace(/([A-Z])/g,"-$1");
-      var line=i.substr(0,1).toUpperCase()+e+": "+obj[i];
-      ret.push(line);
+  /*
+  encode( obj )
+  
+  Performs the exact opposite of _decode_.
+  */
+  encode:function(obj) {
+    var ret = [];
+    const hasOwnProperty = Object.prototype.hasOwnProperty;
+    for(var i in obj) {
+      if(hasOwnProperty.call(obj, i)) {
+        var e = i.substr(1);
+        e = e.replace(/([A-Z])/g, "-$1");
+        var line = i.substr(0, 1).toUpperCase() + e + ": " + obj[i];
+        ret.push(line);
+      }
     }
-  }
-
-  return ret;
-},
+    return ret;
+  },
 
 
 /* 
