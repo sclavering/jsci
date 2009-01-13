@@ -5,19 +5,11 @@
 
 
 function(name, config, _dl, cwd) {
-  if (config._WIN32) {
-    config.pardir='..';
-    config.curdir='.';
-    conifg.sep='\\';
-    config.dlext='.dll';
-    config.pathsep=';';
-  } else {
-    config.pardir='..';
-    config.curdir= '.';
-    config.sep='/';
-    config.dlext='.so';
-    config.pathsep=':';
-  }
+  config.pardir = '..';
+  config.curdir =  '.';
+  config.sep = '/';
+  config.dlext = '.so';
+  config.pathsep = ':';
 
   var JSEXT_version="1";
 
@@ -39,10 +31,7 @@ function(name, config, _dl, cwd) {
   $curdir=this;
   JSEXT_config=config;
 
-  if (config.__unix__)
-    clib = ActiveCdb("clib#__unix__.pch");
-  else if (config._WIN32)
-    clib = ActiveCdb("clib#_WIN32.pch");
+  clib = ActiveCdb("clib#__unix__.pch");
 
   var JSEXT = {
     ActiveCdb: ActiveCdb,
