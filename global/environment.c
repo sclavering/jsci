@@ -1,23 +1,13 @@
 #include <jsapi.h>
 
-#ifdef _WIN32
-# include <windows.h>
-# include <io.h>
-# include <direct.h>
-#else
 # define _GNU_SOURCE
 # include <getopt.h>
 # include <pthread.h>
 # include <unistd.h>
 extern char **environ;
-#endif
 #include <stdlib.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
 typedef char TCHAR;
-#endif
 
 #include <stdarg.h>
 
@@ -113,28 +103,8 @@ env_enumerate(JSContext *cx, JSObject *obj)
     if (reflected)
         return JS_TRUE;
 
-#ifdef _WIN32
-	es= name = (TCHAR *)GetEnvironmentStrings();
-	envcap=128;
-	origevp=(TCHAR **)malloc(sizeof(TCHAR *)*envcap);
-	for(;;) {
-		if (nenv==envcap) {
-			envcap*=2;
-			origevp=(TCHAR **)realloc(origevp, sizeof(TCHAR *)*envcap);
-		}
-		if (*name) {
-			origevp[nenv++]=name;
-			while (*name) name++;
-			name++;
-		} else {
-			origevp[nenv]=0;
-			break;
-		}
-	};
-	evp=origevp;
-#else
 	evp = environ;//(TCHAR **)JS_GetPrivate(cx, obj);
-#endif
+
     for (; (name = *evp) != NULL; evp++) {
 		value=name;
 		while (*value && *value!='=') value++;
@@ -154,17 +124,9 @@ env_enumerate(JSContext *cx, JSObject *obj)
 
     reflected = JS_TRUE;
 
-#ifdef _WIN32
-	free(origevp);
-	FreeEnvironmentStrings(es);
-#endif
-
 	return JS_TRUE;
+
 failure:
-#ifdef _WIN32
-	free(origevp);
-	FreeEnvironmentStrings(es);
-#endif
 	return JS_FALSE;
 }
 
@@ -183,15 +145,7 @@ env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags,
     if (!idstr)
         return JS_FALSE;
     name = JS_GetStringTChars(idstr);
-#ifdef _WIN32
-	vallen=GetEnvironmentVariable(name,0,0);
-	if (vallen) {
-		value=malloc(vallen*sizeof(TCHAR));
-		GetEnvironmentVariable(name,value,vallen);
-	}
-#else
     value = getenv(name);
-#endif
     if (value) {
         valstr = JS_NewStringTCopyZ(cx, value);
         if (!valstr)
@@ -203,15 +157,9 @@ env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags,
         *objp = obj;
     }
 
-#ifdef _WIN32
-	if (value) free(value);
-#endif
     return JS_TRUE;
 
 failure:
-#ifdef _WIN32
-	if (value) free(value);
-#endif
 	return JS_FALSE;
 }
 
@@ -228,9 +176,6 @@ static JSClass jsext_env_class = {
     JS_FinalizeStub
 };
 
-#ifdef _WIN32
-__declspec(dllexport)
-#endif
 JSBool
 JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
   JSObject *envobj = JS_NewObject(cx, &jsext_env_class, NULL, NULL);
