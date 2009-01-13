@@ -245,10 +245,7 @@ Can only be used in read mode.
     var fd;
     switch(typeof this.file) {
     case "string":
-      if (JSEXT_config._WIN32)
-	fd=this.fd=clib.open(this.file, clib.O_RDWR | clib.O_CREAT | clib.O_TRUNC | clib.O_BINARY, clib.S_IREAD | clib.S_IWRITE);
-      else
-	fd=this.fd=clib.open(this.file, clib.O_RDWR | clib.O_CREAT | clib.O_TRUNC, 0777);
+      fd = this.fd = clib.open(this.file, clib.O_RDWR | clib.O_CREAT | clib.O_TRUNC, 0777);
       break;
     case "number":
       fd=this.file; break;
@@ -443,10 +440,7 @@ not seem to work. Key and value should be strings.
     
     switch(typeof(this.file)) {
     case "string":
-      if (JSEXT_config._WIN32)
-	fd=this.fd=clib.open(this.file, clib.O_RDWR | clib.O_CREAT | clib.O_TRUNC | clib.O_BINARY, clib.S_IREAD | clib.S_IWRITE);
-      else
-	fd=this.fd=clib.open(this.file, clib.O_RDWR | clib.O_CREAT | clib.O_TRUNC, 0777);
+      fd = this.fd = clib.open(this.file, clib.O_RDWR | clib.O_CREAT | clib.O_TRUNC, 0777);
       break;
     case "number":
       fd=this.file; break;
