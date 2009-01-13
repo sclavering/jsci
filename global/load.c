@@ -1,12 +1,8 @@
 #include <jsapi.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef _WIN32
-# include <io.h>
-#else
 # define __declspec(x)
 # include <unistd.h>
-#endif
 #include <stdlib.h>
 #include <stdarg.h>
 #include <fcntl.h>
@@ -63,11 +59,7 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
     return JS_FALSE;
   }
 
-#ifdef _WIN32
-  fd=_open(filename,O_RDONLY | O_BINARY);
-#else
   fd=open(filename,O_RDONLY);
-#endif
   if (fd==-1) {
     // File does not exist, throw exception
     JSX_ReportException(cx, "load: Could not open %s",filename);
@@ -79,11 +71,7 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
     JSX_ReportException(cx, "load: Out of memory loading %s", filename);
     goto failure;
   }
-#ifdef _WIN32
-  if (_read(fd, buf+beforelen, S.st_size)!=S.st_size) {
-#else
   if (read(fd, buf+beforelen, S.st_size)!=S.st_size) {
-#endif
     JSX_ReportException(cx, "load: Error loading %s",filename);
     goto failure;
   }
@@ -117,11 +105,7 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
   //  *rval=OBJECT_TO_JSVAL(scrobj);
   *rval=JSVAL_ZERO;
 
-#ifdef _WIN32
-  _close(fd);
-#else
   close(fd);
-#endif
   fd=0;
   
   //  return JS_TRUE;
@@ -135,11 +119,7 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
 
  failure:
   if (buf) free(buf);
-#ifdef _WIN32
-  if (fd) _close(fd);
-#else
   if (fd) close(fd);
-#endif
   if (scrobj)
     JS_RemoveRoot(cx, &scrobj);
   //  if (script)
