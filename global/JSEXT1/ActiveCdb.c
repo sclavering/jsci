@@ -6,11 +6,8 @@
 #include <fcntl.h>
 #include <jsapi.h>
 #include <stdarg.h>
-#ifdef _WIN32
-# include <io.h>
-#else
+
 # define declspec(x)
-#endif
 
 static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   int len;
@@ -221,9 +218,6 @@ static JSBool activeCdb_new(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   return JS_TRUE;
 }
 
-#ifdef _WIN32
-__declspec(dllexport)
-#endif
 JSBool JSX_init(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *classobj;
 
