@@ -1218,13 +1218,8 @@ TYPE_API JSBool JSX_TypeContainsPointer(struct JSX_Type *type) {
   }
 }
       
-#ifdef _WIN32
-TYPE_API JSBool
-JSX_init_Type(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
-#else
 TYPE_API JSBool
 JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
-#endif
   JSObject *typeobj;
   JSObject *protoobj;
 

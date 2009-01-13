@@ -4,15 +4,7 @@
 #include <jsapi.h>
 #include <ffi.h>
 
-#ifdef _WIN32
-# ifdef TYPE_EXPORTS
-#  define TYPE_API __declspec(dllexport)
-# else
-#  define TYPE_API __declspec(dllimport)
-# endif
-#else
 # define TYPE_API
-#endif
 
 
 #define ALIGN_TYPE int
@@ -137,11 +129,6 @@ TYPE_API JSBool JSX_TypeContainsPointer(struct JSX_Type *type);
 TYPE_API JSObject *JSX_GetType(enum JSX_TypeID, int size, int signedness);
 TYPE_API ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type);
 TYPE_API ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
-
-#ifdef _WIN32
-TYPE_API JSBool
-JSX_init_Type(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval);
-#endif
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)
