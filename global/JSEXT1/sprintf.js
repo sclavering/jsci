@@ -57,8 +57,6 @@
 
   }
 
-
-  if (!JSEXT_config._WIN32) {
     return function(format) {
       var inner_args=[null, 0, format].concat(prepargs.apply(null,arguments));
       var len=clib.snprintf.apply(null,inner_args);
@@ -68,20 +66,4 @@
       clib.snprintf.apply(null,inner_args);
       return buf.string(len);
     }
-  } else {
-    return function(format) {
-      var inner_args=[null, 0, format].concat(prepargs.apply(null,arguments));
-      var trylen=512;
-      for (;;) {
-	var buf=Pointer.malloc(trylen+1);
-	inner_args[0]=buf;
-	inner_args[1]=trylen+1;
-	var len=clib._snprintf.apply(null,inner_args);
-	if (len<trylen) break;
-	trylen*=2;
-      }
-      return buf.string(len);
-    }
-  }
-
 })()
