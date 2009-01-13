@@ -3,14 +3,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#ifdef _WIN32
-# include <windows.h>
-# include <malloc.h>
-# define alloca(x) _alloca(x)
-#else
 # include <dlfcn.h>
 # include <alloca.h>
-#endif
 
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);

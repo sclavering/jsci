@@ -4,15 +4,7 @@
 #include <jsapi.h>
 #include "Type.h"
 
-#ifdef _WIN32
-# ifdef POINTER_EXPORTS
-#  define POINTER_API __declspec(dllexport)
-# else
-#  define POINTER_API __declspec(dllimport)
-# endif
-#else
 # define POINTER_API
-#endif
 
 struct JSX_Pointer {
   void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
