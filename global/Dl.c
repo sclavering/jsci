@@ -1,12 +1,8 @@
 #include <jsapi.h>
 #include <stdarg.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
 typedef char TCHAR;
 #define __declspec(x)
-#endif
 
 #ifdef UNICODE
 #define JS_GetStringTChars JS_GetStringChars
@@ -19,18 +15,12 @@ typedef char TCHAR;
 #define JS_DefineTProperty JS_DefineProperty
 #endif
 
-#ifdef _WIN32
-#define DLLACCESS __declspec(dllexport)
-#else
 #define DLLACCESS
-#endif
 
 #include "Type.h"
 #include "Pointer.h"
 
-#ifndef _WIN32
 # include <dlfcn.h>
-#endif
 
 #include <string.h>
 
@@ -164,24 +154,6 @@ JSEXT_dl_newA(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval) {
     object=obj;
   }
 
-#ifdef _WIN32
-  {
-  HMODULE handle;
-    
-  if (filename)
-	handle=LoadLibraryEx(filename, NULL, 0);
-  else
-	handle=GetModuleHandle(NULL);
-
-  JS_SetPrivate(cx, object, (void *)handle);
-
-  if (!handle) {
-    return JS_FALSE;
-  }
-  if (filename)
-	  JSEXT_init=(JSNative) GetProcAddress(handle,"JSEXT_init");
-  }
-#else
   void *dl;
     
   if (filename)
@@ -197,7 +169,6 @@ JSEXT_dl_newA(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval) {
 
   if (filename)
 	  JSEXT_init=(JSNative) dlsym(dl,"JSEXT_init");
-#endif
 
   if (JSEXT_init) { // Call init with filename as only argument
     JSString *tmpstr=0;
@@ -243,15 +214,7 @@ dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 
   res=JSEXT_dl_new(cx, obj, filename, rval);
   if (res==JS_FALSE) {
-#ifdef _WIN32
-#ifdef UNICODE
-	  JSX_ReportException(cx, "can't open dl '%S'. Error code=%d", filename, GetLastError());
-#else
-	  JSX_ReportException(cx, "can't open dl '%s'. Error code=%d", filename, GetLastError());
-#endif
-#else
     JSX_ReportException(cx, "can't open dl %s", dlerror());
-#endif
     return JS_FALSE;
   }
 
@@ -270,17 +233,10 @@ static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, 
     return JS_FALSE;
   }
 
-#ifdef _WIN32
-  if (GetProcAddress((HMODULE)JS_GetPrivate(cx, obj),symbol)!=0)
-	*rval=JSVAL_TRUE;
-  else
-	  *rval=JSVAL_FALSE;
-#else
   if (dlsym((void *)JS_GetPrivate(cx, obj),symbol)!=0)
 	*rval=JSVAL_TRUE;
   else
 	  *rval=JSVAL_FALSE;
-#endif
 
   return JS_TRUE;
 }
@@ -313,17 +269,10 @@ static JSBool JS_DLL_CALLBACK JSX_dl_call(JSContext *cx, JSObject *obj, uintN ar
     argv++;
   }
 
-#ifdef _WIN32
-  if (GetProcAddress((HMODULE)JS_GetPrivate(cx, obj),(void *)fun)!=0)
-    *rval=JSVAL_TRUE;
-  else
-    *rval=JSVAL_FALSE;
-#else
   if (dlsym((void *)JS_GetPrivate(cx, obj),(void *)fun)!=0)
     *rval=JSVAL_TRUE;
   else
     *rval=JSVAL_FALSE;
-#endif
 
   return fun(cx, obj, argc-1, argv+1, rval);
 }
@@ -344,11 +293,7 @@ static JSBool JS_DLL_CALLBACK JSX_dl_function(JSContext *cx, JSObject *obj, uint
     return JS_FALSE;
   }
 
-#ifdef _WIN32
-  fun=(JSNative)GetProcAddress((HMODULE)JS_GetPrivate(cx, obj),name);
-#else
   fun=dlsym((void *)JS_GetPrivate(cx, obj),name);
-#endif
   
   if (!fun) {
     JSX_ReportException(cx, "Unknown symbol '%s'",name);
@@ -363,14 +308,8 @@ static JSBool JS_DLL_CALLBACK JSX_dl_function(JSContext *cx, JSObject *obj, uint
 
 
 static void JS_DLL_CALLBACK JSEXT_dl_finalize(JSContext *cx, JSObject *obj) {
-#ifdef _WIN32
-  HMODULE handle=(HMODULE) JS_GetPrivate(cx, obj);
-  if (!handle) return;
-//  FreeLibrary(handle);
-#else
   void *dl=JS_GetPrivate(cx, obj);
   if (!dl) return;
   //  dlclose(dl);
-#endif
 }
 
