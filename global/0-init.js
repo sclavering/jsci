@@ -48,9 +48,7 @@ function(name, config, _dl, cwd) {
 
   this['JSEXT'+JSEXT_version] = JSEXT;
 
-  var js=xload('JSEXT'+JSEXT_version+config.sep+
-	       'activate#host'+config.sep+
-	       'js.js');
+  const js = xload('JSEXT1/activate/js.js');
 
   var mods = ['getcwd', 'os', 'dir', 'stat', 'isdir', 'ActiveDirectory'];
   for (var i in mods) {
@@ -59,11 +57,7 @@ function(name, config, _dl, cwd) {
 
   JSEXT.$path = JSEXT.getcwd()+config.sep+
            'JSEXT'+JSEXT_version;
-  JSEXT.activate=new JSEXT.ActiveDirectory(JSEXT.getcwd()+config.sep+
-					   'JSEXT'+JSEXT_version+config.sep+
-					   'activate#host',
-					   {js: js},
-					   config);
+  JSEXT.activate = new JSEXT.ActiveDirectory(JSEXT.getcwd() + '/JSEXT1/activate', {js: js}, config);
 
   JSEXT.ActiveDirectory.call(this,
 			     JSEXT.getcwd(),
