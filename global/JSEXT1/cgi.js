@@ -1,5 +1,5 @@
 /*
-new CGI([refresh = false])
+new CGI()
 
 Interprets the environment variables given in _environment_ according to the
 CGI/1.1 specification: <http://hoohoo.ncsa.uiuc.edu/cgi/env.html>.
@@ -8,9 +8,6 @@ The .jsx file to be executed should contain a single anonymous function, which
 will be called with the _CGI_ instance as its only argument.
 
 ### Arguments ###
-
-* _refresh_: Boolean. If true, _cgi_ will attempt to reload ActiveDirectory
-  objects that have been changed since they were last loaded.
 
 ### Properties ###
 
@@ -46,7 +43,7 @@ function FormData() {
 }
 
 
-function CGI(refresh) {
+function CGI() {
   this.requestHeaders = this._get_request_headers();
 
   this.remoteAddress = environment.REMOTE_ADDR;
@@ -61,7 +58,7 @@ function CGI(refresh) {
   // Set a default content type.
   this.responseHeaders = { contentType: 'text/html' };
 
-  this.run(refresh);
+  this.run();
 }
 
 CGI.prototype = {
@@ -78,7 +75,7 @@ CGI.prototype = {
   },
 
 
-  run: function(refresh) {
+  run: function() {
     const cx = this;
 
     stdout = new FlashWriter(stdout, function(stream) {
@@ -112,13 +109,6 @@ CGI.prototype = {
 
     var extension = relFilename.match(/\.([^.]*)$/);
     if(extension) extension = extension[1];
-
-    if(refresh) {
-      var global = (function() { return this; })();
-      this._hostDirCache = {};
-      global.$checkdates();
-      js['export'].global.$checkdates();
-    }
 
     var hostdir = this._hostDirCache[rooturl];
     if(!hostdir) {
