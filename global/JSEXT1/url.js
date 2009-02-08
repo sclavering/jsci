@@ -102,9 +102,9 @@
   // If the "foo" ends in [], the object.foo is created an array, and "bar" becomes a value in that array.
   // The CGI class handles more complex behavior, like interpreting the dots in a name like 'foo.bar.baz'
   _add_form_var_to: function(name_and_value, obj) {
-    const eq_ix = name_and_value.indexOf('=');
-    const val = name_and_value.slice(eq_ix + 1);
-    var full_name = name_and_value.slice(0, eq_ix);
+    const eq_ix = name_and_value.indexOf('='), has_eq = eq_ix !== -1;
+    var full_name = has_eq ? name_and_value.slice(0, eq_ix) : name_and_value;
+    const val = has_eq ? name_and_value.slice(eq_ix + 1) : '';
     const is_array_var = /\[\]$/.test(full_name);
     if(is_array_var) full_name = full_name.slice(0, full_name.length - 2);
 
