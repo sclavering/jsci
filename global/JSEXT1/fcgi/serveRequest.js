@@ -10,22 +10,11 @@
 
     */
 
-(function(){
-
-  var activeRequests=0;
-
-  return function (req) {
-
-    activeRequests++;
-
+function(req) {
     stdin=req['in'];
     stderr=req['err'];
     stdout=req['out'];
     environment=req['env'];
-    
-    new $parent.CGI(activeRequests==1 && JSEXT_config.JS_THREADSAFE);
+    new $parent.CGI();
     req.close();
-    activeRequests--;
-  }
-})()
- 
+}
