@@ -6,7 +6,7 @@ See [RFC 2045].
 */
 ({
   /*
-  decode(lines)
+  _readHeaders(lines)
 
   Decodes a block of mime headers. Mime headers are of the form
 
@@ -29,12 +29,12 @@ See [RFC 2045].
 
       { contentType: "text/html" }
   */
-  decode:function(lines) {
+  _readHeaders: function(lines) {
     var ret = {};
     for(var i = 0; i < lines.length; ++i) {
       var line = lines[i];
       var colonpos = line.indexOf(':');
-      if(colonpos == -1) throw new Error("decode: Malformed document");
+      if(colonpos == -1) throw new Error("_readHeaders: Malformed document");
       var key = line.substr(0, colonpos).toLowerCase().replace(/-./g, function(a) { return a.toUpperCase().substr(1) });
       ret[key] = line.substr(colonpos + 2);
     }
@@ -67,8 +67,6 @@ See [RFC 2045].
 
   Reads headers from a stream, i.e. until eof or an empty line.
   Lines should be terminated by chr(13) chr(10).
-
-  Calls [[$curdir.decode]] to decode the headers.
   */
   readHeaders: function(conn) {
     var lines = [];
@@ -80,7 +78,7 @@ See [RFC 2045].
         lines.push(line.substr(0, line.length - 2));
       }
     }
-    return mime.decode(lines);
+    return mime._readHeaders(lines);
   },
 
 
