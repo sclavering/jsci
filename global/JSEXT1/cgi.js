@@ -158,7 +158,6 @@ CGI.prototype = {
   _exec_page_function: function(func) {
     try {
       func(this);
-      setTimeout.exec();
     } catch(x if x == this._finish_token) {
       // do nothing, since we're just using this exception for control flow
     } catch(x) {

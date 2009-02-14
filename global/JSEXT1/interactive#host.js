@@ -49,7 +49,6 @@ are not terminated by ; (semicolon) is printed on the console.
 	} else
 	  cons.Options.prompt=contprompt;
       }
-      setTimeout.exec();
       cons.close();
       return 0;
     }
