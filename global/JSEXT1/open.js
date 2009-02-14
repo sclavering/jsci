@@ -5,19 +5,17 @@ Opens and returns the resource identified by _uri_.
 If the _uri_ does not match a regexp for a URI, then
 the _uri_ parameter is interpreted as a filename.
 
-See documentation for _open_'s properties for details
-about each protocol.
-
-
+Note: file:// is the only supported URI protocol (support for http:// and others was removed).
 */
 
 (function(curdir){
   return function(uri) {
     uri = url.parse(uri);
+    if(uri.protocol && uri.protocol != "file") throw Error("Unknown protocol handler '" + uri.protocol + "'");
+    return openfile.apply(openfile, arguments);
+  }
 
-    var clas=arguments.callee[uri.protocol || "file"];
-    if (!clas)
-      throw Error("Unknown protocol handler '"+uri.protocol+"'");
-    return clas.apply(clas, arguments);
+  function openfile(uri, mode) {
+    return new JSEXT1.File(uri.fullPath, mode);
   }
 })(this)
