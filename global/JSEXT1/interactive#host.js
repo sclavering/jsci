@@ -18,7 +18,7 @@ are not terminated by ; (semicolon) is printed on the console.
     var cmdbuf;
     var execline;
 
-    if (!JSEXT_config._WINDOWS && !stdin.isatty()) {
+    if(!stdin.isatty()) {
       cons=stdin;
       cons.Options={};
     } else {
