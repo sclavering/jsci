@@ -43,6 +43,43 @@ function FormData() {
 }
 
 
+
+/*
+A File-like object used for CGI output that flushes the http response headers
+as soon as the first write() call for the response body occurs (or before
+closing, if there is no response body).
+
+We don't expose this beyond the CGI module.
+*/
+function FlashWriter(file, headerFunc) {
+  this.file = file;
+  this.headerFunc = headerFunc;
+}
+
+FlashWriter.prototype = {
+  write: function(str) {
+    if(this.headerFunc) {
+      this.headerFunc(this.file);
+      delete this.headerFunc;
+    }
+    return this.file.write(str);
+  },
+
+  flush: function() {
+    return this.file.flush();
+  },
+
+  close: function() {
+    if(this.headerFunc) {
+      this.headerFunc(this.file);
+      delete this.headerFunc;
+    }
+    this.file.close();
+  },
+};
+
+
+
 function CGI() {
   this.requestHeaders = this._get_request_headers();
 
@@ -284,40 +321,6 @@ CGI.prototype = {
   },
 };
 
-
-/*
-A File-like object used for CGI output that flushes the http response headers
-as soon as the first write() call for the response body occurs (or before
-closing, if there is no response body).
-
-We don't expose this beyond the CGI module.
-*/
-function FlashWriter(file, headerFunc) {
-  this.file = file;
-  this.headerFunc = headerFunc;
-}
-
-FlashWriter.prototype = {
-  write: function(str) {
-    if(this.headerFunc) {
-      this.headerFunc(this.file);
-      delete this.headerFunc;
-    }
-    return this.file.write(str);
-  },
-
-  flush: function() {
-    return this.file.flush();
-  },
-
-  close: function() {
-    if(this.headerFunc) {
-      this.headerFunc(this.file);
-      delete this.headerFunc;
-    }
-    this.file.close();
-  },
-};
 
 
 CGI.FormData = FormData;
