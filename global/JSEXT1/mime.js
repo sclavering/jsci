@@ -47,7 +47,7 @@ See [RFC 2045].
   
   Performs the exact opposite of _decode_.
   */
-  encode:function(obj) {
+  _encode_headers: function(obj) {
     var ret = [];
     const hasOwnProperty = Object.prototype.hasOwnProperty;
     for(var i in obj) {
@@ -90,7 +90,7 @@ See [RFC 2045].
   Does the precise opposite of [[$curdir.readHeaders]].
   */
   writeHeaders: function(conn, headers) {
-    var lines = mime.encode(headers);
+    var lines = mime._encode_headers(headers);
     for(var i = 0; i < lines.length; i++) {
       var line = lines[i].replace(/(.{78,998}) /g, "$1\r\n "); // folding
       conn.write(line + "\r\n");
