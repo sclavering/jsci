@@ -142,7 +142,7 @@
 
 
   /*
-  str = http.to_query_string(obj)
+  str = url.to_query_string(obj)
     
   Does the precise opposite of [[$curdir.decodeQry]]
   */
