@@ -366,7 +366,7 @@ CGI.prototype = {
   "text/JSON", in which case they are decoded as JSON objects.
   */
   _decode_multipart_mime: function(str, boundary) {
-    var stream = new StringFile(str);
+    var stream = new CGIStringFile(str);
 
     var ret = {};
 
@@ -518,6 +518,43 @@ function UploadedFile(data) {
   this.close = function() {};
   this.name = null;
 }
+
+
+
+function CGIStringFile(str) {
+  this._str = str || "";
+  this._where = 0;
+}
+
+CGIStringFile.prototype={
+  // Returns true if end-of-file has been reached.
+  eof: function() {
+    return this._where >= this._str.length;
+  },
+
+  // read(n): n bytes or to EOF.  read(): read to EOF
+  _read: function(size) {
+    if(arguments.length < 1) size = -1;
+    if(size < 0) {
+      var ret = this._str.substr(this._where);
+      this._where = this._str.length;
+    } else {
+      var ret = this._str.substr(this._where, size);
+      this._where += size;
+    }
+    return ret;
+  },
+
+  // read a line, returning it including the \n
+  readline: function() {
+    var nextpos=this._str.indexOf('\n', this._where);
+    if(nextpos == -1) return this._read();
+    var ret = this._str.substr(this._where, nextpos - this._where + 1);
+    this._where = nextpos + 1;
+    return ret;
+  },
+}
+
 
 
 
