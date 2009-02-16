@@ -244,8 +244,7 @@ CGI.prototype = {
     if(ct == "text/JSON") return decodeJSON(stdin.read()) || {};
     if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(url.parse_query(stdin.read()) || {});
     if(ct == "multipart/form-data") {
-      var stream = new StringFile(stdin.read()); // Sorry, must read into ram because readln is not bin-safe.
-      return this._reinterpret_form_data(this._decode_multipart_mime(stream, ct.boundary) || {});
+      return this._reinterpret_form_data(this._decode_multipart_mime(stdin.read(), ct.boundary) || {});
     }
     return {};
   },
@@ -324,8 +323,6 @@ CGI.prototype = {
 
   /*
   _write_headers(stream, obj)
-
-  Does the precise opposite of [[$curdir.readHeaders]].
   */
   _write_headers: function(conn, headers) {
     var lines = this._encode_headers(headers);
@@ -337,11 +334,6 @@ CGI.prototype = {
   },
 
 
-  /*
-  encode( obj )
-  
-  Performs the exact opposite of _decode_.
-  */
   _encode_headers: function(obj) {
     var ret = [];
     const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -358,13 +350,12 @@ CGI.prototype = {
 
 
   /*
-  _decode_multipart_mime(stream, boundary)
+  _decode_multipart_mime(str, boundary)
   
   Decodes a mime multipart message.
 
   ### Arguments ###
 
-  * _stream_: A stream to read objects from
   * _boundary_: A string containing the boundary between objects
   
   ### Return value ###
@@ -374,7 +365,9 @@ CGI.prototype = {
   objects. Objects are decoded as strings unless they have Content-Type
   "text/JSON", in which case they are decoded as JSON objects.
   */
-  _decode_multipart_mime: function(stream, boundary) {
+  _decode_multipart_mime: function(str, boundary) {
+    var stream = new StringFile(str);
+
     var ret = {};
 
     stream.readline(); // "--"+boundary;
