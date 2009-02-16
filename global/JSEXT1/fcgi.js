@@ -4,7 +4,7 @@ fcgi([path] [, backlog])
 Initializes the fcgi library and awaits incoming requests.
 This function never returns. This function is
 called by [[$curdir.shell]] when the environment variable
-_JSEXT\_FCGI_ is set.
+JSEXT_FCGI is set.
 
 If threads are enabled, each incoming request spawns a new thread.
 Otherwise, only one request can be handled at any one time.
@@ -111,16 +111,7 @@ File.prototype = {
   /*
   stream.flush()
   
-  Flushes any buffered output.
-  
-  Server-push is a legitimate application of flush.
-  Otherwise, flush is not very useful, since accept
-  does it implicitly.  Calling flush in non-push applications
-  results in extra writes and therefore reduces performance.
-  
-  ### Results ###
-
-  Throws an exception if an error occurred.
+  Flushes any buffered output.  Should not be called explicitly, except for server-push.
   */
   flush: function() {
     if (lib.FCGX_FFlush(this.stream)==-1)
@@ -149,7 +140,6 @@ File.prototype = {
   A [[String]] containing the bytes read.  If the length is smaller than n,
   the end of input has been reached.
   */
-
   read: function(size) {
     if (arguments.length<1) size=-1;
     if (size<0) {
