@@ -1,5 +1,5 @@
 /*
-    fcgi([path] [, backlog])
+fcgi([path] [, backlog])
 
 Initializes the fcgi library and awaits incoming requests.
 This function never returns. This function is
@@ -25,13 +25,6 @@ them to communicate with the correct http client.
 ### NOTE ###
 
 The JavaScript interpreter does not exit between requests, so any globally accessible objects that are created during the processing of one request are accessible to the next. In particular, modules that are loaded during the processing of one request remain loaded for the lifetime of the fcgi server, and are not automatically reloaded until the fcgi server is restarted. This is good for performance, but bad for development. Therefore, CGI is preferrable during development of a web site.
-
-### NOTE 2 ###
-
-A CGI application may call [[$curdir.exit]] to exit at any point. In fcgi, that would end the fcgi server in an incorrect way. Therefore, [[fcgi.server]] replaces
-[[$curdir.exit]] with a function that throws an exception. That exception is caught by _fcgi_, which passes the exit code on to the web server through a fastcgi message. While the
-original [[$curdir.exit]] will bypass any _try_ ... _catch_ constructions which surround your call to [[$curdir.exit]], the fcgi version can not.
-
 */
 
 (function() {
@@ -40,14 +33,6 @@ const libfcgi = JSEXT1.libfcgi;
 
 function fcgi(path, backlog) {
   if(0 != libfcgi.FCGX_IsCGI()) throw new Error("fcgi: isCgi");
-
-  var old_exit=$curdir.exit;
-  $curdir.exit=function(status) {	// replace exit function
-    if (status==undefined)
-    status=0;
-    arguments.callee.status=status;
-    throw arguments.callee;
-  }
 
   var listen = new Listen(path, backlog);
 
@@ -68,7 +53,6 @@ function fcgi(path, backlog) {
   }
 
   listen.close();
-  $curdir.exit=old_exit;
 }
 
 
