@@ -361,7 +361,7 @@ CGI.prototype = {
   ### Return value ###
   
   An object containing properties by the same names as the parts of the mime
-  message. Files that are encoded in the message are returned as _StringFile_
+  message. Files that are encoded in the message are returned as CGI.UploadedFile
   objects. Objects are decoded as strings unless they have Content-Type
   "text/JSON", in which case they are decoded as JSON objects.
   */
@@ -389,7 +389,7 @@ CGI.prototype = {
 
       var val;
       if(cd.filename) {
-        val = new StringFile(buf);
+        val = new UploadedFile(buf);
         val.name = cd.filename;
       } else if(headers.contentType == "text/JSON") {
         val = decodeJSON(buf);
@@ -512,7 +512,17 @@ CGI.prototype = {
 
 
 
+function UploadedFile(data) {
+  this.data = this.str = data;
+  this.read = function() { return this.data; };
+  this.close = function() {};
+  this.name = null;
+}
+
+
+
 CGI.FormData = FormData;
+CGI.UploadedFile = UploadedFile;
 
 return CGI;
 
