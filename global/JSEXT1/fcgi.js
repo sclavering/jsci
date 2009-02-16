@@ -32,15 +32,14 @@ A CGI application may call [[$curdir.exit]] to exit at any point. In fcgi, that 
 [[$curdir.exit]] with a function that throws an exception. That exception is caught by _fcgi_, which passes the exit code on to the web server through a fastcgi message. While the
 original [[$curdir.exit]] will bypass any _try_ ... _catch_ constructions which surround your call to [[$curdir.exit]], the fcgi version can not.
 
-
 */
 
-function(path, backlog) {
+(function() {
 
-  if (0!=arguments.callee.lib.FCGX_IsCGI())
-    throw new Error("fcgi: isCgi");
-//  if (0!=arguments.callee.lib.FCGX_Init())
-//    throw new Error("fcgi: Init");
+const libfcgi = JSEXT1.libfcgi;
+
+function fcgi(path, backlog) {
+  if(0 != libfcgi.FCGX_IsCGI()) throw new Error("fcgi: isCgi");
 
   var old_exit=$curdir.exit;
   $curdir.exit=function(status) {	// replace exit function
@@ -50,27 +49,20 @@ function(path, backlog) {
     throw arguments.callee;
   }
 
-  var listen=new arguments.callee.Listen(path, backlog);
+  var listen = new Listen(path, backlog);
 
   try {
-    if (JSEXT_config.JS_THREADSAFE) {
-      Thread.unshare('stdin');
-      Thread.unshare('stdout');
-      Thread.unshare('stderr');
-      Thread.unshare('environment');
-      
-      for(;;) {
-	new Thread(arguments.callee.serveRequest,listen.accept()).detach();
-      }
-      
-      Thread.share('stdin');
-      Thread.share('stdout');
-      Thread.share('stderr');
-    } else {
-      for(;;) {
-	arguments.callee.serveRequest(listen.accept());
-      }
+    while(true) {
+      var req = listen.accept();
+      // set global vars
+      stdin = req['in'];
+      stderr = req['err'];
+      stdout = req['out'];
+      environment = req['env'];
+      new CGI();
+      req.close();
     }
+
   } catch(x) {
     // server shutdown?
   }
@@ -80,3 +72,307 @@ function(path, backlog) {
 }
 
 
+
+
+
+/*
+new File( FCGX_stream )
+
+A wrapper class for the stdin, stdout and stderr streams.
+Behaves like [[$parent.File]].
+
+*/
+function File(stream) {
+  this.stream = stream;
+  this.closed = false;
+}
+
+File.prototype = {
+  closed: true,
+
+  /*
+  stream.close()
+    
+  Closes the stream
+  */
+  close:function() {
+    if (!this.closed) {
+      lib.FCGX_FClose(this.stream);
+      this.closed=true;
+    }
+  },
+
+  /*
+  stream.eof()
+  
+  Returns true if end-of-file has been detected while reading
+  from stream; otherwise returns false.
+  
+  ### Results ###
+
+  true if end-of-file has been detected, false if not.
+  
+  
+  */
+  
+  eof: function() {
+    return lib.FCGX_HasSeenEOF(this.stream)?true:false;
+  },
+  
+  /*
+  stream.flush()
+  
+  Flushes any buffered output.
+  
+  Server-push is a legitimate application of flush.
+  Otherwise, flush is not very useful, since accept
+  does it implicitly.  Calling flush in non-push applications
+  results in extra writes and therefore reduces performance.
+  
+  ### Results ###
+
+  Throws an exception if an error occurred.
+  */
+  flush: function() {
+    if (lib.FCGX_FFlush(this.stream)==-1)
+      throw new Error("fcgi: flush");
+  },
+
+  /*
+  stream.isatty()
+    
+  Returns false
+  */
+  isatty: function() {
+    return false;
+  },
+
+  /*
+  stream.read([n])
+  
+  Reads up to n consecutive bytes from the input stream
+  Performs no interpretation of the input bytes.
+  
+  If no argument is given, reads until EOF is read
+  
+  ### Results ###
+
+  A [[String]] containing the bytes read.  If the length is smaller than n,
+  the end of input has been reached.
+  */
+
+  read: function(size) {
+    if (arguments.length<1) size=-1;
+    if (size<0) {
+      var trysize=512;
+      var ret="";
+      while (!this.eof()) {
+        ret+=this.read(trysize);
+        trysize*=2;
+      }
+      return ret;
+    }
+    var buf=Pointer.malloc(Number(size));
+    var len=lib.FCGX_GetStr(buf, size, this.stream);
+    return buf.string(len);
+  },
+
+
+  // Not binary-safe
+  /*
+  stream.readline([n])
+  
+  Reads up to n consecutive bytes from the input stream
+  into the character array str.  Stops before n bytes
+  have been read if '\n' or EOF is read.  The terminating '\n'
+  is copied to str.
+  
+  If no argument is given, reads until '\n' or EOF is read
+  
+  **Not binary-safe**: If the input stream contains \0 characters,
+  they will cause reading to terminate.
+
+  ### Results ###
+
+  A [[String]] containing the bytes read.  If the length is smaller than n,
+  the end of input has been reached.
+  */
+  readline: function(size) {
+    if (arguments.length<1) size=-1;
+    if (size<0) {
+      var trysize=512;
+      var ret="";
+      while (!this.eof()) {
+        ret+=this.readline(trysize);
+        if (ret[ret.length-1]=='\n') break;
+        trysize*=2;
+      }
+      return ret;
+    }
+    var buf=Pointer.malloc(size+1);
+    //      var beforepos=this.tell();
+    var line=lib.FCGX_GetLine(buf, size+1, this.stream);
+    if (!line) return "";
+    return buf.string();
+  },
+
+  /*
+  array = stream.readlines([size])
+    
+  Reads up to [size] bytes. If no argument is given, reads until
+  EOF. Splits result into lines an returns an array of strings
+  which do not contain the '\n' character.
+  */
+  readlines: function(size) {
+    var buf=this.read(size);
+    return buf.split(/\n/);
+  },
+  
+  /*
+  stream.write(str)
+  
+  Writes str.length consecutive bytes from the [[String]] str
+  into the output stream.  Performs no interpretation
+  of the output bytes.
+  
+  ### Results ###
+
+  Number of bytes written (n) for normal return.
+  Throws an exception if an error occurred.
+  */
+  write: function(str) {
+    str=String(str);
+    var ret=lib.FCGX_PutStr(str, str.length, this.stream);
+    if (ret==-1)
+      throw new Error("fcgi: write");
+    return ret;
+  },
+
+  /*
+  stream.writelines(array)
+  
+  Writes each of the strings in the array. Adds '\n'
+  characters.
+  */
+  writelines: function(obj) {
+    for (i in obj) this.write(obj[i]+"\n");
+  },
+}
+
+
+
+
+/*
+new Listen([path], [backlog])
+
+Listens to an fcgi socket.
+
+*/
+
+function Listen(path, backlog) {
+  if (backlog===undefined)
+    backlog=8;
+
+  if (path===undefined) {
+    this.fd=0;
+  } else {
+    this.fd = libfcgi.FCGX_OpenSocket(path,backlog);
+    if (this.fd==-1) throw new Error("fcgi:OpenSocket");
+  }
+}
+
+Listen.prototype={
+  /*
+  req = obj.accept()
+
+  Returns a new [[$parent.$parent.Request]] object
+  as soon as a new connection is available.
+  */
+  accept: function() {
+    return new Request(this.fd);
+  },
+
+  /*
+  obj.close()
+
+  Closes the fcgi socket.
+  */
+  close: function() {
+    if (this.fd)
+      clib.close(this.fd);
+  }
+}
+
+
+
+/*
+obj = new Request(fd)
+
+Object which represents a request from an HTTP server to an
+fcgi server.
+
+Contains the following properties:
+
+* _in_: A [[$curdir.File]] object representing the per-request standard input
+* _out_: A [[$curdir.File]] object representing the per-request standard output
+* _err_: A [[$curdir.File]] object representing the per-request standard error
+* _env_: An object containing the per-request environment variables
+
+### Arguments ###
+
+* _fd_: The file descriptor used for communication with the HTTP server.
+
+*/
+function Request(fd) {
+  this.request=new Pointer(libfcgi['struct FCGX_Request']);
+  var res=libfcgi.FCGX_InitRequest(this.request, fd, 0);
+
+  if (res!=0)
+    throw new Error("FCGX_InitRequest");
+  
+  var res=libfcgi.FCGX_Accept_r(this.request);
+  if (res!=0)
+    throw new Error("FCGX_Accept_r");
+  this.request.finalize=libfcgi.FCGX_Finish_r;
+  
+  this['in']=new File(this.request.member(0,"in").$);
+  this['out']=new File(this.request.member(0,"out").$);
+  this['err']=new File(this.request.member(0,"err").$);
+  this['env']={};
+  
+  var envp=this.request.member(0,"envp").$;
+  if (envp==null) return;
+  var i;
+  for(i=0;;i++) {
+    var val=envp.member(i).$;
+    if (val==null) break;
+    val=val.string();
+    var eqPos=val.indexOf("=");
+    this.env[val.substr(0,eqPos)]=val.substr(eqPos+1);
+  }
+}
+
+/*
+  req.close()
+
+Finish & free the request (multi-thread safe).
+
+Side effect:
+---
+
+Finishes the request accepted by (and frees any
+storage allocated by) the previous call to accept.
+
+
+*/
+
+Request.prototype.close=function() {
+  this.request.finalize=null;
+  libfcgi.FCGX_Finish_r(this.request);
+}
+
+
+
+return fcgi;
+
+})()
