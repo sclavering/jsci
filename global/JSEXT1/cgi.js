@@ -528,26 +528,12 @@ CGIStringFile.prototype={
     return this._where >= this._str.length;
   },
 
-  // read(n): n bytes or to EOF.  read(): read to EOF
-  _read: function(size) {
-    if(arguments.length < 1) size = -1;
-    if(size < 0) {
-      var ret = this._str.substr(this._where);
-      this._where = this._str.length;
-    } else {
-      var ret = this._str.substr(this._where, size);
-      this._where += size;
-    }
-    return ret;
-  },
-
   // read a line, returning it including the \n
   readline: function() {
-    var nextpos=this._str.indexOf('\n', this._where);
-    if(nextpos == -1) return this._read();
-    var ret = this._str.substr(this._where, nextpos - this._where + 1);
-    this._where = nextpos + 1;
-    return ret;
+    const oldwhere = this._where;
+    const ix = this._str.indexOf('\n', oldwhere);
+    this._where = ix == -1 ? this._str.length : ix + 1;
+    return this._str.slice(oldwhere, this._where);
   },
 }
 
