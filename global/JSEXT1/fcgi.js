@@ -32,19 +32,24 @@ The JavaScript interpreter does not exit between requests, so any globally acces
 const libfcgi = JSEXT1.libfcgi;
 
 function fcgi(path, backlog) {
+  if(backlog === undefined) backlog = 8;
+
   if(0 != libfcgi.FCGX_IsCGI()) throw new Error("fcgi: isCgi");
 
-  var listen = new Listen(path, backlog);
+  const fcgi_fd = path === undefined ? 0 : libfcgi.FCGX_OpenSocket(path, backlog);
+  if(fcgi_fd == -1) throw new Error("fcgi:OpenSocket");
 
   try {
     while(true) {
-      var req = listen.accept();
+      var req = new Request(fcgi_fd);
+
       // set global vars
       stdin = req['in'];
       stderr = req['err'];
       stdout = req['out'];
       environment = req['env'];
       new CGI();
+
       req.close();
     }
 
@@ -52,7 +57,7 @@ function fcgi(path, backlog) {
     // server shutdown?
   }
 
-  listen.close();
+  if(fcgi_fd) clib.close(fcgi_fd);
 }
 
 
@@ -243,49 +248,6 @@ File.prototype = {
   },
 }
 
-
-
-
-/*
-new Listen([path], [backlog])
-
-Listens to an fcgi socket.
-
-*/
-
-function Listen(path, backlog) {
-  if (backlog===undefined)
-    backlog=8;
-
-  if (path===undefined) {
-    this.fd=0;
-  } else {
-    this.fd = libfcgi.FCGX_OpenSocket(path,backlog);
-    if (this.fd==-1) throw new Error("fcgi:OpenSocket");
-  }
-}
-
-Listen.prototype={
-  /*
-  req = obj.accept()
-
-  Returns a new [[$parent.$parent.Request]] object
-  as soon as a new connection is available.
-  */
-  accept: function() {
-    return new Request(this.fd);
-  },
-
-  /*
-  obj.close()
-
-  Closes the fcgi socket.
-  */
-  close: function() {
-    if (this.fd)
-      clib.close(this.fd);
-  }
-}
 
 
 
