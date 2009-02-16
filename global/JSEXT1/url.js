@@ -70,22 +70,13 @@
   form "a=b&c=d&e", and returns an object like { a: "b", c: "d", e: null }.
   
   Where a key exists more than once, the last occurrence is used.
-
-  Will also recognise and parse URL-encoded JSON as if it were the internals of
-  a JSON array literal.  e.g. '1,2,"three",[4]' returns as [1,2,"three",[4]].
   */
   parse_query: function(qry) {
     if(qry == undefined) return;
-    try {
-      return $parent.decodeJSON("[" + this._urldecode(qry) + "]");
-    } catch(x) {
-      // normal a=x&b=y format
-      const get = {};
-      const vars = qry.split("&");
-      for(var i = 0; i != vars.length; ++i) this._add_form_var_to(this._urldecode(vars[i]), get);
-      return get;
-    }
-    return {};
+    const get = {};
+    const vars = qry.split("&");
+    for(var i = 0; i != vars.length; ++i) this._add_form_var_to(this._urldecode(vars[i]), get);
+    return get;
   },
 
   // Similar to [[decodeURIComponent]], but also decodes + characters to spaces.
@@ -143,8 +134,6 @@
 
   /*
   str = url.to_query_string(obj)
-    
-  Does the precise opposite of [[$curdir.decodeQry]]
   */
   to_query_string: function(obj) {
     if(obj === undefined) return;

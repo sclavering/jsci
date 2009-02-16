@@ -241,7 +241,6 @@ CGI.prototype = {
     const cx = this;
     if(cx.method != "POST") return {};
     const ct = this._mime_name_value_pair_decode(this.requestHeaders.contentType);
-    if(ct == "text/JSON") return decodeJSON(stdin.read()) || {};
     if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(url.parse_query(stdin.read()) || {});
     if(ct == "multipart/form-data") {
       return this._reinterpret_form_data(this._decode_multipart_mime(stdin.read(), ct.boundary) || {});
@@ -362,8 +361,7 @@ CGI.prototype = {
   
   An object containing properties by the same names as the parts of the mime
   message. Files that are encoded in the message are returned as CGI.UploadedFile
-  objects. Objects are decoded as strings unless they have Content-Type
-  "text/JSON", in which case they are decoded as JSON objects.
+  objects. Other values are returned as strings.
   */
   _decode_multipart_mime: function(str, boundary) {
     var stream = new CGIStringFile(str);
@@ -391,8 +389,6 @@ CGI.prototype = {
       if(cd.filename) {
         val = new UploadedFile(buf);
         val.name = cd.filename;
-      } else if(headers.contentType == "text/JSON") {
-        val = decodeJSON(buf);
       } else {
         val = buf;
       }
