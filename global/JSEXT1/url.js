@@ -97,49 +97,4 @@
       obj[full_name] = val;
     }
   },
-
-
-  /*
-  url.to_string(object)
-  
-  Does the precise opposite of url.parse().
-  */
-  to_string: function(obj) {
-    var ret = "";
-    if(obj.protocol != undefined) ret += obj.protocol + "://";
-    if(obj.username != undefined) ret += obj.username;
-    if(obj.password != undefined) ret += ":" + obj.password;
-    if(obj.username != undefined || obj.password != undefined) ret += "@";
-    if(obj.host != undefined) ret += obj.host;
-    if(obj.port != undefined) ret += ":" + obj.port;
-    if(obj.path != undefined) ret += obj.path;
-    if(obj.qry != undefined) ret += "?" + this.to_query_string(obj.qry);
-    if(obj.section != undefined) ret += "#" + this._urlencode(obj.section);
-    return ret;
-  },
-
-
-  /*
-  str = url.to_query_string(obj)
-  */
-  to_query_string: function(obj) {
-    if(obj === undefined) return;
-  
-    if(obj instanceof Array) {
-      var ret = $parent.encodeJSON(obj);
-      return ret.substr(1,ret.length-2);
-    }
-    var ret = [];
-    for(var i in obj) ret.push(this._urlencode(i) + (obj[i] === null ? '' : "=" + this._urlencode(String(obj[i]))));
-    return ret.join("&");
-  },
-
-
-  // Similar to [[encodeURIComponent]], but also encodes spaces into +.
-  _urlencode: function (txt) {
-    txt = txt.replace(/[^0-9A-Za-z_ ]/g, function(l) { return "%" + ("0" + l.charCodeAt(0).toString(16)).substr(-2); });
-    txt = txt.replace(/ /g," + ");
-    return txt;
-    //  return encodeURIComponent(txt);
-  },
 })
