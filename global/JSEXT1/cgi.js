@@ -87,7 +87,8 @@ function CGI() {
   this.method = environment.REQUEST_METHOD;
   this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
 
-  this.GET_data = this._reinterpret_form_data(url.parse(this.requestURL).qry || {});
+  const qstr = url.parse(this.requestURL).qryString || '';
+  this.GET_data = this._reinterpret_form_data(url.parse_query(qstr) || {});
   this.POST_data = this._get_POST_data();
   this.cookie_data = this._parse_cookie_header(this.requestHeaders.cookie);
 

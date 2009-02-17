@@ -12,7 +12,6 @@
   * _host_: [[String]], the part after // (or after @ if username and password are given)
   * _port_: [[String]], the part after :
   * _path_: [[String]], the part after /
-  * _qry_: [[Object]], the part after ?, decoded with [[$curdir.parse_query]]
   * _qryString_: [[String]], the part after ? or undefined if no ?
   * _section_: [[String]], the part after #
   * _fullPath_: [[String]], everything after /
@@ -31,7 +30,6 @@
             host: parts[8],
             port: parts[9] ? parts[10]: undefined,
             path: parts[11] ? parts[11].replace(/%../g, function(nn){return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
-            qry: this.parse_query(parts[13]),
             qryString: parts[13],
             section: parts[14] ? this._urldecode(parts[15]) : undefined,
             fullPath: parts[11] + (parts[12] || "") + (parts[14] || ""),
@@ -42,7 +40,6 @@
     var parts = uri.match(/([^\?#]*)?(\?([^#]*))?(#(.*))?/);
     return {
       path: parts[1] ? parts[1].replace(/%../g, function(nn) { return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
-      qry: this.parse_query(parts[3]),
       qryString: parts[3],
       section: parts[5] ? this._urldecode(parts[5]) : undefined,
       fullPath: uri,
