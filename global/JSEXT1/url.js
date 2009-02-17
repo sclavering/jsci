@@ -22,18 +22,6 @@
   parse: function(uri) {
     var proto = uri.match(/^([^:]+):/);
     if(proto && proto[1].length > 1) {
-      switch(proto[1]) {
-        case 'mailto':
-          //                   proto  user      qry
-          var parts = uri.match(/mailto:([^?]*)(\?(.*))?/);
-          var ret = this.parse_query(parts[3] || "");
-          ret.protocol="mailto";
-          ret.to = parts[1].split(",");
-          if(ret.cc) ret.cc = ret.cc.split(",");
-          if(ret.bcc) ret.bcc = ret.bcc.split(",");
-          return ret;
-          break;
-        default:
           //                     proto         user      passwd       host      port        path            qry       section
           var parts = uri.match(/([^:]+):\/\/((([^:@]*)(:([^@]*))?@)?(([^:\/]*)(:([0-9]+))?)(\/[^\?#]*)?)(\?([^#]*))?(#(.*))?/);
           return {
@@ -48,7 +36,6 @@
             section: parts[14] ? this._urldecode(parts[15]) : undefined,
             fullPath: parts[11] + (parts[12] || "") + (parts[14] || ""),
           };
-      }
     }
 
     //                      path          qry      section
