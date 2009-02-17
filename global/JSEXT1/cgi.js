@@ -364,7 +364,20 @@ CGI.prototype = {
   objects. Other values are returned as strings.
   */
   _decode_multipart_mime: function(str, boundary) {
-    var stream = new CGIStringFile(str);
+    const stream = {
+      _where: 0,
+      _str: str,
+      eof: function() {
+        return this._where >= this._str.length;
+      },
+      // read a line, returning it including the \n
+      readline: function() {
+        const oldwhere = this._where;
+        const ix = this._str.indexOf('\n', oldwhere);
+        this._where = ix == -1 ? this._str.length : ix + 1;
+        return this._str.slice(oldwhere, this._where);
+      },
+    };
 
     var ret = {};
 
@@ -514,29 +527,6 @@ function UploadedFile(data) {
   this.close = function() {};
   this.name = null;
 }
-
-
-
-function CGIStringFile(str) {
-  this._str = str || "";
-  this._where = 0;
-}
-
-CGIStringFile.prototype={
-  // Returns true if end-of-file has been reached.
-  eof: function() {
-    return this._where >= this._str.length;
-  },
-
-  // read a line, returning it including the \n
-  readline: function() {
-    const oldwhere = this._where;
-    const ix = this._str.indexOf('\n', oldwhere);
-    this._where = ix == -1 ? this._str.length : ix + 1;
-    return this._str.slice(oldwhere, this._where);
-  },
-}
-
 
 
 
