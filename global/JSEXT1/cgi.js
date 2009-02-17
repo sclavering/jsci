@@ -87,7 +87,7 @@ function CGI() {
   this.method = environment.REQUEST_METHOD;
   this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
 
-  const qstr = this._parse_url(this.requestURL).qryString || '';
+  const qstr = this._get_query_string(this.requestURL) || '';
   this.GET_data = this._reinterpret_form_data(this._parse_query(qstr) || {});
   this.POST_data = this._get_POST_data();
   this.cookie_data = this._parse_cookie_header(this.requestHeaders.cookie);
@@ -520,51 +520,17 @@ CGI.prototype = {
   },
 
 
-  /*
-  obj = x._parse_url(string)
-
-  Parses a URL (or URI, or IRI) into different parts.
-
-  Returns an object containing the following properties:
-
-  * _protocol_: [[String]], the part before ://
-  * _username_: [[String]], the part between // and : (or between // and @ if no password is given)
-  * _password_: [[String]], the part between : and @
-  * _host_: [[String]], the part after // (or after @ if username and password are given)
-  * _port_: [[String]], the part after :
-  * _path_: [[String]], the part after /
-  * _qryString_: [[String]], the part after ? or undefined if no ?
-  * _section_: [[String]], the part after #
-  * _fullPath_: [[String]], everything after /
-
-  Note: uses regexps internally.
-  */
-  _parse_url: function(uri) {
+  _get_query_string: function(uri) {
     var proto = uri.match(/^([^:]+):/);
     if(proto && proto[1].length > 1) {
       //                     proto         user      passwd       host      port        path            qry       section
       var parts = uri.match(/([^:]+):\/\/((([^:@]*)(:([^@]*))?@)?(([^:\/]*)(:([0-9]+))?)(\/[^\?#]*)?)(\?([^#]*))?(#(.*))?/);
-      return {
-        protocol: parts[1],
-        username: parts[3] ? parts[4]: undefined,
-        password: parts[3] ? parts[6]: undefined,
-        host: parts[8],
-        port: parts[9] ? parts[10]: undefined,
-        path: parts[11] ? parts[11].replace(/%../g, function(nn){return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
-        qryString: parts[13],
-        section: parts[14] ? this._urldecode(parts[15]) : undefined,
-        fullPath: parts[11] + (parts[12] || "") + (parts[14] || ""),
-      };
+      return parts[13];
     }
 
     //                      path          qry      section
     var parts = uri.match(/([^\?#]*)?(\?([^#]*))?(#(.*))?/);
-    return {
-      path: parts[1] ? parts[1].replace(/%../g, function(nn) { return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
-      qryString: parts[3],
-      section: parts[5] ? this._urldecode(parts[5]) : undefined,
-      fullPath: uri,
-    };
+    return parts[3];
   },
 
 
