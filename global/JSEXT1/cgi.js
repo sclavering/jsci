@@ -87,8 +87,8 @@ function CGI() {
   this.method = environment.REQUEST_METHOD;
   this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
 
-  const qstr = url.parse(this.requestURL).qryString || '';
-  this.GET_data = this._reinterpret_form_data(url.parse_query(qstr) || {});
+  const qstr = this._parse_url(this.requestURL).qryString || '';
+  this.GET_data = this._reinterpret_form_data(this._parse_query(qstr) || {});
   this.POST_data = this._get_POST_data();
   this.cookie_data = this._parse_cookie_header(this.requestHeaders.cookie);
 
@@ -242,7 +242,7 @@ CGI.prototype = {
     const cx = this;
     if(cx.method != "POST") return {};
     const ct = this._mime_name_value_pair_decode(this.requestHeaders.contentType);
-    if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(url.parse_query(stdin.read()) || {});
+    if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(this._parse_query(stdin.read()) || {});
     if(ct == "multipart/form-data") {
       return this._reinterpret_form_data(this._decode_multipart_mime(stdin.read(), ct.boundary) || {});
     }
@@ -250,7 +250,7 @@ CGI.prototype = {
   },
 
 
-  // url.parse_query does the basic parsing of the foo=bar part of a query string, but only special-cases foo[]
+  // ._parse_query does the basic parsing of the foo=bar part of a query string, but only special-cases foo[]
   // Here we reinterpret names data like { 'foo.42.bar': 'quux' } to { foo: { 42: { bar: 'quux' }}}.
   // This is done here because we also want it to apply to multipart/form-data form submissions.
   _reinterpret_form_data: function(data) {
@@ -517,6 +517,102 @@ CGI.prototype = {
       ret[key] = line.substr(colonpos + 2);
     }
     return ret;
+  },
+
+
+  /*
+  obj = x._parse_url(string)
+
+  Parses a URL (or URI, or IRI) into different parts.
+
+  Returns an object containing the following properties:
+
+  * _protocol_: [[String]], the part before ://
+  * _username_: [[String]], the part between // and : (or between // and @ if no password is given)
+  * _password_: [[String]], the part between : and @
+  * _host_: [[String]], the part after // (or after @ if username and password are given)
+  * _port_: [[String]], the part after :
+  * _path_: [[String]], the part after /
+  * _qryString_: [[String]], the part after ? or undefined if no ?
+  * _section_: [[String]], the part after #
+  * _fullPath_: [[String]], everything after /
+
+  Note: uses regexps internally.
+  */
+  _parse_url: function(uri) {
+    var proto = uri.match(/^([^:]+):/);
+    if(proto && proto[1].length > 1) {
+      //                     proto         user      passwd       host      port        path            qry       section
+      var parts = uri.match(/([^:]+):\/\/((([^:@]*)(:([^@]*))?@)?(([^:\/]*)(:([0-9]+))?)(\/[^\?#]*)?)(\?([^#]*))?(#(.*))?/);
+      return {
+        protocol: parts[1],
+        username: parts[3] ? parts[4]: undefined,
+        password: parts[3] ? parts[6]: undefined,
+        host: parts[8],
+        port: parts[9] ? parts[10]: undefined,
+        path: parts[11] ? parts[11].replace(/%../g, function(nn){return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
+        qryString: parts[13],
+        section: parts[14] ? this._urldecode(parts[15]) : undefined,
+        fullPath: parts[11] + (parts[12] || "") + (parts[14] || ""),
+      };
+    }
+
+    //                      path          qry      section
+    var parts = uri.match(/([^\?#]*)?(\?([^#]*))?(#(.*))?/);
+    return {
+      path: parts[1] ? parts[1].replace(/%../g, function(nn) { return String.fromCharCode(parseInt(nn.substr(1), 16)); }) : undefined,
+      qryString: parts[3],
+      section: parts[5] ? this._urldecode(parts[5]) : undefined,
+      fullPath: uri,
+    };
+  },
+
+
+  /*
+  obj = x._parse_query(str)
+  
+  Parses a query string of the form "a=b&c=d&e", and returns an object like { a: "b", c: "d", e: null }.
+  
+  Where a key exists more than once, the last occurrence is used.
+  */
+  _parse_query: function(qry) {
+    if(qry == undefined) return;
+    const get = {};
+    const vars = qry.split("&");
+    for(var i = 0; i != vars.length; ++i) this._add_form_var_to(this._urldecode(vars[i]), get);
+    return get;
+  },
+
+  // Similar to [[decodeURIComponent]], but also decodes + characters to spaces.
+  _urldecode: function(qry) {
+    if(qry === undefined) return;
+    qry = qry.replace(/\+/g, " ");
+    qry = qry.replace(/%../g, function(nn) { return String.fromCharCode(parseInt(nn.substr(1), 16)); });
+    return qry;
+    //    return decodeURIComponent(qry.replace(/\+/g," "));
+  },
+
+
+  // Interpret a single part of a query string, e.g. foo=bar, and set property object.foo = "bar"
+  // If the "foo" ends in [], the object.foo is created an array, and "bar" becomes a value in that array.
+  // The CGI class handles more complex behavior, like interpreting the dots in a name like 'foo.bar.baz'
+  _add_form_var_to: function(name_and_value, obj) {
+    const eq_ix = name_and_value.indexOf('='), has_eq = eq_ix !== -1;
+    var full_name = has_eq ? name_and_value.slice(0, eq_ix) : name_and_value;
+    const val = has_eq ? name_and_value.slice(eq_ix + 1) : '';
+    const is_array_var = /\[\]$/.test(full_name);
+    if(is_array_var) full_name = full_name.slice(0, full_name.length - 2);
+
+    // Don't allow __proto__ or anything like that to be replaced
+    if(full_name in Object.prototype) return;
+
+    if(is_array_var) {
+      // note: use |new Array| here rather than just [] so that the instanceof works
+      if(!((full_name in obj) && obj[full_name] instanceof Array)) obj[full_name] = new Array();
+      obj[full_name].push(val);
+    } else {
+      obj[full_name] = val;
+    }
   },
 };
 
