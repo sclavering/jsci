@@ -85,9 +85,12 @@ function CGI() {
 
   this.remoteAddress = environment.REMOTE_ADDR;
   this.method = environment.REQUEST_METHOD;
-  this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
+  const url = this.requestURL = "http://" + (this.requestHeaders.host || '') + environment.REQUEST_URI;
 
-  const qstr = this._get_query_string(this.requestURL) || '';
+  // remember: the #foo part isn't sent to the server, so we don't need to exclude it
+  const qstr_ix = url.indexOf('?');
+  const qstr = qstr_ix == -1 ? '' : url.slice(qstr_ix + 1);
+
   this.GET_data = this._reinterpret_form_data(this._parse_query(qstr) || {});
   this.POST_data = this._get_POST_data();
   this.cookie_data = this._parse_cookie_header(this.requestHeaders.cookie);
@@ -517,20 +520,6 @@ CGI.prototype = {
       ret[key] = line.substr(colonpos + 2);
     }
     return ret;
-  },
-
-
-  _get_query_string: function(uri) {
-    var proto = uri.match(/^([^:]+):/);
-    if(proto && proto[1].length > 1) {
-      //                     proto         user      passwd       host      port        path            qry       section
-      var parts = uri.match(/([^:]+):\/\/((([^:@]*)(:([^@]*))?@)?(([^:\/]*)(:([0-9]+))?)(\/[^\?#]*)?)(\?([^#]*))?(#(.*))?/);
-      return parts[13];
-    }
-
-    //                      path          qry      section
-    var parts = uri.match(/([^\?#]*)?(\?([^#]*))?(#(.*))?/);
-    return parts[3];
   },
 
 
