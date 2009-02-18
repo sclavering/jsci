@@ -330,22 +330,10 @@ CGI.prototype = {
   },
 
 
-  /*
-  _decode_multipart_mime(str, boundary)
-  
-  Decodes a mime multipart message.
+  // Decodes a multipart/form-data POST body into an object, with a key for each part name, and values as either strings or CGI.UploadedFile objects (as appropriate).
+  _decode_multipart_mime: function(message_str, boundary_str) {
+    var str = String(message_str), boundary = String(boundary_str);
 
-  ### Arguments ###
-
-  * _boundary_: A string containing the boundary between objects
-  
-  ### Return value ###
-  
-  An object containing properties by the same names as the parts of the mime
-  message. Files that are encoded in the message are returned as CGI.UploadedFile
-  objects. Other values are returned as strings.
-  */
-  _decode_multipart_mime: function(str, boundary) {
     const stream = {
       _where: 0,
       _str: str,
@@ -515,6 +503,7 @@ CGI.prototype = {
     for(var i = 0; i != vars.length; ++i) this._add_form_var_to(this._urldecode(vars[i]), get);
     return get;
   },
+
 
   // Similar to [[decodeURIComponent]], but also decodes + characters to spaces.
   _urldecode: function(qry) {
