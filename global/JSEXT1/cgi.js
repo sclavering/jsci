@@ -304,12 +304,6 @@ CGI.prototype = {
     throw new Error("Too late to set cookie after writing to page");
   },
 
-  delete_cookie: function(name, path, domain) {
-    // xxx should maybe do nothing if there is no matching request cookie
-    // Yes, in HTTP you delete cookies by forcing them to expire
-    this.response_cookies[name] = { value: 'delete', expires: new Date(0), path: path, domain: domain };
-  },
-
   output_cookies: function(stream) {
     this.set_cookie = this._set_cookie_too_late;
     for(var name in this.response_cookies) {
