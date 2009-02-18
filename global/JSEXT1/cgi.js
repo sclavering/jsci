@@ -168,7 +168,14 @@ CGI.prototype = {
     const func = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
     if(typeof func != "function") return;
 
-    this._exec_page_function(func);
+    // Run the page, trapping exceptions
+    try {
+      func(this);
+    } catch(x if x == this._finish_token) {
+      // do nothing, since we're just using this exception for control flow
+    } catch(x) {
+      try { this.onerror(x); } catch(e) {}
+    }
 
     stdout.close();
   },
@@ -187,20 +194,6 @@ CGI.prototype = {
     if(environment.CONTENT_TYPE) headers.contentType = environment.CONTENT_TYPE;
     if(environment.CONTENT_LENGTH) headers.contentLength = environment.CONTENT_LENGTH;
     return headers;
-  },
-
-
-  _exec_page_function: function(func) {
-    try {
-      func(this);
-    } catch(x if x == this._finish_token) {
-      // do nothing, since we're just using this exception for control flow
-    } catch(x) {
-      try {
-        this.onerror(x);
-      } catch(e) {
-      }
-    }
   },
 
 
