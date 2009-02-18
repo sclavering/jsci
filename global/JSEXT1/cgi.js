@@ -318,9 +318,6 @@ CGI.prototype = {
 
 
 
-  /*
-  _write_headers(stream, obj)
-  */
   _write_headers: function(conn, headers) {
     var lines = this._encode_headers(headers);
     for(var i = 0; i < lines.length; i++) {
@@ -494,7 +491,7 @@ CGI.prototype = {
   ### Return value ###
   
   An object of name/value pairs. Mime names are case-insensitive,
-  so the case is normalized: Nnames are first converted to all lower case.
+  so the case is normalized: names are first converted to all lower case.
   Letters immediately following hyphens are then converted to upper case
   and the hyphen is removed. Example:
 
