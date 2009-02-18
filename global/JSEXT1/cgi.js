@@ -151,14 +151,9 @@ CGI.prototype = {
     var extension = relFilename.match(/\.([^.]*)$/);
     if(extension) extension = extension[1];
 
-    var hostdir = this._hostDirCache[rooturl];
-    if(!hostdir) {
-      hostdir = {};
-      ActiveDirectory.call(hostdir, root);
-      this._hostDirCache[rooturl] = hostdir;
-    }
+    var hostdir = this.hostdir = {};
+    ActiveDirectory.call(hostdir, root);
 
-    this.hostdir = hostdir;
     this.filename = "/" + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
     // this.responseLine = "200 OK";
 
@@ -177,7 +172,6 @@ CGI.prototype = {
 
     stdout.close();
   },
-  _hostDirCache: {},
 
 
   _get_request_headers: function() {
