@@ -127,9 +127,8 @@ CGI.prototype = {
     });
 
     var filename = environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
-    var path = JSEXT1.path(filename);
     var onlyFilename = JSEXT1.filename(filename);
-    var pathParts = path.split("/");
+    var pathParts = JSEXT1.path(filename).split("/");
     var urlParts = this.requestURL.split("/");
     urlParts.pop();
 
@@ -145,16 +144,7 @@ CGI.prototype = {
     this.filename = "/" + pathParts.slice(pathParts.length - i).join("/");
     // this.responseLine = "200 OK";
 
-    var filename = this.filename;
-
-    var pathparts = filename.split("/");
-    var curdir = {};
-    ActiveDirectory.call(curdir, root);
-    for(var i = 1; i < pathparts.length - 1; i++) curdir = curdir[pathparts[i]];
-
-    var onlyFilename = JSEXT1.filename(filename);
-
-    const func = load.call(curdir, root + filename);
+    const func = load.call({}, root + this.filename);
     if(typeof func != "function") return;
 
     // Run the page, trapping exceptions
