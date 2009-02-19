@@ -124,25 +124,8 @@ CGI.prototype = {
       delete cx.responseHeaders;
     });
 
-    var filename = environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
-    var onlyFilename = JSEXT1.filename(filename);
-    var pathParts = JSEXT1.path(filename).split("/");
-    var urlParts = this.requestURL.split("/");
-    urlParts.pop();
-
-    var i;
-    for(i = 1; i <= urlParts.length; i++) {
-      if(pathParts[pathParts.length - i] != urlParts[urlParts.length - i]) break;
-    }
-
-    var root = pathParts.slice(0, pathParts.length - i + 1).join("/");
-
-    pathParts.push(onlyFilename);
-
-    var filename2 = "/" + pathParts.slice(pathParts.length - i).join("/");
-    // this.responseLine = "200 OK";
-
-    const func = load.call({}, root + filename2);
+    const filename = environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
+    const func = load.call({}, filename);
     if(typeof func != "function") return;
 
     // Run the page, trapping exceptions
