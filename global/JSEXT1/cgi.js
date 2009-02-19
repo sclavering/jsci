@@ -139,11 +139,15 @@ CGI.prototype = {
 
     const filename = environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
     const func = load.call({}, filename);
-    if(typeof func != "function") return;
+    this._exec_safely(func, this, true);
+    stdout.close();
+  },
 
-    // Run the page, trapping exceptions
+
+  // Run the page or the error handler, trapping exceptions.  (Both need .respond() and .redirect() to work.)
+  _exec_safely: function(func, arg, run_onerror) {
     try {
-      func(this);
+      func.call(this, arg);
     }
     // This "exception" is just a nonce used for control flow
     catch(x if x == this._finish_token) {
@@ -154,11 +158,9 @@ CGI.prototype = {
       // because we don't want the FlashWriter to flush its headers
       stdout = this._real_stdout;
     }
-    catch(x) {
-      try { this.onerror(x); } catch(e) {}
+    catch(ex) {
+      if(run_onerror) this._exec_safely(this.onerror, ex, false);
     }
-
-    stdout.close();
   },
 
 
