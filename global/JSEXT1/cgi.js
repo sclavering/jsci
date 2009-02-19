@@ -26,8 +26,6 @@ will be called with the _CGI_ instance as its only argument.
 * _cookie_data_: the request cookies, as a name-value mapping
 * _filename_: A string containing an absolute path, where root is the specified
   host directory, not the filesystem root.
-* _hostdir_: An [[ActiveDirectory]] object for the root directory where the
-  file is stored.
 
 ### Methods ###
 */
@@ -141,13 +139,8 @@ CGI.prototype = {
     }
 
     var root = pathParts.slice(0, pathParts.length - i + 1).join("/");
-    var rooturl = urlParts.slice(0, urlParts.length - i + 1).join("/");
-    if(rooturl != "/") rooturl += "/";
 
     pathParts.push(onlyFilename);
-
-    var hostdir = this.hostdir = {};
-    ActiveDirectory.call(hostdir, root);
 
     this.filename = "/" + pathParts.slice(pathParts.length - i).join("/");
     // this.responseLine = "200 OK";
@@ -155,12 +148,13 @@ CGI.prototype = {
     var filename = this.filename;
 
     var pathparts = filename.split("/");
-    var curdir = this.hostdir;
+    var curdir = {};
+    ActiveDirectory.call(curdir, root);
     for(var i = 1; i < pathparts.length - 1; i++) curdir = curdir[pathparts[i]];
 
     var onlyFilename = JSEXT1.filename(filename);
 
-    const func = load.call(curdir, curdir.$path + "/" + onlyFilename);
+    const func = load.call(curdir, root + filename);
     if(typeof func != "function") return;
 
     // Run the page, trapping exceptions
