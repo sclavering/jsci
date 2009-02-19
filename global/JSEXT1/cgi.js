@@ -112,8 +112,21 @@ CGI.prototype = {
   },
 
 
+  respond: function(status_code, headers_dict, body_str) {
+    const out = this._real_stdout;
+    out.write("Status: " + status_code);
+    for(var h in headers_dict) out.write(h + ": " + headers_dict[h] + "\r\n");
+    out.write("\r\n");
+    if(body_str) out.write(body_str);
+    throw this._exit_nonce;
+  },
+  _exit_nonce: {},
+
+
   run: function() {
     const cx = this;
+
+    this._real_stdout = stdout;
 
     stdout = new FlashWriter(stdout, function(stream) {
       stdin.close();
@@ -131,9 +144,17 @@ CGI.prototype = {
     // Run the page, trapping exceptions
     try {
       func(this);
-    } catch(x if x == this._finish_token) {
-      // do nothing, since we're just using this exception for control flow
-    } catch(x) {
+    }
+    // This "exception" is just a nonce used for control flow
+    catch(x if x == this._finish_token) {
+      // do nothing
+    }
+    // This "exception" is just a nonce used for control flow
+    catch(x if x == this._exit_nonce) {
+      // because we don't want the FlashWriter to flush its headers
+      stdout = this._real_stdout;
+    }
+    catch(x) {
       try { this.onerror(x); } catch(e) {}
     }
 
