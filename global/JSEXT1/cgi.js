@@ -24,8 +24,6 @@ will be called with the _CGI_ instance as its only argument.
 * _method_: A string containing the HTTP method (usually "GET" or "POST").
 * _requestURL_: A string
 * _cookie_data_: the request cookies, as a name-value mapping
-* _filename_: A string containing an absolute path, where root is the specified
-  host directory, not the filesystem root.
 
 ### Methods ###
 */
@@ -141,10 +139,10 @@ CGI.prototype = {
 
     pathParts.push(onlyFilename);
 
-    this.filename = "/" + pathParts.slice(pathParts.length - i).join("/");
+    var filename2 = "/" + pathParts.slice(pathParts.length - i).join("/");
     // this.responseLine = "200 OK";
 
-    const func = load.call({}, root + this.filename);
+    const func = load.call({}, root + filename2);
     if(typeof func != "function") return;
 
     // Run the page, trapping exceptions
