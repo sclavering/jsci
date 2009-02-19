@@ -129,10 +129,9 @@ CGI.prototype = {
     });
 
     var filename = environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
-    var path = $curdir.path(filename);
-    var onlyFilename = $curdir.filename(filename);
-    var urlpath = environment.PATH_INFO || environment.SCRIPT_NAME;
-    var pathParts = path.split(JSEXT_config.sep);
+    var path = JSEXT1.path(filename);
+    var onlyFilename = JSEXT1.filename(filename);
+    var pathParts = path.split("/");
     var urlParts = this.requestURL.split("/");
     urlParts.pop();
 
@@ -141,31 +140,27 @@ CGI.prototype = {
       if(pathParts[pathParts.length - i] != urlParts[urlParts.length - i]) break;
     }
 
-    var root = pathParts.slice(0, pathParts.length - i + 1).join(JSEXT_config.sep);
+    var root = pathParts.slice(0, pathParts.length - i + 1).join("/");
     var rooturl = urlParts.slice(0, urlParts.length - i + 1).join("/");
     if(rooturl != "/") rooturl += "/";
 
     pathParts.push(onlyFilename);
-    var relFilename = JSEXT_config.sep + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
-
-    var extension = relFilename.match(/\.([^.]*)$/);
-    if(extension) extension = extension[1];
 
     var hostdir = this.hostdir = {};
     ActiveDirectory.call(hostdir, root);
 
-    this.filename = "/" + pathParts.slice(pathParts.length - i).join(JSEXT_config.sep);
+    this.filename = "/" + pathParts.slice(pathParts.length - i).join("/");
     // this.responseLine = "200 OK";
 
     var filename = this.filename;
 
-    var pathparts = filename.split(JSEXT_config.sep);
+    var pathparts = filename.split("/");
     var curdir = this.hostdir;
     for(var i = 1; i < pathparts.length - 1; i++) curdir = curdir[pathparts[i]];
 
     var onlyFilename = JSEXT1.filename(filename);
 
-    const func = load.call(curdir, curdir.$path + JSEXT_config.sep + onlyFilename);
+    const func = load.call(curdir, curdir.$path + "/" + onlyFilename);
     if(typeof func != "function") return;
 
     // Run the page, trapping exceptions
