@@ -179,10 +179,11 @@ CGI.prototype = {
 
 
   /*
-  Helper for use in .onerror().  Logs the exception to a specified log file.
+  Helper for use in .onerror().  Logs each exception to a separate file whose name is |logfile_prefix| followed by a timestamp.
   */
-  log_error: function(exception, logfile_path) {
-    const f = new File(logfile_path, 'a');
+  log_error: function(exception, logfile_prefix) {
+    const timestamp = new Date().toLocaleFormat('%Y-%m-%d-%T') + '-' + (Date.now() % 1000);
+    const f = new File(logfile_prefix + '-' + timestamp, 'a');
     f.write(this._format_error_as_string(exception));
     if(f) f.close();
   },
