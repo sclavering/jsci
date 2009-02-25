@@ -25,9 +25,6 @@
     }
   }
 
-  if (JSEXT_config.JS_THREADSAFE && !clib.unshare)
-    c.cdlock=new Mutex;
-
   c.olddir=[];
 
   return c;

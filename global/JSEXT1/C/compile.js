@@ -21,8 +21,6 @@ function(filename, out_filename) {
     }
     
       var cmd='cc -I '+$path+'/0-include -DXP_UNIX -fPIC -x c '+filename+' -shared -o '+out_filename;
-      if (JSEXT_config.JS_THREADSAFE)
-	cmd+=" -DJS_THREADSAFE=1";
       var ret=$parent.read(cmd+' 2>&1 |');
       var error=false;
       for each (var line in ret.split("\n")) {

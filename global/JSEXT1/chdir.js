@@ -7,14 +7,9 @@
   */
 
 (function() {
-
-  if (JSEXT_config.JS_THREADSAFE && !clib.unshare && Thread.threads.length)
-    throw new Error("chdir can not be used in a multithreaded application on Linux<2.6.16. Try chdirLock / chdirUnlock instead");
-
   return function(dir) {
     if (clib.chdir(dir)==-1)
       throw new Error(os.error("chdir"));
   }
-
 })()
 
