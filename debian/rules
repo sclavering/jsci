@@ -60,13 +60,13 @@ clean:
 	-$(MAKE) distclean
 	rm -f config.sub config.guess
 
-	dh_clean  --exclude ./mininspr/pratom.c.orig
+	dh_clean
 
 install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i  --exclude ./mininspr/pratom.c.orig
+	dh_clean -k -i
 	dh_installdirs -i
 
 	# Add here commands to install the indep part of the package into
@@ -78,7 +78,7 @@ install-indep:
 install-arch:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -s  --exclude ./mininspr/pratom.c.orig
+	dh_clean -k -s
 	dh_installdirs -s
 
 	# Add here commands to install the arch part of the package into 
