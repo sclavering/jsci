@@ -34,7 +34,6 @@ threadsafe=@THREADSAFE@
 JSEXT_version=1
 
 all:
-	$(MAKE) -C mininspr XCFLAGS="$(XCFLAGS)"
 	$(MAKE) -C js/src -f Makefile.ref Linux_All_OPT.OBJ/libjs.so BUILD_OPT=1 $(threadsafe) XCFLAGS="$(XCFLAGS)"
 	cp js/src/Linux_All_OPT.OBJ/jsautocfg.h js/src
 	mkdir global/JSEXT$(JSEXT_version)/C/0-include || echo 0-include exists
@@ -44,7 +43,6 @@ all:
 
 clean:
 	$(MAKE) -C global clean
-	$(MAKE) -C mininspr clean
 	$(MAKE) -C js/src -f Makefile.ref clean
 	rm -rf js/src/Linux_All_OPT.OBJ
 	rm -f js/src/jsautocfg.h
