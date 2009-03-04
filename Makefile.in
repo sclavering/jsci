@@ -30,11 +30,10 @@ bindir=@bindir@
 libdir=@libdir@
 mandir=@mandir@
 version=@PACKAGE_VERSION@
-threadsafe=@THREADSAFE@
 JSEXT_version=1
 
 all:
-	$(MAKE) -C js/src -f Makefile.ref Linux_All_OPT.OBJ/libjs.so BUILD_OPT=1 $(threadsafe) XCFLAGS="$(XCFLAGS)"
+	$(MAKE) -C js/src -f Makefile.ref Linux_All_OPT.OBJ/libjs.so BUILD_OPT=1 XCFLAGS="$(XCFLAGS)"
 	cp js/src/Linux_All_OPT.OBJ/jsautocfg.h js/src
 	mkdir global/JSEXT$(JSEXT_version)/C/0-include || echo 0-include exists
 	cp js/src/*.h js/src/*.tbl js/src/*.msg dist/Linux_All_OPT.OBJ/include/* global/JSEXT$(JSEXT_version)/C/0-include
