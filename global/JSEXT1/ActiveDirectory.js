@@ -42,7 +42,7 @@ a filename extension (minus the dot), and each property is a function which hand
 to value. For example, the default txt handler looks like this:
 
     function(name,extension) {
-      var file=new JSEXT1.File(this.$path+JSEXT_config.sep+name+extension,"r");
+      var file = new JSEXT1.File(this.$path + '/' + name + extension, "r");
       var ret=file.read();
       file.close();
       return ret;
@@ -62,8 +62,7 @@ any one of their handlers is called. Which one is undefined.
 Constructor
 ---
 
-
-    new ActiveDirectory( path, [handlers], [platform] )
+new ActiveDirectory( path, [handlers] )
 
 ### Arguments ###
 
@@ -72,7 +71,6 @@ Constructor
 will be called with two arguments: The bare file name (minus extension and path), and extension (including the dot) as the second argument. The _this_ object
 will be the invoking ActiveDirectory object. The function may always find the path to the file it is loading in _this.$path_. The property names
 should correspond to file name extensions without the dot.
-* _platform_: [[Object]] which contains flags.
 
 Properties of ActiveDirectory objects
 ---
@@ -105,7 +103,7 @@ will be searched first. Example:
 
 */
 
-function( path, handlers, platform ) {
+function(path, handlers) {
   var dir=$curdir.dir(path);
   var filename;
   var subdirs=[];
@@ -117,7 +115,6 @@ function( path, handlers, platform ) {
   var ActiveDirectory=arguments.callee;
 
   handlers = handlers || JSEXT1.activate;
-  platform = platform || JSEXT_config;
 
   var hasOwnProperty=Object.prototype.hasOwnProperty;
 
@@ -125,7 +122,6 @@ function( path, handlers, platform ) {
   self.$curdir=self;
   self.$checkdates=checkdates;
   self.$handlers=handlers;
-  self.$platform=platform;
 
   if (!hasOwnProperty.call(self,'$getters')) {
     self.$getters={};
@@ -141,7 +137,7 @@ function( path, handlers, platform ) {
       var filename=dir[i];
       parts=filename.match(/^(([^ -@][^#\.]*)(#([^\.]*))?)(\.(.*))?/);
       
-      if (parts && (!parts[4] || platform[parts[4]])) { // correct platform
+      if (parts && !parts[4]) {
 	if (parts[5]) {
 	  var propname=parts[2];
 	  var extension=parts[6];
@@ -154,7 +150,7 @@ function( path, handlers, platform ) {
 	    self.prototype = handlers[extension].call(self, parts[1], '.'+extension);
 	    //	  getGetter(propname, parts[1], extension).call(self);
 	  }
-	} else if ($curdir.isdir(path+JSEXT_config.sep+filename)) {
+	} else if ($curdir.isdir(path + '/' + filename)) {
 	  subdirs.push(parts);
 	}
       }
@@ -182,8 +178,8 @@ function( path, handlers, platform ) {
                val.$glocal=self.$glocal;
              }
                    */
-	  var newpath=path + JSEXT_config.sep + parts[0];
-	  ActiveDirectory.call(val, newpath, handlers, platform);
+	  var newpath = path + '/' + parts[0];
+	  ActiveDirectory.call(val, newpath, handlers);
 	}
 
 	self[parts[2]].$curdir=self[parts[2]];
@@ -226,8 +222,8 @@ function( path, handlers, platform ) {
          }
          */
 
-      var newpath=path + JSEXT_config.sep + filename;
-      ActiveDirectory.call(val, newpath, handlers, platform);
+      var newpath = path + '/' + filename;
+      ActiveDirectory.call(val, newpath, handlers);
       val.$name=propname;
       self[propname].$parent=self;
       if (self['with'] && !self[propname].$getters['with'])
@@ -257,7 +253,7 @@ function( path, handlers, platform ) {
       try {
 	var val = handlers[extension].call(self, filename, "."+extension);
 	var check = new String(propname);
-	check.mtime = $curdir.stat(self.$path+JSEXT_config.sep+filename+"."+extension).mtime;
+	check.mtime = $curdir.stat(self.$path + '/' + filename + "." + extension).mtime;
 	self.$loaded[filename+"."+extension]=check;
       } catch (x) {
 	delete self[propname];
@@ -276,16 +272,16 @@ function( path, handlers, platform ) {
   }
 
   function checkdates() {
-    //    clib.puts("checkdates "+self.$path+" browser="+platform.browser);
+    //    clib.puts("checkdates "+self.$path);
     if ($curdir.stat(path).mtime>self.$mydate) {
       //	clib.puts("dirupdate");
-      ActiveDirectory.call(self, path, handlers, platform);
+      ActiveDirectory.call(self, path, handlers);
     }
 
     for (var file in self.$loaded) {
       var prop=self.$loaded[file];
       var propname=String(prop);
-      var stat=$curdir.stat(self.$path+JSEXT_config.sep+file);
+      var stat = $curdir.stat(self.$path + '/' + file);
       if (!stat || stat.mtime>prop.mtime) {
 //		clib.puts("refresh "+file);
 	delete self[propname];
