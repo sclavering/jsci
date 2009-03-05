@@ -13,12 +13,7 @@ for this to work.
 function(filename, out_filename) {
     var dotpos=filename.lastIndexOf('.');
     
-    if (!out_filename) {
-      if (dotpos===-1)
-	out_filename=filename+JSEXT_config.dlext;
-      else
-	out_filename=filename.substr(0,dotpos)+JSEXT_config.dlext;
-    }
+    if(!out_filename) out_filename = (dotpos === -1 ? filename : filename.substr(0, dotpos)) + '.so';
     
       var cmd='cc -I '+$path+'/0-include -DXP_UNIX -fPIC -x c '+filename+' -shared -o '+out_filename;
       var ret=$parent.read(cmd+' 2>&1 |');

@@ -65,7 +65,7 @@ Returns an object containing the following properties:
     
   // Parse proper
 
-  code=curdir.ctoxml(curdir.cpp(code,[curdir.$path+JSEXT_config.sep+'0-include']));
+  code = curdir.ctoxml(curdir.cpp(code, [curdir.$path + '/0-include']));
     
   // Contains the evaluated code. Used during
   // processing to evaluate sizeof() expressions.

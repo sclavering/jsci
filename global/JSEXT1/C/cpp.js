@@ -19,7 +19,7 @@ A string.
 
 (function(){
 
-  var libcpp=Dl($path+JSEXT_config.sep+'libcpp'+JSEXT_config.dlext);
+  var libcpp = Dl($path + '/libcpp.so');
   var cpp=libcpp.pointer('cpp',Type['function'](Type.pointer(Type.char),[{'const':false,name:'C',type:Type.pointer(Type.char)},{'const':false,name:'errormsg',type:Type.pointer(Type.pointer(Type.char))},{'const':false,name:'include_path',type:Type.pointer(Type.pointer(Type.char))}],false,'cdecl')).$;
   var free=libcpp.pointer('cpp_free',Type['function'](Type['void'],[{'const':false,name:'ptr',type:Type.pointer(Type['void'])}],false,'cdecl')).$;
 
