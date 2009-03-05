@@ -34,7 +34,7 @@
     var tomake=[];
     for(;;) {
       if (exists(path)) break;
-      var lastslash=path.lastIndexOf(JSEXT_config.sep);
+      var lastslash=path.lastIndexOf('/');
       if (lastslash==-1) {
 	tomake.unshift(path);
 	path=curdir;
@@ -46,7 +46,7 @@
   
     while (tomake.length) {
       var thisdir=tomake.shift();
-      clib.mkdir(path+JSEXT_config.sep+thisdir, mode);
-      path+=JSEXT_config.sep+thisdir;
+      clib.mkdir(path + '/' + thisdir, mode);
+      path += '/' + thisdir;
     }
   }
