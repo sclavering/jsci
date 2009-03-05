@@ -12,17 +12,14 @@ function() {
       var jsdir = new JSEXT1.ActiveDirectory(path, JSEXT1.js['export'].handlers);
       
       for (var i=0; i<fn.length; i++) {
-	var filename=fn[i];
-	var parts=filename.match(/^(([^ -@][^#\.]*)(#([^\.]*))?)(\.(.*))?/);
-	if (parts && (!parts[4] || JSEXT_config[parts[4]] || parts[4]=="browser")) { // correct platform
-	  processfile(path, fn[i]);
-	}
+        var filename=fn[i];
+        if(/^(([^ -@][^\.]*))(\.(.*))?/.test(fn[i])) processfile(path, fn[i]);
       }
 
       function processfile(path, filename) {
 
-	if (JSEXT1.isdir(path + JSEXT_config.sep + filename)) {
-	  processdir(path + JSEXT_config.sep + filename);
+	if(JSEXT1.isdir(path + '/' + filename)) {
+	  processdir(path + '/' + filename);
 	  return;
 	}
 
