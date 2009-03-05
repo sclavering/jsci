@@ -21,7 +21,7 @@
     for(;;) {
       if (clib.rmdir(name)==-1)
 	break;
-      var slashpos=name.lastIndexOf(JSEXT_config.sep);
+      var slashpos = name.lastIndexOf('/');
       if (slashpos==-1) break;
       name=name.substr(0,slashpos);
     }
