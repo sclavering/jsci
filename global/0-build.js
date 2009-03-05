@@ -9,7 +9,7 @@ function() {
       print("Processing ",path,"\n");
 
       var fn=JSEXT1.dir(path);
-      var jsdir=new JSEXT1.ActiveDirectory(path, JSEXT1.js['export'].handlers, JSEXT1.js['export'].platform);
+      var jsdir = new JSEXT1.ActiveDirectory(path, JSEXT1.js['export'].handlers);
       
       for (var i=0; i<fn.length; i++) {
 	var filename=fn[i];
