@@ -1,16 +1,10 @@
-  /*
-          path(filename)
-          
-      Returns path part of the filename and path
-     */
+/*
+path(filename)
 
-  function(filename) {
-    var m=filename.match("(.*)"+JSEXT_config.sep+"([^"+JSEXT_config.sep+"]*)$");
-    if (m) {
-      if (m[1]!="")
-        return m[1];
-      else
-	return JSEXT_config.sep;
-    } else
-      return JSEXT_config.curdir;
-  }
+Returns path part of the filename and path
+*/
+function(filename) {
+  var m = filename.match("(.*)/([^/]*)$");
+  if(m) return m[1] != "" ? m[1] : '/';
+  return '.';
+}
