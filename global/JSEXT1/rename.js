@@ -20,14 +20,14 @@
       return;
     }
 
-    var lastslash=newpath.lastIndexOf(JSEXT_config.sep);
+    var lastslash = newpath.lastIndexOf('/');
     if (lastslash!=-1) {
       mkdir(newpath.substr(0,lastslash), true);
     }
 
     arguments.callee(oldpath,newpath);
 
-    var lastslash=oldpath.lastIndexOf(JSEXT_config.sep);
+    var lastslash = oldpath.lastIndexOf('/');
     if (lastslash!=-1) {
       rmdir(oldpath.substr(0,lastslash), true);
     }
