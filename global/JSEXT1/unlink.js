@@ -15,7 +15,7 @@
     }
 
     var errors=[];
-    if (path[path.length-1]==JSEXT_config.sep)
+    if(path[path.length - 1] == '/')
       path=path.substr(0,path.length-1);
     recursive(path);
     return errors;
@@ -23,9 +23,7 @@
     function recursive(path) {
       if (isdir(path)) {
 	var d=dir(path);
-	for (var i in d) {
-	  recursive(path+JSEXT_config.sep+d[i]);
-	}
+	for(var i in d) recursive(path + '/' + d[i]);
 	if (clib.rmdir(path)==-1)
 	  errors.push(path);
       } else {
