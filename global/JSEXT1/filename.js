@@ -6,7 +6,7 @@
 
 (function() {
 
-  var regexp=new RegExp("(.*)"+JSEXT_config.sep+"([^"+JSEXT_config.sep+"]*)$");
+  var regexp = new RegExp("(.*)/([^/]*)$");
 
   return function(filename) {
     var m=filename.match(regexp);
