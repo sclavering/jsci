@@ -18,32 +18,30 @@ function(name, extension) {
   var timestamp={};
 
   //clib.puts("cget "+this.$path+"/"+name);
-  for each (var ext in ['h', 'c', 'pch', JSEXT_config.dlext.substr(1)]) {
-    var stat=JSEXT1.stat(this.$path+JSEXT_config.sep+name+"."+ext);
+  for each(var ext in ['h', 'c', 'pch', 'so']) {
+    var stat = JSEXT1.stat(this.$path + '/' + name + '.' + ext);
     timestamp[ext]=stat && stat.mtime;
   }
-
-  timestamp.dl=timestamp[JSEXT_config.dlext.substr(1)];
 
   // 2. Build dl file if possible and necessary
 
   var dlobj;
 
-  if (timestamp.c && timestamp.c > timestamp.dl) {
+  if(timestamp.c && timestamp.c > timestamp.so) {
     //clib.puts("ccget "+name);
     JSEXT1.chdirLock(this.$path);
     JSEXT1.C.compile(name+'.c');
-    var stat=JSEXT1.stat(name+JSEXT_config.dlext);
-    timestamp.dl=stat && stat.mtime;
+    var stat = JSEXT1.stat(name + '.so');
+    timestamp.so = stat && stat.mtime;
     JSEXT1.chdirUnlock();
   }
   //clib.puts("dget "+name);
 
-  if (timestamp.dl) {
+  if(timestamp.so) {
     //clib.puts("eget "+name+" "+this.$path);
     JSEXT1.chdirLock(this.$path);
     //clib.puts("dlget "+name);
-    dlobj=Dl(JSEXT_config.curdir + JSEXT_config.sep + name + JSEXT_config.dlext);
+    dlobj = Dl('./' + name + '.so');
     //clib.puts("dlgot "+name);
     JSEXT1.chdirUnlock();
   }

@@ -4,7 +4,7 @@
  */
 
 function(name,extension) {
-  var file=new JSEXT1.File(this.$path+JSEXT_config.sep+name+extension,"r");
+  var file = new JSEXT1.File(this.$path + '/' + name + extension,"r");
   var ret=file.read();
   file.close();
   return ret;

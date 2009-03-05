@@ -12,8 +12,8 @@ function (name,extension) {
     for (var i=w.length; i--;)
       before+="with(this['with']["+i+"])";
     before+="with(this){";
-    return load.call(this, this.$path+JSEXT_config.sep+name+extension,before,"}");
+    return load.call(this, this.$path + '/' + name + extension, before, "}");
   } else {
-    return load.call(this, this.$path+JSEXT_config.sep+name+extension);
+    return load.call(this, this.$path + '/' + name + extension);
   }
 }
