@@ -35,7 +35,7 @@
 function() {
 
   if(environment.HOME && JSEXT1.isdir(environment.HOME + '/.jsext')) {
-    var newglob = new JSEXT1.ActiveDirectory(environment.HOME + '/.jsext', JSEXT1.activate, JSEXT_config);
+    var newglob = new JSEXT1.ActiveDirectory(environment.HOME + '/.jsext', JSEXT1.activate);
     var oldglob=__proto__;
     __proto__=newglob;
     newglob.__proto__=oldglob;
