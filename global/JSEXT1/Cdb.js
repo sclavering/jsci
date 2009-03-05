@@ -47,7 +47,7 @@ Opening an existing cdb file in write mode erases all existing data.
       this['struct cdb_find']=Type.struct();
       this['struct cdb_make']=Type.struct();
       this['struct cdb_rl']=Type.struct();
-      this['dl 0']=Dl("libcdb.so.1");//$path+JSEXT_config.sep+'Cdb'+JSEXT_config.sep+'libcdb'+JSEXT_config.dlext);
+      this['dl 0'] = Dl("libcdb.so.1"); // $path + '/Cdb/libcdb.so';
       this['cdbi_t']=Type.unsigned_int;
       this['cdb_hash']=this['dl 0'].pointer('cdb_hash',Type['function'](Type.unsigned_int,[{'const':true,name:'buf',type:Type.pointer(Type['void'])},{'const':false,name:'len',type:Type.unsigned_int}],false,'cdecl')).$;
       this['cdb_unpack']=this['dl 0'].pointer('cdb_unpack',Type['function'](Type.unsigned_int,[{'const':true,name:'buf',type:Type.array(Type.unsigned_char,4)}],false,'cdecl')).$;
