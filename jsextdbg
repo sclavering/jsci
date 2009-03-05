@@ -7,5 +7,5 @@ cd `dirname $0`
 dn=`pwd`
 echo "run --rcfile global/0-init.js $*" > jsextdbg.cmd
 cd global
-export LD_LIBRARY_PATH=$dn/js/src/Linux_All_OPT.OBJ/:/home/pvv/d/sveinb/jsext/libffi-3.0.5/.libs:/home/pvv/d/sveinb/jsext/tinycdb-0.76:$dn/dist/Linux_All_OPT.OBJ/lib:$dn/libjsext
+export LD_LIBRARY_PATH=$dn/js/src/Linux_All_OPT.OBJ/:$dn/libjsext
 gdb $dn/libjsext/jsext -x ../jsextdbg.cmd
