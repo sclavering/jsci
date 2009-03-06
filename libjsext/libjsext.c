@@ -37,13 +37,8 @@
 
 static char *strip_file_name(char *ini_file);
 
-#ifdef _WIN32
-# include <io.h>
-# include <direct.h>
-#else
 # include <dlfcn.h>
 # include <unistd.h>
-#endif
 
 #include <string.h>
 
@@ -84,14 +79,6 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
 
   config=JS_NewObject(cx, NULL, NULL, NULL);
   argv[0]=OBJECT_TO_JSVAL(config);
-#ifdef _WIN32
-  *rval=JSVAL_TRUE;
-  JS_SetProperty (cx, config, "_WIN32", rval);
-#endif
-#ifdef _WINDOWS
-  *rval=JSVAL_TRUE;
-  JS_SetProperty (cx, config, "_WINDOWS", rval);
-#endif
 #ifdef __unix__
   *rval=JSVAL_TRUE;
   JS_SetProperty (cx, config, "__unix__", rval);
@@ -114,27 +101,10 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
   if (ini_file==NULL) {
     ini_file=getenv("JSEXT_INI");
   }
-
   
-#ifdef _WIN32
-  if (ini_file==NULL) {
-    char *lastslash;
-	char argv0[512];
-    GetModuleFileNameA(0, argv0, 512);
-	ini_file=malloc(strlen(argv0)+30);
-	strcpy(ini_file, argv0);
-	lastslash=strip_file_name(ini_file);
-	if (lastslash)
-		lastslash[1]=0;
-	else
-		ini_file[0]=0;
-	strcat(ini_file, "global\\0-init.js");
-  }
-#else
   if (ini_file==NULL) {
     ini_file=libdir "/jsext/0-init.js";
   }
-#endif
 
   argv[3]=STRING_TO_JSVAL(JS_NewStringCopyZ(cx,getcwd(cwd, 1024)));
 
@@ -195,11 +165,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
 
-#ifdef _WIN32
-  int fd=open(filename,O_RDONLY | O_BINARY);
-#else
   int fd=open(filename,O_RDONLY);
-#endif
   char *buf;
   JSScript *script=0;
   struct stat S;
@@ -297,24 +263,6 @@ dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
     return JS_FALSE;
   }
   
-#ifdef _WIN32
-  {
-  HMODULE handle;
-    
-  handle=LoadLibraryEx(filename, NULL, 0);
-
-  if (!handle) {
-#ifdef UNICODE
-    JSX_ReportException(cx, "can't open dl '%S'. Error code=%d", filename, GetLastError());
-#else
-    JSX_ReportException(cx, "can't open dl '%s'. Error code=%d", filename, GetLastError());
-#endif
-    return JS_FALSE;
-  }
-
-  JSX_init=(JSNative) GetProcAddress(handle,"JSX_init");
-  }
-#else
   void *dl;
     
   dl=dlopen(filename, RTLD_LAZY);
@@ -325,7 +273,6 @@ dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   }
 
   JSX_init=(JSNative) dlsym(dl,"JSX_init");
-#endif
 
   if (JSX_init) { // Call init
     if (!(*JSX_init)(cx, obj, 0, 0, rval))
@@ -343,20 +290,6 @@ dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   return JS_TRUE;
 }
 
-#ifdef _WIN32
-static char *strip_file_name(char *ini_file) {
-    char *lastslash=strrchr(ini_file,'/');
-	char *lastbackslash=strrchr(ini_file,'\\');
-	if (lastslash || lastbackslash) {
-	  if (lastbackslash && (lastbackslash < lastslash ||
-		  !lastslash))
-		  return lastbackslash;
-	  else
-		  return lastslash;
-	} else
-	  return 0;
-}
-#else
 static char *strip_file_name(char *ini_file) {
   char *lastslash=strrchr(ini_file,'/');
   if (lastslash)
@@ -364,4 +297,3 @@ static char *strip_file_name(char *ini_file) {
   else
     return 0;
 }
-#endif

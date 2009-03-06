@@ -1,11 +1,7 @@
 #ifndef _unicodedef_h
 #define _unicodedef_h
 
-#ifdef _WIN32
-#include <windows.h>
-#else
 typedef char TCHAR;
-#endif
 
 #ifdef UNICODE
 #define JS_GetStringTChars JS_GetStringChars

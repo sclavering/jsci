@@ -27,21 +27,13 @@
 
 
 #include <jsapi.h>
-#ifdef _WIN32
-# include <windows.h>
-#else
 # include <getopt.h>
-#endif
 #include "unicodedef.h"
 #include "libjsext.h"
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef _WIN32
-# include <io.h>
-#else
 # include <unistd.h>
-#endif
 #include <string.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -51,18 +43,6 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
 static int eval(JSContext *cx, JSObject *obj, char *expr);
 
 static void printhelp() {
-#ifdef _WIN32
-  puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
-       "Evaluates FILE. If it is an anonymous JavaScript function, arguments are passed to it\n\n"
-       "Options:\n"
-       "/r RCFILE\n"
-       "\tExecute commands from RCFILE instead of the\n"
-	   "\tfile named 0-init.js in the 'global' subdirectory\n"
-       "/e EXPR\n"
-       "\tEvaluate the expression\n"
-       "/?\n"
-       "\tPrint help\n");
-#else
   puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
        "Evaluates FILE. If it is an anonymous JavaScript function, arguments are passed to it\n\n"
        "Options:\n"
@@ -73,7 +53,6 @@ static void printhelp() {
        "\tEvaluate the expression\n"
        "-h, --help\n"
        "\tPrint help\n");
-#endif
 }
 
 void ReportError(char *format, ...) {
@@ -85,23 +64,6 @@ void ReportError(char *format, ...) {
   va_end(va);
 }
 
-#ifdef _WINDOWS
-static void
-my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
-{
-  TCHAR errbuf[1024];
-  errbuf[0]=0;
-#ifdef UNICODE
-  if (report->lineno && report->filename) _snwprintf(errbuf, 1024,L"Line %d in %S:",report->lineno,report->filename);
-  if (message) _snwprintf(errbuf+wcslen(errbuf),1024-wcslen(errbuf),L"%S\n",message);
-  MessageBox(0,errbuf,L"Error",MB_OK);
-#else
-  if (report->lineno && report->filename) _snprintf(errbuf, 1024,"Line %d in %s:",report->lineno,report->filename);
-  if (message) _snprintf(errbuf+strlen(errbuf),1024-strlen(errbuf),"%s\n",message);
-  MessageBox(0,errbuf,"Error",MB_OK);
-#endif
-}
-#else
 static void
 my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
 {
@@ -112,87 +74,11 @@ my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
   if (message)
     fprintf(stderr,"%s\n",message);
 }
-#endif
 
 static void *startthread(void *v) {
 }
 
-#ifdef _WINDOWS
-
-int
-main(int _argc, char **_argv, char **_envp);
-
-/*
-  This function is based on a forum posting by Bo Peng.
-  http://www.mail-archive.com/lyx-devel@lists.lyx.org/msg97790.html
- */
-
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, char* command_line, int show_command)
-{
-
-  int argc=0;
-  int argcap=16;
-  char **argv;
-  int result;
-  char *cs;
-  char filename[_MAX_PATH];
-  
-  // tokenize the arguments
-  
-  cs=command_line;
-  argcap=128;
-  argv=(char **)malloc(sizeof(char *)*argcap);
-  
-  // put the program name into argv[0]
-
-  GetModuleFileNameA(NULL, filename, _MAX_PATH);
-  argv[0] = strdup(filename);
-  argc=1;
-
-  for(;;) {
-    while (*cs==' ') ++cs; // eat spaces between arguments
-    if (!*cs) break;
-    
-    if (argc==argcap) {
-      argcap*=2;
-      argv=(char **)realloc(argv, sizeof(char *)*argcap);
-    }
-    if (*cs=='"') {
-      char *out;
-      cs++;
-      argv[argc++]=cs;
-      out=cs;
-      
-      for(;;) {
-	if (!*cs) break;
-	if (cs[0]=='"' && cs[1]=='"' && cs[2]=='"') cs+=2;
-	else if (cs[0]=='"') break;
-	*(out++)=*(cs++);
-      }
-      *out=0;
-    } else {
-      argv[argc++]=cs;
-      if (strchr(cs,' ')) {
-	cs=strchr(cs,' ');
-	*(cs++)=0;
-      } else {
-	break;
-      }
-    }
-  };
-
-  result = main(argc, argv, 0);
-  
-  free(argv);
-  return result;
-}
-#endif
-
-#ifdef _WIN32
-int optind=1;
-#else
 extern int optind;
-#endif
 
 int
 main(int argc, char **argv, char **envp)
@@ -207,23 +93,6 @@ main(int argc, char **argv, char **envp)
   JSObject *glob;
   int exitcode=0;
 	jsval rval;
-
-#ifdef _WIN32
-
-  while (optind < argc) {
-    if (strcmp(argv[optind],"/r")==0 && argc>optind+1) {
-      rcfile=argv[++optind];
-      optind++;
-    } else if (strcmp(argv[optind],"/?")==0) {
-      printhelp();
-      exit(0);
-    } else if (strcmp(argv[optind],"/e")==0 && argc>optind+1) {
-      evalexpr=argv[++optind];
-      optind++;
-    } else break;
-  }
-  
-#else
 
   for (;;) {
     static struct option long_options[] = {
@@ -252,9 +121,6 @@ main(int argc, char **argv, char **envp)
     if (c == -1)
       break;
   }
-
-#endif
-
 
   rt=JS_NewRuntime(64000000);
   if (!rt) goto failure;
