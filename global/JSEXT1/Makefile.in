@@ -31,7 +31,6 @@ sysconfdir=@sysconfdir@
 bindir=@bindir@
 libdir=@libdir@
 version=@PACKAGE_VERSION@
-JSEXT_version=1_0
 
 CFLAGS=-I C/0-include -shared $(JSAPI_FLAGS) -O3 -fPIC $(XCFLAGS)
 %.so : %.c ; cc $(CFLAGS) $< -o $@

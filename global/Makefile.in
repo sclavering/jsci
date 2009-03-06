@@ -31,9 +31,8 @@ sysconfdir=@sysconfdir@
 bindir=@bindir@
 libdir=@libdir@
 version=@PACKAGE_VERSION@
-JSEXT_version=1
 
-CFLAGS=-I JSEXT$(JSEXT_version)/C/0-include -shared $(JSAPI_FLAGS) -O3 -fPIC $(XCFLAGS)
+CFLAGS=-I JSEXT1/C/0-include -shared $(JSAPI_FLAGS) -O3 -fPIC $(XCFLAGS)
 
 %.so : %.c ; cc $(CFLAGS) $< -o $@
 
@@ -58,14 +57,14 @@ Type.so:	Type.c Pointer.c
 	cc $(CFLAGS) ./Type.so Pointer.c -o Pointer.so -lffi
 
 clib\#__unix__.pch: Pointer.so Type.so 0-makeclib.js
-	$(MAKE) -C JSEXT$(JSEXT_version)/C XCFLAGS="$(XCFLAGS)"
-	$(MAKE) -C JSEXT$(JSEXT_version) XCFLAGS="$(XCFLAGS)"
+	$(MAKE) -C JSEXT1/C XCFLAGS="$(XCFLAGS)"
+	$(MAKE) -C JSEXT1 XCFLAGS="$(XCFLAGS)"
 	../jsext -r 0-makeclib.js -e 1 > clib\#__unix__.pch
 
 clean:
 	../jsext 0-clean.js $(libdir)/jsext
-	$(MAKE) -C JSEXT$(JSEXT_version)/C clean
-	$(MAKE) -C JSEXT$(JSEXT_version) clean
+	$(MAKE) -C JSEXT1/C clean
+	$(MAKE) -C JSEXT1 clean
 	rm -f $(TARGETS)
 
 install:
