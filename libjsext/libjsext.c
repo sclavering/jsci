@@ -200,12 +200,7 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   jsval str;
 
   va_start(va, format);
-#ifdef WIN32
-  msg=JS_malloc(cx, 81);
-  va_start(va, format);
-  len=_vsnprintf(msg,80,format,va);
-  msg[80]=0;
-#else
+
   msg=JS_malloc(cx, 81);
   va_start(va, format);
   len=vsnprintf(msg,80,format,va);
@@ -218,7 +213,7 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   va_start(va, format);
   vsprintf(msg,format,va);
     */
-#endif
+
   va_end(va);
   Str=JS_NewString(cx, msg, len);
   str=STRING_TO_JSVAL(Str);
