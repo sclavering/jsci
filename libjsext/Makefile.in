@@ -41,9 +41,6 @@ TARGETS	= libjsext.so jsext
 
 all:	$(TARGETS)
 
-version.h:	version.h.in
-	sed s\#@ver""sion@#$(version)#g < version.h.in > version.h
-
 install: all
 	install -D jsext $(DESTDIR)$(bindir)
 	install -D libjsext.so $(DESTDIR)$(libdir)
@@ -51,7 +48,7 @@ install: all
 LIBJSEXTOBJ	= libjsext.o
 
 JSEXTOBJ = jsext.o
-jsext:	$(JSEXTOBJ) version.h $(LIBJSEXTOBJ)
+jsext:	$(JSEXTOBJ) $(LIBJSEXTOBJ)
 	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSEXTOBJ) $(LIBJSEXTOBJ) -o jsext -lm -pthread -rdynamic -ljs -ldl
 
 libjsext.so:	$(LIBJSEXTOBJ)

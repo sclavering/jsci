@@ -35,7 +35,6 @@
 #include "unicodedef.h"
 #include "libjsext.h"
 #include <stdlib.h>
-#include "version.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef _WIN32
