@@ -1,4 +1,4 @@
-#include "clib#__unix__.h"
+#include "clib.h"
 
 int call_stat(const char *file_name, struct stat *buf) {
   return stat(file_name, buf);

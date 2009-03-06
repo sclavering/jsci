@@ -16,7 +16,7 @@ function(name, config, _dl, cwd) {
   $path=".";
   $curdir=this;
 
-  clib = ActiveCdb("clib#__unix__.pch");
+  clib = ActiveCdb("clib.pch");
 
   var JSEXT = {
     ActiveCdb: ActiveCdb,

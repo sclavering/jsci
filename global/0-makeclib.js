@@ -31,7 +31,7 @@ function(name, config, _dl, cwd) {
   clib.chdir('..');
   clib.chdir('..');
 //  puts(String(JSEXT1.C.ctoxml(JSEXT1.C.cpp('#include <io.h>'))));
-  var fragment=JSEXT1.C.fragment('#include "clib#__unix__.h"', Dl('./clib#__unix__.so'));
+  var fragment = JSEXT1.C.fragment('#include "clib.h"', Dl('./clib.so'));
   var pch=new JSEXT1.Cdb(fd,'w');
   pch.write(fragment);
   pch.close();
