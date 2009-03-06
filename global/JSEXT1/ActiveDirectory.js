@@ -121,7 +121,6 @@ function(path, handlers) {
   self.$path=path;
   self.$curdir=self;
   self.$checkdates=checkdates;
-  self.$handlers=handlers;
 
   if (!hasOwnProperty.call(self,'$getters')) {
     self.$getters={};
