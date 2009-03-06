@@ -46,11 +46,7 @@ AC_CHECK_LIB([m], [sin])
 #AC_CHECK_LIB([js], [JS_NewContext],,
 #		   [AC_MSG_ERROR([Missing spidermonkey])])
 
-[JSAPI_FLAGS="-D XP_UNIX"; THREADSAFE=""]
-
-# Check for threadsafe spidermonkey
-AC_ARG_ENABLE([threadsafe], [  --enable-threadsafe    Compile with thread support], 
-		   [JSAPI_FLAGS="-D XP_UNIX -D JS_THREADSAFE"; THREADSAFE="JS_THREADSAFE=1"])
+[JSAPI_FLAGS="-D XP_UNIX"]
 
 #AC_CHECK_HEADER([js/jsapi.h],,
 #			[AC_MSG_ERROR([Missing spidermonkey header files])])
@@ -61,7 +57,6 @@ AC_ARG_ENABLE([threadsafe], [  --enable-threadsafe    Compile with thread suppor
 AC_SUBST(JSAPI_FLAGS)
 #AC_SUBST(JSAPI_H_DIR)
 
-AC_SUBST(THREADSAFE)
 AC_SUBST(libdir)
 AC_SUBST(mandir)
 AC_SUBST(bindir)

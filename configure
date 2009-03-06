@@ -667,7 +667,6 @@ LEXLIB
 YACC
 YFLAGS
 JSAPI_FLAGS
-THREADSAFE
 GREP
 EGREP
 ALLOCA
@@ -1251,11 +1250,6 @@ if test -n "$ac_init_help"; then
      short | recursive ) echo "Configuration of jsext 1.1:";;
    esac
   cat <<\_ACEOF
-
-Optional Features:
-  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
-  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-threadsafe    Compile with thread support
 
 Some influential environment variables:
   CC          C compiler command
@@ -3295,14 +3289,7 @@ fi
 #AC_CHECK_LIB([js], [JS_NewContext],,
 #		   [AC_MSG_ERROR([Missing spidermonkey])])
 
-JSAPI_FLAGS="-D XP_UNIX"; THREADSAFE=""
-
-# Check for threadsafe spidermonkey
-# Check whether --enable-threadsafe was given.
-if test "${enable_threadsafe+set}" = set; then
-  enableval=$enable_threadsafe; JSAPI_FLAGS="-D XP_UNIX -D JS_THREADSAFE"; THREADSAFE="JS_THREADSAFE=1"
-fi
-
+JSAPI_FLAGS="-D XP_UNIX"
 
 #AC_CHECK_HEADER([js/jsapi.h],,
 #			[AC_MSG_ERROR([Missing spidermonkey header files])])
@@ -3312,7 +3299,6 @@ fi
 
 
 #AC_SUBST(JSAPI_H_DIR)
-
 
 
 
@@ -6159,7 +6145,6 @@ LEXLIB!$LEXLIB$ac_delim
 YACC!$YACC$ac_delim
 YFLAGS!$YFLAGS$ac_delim
 JSAPI_FLAGS!$JSAPI_FLAGS$ac_delim
-THREADSAFE!$THREADSAFE$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 ALLOCA!$ALLOCA$ac_delim
@@ -6167,7 +6152,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 58; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 57; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
