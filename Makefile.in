@@ -49,7 +49,6 @@ clean:
 
 install:
 	install -D js/src/Linux_All_OPT.OBJ/libjs.so $(DESTDIR)$(libdir)/libjs.so
-	install -D man/jsext.1 $(DESTDIR)$(mandir)/man1/jsext.1
 	$(MAKE) -C libjsext install DESTDIR=$(DESTDIR)
 	$(MAKE) -C global install DESTDIR=$(DESTDIR)
 
