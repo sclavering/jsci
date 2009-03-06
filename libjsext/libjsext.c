@@ -66,11 +66,6 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
 
   JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
 
-#ifdef JS_THREADSAFExx
-  JS_BeginRequest(cx);
-  JS_SetContextThread(cx);
-#endif
-
   argv=JS_malloc(cx, sizeof(jsval)*4);
   for(i=0; i<4; i++) {
     argv[i]=JSVAL_VOID;
@@ -90,10 +85,6 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
 #ifdef __FreeBSD__
   *rval=JSVAL_TRUE;
   JS_SetProperty (cx, config, "__FreeBSD__", rval);
-#endif
-#ifdef JS_THREADSAFE
-  *rval=JSVAL_TRUE;
-  JS_SetProperty (cx, config, "JS_THREADSAFE", rval);
 #endif
   *rval=JSVAL_TRUE;
   JS_SetProperty (cx, config, "host", rval);
@@ -140,11 +131,6 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
   JS_free(cx, argv);
   free(ifdup);
   
-#ifdef JS_THREADSAFExx
-  JS_EndRequest(cx);
-  JS_ClearContextThread(cx);
-#endif
-
   return JS_TRUE;
 
  failure:
@@ -153,14 +139,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
   JS_free(cx, argv);
   if (ifdup)
     free(ifdup);
-  
-#ifdef JS_THREADSAFExx
-  JS_EndRequest(cx);
-  JS_ClearContextThread(cx);
-#endif
-
   return JS_FALSE;
-  
 }
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {

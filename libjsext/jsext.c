@@ -128,11 +128,6 @@ main(int argc, char **argv, char **envp)
   cx=JS_NewContext(rt, 65536);
   if (!cx) goto failure;
 
-  #ifdef JS_THREADSAFE
-  JS_BeginRequest(cx);
-  //  JS_SetContextThread(cx);
-  #endif
-
   //  JS_SetOptions(cx, JSOPTION_VAROBJFIX);
   JS_SetErrorReporter(cx, my_ErrorReporter);
 
@@ -165,9 +160,6 @@ main(int argc, char **argv, char **envp)
 
   JS_RemoveRoot(cx, &rval);
 
-#ifdef JS_THREADSAFE
-  JS_EndRequest(cx);
-#endif
   JS_DestroyContext(cx);
   JS_DestroyRuntime(rt);
   
