@@ -28,7 +28,6 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 bindir=@bindir@
 libdir=@libdir@
-mandir=@mandir@
 version=@PACKAGE_VERSION@
 
 all:

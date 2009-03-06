@@ -3307,7 +3307,6 @@ JSAPI_FLAGS="-D XP_UNIX"
 
 
 
-
 # Checks for header files.
 
 { echo "$as_me:$LINENO: checking for grep that handles long lines and -e" >&5

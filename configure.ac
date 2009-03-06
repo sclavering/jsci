@@ -58,7 +58,6 @@ AC_SUBST(JSAPI_FLAGS)
 #AC_SUBST(JSAPI_H_DIR)
 
 AC_SUBST(libdir)
-AC_SUBST(mandir)
 AC_SUBST(bindir)
 AC_SUBST(prefix)
 AC_SUBST(sysconfdir)
