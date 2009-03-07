@@ -5,7 +5,7 @@
   ### Invoked with a command line ###
 
   If JSEXT is called with command-line arguments, then
-  the first of them should be a .js or .jsx file. *shell* will
+  the first of them should be a .js file. *shell* will
   load that file and interpret it. If it evaluates to a function,
   i.e. if the last statement in the file is a function definition,
   that function will be called with the remaining command-line
