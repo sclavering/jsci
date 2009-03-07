@@ -36,10 +36,12 @@ function() {
   if(environment.JSEXT_FCGI) {
     return JSEXT1.fcgi();
   }
+
   if(environment.GATEWAY_INTERFACE) {
     new JSEXT1.CGI();
     return;
   }
+
   if(arguments.length) { // execute a program
     var progdir=JSEXT1.path(arguments[0]);
     var progfile=JSEXT1.filename(arguments[0]);
@@ -69,9 +71,8 @@ function() {
 	print("\n");
       }
     }
-
-  } else {
-    return JSEXT1.interactive();
+    return;
   }
 
+  return JSEXT1.interactive();
 }
