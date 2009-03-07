@@ -227,32 +227,24 @@ function(path, handlers) {
 
 
   function checkdates() {
-    //    clib.puts("checkdates "+self.$path);
-    if ($curdir.stat(path).mtime>self.$mydate) {
-      //	clib.puts("dirupdate");
-      ActiveDirectory.call(self, path, handlers);
-    }
+    if($curdir.stat(path).mtime > self.$mydate) ActiveDirectory.call(self, path, handlers);
 
-    for (var file in self.$loaded) {
-      var prop=self.$loaded[file];
-      var propname=String(prop);
+    for(var file in self.$loaded) {
+      var prop = self.$loaded[file];
+      var propname = String(prop);
       var stat = $curdir.stat(self.$path + '/' + file);
-      if (!stat || stat.mtime>prop.mtime) {
-//		clib.puts("refresh "+file);
-	delete self[propname];
-	delete self.$loaded[file];
- 	delete self.$dirs[propname];
-	if (stat) {
-	  //	  	  clib.puts(String(self.$getters[propname]));
-	  self.__defineGetter__(propname, self.$getters[propname]);
-	  self.__defineSetter__(propname, getDefaultSetter(propname));
-	}
+      if(!stat || stat.mtime > prop.mtime) {
+        delete self[propname];
+        delete self.$loaded[file];
+        delete self.$dirs[propname];
+        if(stat) {
+          self.__defineGetter__(propname, self.$getters[propname]);
+          self.__defineSetter__(propname, getDefaultSetter(propname));
+        }
       }
     }
 
-    for (var dir in self.$dirs) {
-      self.$dirs[dir].$checkdates();
-    }
+    for(var dir in self.$dirs) self.$dirs[dir].$checkdates();
   }
 
 }
