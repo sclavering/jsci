@@ -1,10 +1,7 @@
 /*
-    init(name, config, _dl, cwd, ...)
-
+init(name, __obsolete, _dl, cwd, ...)
 */
-
-
-function(name, config, _dl, cwd) {
+function(name, __obsolete, _dl, cwd) {
   var mods = ['Type', 'Pointer', 'load', 'Dl'];
   for(var i in mods) this[mods[i]] = _dl('./' + mods[i] + '.so');
 
@@ -38,13 +35,13 @@ function(name, config, _dl, cwd) {
   for (var i in mods) JSEXT[mods[i]] = js.call(JSEXT, mods[i], ".js");
 
   JSEXT.$path = JSEXT.getcwd() + '/JSEXT1';
-  JSEXT.activate = new JSEXT.ActiveDirectory(JSEXT.getcwd() + '/JSEXT1/activate', { js: js }, config);
+  JSEXT.activate = new JSEXT.ActiveDirectory(JSEXT.getcwd() + '/JSEXT1/activate', { js: js });
 
-  JSEXT.ActiveDirectory.call(this, JSEXT.getcwd(), JSEXT.activate, config);
+  JSEXT.ActiveDirectory.call(this, JSEXT.getcwd(), JSEXT.activate);
 
   $dirs.JSEXT=JSEXT;
 
-  JSEXT.ActiveDirectory.call(JSEXT, JSEXT.$path, JSEXT.activate, config);
+  JSEXT.ActiveDirectory.call(JSEXT, JSEXT.$path, JSEXT.activate);
 
   JSEXT.chdir(cwd);
 
