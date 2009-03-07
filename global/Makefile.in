@@ -60,12 +60,3 @@ clib.pch: Pointer.so Type.so 0-makeclib.js
 	$(MAKE) -C JSEXT1/C XCFLAGS="$(XCFLAGS)"
 	$(MAKE) -C JSEXT1 XCFLAGS="$(XCFLAGS)"
 	../jsext -r 0-makeclib.js -e 1 > clib.pch
-
-clean:
-	../jsext 0-clean.js $(libdir)/jsext
-	$(MAKE) -C JSEXT1/C clean
-	$(MAKE) -C JSEXT1 clean
-	rm -f $(TARGETS)
-
-install:
-	../jsext 0-install.js $(DESTDIR)$(libdir)/jsext

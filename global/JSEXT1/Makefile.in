@@ -40,7 +40,3 @@ all:	ActiveCdb.so
 
 ActiveCdb.so:	ActiveCdb.c
 	cc $(CFLAGS) ActiveCdb.c -o ActiveCdb.so -lcdb
-
-clean:
-	rm -f $(TARGETS)
-

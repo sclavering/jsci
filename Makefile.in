@@ -37,20 +37,3 @@ all:
 	cp js/src/*.h js/src/*.tbl js/src/*.msg global/JSEXT1/C/0-include
 	$(MAKE) -C libjsext XCFLAGS="$(XCFLAGS)"
 	$(MAKE) -C global XCFLAGS="$(XCFLAGS)"
-
-clean:
-	$(MAKE) -C global clean
-	$(MAKE) -C js/src -f Makefile.ref clean
-	rm -rf js/src/Linux_All_OPT.OBJ
-	rm -f js/src/jsautocfg.h
-	rm -rf global/JSEXT1/C/0-include
-	$(MAKE) -C libjsext clean
-
-install:
-	install -D js/src/Linux_All_OPT.OBJ/libjs.so $(DESTDIR)$(libdir)/libjs.so
-	$(MAKE) -C libjsext install DESTDIR=$(DESTDIR)
-	$(MAKE) -C global install DESTDIR=$(DESTDIR)
-
-distclean:	clean
-	rm -f Makefile config.status config.log *~ libjsext/Makefile global/Makefile global/JSEXT1/Makefile
-	rm -rf autom4te.cache

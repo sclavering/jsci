@@ -41,10 +41,6 @@ TARGETS	= libjsext.so jsext
 
 all:	$(TARGETS)
 
-install: all
-	install -D jsext $(DESTDIR)$(bindir)
-	install -D libjsext.so $(DESTDIR)$(libdir)
-
 LIBJSEXTOBJ	= libjsext.o
 
 JSEXTOBJ = jsext.o
@@ -53,9 +49,3 @@ jsext:	$(JSEXTOBJ) $(LIBJSEXTOBJ)
 
 libjsext.so:	$(LIBJSEXTOBJ)
 	$(CC) $(JSAPI_FLAGS) $(LIBJSEXTOBJ) -fPIC -g -shared -o libjsext.so
-
-clean	:
-	rm -f *.o $(TARGETS) *~
-
-distclean:	clean
-	rm -f Makefile
