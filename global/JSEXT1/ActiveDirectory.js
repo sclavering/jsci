@@ -89,18 +89,6 @@ Calling as a function
 If ActiveDirectory is called as a function rather than as a constructor, it will populate the _this_ object with the
 properties stored in the given directory.
 
-Directory-wide _with_
----
-
-A file named _with.js_ in a directory causes all functions in
-that directory and subdirectories to
-be interpreted in the _with_ context specified by
-_with.js_. _with.js_ should be a JavaScript array literal containing
-a list of objects to be included in the scope chain. The first element
-will be searched first. Example:
-
-    [JSEXT1, my_libraries]
-
 */
 
 function(path, handlers) {
@@ -225,10 +213,6 @@ function(path, handlers) {
       ActiveDirectory.call(val, newpath, handlers);
       val.$name=propname;
       self[propname].$parent=self;
-      if (self['with'] && !self[propname].$getters['with'])
-	self[propname]['with']=self['with'];
-
-
       return val;
     }
   }
