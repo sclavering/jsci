@@ -192,42 +192,39 @@ function(path, handlers) {
     }
   }
 
-  function getDefaultSetter(propname) {
 
+  function getDefaultSetter(propname) {
     return function(value) {
       delete self[propname];
-      self[propname]=value;
+      self[propname] = value;
     }
-
   }
+
 
   function getGetter(propname, filename, extension) {
     return function() {
-      //	      clib.puts("getting "+propname);
       var olddir;
 
       delete self[propname];
-      self[propname]=undefined;
+      self[propname] = undefined;
       try {
-	var val = handlers[extension].call(self, filename, "."+extension);
-	var check = new String(propname);
-	check.mtime = $curdir.stat(self.$path + '/' + filename + "." + extension).mtime;
-	self.$loaded[filename+"."+extension]=check;
+        var val = handlers[extension].call(self, filename, "." + extension);
+        var check = new String(propname);
+        check.mtime = $curdir.stat(self.$path + '/' + filename + "." + extension).mtime;
+        self.$loaded[filename + "." + extension] = check;
       } catch (x) {
-	delete self[propname];
-	self.__defineGetter__(propname, arguments.callee);
-	self.__defineSetter__(propname, getDefaultSetter(propname));
-	throw(x);
+        delete self[propname];
+        self.__defineGetter__(propname, arguments.callee);
+        self.__defineSetter__(propname, getDefaultSetter(propname));
+        throw(x);
       }
 
-	//	      clib.puts("got "+propname);
-
-      if (self[propname]===undefined)
-	self[propname] = val;
+      if(self[propname] === undefined) self[propname] = val;
 
       return val;
     }
   }
+
 
   function checkdates() {
     //    clib.puts("checkdates "+self.$path);
