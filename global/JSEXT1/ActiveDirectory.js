@@ -97,8 +97,7 @@ function(path, handlers) {
   var subdirs=[];
   var self=this;
 
-	// Always use 'self' because 'this' may be down the prototype chain somewhere
-	// when the ActiveDirectory object is the prototype of another object
+  // Always use 'self' because 'this' may be down the prototype chain somewhere when the ActiveDirectory object is the prototype of another object
 
   var ActiveDirectory=arguments.callee;
 
@@ -119,29 +118,28 @@ function(path, handlers) {
 
   var parts;
 
-  for (var i in dir)
-    if (hasOwnProperty.call(dir,i)) {
-      var filename=dir[i];
-      parts=filename.match(/^(([^ -@][^#\.]*)(#([^\.]*))?)(\.(.*))?/);
-      
-      if (parts && !parts[4]) {
-	if (parts[5]) {
-	  var propname=parts[2];
-	  var extension=parts[6];
-	  if (handlers[extension] && !hasOwnProperty.call(self,propname) && propname!="valueOf") {
-	    self.$getters[propname]=getGetter(propname, parts[1], extension);
-	    //	  delete self[propname];
-	    self.__defineGetter__(propname, self.$getters[propname]);
-	    self.__defineSetter__(propname, getDefaultSetter(propname));
-	  } else if (handlers[extension] && propname=="prototype") {
-	    self.prototype = handlers[extension].call(self, parts[1], '.'+extension);
-	    //	  getGetter(propname, parts[1], extension).call(self);
-	  }
-	} else if ($curdir.isdir(path + '/' + filename)) {
-	  subdirs.push(parts);
-	}
+  for(var i in dir) {
+    if(!hasOwnProperty.call(dir, i)) continue;
+
+    var filename = dir[i];
+    parts = filename.match(/^(([^ -@][^#\.]*)(#([^\.]*))?)(\.(.*))?/);
+
+    if(!parts || parts[4]) continue;
+
+    if(parts[5]) {
+      var propname=parts[2];
+      var extension=parts[6];
+      if(handlers[extension] && !hasOwnProperty.call(self, propname) && propname != "valueOf") {
+        self.$getters[propname] = getGetter(propname, parts[1], extension);
+        self.__defineGetter__(propname, self.$getters[propname]);
+        self.__defineSetter__(propname, getDefaultSetter(propname));
+      } else if(handlers[extension] && propname == "prototype") {
+        self.prototype = handlers[extension].call(self, parts[1], '.' + extension);
       }
+    } else if($curdir.isdir(path + '/' + filename)) {
+      subdirs.push(parts);
     }
+  }
 
   for (var i in subdirs)
     if (hasOwnProperty.call(subdirs,i)) {
