@@ -141,10 +141,12 @@ function(path, handlers) {
     }
   }
 
-  for (var i in subdirs)
-    if (hasOwnProperty.call(subdirs,i)) {
-    var parts=subdirs[i];
-    if (hasOwnProperty.call(self,parts[2]) && !self.$getters[parts[2]]) {
+
+  for(var i in subdirs) {
+    if(!hasOwnProperty.call(subdirs, i)) continue;
+
+    var parts = subdirs[i];
+    if(hasOwnProperty.call(self, parts[2]) && !self.$getters[parts[2]]) {
       // When making a function, the 'prototype' property will be automatically created.
       // If there is also a 'prototype' directory, then read it right away - not possible
       // to defer. The test above works because the 'prototype' property will have been
@@ -153,27 +155,19 @@ function(path, handlers) {
       // However, when ActiveDirectory is called to refresh an existing directory,
       // it must be prevented from doing self.
 
-	if (!self.__lookupGetter__(parts[2])) {
-
-	if (typeof(self)=="function" && parts[0]=="prototype") {
-	  var val=self[parts[1]];
-		/*
-             if (hasOwnProperty.call(self,"$glocal")) {
-                           val.__proto__=self.$glocal;
-               val.$glocal=self.$glocal;
-             }
-                   */
-	  var newpath = path + '/' + parts[0];
-	  ActiveDirectory.call(val, newpath, handlers);
-	}
-
-	self[parts[2]].$curdir=self[parts[2]];
-	self[parts[2]].$name=parts[2];
-	self[parts[2]].$parent=self;
+      if(!self.__lookupGetter__(parts[2])) {
+        if(typeof(self) == "function" && parts[0] == "prototype") {
+          var val = self[parts[1]];
+          var newpath = path + '/' + parts[0];
+          ActiveDirectory.call(val, newpath, handlers);
+        }
+        self[parts[2]].$curdir = self[parts[2]];
+        self[parts[2]].$name = parts[2];
+        self[parts[2]].$parent = self;
       }
 
     } else {
-      self.$getters[parts[2]]=getSubdirGetter(parts[2], parts[0], hasOwnProperty.call(self.$getters, parts[2]) && self.$getters[parts[2]]);
+      self.$getters[parts[2]] = getSubdirGetter(parts[2], parts[0], hasOwnProperty.call(self.$getters, parts[2]) && self.$getters[parts[2]]);
       self.__defineGetter__(parts[2], self.$getters[parts[2]]);
       self.__defineSetter__(parts[2], getDefaultSetter(parts[2]));
     }
