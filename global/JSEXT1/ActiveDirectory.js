@@ -173,33 +173,16 @@ function(path, handlers) {
     }
   }
 
-  /*
-     if (hasOwnProperty.call(self,"glocal")) {
-                   print("have glocal!\n");
-         self.glocal.__proto__=self.__proto__;
-         self.__proto__=self.glocal;
-         self.$glocal=self.glocal;
-     }  
-     */
 
   function getSubdirGetter(propname, filename, oldgetter) {
     return function() {
-      if (oldgetter) {
-	var val=oldgetter.call(self);
+      if(oldgetter) {
+        var val = oldgetter.call(self);
       } else {
-	delete self[propname];
-	var val=(self[propname]={});
-	//					val.__proto__=self;
+        delete self[propname];
+        var val = (self[propname] = {});
       }
-
-      self.$dirs[propname]=val;
-
-      /*
-         if (hasOwnProperty.call(self,"$glocal")) {
-           val.__proto__=self.$glocal;
-           val.$glocal=self.$glocal;
-         }
-         */
+      self.$dirs[propname] = val;
 
       var newpath = path + '/' + filename;
       ActiveDirectory.call(val, newpath, handlers);
