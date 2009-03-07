@@ -41,7 +41,6 @@ are not terminated by ; (semicolon) is printed on the console.
 
 	if (cons.eof()) break;
 	if (js.isCompilableUnit(cmdbuf)) {
-	  global.$checkdates();
 	  execline(cmdbuf);
 	  cmdbuf="";
 		

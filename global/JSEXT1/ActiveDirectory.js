@@ -79,8 +79,6 @@ Properties of ActiveDirectory objects
 * _$curdir_: [[Object]] which contains the current ActiveDirectory
 * _$parent_: [[Object]] which contains the parent ActiveDirectory
 * _$path_: [[String]] which contains the path of the directory
-* _$checkdates_: [[Function]] which can be called to update any properties
-  whose files have been updated on disk.
 
 Calling as a function
 ---
@@ -90,8 +88,10 @@ If ActiveDirectory is called as a function rather than as a constructor, it will
 properties stored in the given directory.
 
 */
+(function() {
 
-function(path, handlers) {
+
+function ActiveDirectory(path, handlers) {
   var dir=$curdir.dir(path);
   var filename;
   var subdirs=[];
@@ -99,15 +99,12 @@ function(path, handlers) {
 
   // Always use 'self' because 'this' may be down the prototype chain somewhere when the ActiveDirectory object is the prototype of another object
 
-  var ActiveDirectory=arguments.callee;
-
   handlers = handlers || JSEXT1.activate;
 
   var hasOwnProperty=Object.prototype.hasOwnProperty;
 
   self.$path=path;
   self.$curdir=self;
-  self.$checkdates=checkdates;
 
   if (!hasOwnProperty.call(self,'$getters')) {
     self.$getters={};
@@ -224,28 +221,9 @@ function(path, handlers) {
       return val;
     }
   }
-
-
-  function checkdates() {
-    if($curdir.stat(path).mtime > self.$mydate) ActiveDirectory.call(self, path, handlers);
-
-    for(var file in self.$loaded) {
-      var prop = self.$loaded[file];
-      var propname = String(prop);
-      var stat = $curdir.stat(self.$path + '/' + file);
-      if(!stat || stat.mtime > prop.mtime) {
-        delete self[propname];
-        delete self.$loaded[file];
-        delete self.$dirs[propname];
-        if(stat) {
-          self.__defineGetter__(propname, self.$getters[propname]);
-          self.__defineSetter__(propname, getDefaultSetter(propname));
-        }
-      }
-    }
-
-    for(var dir in self.$dirs) self.$dirs[dir].$checkdates();
-  }
-
 }
 
+
+return ActiveDirectory;
+
+})()
