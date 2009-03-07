@@ -38,9 +38,6 @@ function(name, __obsolete, _dl, cwd) {
   JSEXT.activate = new JSEXT.ActiveDirectory(JSEXT.getcwd() + '/JSEXT1/activate', { js: js });
 
   JSEXT.ActiveDirectory.call(this, JSEXT.getcwd(), JSEXT.activate);
-
-  $dirs.JSEXT=JSEXT;
-
   JSEXT.ActiveDirectory.call(JSEXT, JSEXT.$path, JSEXT.activate);
 
   JSEXT.chdir(cwd);

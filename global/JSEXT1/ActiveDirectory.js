@@ -106,12 +106,7 @@ function ActiveDirectory(path, handlers) {
   self.$path=path;
   self.$curdir=self;
 
-  if (!hasOwnProperty.call(self,'$getters')) {
-    self.$getters={};
-    self.$loaded={};
-    self.$dirs={};
-    self.$mydate=$curdir.stat(path).mtime;
-  }
+  if(!hasOwnProperty.call(self, '$getters')) self.$getters = {};
 
   var parts;
 
@@ -179,7 +174,6 @@ function ActiveDirectory(path, handlers) {
         delete self[propname];
         var val = (self[propname] = {});
       }
-      self.$dirs[propname] = val;
 
       var newpath = path + '/' + filename;
       ActiveDirectory.call(val, newpath, handlers);
@@ -208,7 +202,6 @@ function ActiveDirectory(path, handlers) {
         var val = handlers[extension].call(self, filename, "." + extension);
         var check = new String(propname);
         check.mtime = $curdir.stat(self.$path + '/' + filename + "." + extension).mtime;
-        self.$loaded[filename + "." + extension] = check;
       } catch (x) {
         delete self[propname];
         self.__defineGetter__(propname, arguments.callee);
