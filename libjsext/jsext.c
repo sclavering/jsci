@@ -110,10 +110,10 @@ main(int argc, char **argv, char **envp)
       {"eval", 1, 0, 'e'},
       {0, 0, 0, 0}
     };
-    
+
     int c = getopt_long (argc, argv, "r:he:",
 			 long_options,0);
-    
+
     switch(c) {
     case 'e':
       evalexpr=optarg;
@@ -171,9 +171,9 @@ main(int argc, char **argv, char **envp)
 
   JS_DestroyContext(cx);
   JS_DestroyRuntime(rt);
-  
+
   return exitcode;
-  
+
  failure:
   if (cx) JS_DestroyContext(cx);
   if (rt) JS_DestroyRuntime(rt);
@@ -193,7 +193,7 @@ static int eval(JSContext *cx, JSObject *obj, char *expr) {
 
   scrobj=JS_NewScriptObject(cx, script);
   JS_AddRoot(cx, &scrobj);
-  
+
   if (!JS_ExecuteScript(cx, obj, script, &tmpval))
     goto failure;
 
@@ -257,7 +257,7 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
 
   for (i=0; i<argc; i++) {
     JS_RemoveRoot(cx, jsargv+i);
-  }  
+  }
 
   JS_free(cx,jsargv);
 
