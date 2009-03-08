@@ -87,7 +87,7 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memset putenv setenv strchr strcspn strdup strspn strstr])
 
 AC_CONFIG_FILES([Makefile
-		 libjsext/Makefile
+                 libjsext/Makefile
                  global/Makefile
                  global/JSEXT1/Makefile])
 AC_OUTPUT
