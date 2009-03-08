@@ -29,16 +29,17 @@ function(name, __obsolete, _dl, cwd) {
 
   this.JSEXT1 = JSEXT;
 
-  const js = xload('JSEXT1/activate/js.js');
+  const activate = xload('JSEXT1/activate.js');
+  const js = activate.js;
 
   var mods = ['getcwd', 'os', 'dir', 'stat', 'isdir', 'ActiveDirectory'];
   for (var i in mods) JSEXT[mods[i]] = js.call(JSEXT, mods[i], ".js");
 
   JSEXT.$path = JSEXT.getcwd() + '/JSEXT1';
-  JSEXT.activate = new JSEXT.ActiveDirectory(JSEXT.getcwd() + '/JSEXT1/activate', { js: js });
+  JSEXT.activate = activate;
 
-  JSEXT.ActiveDirectory.call(this, JSEXT.getcwd(), JSEXT.activate);
-  JSEXT.ActiveDirectory.call(JSEXT, JSEXT.$path, JSEXT.activate);
+  JSEXT.ActiveDirectory.call(this, JSEXT.getcwd(), activate);
+  JSEXT.ActiveDirectory.call(JSEXT, JSEXT.$path, activate);
 
   JSEXT.chdir(cwd);
 
