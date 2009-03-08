@@ -37,15 +37,10 @@ CFLAGS	= -O3 $(JSAPI_FLAGS) -Dsysconfdir=\"$(sysconfdir)\" -I../js/src -Dlibdir=
 LFLAGS	= 
 LDFLAGS	= -L../js/src/Linux_All_OPT.OBJ
 
-TARGETS	= libjsext.so jsext
+TARGETS	= jsext
 
 all:	$(TARGETS)
 
-LIBJSEXTOBJ	= libjsext.o
-
 JSEXTOBJ = jsext.o
-jsext:	$(JSEXTOBJ) $(LIBJSEXTOBJ)
-	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSEXTOBJ) $(LIBJSEXTOBJ) -o jsext -lm -pthread -rdynamic -ljs -ldl
-
-libjsext.so:	$(LIBJSEXTOBJ)
-	$(CC) $(JSAPI_FLAGS) $(LIBJSEXTOBJ) -fPIC -g -shared -o libjsext.so
+jsext:	$(JSEXTOBJ)
+	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSEXTOBJ) -o jsext -lm -pthread -rdynamic -ljs -ldl
