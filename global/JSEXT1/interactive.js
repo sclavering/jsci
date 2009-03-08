@@ -20,7 +20,7 @@ function interactive() {
     cons = Console.open({
       prompt: normalprompt,
       histfile: environment.HOME + "/.jsext_history",
-      complete: arguments.callee.completefunc,
+      complete: completefunc,
     });
 
     // Make a function using the Function constructor to avoid closure
