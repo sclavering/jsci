@@ -273,7 +273,6 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
 
 
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
-  JSObject *config;
   jsval *argv;
   int i;
   char *ifdup=0;
@@ -281,31 +280,15 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   char *filename;
   JSFunction *jsfun;
   char cwd[1024];
+  int init_argc = 2;
 
   JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
 
-  argv=JS_malloc(cx, sizeof(jsval)*4);
-  for(i=0; i<4; i++) {
+  argv = JS_malloc(cx, sizeof(jsval) * init_argc);
+  for(i = 0; i != init_argc; ++i) {
     argv[i]=JSVAL_VOID;
     JS_AddRoot(cx, argv+i);
   }
-
-  config=JS_NewObject(cx, NULL, NULL, NULL);
-  argv[0]=OBJECT_TO_JSVAL(config);
-#ifdef __unix__
-  *rval=JSVAL_TRUE;
-  JS_SetProperty (cx, config, "__unix__", rval);
-#endif
-#ifdef __linux__
-  *rval=JSVAL_TRUE;
-  JS_SetProperty (cx, config, "__linux__", rval);
-#endif
-#ifdef __FreeBSD__
-  *rval=JSVAL_TRUE;
-  JS_SetProperty (cx, config, "__FreeBSD__", rval);
-#endif
-  *rval=JSVAL_TRUE;
-  JS_SetProperty (cx, config, "host", rval);
 
   char *ini_file = getenv("JSEXT_INI");
 
@@ -313,7 +296,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
     ini_file=libdir "/jsext/0-init.js";
   }
 
-  argv[3]=STRING_TO_JSVAL(JS_NewStringCopyZ(cx,getcwd(cwd, 1024)));
+  argv[1] = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
 
   ifdup=strdup(ini_file);
   lastslash=strip_file_name(ifdup);
@@ -329,34 +312,23 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
 
   jsfun=JS_NewFunction(cx, dl, 0, 0, 0, 0);
 
-  argv[2]=OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
-  argv[1]=OBJECT_TO_JSVAL(config);
-  argv[0]=STRING_TO_JSVAL(JS_NewStringCopyZ(cx,ini_file));
+  argv[0] = OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 
+  JSBool rv = JS_FALSE;
   jsfun=JS_ValueToFunction(cx, *rval);
-  if (!jsfun) {
+  if(jsfun) {
+    rv = JS_CallFunction(cx, obj, jsfun, init_argc, argv, rval);
+  } else {
     JSX_ReportException(cx, "Ini file does not evaluate to a function");
-    goto failure;
   }
 
-  if (!JS_CallFunction(cx, obj, jsfun, 4, argv, rval))
-    goto failure;
-
-  for (i=4; i--;)
-    JS_RemoveRoot(cx, argv+i);
+  for(i = init_argc; i--;) JS_RemoveRoot(cx, argv + i);
   JS_free(cx, argv);
-  free(ifdup);
+  if(ifdup) free(ifdup);
 
-  return JS_TRUE;
-
- failure:
-  for (i=4; i--;)
-    JS_RemoveRoot(cx, argv+i);
-  JS_free(cx, argv);
-  if (ifdup)
-    free(ifdup);
-  return JS_FALSE;
+  return rv;
 }
+
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
 

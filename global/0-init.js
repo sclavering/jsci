@@ -1,7 +1,4 @@
-/*
-init(name, __obsolete, _dl, cwd, ...)
-*/
-function(name, __obsolete, _dl, cwd) {
+function(_dl, cwd) {
   var mods = ['Type', 'Pointer', 'load', 'Dl'];
   for(var i in mods) this[mods[i]] = _dl('./' + mods[i] + '.so');
 

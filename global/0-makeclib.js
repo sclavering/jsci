@@ -1,4 +1,4 @@
-function(name, config, _dl, cwd) {
+function(_dl, cwd) {
   var mods=['Type','Pointer','load','Dl'];
   for(var i in mods) this[mods[i]] = _dl('./' + mods[i] + '.so');
   var ActiveCdb = _dl('./JSEXT1/ActiveCdb.so');
