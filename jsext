@@ -7,4 +7,5 @@ cd `dirname $0`
 dn=`pwd`
 cd - > /dev/null
 export LD_LIBRARY_PATH=$dn/js/src/Linux_All_OPT.OBJ/:$dn/libjsext
-exec $dn/libjsext/jsext --rcfile $dn/global/0-init.js $*
+export JSEXT_INI=$dn/global/0-init.js
+exec $dn/libjsext/jsext $*
