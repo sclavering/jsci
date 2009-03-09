@@ -41,7 +41,7 @@ TARGETS=Type.so Pointer.so Dl.so load.so clib.so clib.pch print.never
 all:	$(TARGETS)
 
 print.never:	print.js
-	../jsext -r 0-init.js 0-build.js
+	JSEXT_INI='0-init.js' ../jsext 0-build.js
 
 Dl.so:	Dl.c Type.so Pointer.so
 	cc $(CFLAGS) ./Pointer.so ./Type.so Dl.c -o Dl.so
@@ -59,4 +59,4 @@ Type.so:	Type.c Pointer.c
 clib.pch: Pointer.so Type.so 0-makeclib.js
 	$(MAKE) -C JSEXT1/C XCFLAGS="$(XCFLAGS)"
 	$(MAKE) -C JSEXT1 XCFLAGS="$(XCFLAGS)"
-	../jsext -r 0-makeclib.js -e 1 > clib.pch
+	JSEXT_INI='0-makeclib.js' ../jsext -e 1 > clib.pch

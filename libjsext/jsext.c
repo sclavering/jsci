@@ -46,7 +46,7 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...);
 static JSBool dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 
 
-JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval);
+JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
 static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[]);
 static int eval(JSContext *cx, JSObject *obj, char *expr);
@@ -55,9 +55,6 @@ static void printhelp() {
   puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
        "Evaluates FILE. If it is an anonymous JavaScript function, arguments are passed to it\n\n"
        "Options:\n"
-       "-r, --rcfile=RCFILE\n"
-       "\tExecute commands from RCFILE instead of the system wide\n"
-       "\tinitialization file" libdir "/jsext/0-init.js\n"
        "-e, --eval=EXPR\n"
        "\tEvaluate the expression\n"
        "-h, --help\n"
@@ -97,7 +94,6 @@ main(int argc, char **argv, char **envp)
   char *buf=0;
   int fd=0;
   JSContext *cx=0;
-  char *rcfile=0;
   char *evalexpr=0;
   JSObject *glob;
   int exitcode=0;
@@ -105,7 +101,6 @@ main(int argc, char **argv, char **envp)
 
   for (;;) {
     static struct option long_options[] = {
-      {"rcfile", 1, 0, 'r'},
       {"help", 0, 0, 'h'},
       {"eval", 1, 0, 'e'},
       {0, 0, 0, 0}
@@ -117,9 +112,6 @@ main(int argc, char **argv, char **envp)
     switch(c) {
     case 'e':
       evalexpr=optarg;
-      break;
-    case 'r':
-      rcfile=optarg;
       break;
     case 'h':
       printhelp();
@@ -150,7 +142,7 @@ main(int argc, char **argv, char **envp)
     goto failure;
 
   JS_AddRoot(cx, &rval);
-  exitcode=!JSX_init(cx, glob, rcfile, &rval);
+  exitcode = !JSX_init(cx, glob, &rval);
 
   if (evalexpr && !exitcode) {
     exitcode=eval(cx, glob, evalexpr);
@@ -280,14 +272,7 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
 
 
 
-/*
-  Initializes jsext with ini_file from
-  global_path if not null
-  environment variable JSEXT_INI if set
-  compiler option $prefix/lib/jsext-$version.js
- */
-
-JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
+JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JSObject *config;
   jsval *argv;
   int i;
@@ -322,9 +307,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, char *ini_file, jsval *rval) {
   *rval=JSVAL_TRUE;
   JS_SetProperty (cx, config, "host", rval);
 
-  if (ini_file==NULL) {
-    ini_file=getenv("JSEXT_INI");
-  }
+  char *ini_file = getenv("JSEXT_INI");
 
   if (ini_file==NULL) {
     ini_file=libdir "/jsext/0-init.js";
