@@ -126,6 +126,7 @@ return function(code, default_dl) {
     }
   }
 
+
   function parse_inner() {
     var tu;
     var ps=new $parent.Progress;
@@ -215,9 +216,7 @@ return function(code, default_dl) {
   function loaddls() {
     // Find dls
 
-    if (default_dl) {
-      this['dl '+(ndl++)]=default_dl;
-    }
+    if(default_dl) this['dl ' + (ndl++)] = default_dl;
 
     var match;
     var pragma;
@@ -239,12 +238,12 @@ return function(code, default_dl) {
       sym[id]="Dl("+filename+")";
       symOrder.push(id);
     }
-
   }
+
 
   function multiDeclaration(decl, dep) {
     var ret=[];
-    for (var length=decl.*.length(); length--;) {
+    for(var length = decl.*.length(); length--; ) {
       var declor=decl.*[length];
       var unidec=declaration(decl, dep, declor);
       if(!unidec || !unidec.id) break;
@@ -253,34 +252,31 @@ return function(code, default_dl) {
     return ret.reverse();
   }
 
+
   function declaration(decl, dep, declor) {
-    var ret=indir(dirtype(decl, dep), declor, dep);
+    var ret = indir(dirtype(decl, dep), declor, dep);
 
     if (ret.fd) {
       var callConv = decl..stdcall.length() ? "stdcall" : "cdecl";
       var dirfunc = "Type['function'](" + ret.type + ",[" + ret.params + "]," + ret.elipsis + ",'" + callConv + "')";
-
       var ret2=indir(dirfunc, ret.fd.*[0], dep);
-
-      if (ret.fd.*[0].name() == "id")
-        ret2.isFunc=true;
-
+      if (ret.fd.*[0].name() == "id") ret2.isFunc = true;
       return ret2;
     }
 
     return ret;
   }
 
-  function link(ident) {
 
-    for (var i=0; i<ndl; i++)
-      if (this['dl '+i].symbolExists(ident)) {
+  function link(ident) {
+    for(var i = 0; i < ndl; i++) {
+      if(this['dl ' + i].symbolExists(ident))
         return i;
-      }
+    }
 //    var warning="Warning: unresolved "+ident;
 //    print(warning,"\n");
-
   }
+
 
   function dirtype(decl, dep) {
     var type;
