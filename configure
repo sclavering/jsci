@@ -5459,7 +5459,8 @@ fi
 done
 
 
-ac_config_files="$ac_config_files Makefile libjsext/Makefile global/Makefile global/JSEXT1/Makefile"
+ac_config_files="$ac_config_files Makefile libjsext/Makefile global/Makefile"
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6031,7 +6032,6 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "libjsext/Makefile") CONFIG_FILES="$CONFIG_FILES libjsext/Makefile" ;;
     "global/Makefile") CONFIG_FILES="$CONFIG_FILES global/Makefile" ;;
-    "global/JSEXT1/Makefile") CONFIG_FILES="$CONFIG_FILES global/JSEXT1/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

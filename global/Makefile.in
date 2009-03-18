@@ -58,5 +58,4 @@ Type.so:	Type.c Pointer.c
 
 clib.jswrapper: Pointer.so Type.so 0-makeclib.js
 	$(MAKE) -C JSEXT1/C XCFLAGS="$(XCFLAGS)"
-	$(MAKE) -C JSEXT1 XCFLAGS="$(XCFLAGS)"
 	JSEXT_INI='0-makeclib.js' ../jsext > clib.jswrapper
