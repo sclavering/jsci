@@ -7,19 +7,7 @@
 extern char **environ;
 #include <stdlib.h>
 
-typedef char TCHAR;
-
 #include <stdarg.h>
-
-#ifdef UNICODE
-#define JS_GetStringTChars JS_GetStringChars
-#define JS_NewStringTCopyZ JS_NewUCStringCopyZ
-#define JS_DefineProperty(cx, obj, name, value, getter, setter, attrs) \
-  JS_DefineUCProperty((cx),(obj),(name),wcslen(name),(value),(getter),(setter),(attrs))
-#else
-#define JS_NewStringTCopyZ JS_NewStringCopyZ
-#define JS_GetStringTChars JS_GetStringBytes
-#endif
 
 static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   int len;
@@ -48,15 +36,15 @@ env_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 /* XXX porting may be easy, but these don't seem to supply setenv by default */
 #if !defined XP_BEOS && !defined XP_OS2 && !defined SOLARIS
     JSString *idstr, *valstr;
-    const TCHAR *name, *value;
+    const char *name, *value;
     int rv;
 
     idstr = JS_ValueToString(cx, id);
     valstr = JS_ValueToString(cx, *vp);
     if (!idstr || !valstr)
         return JS_FALSE;
-    name = JS_GetStringTChars(idstr);
-    value = JS_GetStringTChars(valstr);
+    name = JS_GetStringBytes(idstr);
+    value = JS_GetStringBytes(valstr);
 #ifdef XP_WIN
 	if (SetEnvironmentVariable(name,value)) rv=0;
 	else rv=-1;
@@ -94,7 +82,7 @@ static JSBool
 env_enumerate(JSContext *cx, JSObject *obj)
 {
     static JSBool reflected;
-    TCHAR **evp, *name, *value, *es, **origevp;
+    char **evp, *name, *value, *es, **origevp;
 	int nenv=0;
 	int envcap=0;
     JSString *valstr;
@@ -103,7 +91,7 @@ env_enumerate(JSContext *cx, JSObject *obj)
     if (reflected)
         return JS_TRUE;
 
-	evp = environ;//(TCHAR **)JS_GetPrivate(cx, obj);
+	evp = environ; // (char **) JS_GetPrivate(cx, obj);
 
     for (; (name = *evp) != NULL; evp++) {
 		value=name;
@@ -111,7 +99,7 @@ env_enumerate(JSContext *cx, JSObject *obj)
         if (!*value)
             continue;
         *value++ = '\0';
-        valstr = JS_NewStringTCopyZ(cx, value);
+        valstr = JS_NewStringCopyZ(cx, value);
         if (!valstr) {
             ok = JS_FALSE;
         } else {
@@ -135,8 +123,8 @@ env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags,
             JSObject **objp)
 {
     int vallen;
-	JSString *idstr, *valstr;
-    TCHAR *name, *value=0;
+    JSString *idstr, *valstr;
+    char *name, *value = 0;
 
     if (flags & JSRESOLVE_ASSIGNING)
         return JS_TRUE;
@@ -144,10 +132,10 @@ env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags,
     idstr = JS_ValueToString(cx, id);
     if (!idstr)
         return JS_FALSE;
-    name = JS_GetStringTChars(idstr);
+    name = JS_GetStringBytes(idstr);
     value = getenv(name);
     if (value) {
-        valstr = JS_NewStringTCopyZ(cx, value);
+        valstr = JS_NewStringCopyZ(cx, value);
         if (!valstr)
 			goto failure;
         if (!JS_DefineProperty(cx, obj, name, STRING_TO_JSVAL(valstr),
