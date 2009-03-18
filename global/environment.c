@@ -45,30 +45,7 @@ env_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_FALSE;
     name = JS_GetStringBytes(idstr);
     value = JS_GetStringBytes(valstr);
-#ifdef XP_WIN
-	if (SetEnvironmentVariable(name,value)) rv=0;
-	else rv=-1;
-#elif defined HPUX || defined OSF1 || defined IRIX
-    {
-        char *waste = JS_smprintf("%s=%s", name, value);
-        if (!waste) {
-            JS_ReportOutOfMemory(cx);
-            return JS_FALSE;
-        }
-
-        rv = putenv(waste);
-        /*
-         * HPUX9 at least still has the bad old non-copying putenv.
-         *
-         * Per mail from <s.shanmuganathan@digital.com>, OSF1 also has a putenv
-         * that will crash if you pass it an auto char array (so it must place
-         * its argument directly in the char *environ[] array).
-         */
-//        free(waste);
-    }
-#else
     rv = setenv(name, value, 1);
-#endif
     if (rv < 0) {
         JSX_ReportException(cx, "can't set envariable %s to %s", name, value);
         return JS_FALSE;
