@@ -1,6 +1,5 @@
 /*
-
-    obj = parse(code, default_dl)
+obj = parse(code, default_dl)
 
 Examines a C program. The program should already have been processed
 by [[$curdir.cpp]] and [[$curdir.ctoxml]]. Recognizes the programming
@@ -59,22 +58,22 @@ Returns an object containing the following properties:
 
 */
 
-(function(curdir){
+(function(curdir) {
 
-  return function(code, default_dl) {
-    
+return function(code, default_dl) {
+
   // Parse proper
 
   code = curdir.ctoxml(curdir.cpp(code, [curdir.$path + '/0-include']));
-    
+
   // Contains the evaluated code. Used during
   // processing to evaluate sizeof() expressions.
-    
+
   var that={};
-    
+
   // Contains symbols
   var sym={};
-    
+
   // Contains declarations of structs and unions
   var su={};
 
@@ -97,7 +96,7 @@ Returns an object containing the following properties:
   var ndl=0;
 
   loaddls.call(that);
-	var ps=new $parent.Progress;
+  var ps = new $parent.Progress;
   ps.status("parse_inner");
   parse_inner.call(that); // Make 'that' 'this'
   ps.status("initmacro");
@@ -106,8 +105,7 @@ Returns an object containing the following properties:
   allmacros();
 
   ps.status("include_dep");
-  for (var i in expsym)
-    include_dep(i);
+  for(var i in expsym) include_dep(i);
   ps.close();
 
   return {
@@ -122,8 +120,8 @@ Returns an object containing the following properties:
   function include_dep(sym) {
     for (var i in dep[sym]) {
       if (!expsym[i]) {
-	expsym[i] = true;
-	include_dep(i);
+        expsym[i] = true;
+        include_dep(i);
       }
     }
   }
@@ -131,114 +129,92 @@ Returns an object containing the following properties:
   function parse_inner() {
     var tu;
     var ps=new $parent.Progress;
-		
+
     for each(tu in code.*) {
       var tmpdep={};
 
       switch(String(tu.name())) {
 
       case 'pragma':
-
-	var match;
-	if ((match=tu.match(/JSEXT[ \t]+recursion[ \t]+(-?[0-9]+)?/))) {
-	  if (!match[1] || match[1]=="-1")
-	    level=undefined;
-	  else
-	    level=Number(match[1])+1;
-	}
-
-	break;
+        var match;
+        if((match = tu.match(/JSEXT[ \t]+recursion[ \t]+(-?[0-9]+)?/))) {
+          level = !match[1] || match[1]=="-1" ? undefined : Number(match[1]) + 1;
+        }
+        break;
 
       case 'line':
-	ps.status("Parsing "+tu.@file+":"+tu.@line);
-	if (tu.@line==1) {
-	  stack[stack.length]=tu.@file;
-	} else {
-	  stack.length--;
-	}
-
-	break;
+        ps.status("Parsing " + tu.@file + ":" + tu.@line);
+        if(tu.@line == 1) {
+          stack[stack.length] = tu.@file;
+        } else {
+          stack.length--;
+        }
+        break;
 
       case 'd': // declaration
       case 'fdef': // function definition
+        var decl = multiDeclaration(tu, tmpdep);
+        var id, expr;
 
+        for (var i in decl) {
+          if (!decl[i].id) // Struct declaration without typedef
+            break;
 
-	var decl=multiDeclaration(tu, tmpdep);
-	var id, expr;
+          if (tu.typedef.length()) {
+            id = decl[i].id;
+            expr = decl[i].type;
+          } else {
+            // Resolve pointer
+            var dlindex = link.call(that, decl[i].id);
+            if (dlindex === undefined) break;
 
-	for (var i in decl) {
-	  if (!decl[i].id) // Struct declaration without typedef
-	    break;
+            id = decl[i].id;
+            var dlid = "dl " + dlindex;
 
-	  if (tu.typedef.length()) {
-	    
-	    id = decl[i].id;
-	    expr = decl[i].type;
-	    
-	  } else {
-	    
-	    // Resolve pointer
-	    var dlindex = link.call(that, decl[i].id);
-	    
-	    if (dlindex === undefined)
-	      break;
-	    
-	    id = decl[i].id;
-	    var dlid="dl "+dlindex;
-	    
-	    expr = "this['"+dlid+"'].pointer('" +
-	      decl[i].id + "'," +
-	      decl[i].type + ")" +
-	      (decl[i].isFunc ? ".$" : "");
-	    
-	    tmpdep[dlid]=true;
-	  }
-	  
-	  sym[id] = expr;
-	  symOrder.push(id);
-	  
-		try {
-				with(this){eval("this['"+id+"']="+expr)};
-		} catch(x) {
-				print ("Error while evaluating ",id,":\n",x,"\n");
-		}
-	  
-	  dep[id]=tmpdep;
-	  
-	  if (level === undefined || stack.length <= level)
-	    expsym[id]=true;
-	}
+            expr = "this['" + dlid + "'].pointer('" + decl[i].id + "'," + decl[i].type + ")" + (decl[i].isFunc ? ".$" : "");
 
-	break;
-	
+            tmpdep[dlid]=true;
+          }
+
+          sym[id] = expr;
+          symOrder.push(id);
+
+          try {
+            with(this) eval("this['" + id + "']=" + expr);
+          } catch(x) {
+            print("Error while evaluating ", id, ":\n", x, "\n");
+          }
+
+          dep[id] = tmpdep;
+
+          if(level === undefined || stack.length <= level) expsym[id] = true;
+        }
+        break;
+
       case 'define': // macro definition
+        // Defer processing until later
+        if(level === undefined || stack.length <= level) expsym[tu.id] = true;
+        break;
 
-	// Defer processing until later
-	if (level === undefined || stack.length <= level)
-	  expsym[tu.id]=true;
+      } // swtich
+    }
 
-	break;
-
-      }
-		}
-
-		ps.close();
-    
+    ps.close();
   }
+
 
   function allmacros() {
     var ps=new $parent.Progress;
     for each (var def in code.define) {
-	if (expsym[def.id]) {
-	  macro.call(that,def);
-	}
-      }
+      if(expsym[def.id]) macro.call(that,def);
+    }
     ps.close();
   }
 
+
   function loaddls() {
     // Find dls
-  
+
     if (default_dl) {
       this['dl '+(ndl++)]=default_dl;
     }
@@ -248,8 +224,8 @@ Returns an object containing the following properties:
 
     for each(pragma in code.pragma) {
       if ((match=pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(default)|(main))[ \t]*$/))) {
-	if (match[3]) this['dl '+(ndl++)]=Dl(match[3]);
-	else if (match[5]) this['dl '+(ndl++)]=Dl(null);
+        if(match[3]) this['dl ' + (ndl++)] = Dl(match[3]);
+        else if(match[5]) this['dl ' + (ndl++)] = Dl(null);
       }
     }
 
@@ -271,8 +247,7 @@ Returns an object containing the following properties:
     for (var length=decl.*.length(); length--;) {
       var declor=decl.*[length];
       var unidec=declaration(decl, dep, declor);
-      if (!unidec || !unidec.id)
-	break;
+      if(!unidec || !unidec.id) break;
       ret.push(unidec);
     }
     return ret.reverse();
@@ -283,15 +258,12 @@ Returns an object containing the following properties:
 
     if (ret.fd) {
       var callConv = decl..stdcall.length() ? "stdcall" : "cdecl";
-      var dirfunc = "Type['function'](" + ret.type +
-	",["+ret.params+"]," +
-	ret.elipsis + ",'" +
-	callConv + "')";
+      var dirfunc = "Type['function'](" + ret.type + ",[" + ret.params + "]," + ret.elipsis + ",'" + callConv + "')";
 
       var ret2=indir(dirfunc, ret.fd.*[0], dep);
 
       if (ret.fd.*[0].name() == "id")
-	ret2.isFunc=true;
+        ret2.isFunc=true;
 
       return ret2;
     }
@@ -315,86 +287,63 @@ Returns an object containing the following properties:
     var lasttype;
     var size=0;
     var signed="";
-    
-    if (decl.dt.length()) {
 
+    if(decl.dt.length()) {
       // Defined type
-      dep[decl.dt]=true;
-      return "this['"+decl.dt+"']";
+      dep[decl.dt] = true;
+      return "this['" + decl.dt + "']";
+    }
 
-    } else if (decl.struct.length()) {
-
+    if(decl.struct.length()) {
       // Struct declaration
       if (decl.struct.@id.length()) {
-	suDeclare(decl.struct);
-	dep["struct "+decl.struct.@id]=true;
+        suDeclare(decl.struct);
+        dep["struct "+decl.struct.@id]=true;
         return "this['struct "+decl.struct.@id + "']";
-      } else
-        return "Type.struct("+suMembers(decl.struct, dep)+")";
+      }
+      return "Type.struct("+suMembers(decl.struct, dep)+")";
+    }
 
-    } else if (decl.union.length()) {
-
+    if (decl.union.length()) {
       // Union declaration
       if (decl.union.@id.length()) {
-	suDeclare(decl.union);
-	dep["union "+decl.union.@id]=true;
+        suDeclare(decl.union);
+        dep["union " + decl.union.@id] = true;
         return "this['union " + decl.union.@id + "']";
-      } else
-        return "Type.union(" + suMembers(decl.union, dep) + ")";
+      }
+      return "Type.union(" + suMembers(decl.union, dep) + ")";
+    }
 
-    } else if (decl.enum.length()) {
-
+    if (decl.enum.length()) {
       // Enum declaration
       if (level === undefined || stack.length <= level)
         enumMembers.call(that, decl);
       return "Type.int";
+    }
 
-    } else if (decl.t.length()) {
-
+    if(decl.t.length()) {
       // Primitive declaration or return value of a function
       for each (type in decl.t) {
-	if (type == "signed")
-	  signed = "signed_";
-	if (type == "unsigned")
-	  signed = "unsigned_";
-	if (type == "char")
-	  size -= 2;
-	if (type == "short")
-	  size--;
-	if (type == "__int64")
-	  size = 3;
-	if (type == "long" || type == "double")
-	  size++;
-	if (type == "int" ||
-	    type == "long" ||
-	    type == "char" ||
-	    type == "short" ||
-	    type == "__int64" ||
-	    type == "signed" ||
-	    type == "unsigned")
-	  lasttype = "int";
-	if (type == "float" ||
-	    type == "double")
-	  lasttype = "float";
-	if (type == "__builtin_va_list")
-	  lasttype = "valist";
-	if (type == "void")
-	  lasttype = "void";
+        if(type == "signed") signed = "signed_";
+        if(type == "unsigned") signed = "unsigned_";
+        if(type == "char") size -= 2;
+        if(type == "short") size--;
+        if(type == "__int64") size = 3;
+        if(type == "long" || type == "double") size++;
+        if(type == "int" || type == "long" || type == "char" || type == "short" || type == "__int64" || type == "signed" || type == "unsigned") lasttype = "int";
+        if(type == "float" || type == "double") lasttype = "float";
+        if(type == "__builtin_va_list") lasttype = "valist";
+        if(type == "void") lasttype = "void";
       }
-      
-      if (lasttype == "int")
-        size += 2;
-      
-      if (lasttype == "int")
-        return "Type." + signed + ["char","short","int","long","long_long","int64"][size];
-      else if (lasttype == "float")
-        return "Type." + ["float","double","long_double"][size];
-      else
-        return "Type['" + lasttype + "']";
-      
+
+      if(lasttype == "int") size += 2;
+
+      if(lasttype == "int") return "Type." + signed + ["char", "short", "int", "long", "long_long", "int64"][size];
+      if(lasttype == "float") return "Type." + ["float", "double", "long_double"][size];
+      return "Type['" + lasttype + "']";
     }
-    
   }
+
 
   function suMembers(su, dep) {
     var members=[];
@@ -404,18 +353,14 @@ Returns an object containing the following properties:
       var expr=multiDeclaration(member, dep);
 
       for (var i=0; i<expr.length; i++) {
-	if (!expr[i].id) {
-	  expr[i].id="anonymous"+(n++);
-	}
-	
-	members.push("{"+
-		     (expr[i].id ? "name:'" + expr[i].id + "'," : "") +
-		     "type:" + expr[i].type +
-		     "}");
+        if(!expr[i].id) expr[i].id = "anonymous" + (n++);
+
+        members.push("{" + (expr[i].id ? "name:'" + expr[i].id + "'," : "") + "type:" + expr[i].type + "}");
       }
     }
     return members;
   }
+
 
   function enumMembers(decl) {
     var val=0;
@@ -423,24 +368,21 @@ Returns an object containing the following properties:
 
     for each(var sm in decl.enum.*) {
       if (sm.name()=="id") {
-	if (prevsym !== undefined) {
-	  this[prevsym]=val;
-	  sym[prevsym]=String(val);
-	  symOrder.push(prevsym);
-	  expsym[prevsym]=true;
-	  val++;
-	}
-	prevsym=sm;
+        if(prevsym !== undefined) {
+          this[prevsym] = val;
+          sym[prevsym] = String(val);
+          symOrder.push(prevsym);
+          expsym[prevsym] = true;
+          val++;
+        }
+        prevsym = sm;
       } else {
-
-	var expr=inner_eval(sm);
-	try {
-	  with (this) {
-	    val=eval(expr);
-	  }
-	} catch(x) {
-	  print("enumMembers\n",x,"\n");
-	}
+        var expr = inner_eval(sm);
+        try {
+          with(this) val = eval(expr);
+        } catch(x) {
+          print("enumMembers\n", x, "\n");
+        }
       }
     }
     if (prevsym !== undefined) {
@@ -451,6 +393,7 @@ Returns an object containing the following properties:
     }
   }
 
+
   function suDeclare(su_xml) {
 
     var id=su_xml.name()+" "+su_xml.@id;
@@ -459,9 +402,9 @@ Returns an object containing the following properties:
       var expr="Type."+su_xml.name()+"()";
       su[id]=expr;
       try {
-	that[id]=eval(expr);
+        that[id] = eval(expr);
       } catch(x) {
-	print("suDeclare\n",x,"\n",su_xml,"\n");
+        print("suDeclare\n", x, "\n", su_xml, "\n");
       }
     }
 
@@ -471,17 +414,15 @@ Returns an object containing the following properties:
       var members=suMembers(su_xml, tmpdep);
       var exprs=[];
 
-      for (var i=0; i<members.length; i++) {
-	exprs.push("this['"+id+"']["+i+"]="+members[i]);
-      }
+      for(var i = 0; i < members.length; i++) exprs.push("this['" + id + "'][" + i + "]=" + members[i]);
 
-      sym[id]="("+exprs+",this['"+id+"'])";
+      sym[id] = "(" + exprs + ",this['" + id + "'])";
       symOrder.push(id);
 
       try {
-	(function(){with(this){eval(exprs.join(";"))}}).call(that);
+        (function() { with(this) eval(exprs.join(";")); }).call(that);
       } catch(x) {
-	print("suDeclare2\n",x,"\n",su_xml,"\n");
+        print("suDeclare2\n", x, "\n", su_xml, "\n");
       }
 
       dep[id]=tmpdep;
@@ -489,8 +430,8 @@ Returns an object containing the following properties:
 
     if (level === undefined || stack.length <= level)
       expsym[id]=true;
-
   }
+
 
   function inner_eval(expr) {
     if (expr.name()=="c") {
@@ -533,11 +474,12 @@ Returns an object containing the following properties:
     }
   }
 
+
   function indir(dirtype, declor, dep) {
 
     if (!declor) { // void x(int, double)
       return {
-	type: dirtype
+        type: dirtype
       }
     }
 
@@ -547,62 +489,45 @@ Returns an object containing the following properties:
     switch(String(declor.name())) {
 
     case 'ptr':
-      
       var asterisk=declor.a;
       while (asterisk.length()) {
-	a+="Type.pointer(";
-	b+=")";
-	asterisk=asterisk.a;
+        a += "Type.pointer(";
+        b += ")";
+        asterisk = asterisk.a;
       }
-      
       var inner=indir(a + dirtype + b, declor.*[1], dep);
-      //      inner.type=a+inner.type+b;
       return inner;
-      
+
     case 'ix':
       if (declor.*.length()>1) {
-	a="Type.array(";
- 	b=","+eval(inner_eval(declor.*[1]))+")";
+        a = "Type.array(";
+        b = "," + eval(inner_eval(declor.*[1])) + ")";
+      } else { // x[]
+        a = "Type.pointer(";
+        b = ")";
       }
-      else { // x[]
-	a="Type.pointer(";
-	b=")";
-      }
-      
       var inner=indir(a + dirtype + b, declor.*[0], dep);
       //     inner.type=a+inner.type+b;
       return inner;
-      
-    case 'p':
-      
-      return indir(dirtype, declor.*[0], dep);
-      break;
-      
-    case 'bitfield':
 
-      if (declor.*.length()==1)
-	return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[0])) + ")", <id>$</id>, dep);
-      else
-	return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[1])) + ")", declor.*[0], dep);
-      break;
-      
+    case 'p':
+      return indir(dirtype, declor.*[0], dep);
+
+    case 'bitfield':
+      if(declor.*.length() == 1) return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[0])) + ")", <id>$</id>, dep);
+      return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[1])) + ")", declor.*[0], dep);
+
     case 'fd':
-      
       var params=[];
       var param;
       var isvoid=false;
 
       for each (param in declor.pm.d) {
+        var param_type = declaration(param, dep, param.*[param.*.length() - 1]);
 
-	var param_type=declaration(param, dep, param.*[param.*.length()-1]);
+        params.push("{'const':" + (param["const"].length() > 0) + "," + (param_type.id ? "name:'" + param_type.id + "'," : "") + "type:" + param_type.type + "}");
 
-	params.push("{'const':"+(param["const"].length() > 0)+","+
-		    (param_type.id ? "name:'" + param_type.id + "'," : "") +
-		    "type:"+param_type.type+"}");
-
-	if (param_type.type == "Type['void']")
-	  isvoid=true;
-
+        if (param_type.type == "Type['void']") isvoid = true;
       }
 
       var elipsis = declor.pm.elipsis.length() > 0;
@@ -610,37 +535,36 @@ Returns an object containing the following properties:
       // Note: Empty argument lists, per the ANSI C standard
       // signify an undefined argument list, not an empty one.
       // Represented by an empty argument list plus elipsis.
-      
+
       if (params.length == 0) {
-	elipsis = true;
+        elipsis = true;
       }
-      
+
       // On the other hand; an argument list with one "void"
       // element is supposed to be an empty argument list.
       // Represented by an empty argument list sans elipsis.
 
       if (params.length == 1 && isvoid) {
-	params = [];
+        params = [];
       }
 
       return {
         type: dirtype || "Type.int", // Default int return
-	params: params,
-	elipsis: elipsis,
-	fd: declor
+        params: params,
+        elipsis: elipsis,
+        fd: declor
       }
 
     case 'id':
-      
       return {
-	type: dirtype,
-	id: declor
+        type: dirtype,
+        id: declor
       }
 
     default:  // typedef void (*) (void)
 
       return {
-	type: dirtype
+        type: dirtype
       }
 
     }
@@ -648,28 +572,18 @@ Returns an object containing the following properties:
 
 
 /*
-
-           Tries to coerce a C macro into a JavaScript expression
-
+Tries to coerce a C macro into a JavaScript expression
 */
 
   var typelist;
 
   function initmacro() {
-
     typelist=[];
     for (var i in this) {
       if ((this[i] instanceof Type) && i[0]!='$') {
-	typelist[i]=true;
+        typelist[i] = true;
       }
     }
-
-    /*
-      typecastregexp=new RegExp("\\( *(("+types.join(")|(")+")) *\\)","g");
-      
-      typecastregexp=/\( *([a-zA-Z_][a-zA-Z_0-9]*) *\)/g;
-    */
-
   }
 
   function macro(macro) {
@@ -677,45 +591,38 @@ Returns an object containing the following properties:
       return; // Don't overwrite other syms with macros
 
     // Change 123L into 123
- 
+
     var v=" "+macro.v+" ";
     v=v.replace(/([^a-zA-Z_0-9])([0-9]+)[lLuUfF]/g,"$1$2");
     v=v.replace(/([^a-zA-Z_0-9])(0x[0-9a-fA-F]+)[lLuU]/g,"$1$2");
-    
+
     // remove typecasts
-    
-    v=v.replace(/\( *([a-zA-Z_][a-zA-Z_0-9]*) *\)/g,function(str,sym) {
-	if (typelist.hasOwnProperty(sym))
-	  return "";
-	else
-	  return str;
+
+    v = v.replace(/\( *([a-zA-Z_][a-zA-Z_0-9]*) *\)/g, function(str, sym) {
+        return typelist.hasOwnProperty(sym) ? "" : str;
       });
-    
+
     v=v.replace(/\([ ]*(unsigned +|signed +)?(long +|short +)?(int|char|long|short|signed|unsigned|double|float)[ ]*\)/,"");
-    
+
     // change struct indexing
-    
     v=v.replace(/->[ \t]*([a-zA-Z_][a-zA-Z_0-9]*)/g,".member(0,'$1').$$");
-    
     // remove L before string like in L"string"
-    
     v=v.replace(/^([^"])*L"/,'$1"');
-    
+
     if (macro.pm.length()) { // #define x(y) y
 
       var params=[];
       for each (var param in macro.pm) {
-	if (param!="") // Used to mark empty arg list
-	  params.push(param);
+        if(param != "") // Used to mark empty arg list
+          params.push(param);
       }
 
-      //      var expr="with(this){function ("+params+") {var $a=arguments;with($a){return "+v+"}}}";
-      var expr="with(this){function ("+params+") {return "+v+"}}";
+      var expr = "with(this){function (" + params + ") {return " + v + "}}";
 
       try {
-	this[macro.id]=eval(expr);
-	sym[macro.id]=expr;
-	symOrder.push(macro.id);
+        this[macro.id] = eval(expr);
+        sym[macro.id] = expr;
+        symOrder.push(macro.id);
       } catch(x) {}
 
     } else if (v=="  ") { // #define x
@@ -725,48 +632,37 @@ Returns an object containing the following properties:
       symOrder.push(macro.id);
 
     } else { // #define x 42
-      
-      // trim, don't use trim module because of build deps
-      v=v.replace(/^[ \t]*/,"").replace(/[ \t]*$/,"");
-      if (this['struct '+v]) { // #define _io_file _IO_FILE
-	this['struct '+macro.id]=this['struct '+v];
-	sym['struct '+macro.id]="this['struct "+v+"']";
-	symOrder.push('struct '+macro.id);
-    if (expsym['struct '+v])
-      expsym['struct '+macro.id]=true;
+      v = v.replace(/^[ \t]+|[ \t]+$/g, "");
+
+      if(this['struct ' + v]) { // #define _io_file _IO_FILE
+        this['struct ' + macro.id] = this['struct ' + v];
+        sym['struct ' + macro.id] = "this['struct " + v + "']";
+        symOrder.push('struct ' + macro.id);
+        if(expsym['struct ' + v]) expsym['struct ' + macro.id] = true;
       }
-      
-      if (this['union '+v]) { // #define _io_file _IO_FILE
-	this['union '+macro.id]=this['union '+v];
-	sym['union '+macro.id]="this['union "+v+"']";
-	symOrder.push('union '+macro.id);
-    if (expsym['union '+v])
-      expsym['union '+macro.id]=true;
+
+      if(this['union ' + v]) { // #define _io_file _IO_FILE
+        this['union ' + macro.id] = this['union ' + v];
+        sym['union ' + macro.id] = "this['union " + v + "']";
+        symOrder.push('union ' + macro.id);
+        if(expsym['union ' + v]) expsym['union ' + macro.id] = true;
       }
-      
+
       // alter references to global variables
-			//      v=v.replace(/([^0-9A-Za-z_.'"])([a-zA-Z_][a-zA-Z_0-9]*)/g,"$1this['$2']");
-    
+      //      v=v.replace(/([^0-9A-Za-z_.'"])([a-zA-Z_][a-zA-Z_0-9]*)/g,"$1this['$2']");
+
       if (this[v]) { // #define stdin stdin
-	
-	this[macro.id]=this[v];
-	sym[macro.id]=sym[v];
-	symOrder.push(macro.id);
-	
+        this[macro.id] = this[v];
+        sym[macro.id] = sym[v];
+        symOrder.push(macro.id);
       } else {
-	try {
-			//    this.defineGetter(macro.id)=Function(v);
-
-	  with(this) {
-	    eval("this['"+macro.id+"']="+v);
-	  }
-
-	  sym[macro.id]=v;
-	  symOrder.push(macro.id);
-	} catch(x) {}
+        try {
+          with(this) eval("this['" + macro.id + "']=" + v);
+          sym[macro.id] = v;
+          symOrder.push(macro.id);
+        } catch(x) {}
       }
     }
-		   
   }
 }
 
