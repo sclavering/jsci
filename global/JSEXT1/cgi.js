@@ -114,7 +114,7 @@ CGI.prototype = {
 
   respond: function(status_code, headers_dict, body_str) {
     const out = this._real_stdout;
-    out.write("Status: " + status_code);
+    out.write("Status: " + status_code + "\r\n");
     for(var h in headers_dict) out.write(h + ": " + headers_dict[h] + "\r\n");
     out.write("\r\n");
     if(body_str) out.write(body_str);
