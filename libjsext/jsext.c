@@ -254,6 +254,7 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
   JS_free(cx,jsargv);
 
   if (JSVAL_IS_INT(rval))
+    // xxx shouldn't this be JSVAL_TO_INT ?
     return INT_TO_JSVAL(rval);
   else
     return 0;
