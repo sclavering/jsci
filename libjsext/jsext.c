@@ -96,7 +96,7 @@ main(int argc, char **argv, char **envp)
   char *evalexpr=0;
   JSObject *glob;
   int exitcode=0;
-	jsval rval;
+  jsval rval;
 
   for (;;) {
     static struct option long_options[] = {
@@ -105,8 +105,7 @@ main(int argc, char **argv, char **envp)
       {0, 0, 0, 0}
     };
 
-    int c = getopt_long (argc, argv, "r:he:",
-			 long_options,0);
+    int c = getopt_long(argc, argv, "r:he:", long_options, 0);
 
     switch(c) {
     case 'e':
@@ -149,12 +148,12 @@ main(int argc, char **argv, char **envp)
 
   if (!exitcode && (!evalexpr || argc>optind)) {
     JSObject *obj=glob;
-		/*
+    /*
     jsval v;
     JS_GetProperty(cx, obj, "JSEXT", &v);
     obj=JSVAL_TO_OBJECT(v);
     JS_GetProperty(cx, obj, "shell", &v);
-		*/
+    */
     exitcode=call(cx, obj, rval, argc-optind, argv+optind);
   }
 
@@ -189,7 +188,7 @@ static int eval(JSContext *cx, JSObject *obj, char *expr) {
     goto failure;
 
   if (tmpval!=JSVAL_VOID && expr[strlen(expr)-1]!=';' && expr[strlen(expr)-1]!='}') {
-	  puts(JS_GetStringBytes(JS_ValueToString(cx, tmpval)));
+    puts(JS_GetStringBytes(JS_ValueToString(cx, tmpval)));
   }
 
   JS_RemoveRoot(cx, &scrobj);
@@ -207,7 +206,6 @@ static int eval(JSContext *cx, JSObject *obj, char *expr) {
   JS_RemoveRoot(cx, &tmpval);
   return 1;
 }
-
 
 
 static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[]) {
@@ -238,8 +236,7 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
   }
 
   jsfun=JS_ValueToFunction(cx, fun);
-	if (!jsfun)
-		goto failure;
+  if(!jsfun) goto failure;
 
   if (!JS_CallFunction(cx, obj, jsfun, argc, jsargv, &rval))
     goto failure;
@@ -268,8 +265,6 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
 
   return 1;
 }
-
-
 
 
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
@@ -331,7 +326,6 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
 
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
-
   int fd=open(filename,O_RDONLY);
   char *buf;
   JSScript *script=0;
@@ -410,6 +404,7 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   return JS_FALSE;
 }
 
+
 static JSBool
 dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
@@ -444,10 +439,9 @@ dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   return JS_TRUE;
 }
 
+
 static char *strip_file_name(char *ini_file) {
   char *lastslash=strrchr(ini_file,'/');
-  if (lastslash)
-	return lastslash;
-  else
-    return 0;
+  if(lastslash) return lastslash;
+  return 0;
 }
