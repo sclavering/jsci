@@ -132,8 +132,7 @@ JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
     return JS_FALSE;
   }
 
-  if (filename)
-	  JSEXT_init=(JSNative) dlsym(dl,"JSEXT_init");
+  if(filename) JSEXT_init = (JSNative) dlsym(dl,"JSEXT_init");
 
   if (JSEXT_init) { // Call init with filename as only argument
     JSString *tmpstr=0;
@@ -165,9 +164,9 @@ dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   char *filename;
   JSBool res;
 
-  if ((argc>=1 && (JSVAL_IS_NULL(argv[0]) || JSVAL_IS_VOID(argv[0]))) || argc==0)
-	filename=0;
-  else if (!JS_ConvertArguments(cx, argc, argv, "s", &filename)) {
+  if((argc >= 1 && (JSVAL_IS_NULL(argv[0]) || JSVAL_IS_VOID(argv[0]))) || argc == 0) {
+    filename = 0;
+  } else if(!JS_ConvertArguments(cx, argc, argv, "s", &filename)) {
     JSX_ReportException(cx, "Wrong parameter for dl");
     return JS_FALSE;
   }
@@ -195,10 +194,7 @@ static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, 
     return JS_FALSE;
   }
 
-  if (dlsym((void *)JS_GetPrivate(cx, obj),symbol)!=0)
-	*rval=JSVAL_TRUE;
-  else
-	  *rval=JSVAL_FALSE;
+  *rval = dlsym((void *) JS_GetPrivate(cx, obj), symbol) != 0 ? JSVAL_TRUE : JSVAL_FALSE;
 
   return JS_TRUE;
 }
@@ -218,11 +214,10 @@ static JSBool JS_DLL_CALLBACK JSX_dl_call(JSContext *cx, JSObject *obj, uintN ar
     return JS_FALSE;
   }
 
-  if (argc<2)
-    desobj=JS_GetGlobalObject(cx);
-  else {
-    if (!JSVAL_IS_OBJECT(argv[1]) ||
-	JSVAL_IS_NULL(argv[1])) {
+  if(argc < 2) {
+    desobj = JS_GetGlobalObject(cx);
+  } else {
+    if(!JSVAL_IS_OBJECT(argv[1]) || JSVAL_IS_NULL(argv[1])) {
       JSX_ReportException(cx, "Illegal 'this' object");
       return JS_FALSE;
     }
