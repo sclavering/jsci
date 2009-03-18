@@ -1,21 +1,7 @@
 #include <jsapi.h>
 #include <stdarg.h>
 
-typedef char TCHAR;
 #define __declspec(x)
-
-#ifdef UNICODE
-#define JS_GetStringTChars JS_GetStringChars
-#define JS_NewStringTCopyZ JS_NewUCStringCopyZ
-#define JS_DefineTProperty(cx, obj, name, value, getter, setter, attrs) \
-  JS_DefineUCProperty((cx),(obj),(name),wcslen(name),(value),(getter),(setter),(attrs))
-#else
-#define JS_NewStringTCopyZ JS_NewStringCopyZ
-#define JS_GetStringTChars JS_GetStringBytes
-#define JS_DefineTProperty JS_DefineProperty
-#endif
-
-#define DLLACCESS
 
 #include "Type.h"
 #include "Pointer.h"
@@ -120,29 +106,8 @@ JSBool JSX_init(JSContext *cx, JSObject *glob, uintN argc, jsval *argv, jsval *r
   return JS_TRUE;
 }
   
-#ifdef UNICODE
 static JSBool
-JSEXT_dl_new(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval);
-
-static JSBool
-JSEXT_dl_newA(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
-	TCHAR *UCfilename=(TCHAR *)malloc((strlen(filename)+1)*2);
-	TCHAR *p=UCfilename;
-	JSBool ret;
-	while (*filename) *(p++)=*(filename++);
-	*p=0;
-	ret=JSEXT_dl_new(cx, obj, UCfilename, rval);
-	free(UCfilename);
-	return ret;
-}
-
-static JSBool
-JSEXT_dl_new(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval) {
-#else
-#define JSEXT_dl_new JSEXT_dl_newA 
-static JSBool
-JSEXT_dl_newA(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval) {
-#endif
+JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   JSObject *object;
   JSNative JSEXT_init=0;
   JSString *JSfilename;
@@ -175,7 +140,7 @@ JSEXT_dl_newA(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval) {
     jsval argv[1];
     jsval rval=JSVAL_VOID;
 
-    tmpstr=JS_NewStringTCopyZ(cx, filename);
+    tmpstr = JS_NewStringCopyZ(cx, filename);
     JS_AddRoot(cx, &tmpstr);
     argv[0]=STRING_TO_JSVAL(tmpstr);
 
@@ -185,10 +150,11 @@ JSEXT_dl_newA(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval) {
   }
 
   if (filename) {
-	JSfilename=JS_NewStringTCopyZ(cx, filename);
-	JS_DefineProperty(cx, object, "filename", STRING_TO_JSVAL(JSfilename), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-  } else
-	JS_DefineProperty(cx, object, "filename", JSVAL_VOID, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    JSfilename = JS_NewStringCopyZ(cx, filename);
+    JS_DefineProperty(cx, object, "filename", STRING_TO_JSVAL(JSfilename), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+  } else {
+    JS_DefineProperty(cx, object, "filename", JSVAL_VOID, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+  }
 
   return JS_TRUE;
 }
@@ -196,16 +162,12 @@ JSEXT_dl_newA(JSContext *cx, JSObject *obj, TCHAR *filename, jsval *rval) {
 static JSBool
 dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-  TCHAR *filename;
+  char *filename;
   JSBool res;
 
   if ((argc>=1 && (JSVAL_IS_NULL(argv[0]) || JSVAL_IS_VOID(argv[0]))) || argc==0)
 	filename=0;
-#ifdef UNICODE
-  else if (!JS_ConvertArguments(cx, argc, argv, "W", &filename)) {
-#else
   else if (!JS_ConvertArguments(cx, argc, argv, "s", &filename)) {
-#endif
     JSX_ReportException(cx, "Wrong parameter for dl");
     return JS_FALSE;
   }
