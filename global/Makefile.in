@@ -36,12 +36,9 @@ CFLAGS=-I JSEXT1/C/0-include -shared $(JSAPI_FLAGS) -O3 -fPIC $(XCFLAGS)
 
 %.so : %.c ; cc $(CFLAGS) $< -o $@
 
-TARGETS=Type.so Pointer.so Dl.so load.so clib.so clib.jswrapper print.never
+TARGETS=Type.so Pointer.so Dl.so load.so clib.so clib.jswrapper
 
 all:	$(TARGETS)
-
-print.never:	print.js
-	JSEXT_INI='0-init.js' ../jsext 0-build.js
 
 Dl.so:	Dl.c Type.so Pointer.so
 	cc $(CFLAGS) ./Pointer.so ./Type.so Dl.c -o Dl.so
