@@ -1,3 +1,5 @@
+(function() {
+
 /*
 new File(filename [, mode])
 new File(FILE *)
@@ -18,8 +20,7 @@ letter = new File("| mail");
 
 To read and write to a process, use [[$curdir.pipe2]].
 */
-
-function(filename, mode) {
+function File(filename, mode) {
 
   function popen(command) {
     if(mode != "r" && mode != "w" && mode != "a") throw("popen: Invalid mode");
@@ -76,3 +77,229 @@ function(filename, mode) {
     this.closed = false;
   }
 }
+
+
+
+File.prototype = {
+  close: function() {
+    if(this.closed) return;
+    clib.fclose(this.fp);
+    this.closed = true;
+    this.fp.finalize = null;
+  },
+
+
+  /*
+  file.eof()
+
+  Returns true if end-of-file has been reached.
+  */
+  eof: function() {
+    return clib.feof(this.fp) || clib.ferror(this.fp) ? true : false;
+  },
+
+
+  /*
+  num = file.fileno()
+
+  Returns a number, the operating system's file number for the underlying file.
+  */
+  fileno: function() {
+    return clib.fileno(this.fp);
+  },
+
+
+  /*
+  file.flush()
+
+  Flushes buffer from c library to operating system
+  */
+  flush: function() {
+    if(clib.fflush(this.fp) != 0) throw new Error(os.error('write'));
+  },
+
+
+  /*
+  bool = file.isatty()
+
+  Returns true if the underlying file is a terminal.    
+  */
+  isatty: function() {
+    return clib.isatty(this.fileno());
+  },
+    
+
+  /*
+  str = file.read(n)
+
+  Reads _n_ bytes or until end of file, whichever comes first. Returns result as a string.
+
+  str = file.read()
+
+  Reads an entire file (from current position to end of file) and returns it as a string      
+  */
+  read: function(size) {
+    size = Number(size || -1);
+    if(size == 0) return "";
+    if(size < 0) {
+      var trysize = 4096;
+      var ret = "";
+      while(!this.eof()) ret += this.read(trysize);
+      return ret;
+    }
+    var buf = Pointer.malloc(size);
+    var len = clib.fread(buf, 1, size, this.fp);
+    return buf.string(len);
+  },
+  
+
+  /*
+  file.readline([size])
+
+  Returns one line of text, including terminating newline character.
+  If a _size_ is given, this will be the maximal line length.
+
+  Not Binary-safe if operating system's fgets reads null characters
+  */
+  readline: function(size) {
+    if(arguments.length < 1) size = -1;
+    if(size < 0) {
+      var trysize = 4096;
+      var ret = "";
+      while(!this.eof()) {
+        ret += this.readline(trysize);
+        if(ret[ret.length - 1] == '\n') break;
+      }
+      return ret;
+    }
+    var buf = Pointer.malloc(size + 1);
+    var line = clib.fgets(buf, size + 1, this.fp);
+    return buf.string();
+  },
+
+  /*
+  array = file.readlines([size])
+
+  Returns an array of lines with terminating newlines removed.
+  If a _size_ argument is given, this is the maximal line length.
+  */
+  readlines: function(size) {
+    if(arguments.length < 1) size = -1;
+    if(size < 0) {
+      var ret = [];
+      while(!this.eof()) ret.push(this.readline());
+      return ret;
+    }
+    var buf = this.read(size);
+    return buf.split(/\n/);
+  },
+  
+
+  /*
+  file.seek (offset)
+
+  Moves file pointer to the given position.
+  See also [[$curdir.seekEnd]] and [[$curdir.seekRel]].
+  */
+  seek: function(offset) {
+    clib.clearerr(this.fp);
+    clib.fseek(this.fp, offset, clib.SEEK_SET);
+  },
+  
+
+  /*
+  file.seekEnd (offset)
+    
+  Moves file pointer to the given position, relative to the end of the file. _offset_ will generally be zero or a negative number.
+
+  See also [[$curdir.seek]] and [[$curdir.seekRel]].
+  */
+  seekEnd: function(offset) {
+    clib.clearerr(this.fp);
+    clib.fseek(this.fp, offset, clib.SEEK_END);
+  },
+  
+
+  /*
+  file.seekRel (offset)
+    
+  Moves file pointer to the given position, relative to the current position.
+
+  See also [[seek]] and [[seekEnd]].
+  */
+  seekRel: function(offset) {
+    clib.clearerr(this.fp);
+    clib.fseek(this.fp, offset, clib.SEEK_CUR);
+  },
+  
+
+  /*
+  file.stat() -> obj
+    
+  Returns an object with vital stats from a file's inode.
+  */
+  stat: function() {
+    var ret = Pointer(clib['struct stat']);
+    if(clib.call_fstat(this.fileno(), ret) == -1) return null;
+    return $parent.$parent.stat.unistat(ret);
+  },
+
+
+  /*
+  num = file.tell()
+
+  Returns the current file position.
+  */
+  tell: function() {
+    return clib.ftell(this.fp);
+  },
+
+
+  /*
+  file.truncate()
+
+  Truncates the file at its current position, i.e. removes the rest of the file and reduces the file's size to the current file position.
+  */
+  truncate: function(size) {
+    clib.ftruncate(this.fileno(), size);
+  },
+
+
+  /*
+  file.write(str)
+
+  Writes _str_ to file at the current position.  The argument is converted to a [[String]] before being written.
+  */
+  write: function(str) {
+    str = String(str);
+    if(!str) return;
+    if(clib.fwrite(str, 1, str.length, this.fp) == 0) throw new Error(os.error('write'));
+  },
+
+
+  /*
+  file.writelines (array)
+
+  Writes an array of lines to file at the current position.  Appends a newline character to each element of _array_.
+  */
+  writelines: function(obj) {
+    for(var i = 0; i != obj.length; ++i) this.write(obj[i] + "\n");
+  },
+};
+
+
+
+/*
+file = File.tmp() 
+       
+Return a new file object opened in update mode ("w+"). The file has no directory entries associated with it and will be automatically deleted once there are no file descriptors for the file. Availability: Unix, Windows. 
+*/
+File.tmp = function() {
+  return new File(clib.tmpfile());
+};
+
+
+
+return File;
+
+})()
