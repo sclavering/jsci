@@ -28,7 +28,6 @@
 
 #include <jsapi.h>
 # include <getopt.h>
-#include "unicodedef.h"
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -415,13 +414,9 @@ static JSBool
 dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
   JSNative JSX_init=0;
-  TCHAR *filename;
+  char *filename;
 
-#ifdef UNICODE
-  if (!JS_ConvertArguments(cx, argc, argv, "W", &filename)) {
-#else
   if (!JS_ConvertArguments(cx, argc, argv, "s", &filename)) {
-#endif
     JSX_ReportException(cx, "Wrong parameter");
     return JS_FALSE;
   }
@@ -442,11 +437,7 @@ dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
       return JS_FALSE;
 
   } else {
-#ifdef UNICODE
-    JSX_ReportException(cx, "Unable to locate JSX_init in '%S'",filename);
-#else
     JSX_ReportException(cx, "Unable to locate JSX_init in '%s'",filename);
-#endif
     return JS_FALSE;
   }
 
