@@ -45,24 +45,29 @@ function interactive() {
   }
 }
 
+// the traceback stuff fails because there's no function *named* execline on the stack
+function execline(line) {
+  try {
+    var rval = do_eval(line);
+    line = line.replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, '');
+    var lastchar = line.substr(line.length - 1);
+    if(lastchar != ';' && lastchar != '}' && lastchar != '>' && rval !== undefined) print(String(rval)+'\n');
+  } catch(err) {
+    if(err.fileName && err.lineNumber) print('Line ' + err.lineNumber + ' in ' + err.fileName + ':');
+    print((err.message || err) + '\n');
+    if(err.stack) {
+      var stack = err.stack.split('\n');
+      while(!stack.pop().match(/\bdo_eval\b/));
+      stack.pop();
+      print(stack.join('\n') + '\n');
+    }
+  }
+}
 
-const execline = Function("_line", " \
-  try { \
-    var _rval = eval(_line); \
-    _line = _line.replace(/^[ \\t\\n\\r]*/, '').replace(/[ \\t\\n\\r]*$/, ''); \
-    var _lastchar = _line.substr(_line.length - 1); \
-    if(_lastchar != ';' && _lastchar != '}' && _lastchar != '>' && _rval !== undefined) print(String(_rval)+'\\n'); \
-  } catch(_err) { \
-    if(_err.fileName && _err.lineNumber) print('Line ' + _err.lineNumber + ' in ' + _err.fileName + ':'); \
-    print((_err.message || _err)+'\\n'); \
-    if(_err.stack) { \
-      var stack = _err.stack.split('\\n'); \
-      while(!stack.pop().match(/execline/)); \
-      stack.pop(); \
-      print(stack.join('\\n') + '\\n'); \
-    } \
-  } \
-");
+
+function do_eval($$code) {
+  return eval($$code);
+}
 
 
 // Used to find possible completions to words typed in the console.
