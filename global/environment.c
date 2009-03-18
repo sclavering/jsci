@@ -60,19 +60,19 @@ env_enumerate(JSContext *cx, JSObject *obj)
 {
     static JSBool reflected;
     char **evp, *name, *value, *es, **origevp;
-	int nenv=0;
-	int envcap=0;
+    int nenv = 0;
+    int envcap = 0;
     JSString *valstr;
     JSBool ok;
 
     if (reflected)
         return JS_TRUE;
 
-	evp = environ; // (char **) JS_GetPrivate(cx, obj);
+    evp = environ; // (char **) JS_GetPrivate(cx, obj);
 
-    for (; (name = *evp) != NULL; evp++) {
-		value=name;
-		while (*value && *value!='=') value++;
+    for( ; (name = *evp) != NULL; evp++) {
+        value = name;
+        while(*value && *value != '=') value++;
         if (!*value)
             continue;
         *value++ = '\0';
@@ -89,10 +89,10 @@ env_enumerate(JSContext *cx, JSObject *obj)
 
     reflected = JS_TRUE;
 
-	return JS_TRUE;
+    return JS_TRUE;
 
 failure:
-	return JS_FALSE;
+    return JS_FALSE;
 }
 
 static JSBool
@@ -113,8 +113,7 @@ env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags,
     value = getenv(name);
     if (value) {
         valstr = JS_NewStringCopyZ(cx, value);
-        if (!valstr)
-			goto failure;
+        if(!valstr) goto failure;
         if (!JS_DefineProperty(cx, obj, name, STRING_TO_JSVAL(valstr),
                                NULL, NULL, JSPROP_ENUMERATE)) {
             goto failure;
@@ -125,7 +124,7 @@ env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags,
     return JS_TRUE;
 
 failure:
-	return JS_FALSE;
+    return JS_FALSE;
 }
 
 static JSClass jsext_env_class = {
