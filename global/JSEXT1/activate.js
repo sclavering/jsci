@@ -12,7 +12,7 @@ return {
   c: handle_native,
   h: handle_native,
   so: handle_native,
-  pch: handle_native,
+  jswrapper: handle_native,
 }
 
 
@@ -33,17 +33,17 @@ function handle_text(name, extension) {
 
 
 /*
-This handler handles .h, .c, .pch, and .so files.
+This handler handles .h, .c, .jswrapper, and .so files.
 
-.h and .c files are source files. .pch and .so files are generated automatically from .h and .c files if necessary.
+.h and .c files are source files. .jswrapper and .so files are generated automatically from .h and .c files if necessary.
 
 If a .c file exists, it is compiled as a dynamic library and used as the default .so file when parsing the .h file.
 
 If no .h file exists (but a .c file), then function declarations are extracted from the .c file.
 
-When wrapping a system library there is just a .h file and no .c file, and only a .pch file will be generated.
+When wrapping a system library there is just a .h file and no .c file, and only a .jswrapper file will be generated.
 
-The .pch file is a Cdb file containing the low-level javascript wrappers for what's in the .so file.
+The .jswrapper file is a javascript file returning an obejct containing the low-level type-marshalling wrappers for C code (using Type, Pointer, etc.).  Each property
 */
 function handle_native(name, extension) {
   // 1. Find timestamps of all files in group
@@ -51,7 +51,7 @@ function handle_native(name, extension) {
   var timestamp={};
 
   //clib.puts("cget "+this.$path+"/"+name);
-  for each(var ext in ['h', 'c', 'pch', 'so']) {
+  for each(var ext in ['h', 'c', 'jswrapper', 'so']) {
     var stat = JSEXT1.stat(this.$path + '/' + name + '.' + ext);
     timestamp[ext] = stat && stat.mtime;
   }
@@ -82,32 +82,30 @@ function handle_native(name, extension) {
     return ret;
   }
 
-  // 4. Build pch file if possible and necessary
+  // 4. Build .jswrapper file if possible and necessary
 
-  if (timestamp.h && timestamp.h > timestamp.pch) {
+  if(timestamp.h && timestamp.h > timestamp.jswrapper) {
     JSEXT1.chdirLock(this.$path);
     var ps = new JSEXT1.Progress;
     ps.status("Parsing h file");
     var fragment = JSEXT1.C.fragment(JSEXT1.read(name + '.h'), dlobj);
-		ps.status("Writing cdb file");
-    var pch = new JSEXT1.Cdb(name + '.pch', 'w');
-    pch.write(fragment);
-    pch.close();
+    ps.status("Writing .jswrapper file");
+    var wrapperfile = new JSEXT1.File('./' + name + '.jswrapper', 'w');
+    wrapperfile.write(JSEXT1.C.jswrapper(fragment));
+    wrapperfile.close();
     ps.close();
-    timestamp.pch = JSEXT1.stat(name + '.pch');
+    timestamp.jswrapper = JSEXT1.stat('./' + name + '.jswrapper');
     JSEXT1.chdirUnlock();
   }
 
-  // 5. Load pch file if possible
+  // 5. Load .jswrapper file if possible
 
-  if (timestamp.pch) {
+  if(timestamp.jswrapper) {
     JSEXT1.chdirLock(this.$path);
-    var ret = new JSEXT1.ActiveCdb(name + ".pch");
-    var i;
-    for(i = 0; ret['dl ' + i]; i++) { /* pass */ }
+    var ret = load.call(this, this.$path + '/' + name + '.jswrapper');
+    for(var i = 0; ret['dl ' + i]; i++) { /* pass */ }
     JSEXT1.chdirUnlock();
-    if(ret.hasOwnProperty("main")) return ret.main;
-    return ret;
+    return ret.hasOwnProperty("main") ? ret.main : ret;
   }
 }
 

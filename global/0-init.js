@@ -2,18 +2,15 @@ function(_dl, cwd) {
   var mods = ['Type', 'Pointer', 'load', 'Dl'];
   for(var i in mods) this[mods[i]] = _dl('./' + mods[i] + '.so');
 
-  var ActiveCdb = _dl('./JSEXT1/ActiveCdb.so');
-
   // avoid unwanted closures
   var xload = new Function("filename", "return load(filename);");
 
   $path=".";
   $curdir=this;
 
-  clib = ActiveCdb("clib.pch");
+  clib = xload("clib.jswrapper");
 
   var JSEXT = {
-    ActiveCdb: ActiveCdb,
     $parent: this,
     $name: "JSEXT1",
     $path: './JSEXT1',
