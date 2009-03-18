@@ -78,14 +78,13 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
 
   if (S.st_size>1 && buf[beforelen]=='#' && buf[beforelen+1]=='!') {
     // shebang
-    while (buf[shebanglen+beforelen]!='\n' &&
-	   buf[shebanglen+beforelen]!='\r') shebanglen++;
+    while(buf[shebanglen + beforelen] != '\n' && buf[shebanglen + beforelen] != '\r') shebanglen++;
     shebanglen++;
-    if (shebanglen<S.st_size &&
-	(buf[shebanglen+beforelen]=='\n' ||
-	 buf[shebanglen+beforelen]=='\r') &&
-	buf[shebanglen+beforelen]!=buf[shebanglen+beforelen-1])
+    if(shebanglen < S.st_size &&
+        (buf[shebanglen + beforelen] == '\n' || buf[shebanglen + beforelen] == '\r') &&
+        buf[shebanglen + beforelen] != buf[shebanglen + beforelen - 1]) {
       shebanglen++;
+    }
   }
   if (before) {
     memcpy(buf+shebanglen, before, beforelen);
