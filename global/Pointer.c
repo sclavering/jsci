@@ -111,7 +111,7 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
 // rval should be rooted
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.
 
-POINTER_API int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type *type, jsval *rval) {
+int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type *type, jsval *rval) {
   jsdouble tmpdouble;
   int tmpint;
   int tmpuint;
@@ -1483,7 +1483,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
   return 0;
 }
 
-POINTER_API JSClass * JSX_GetPointerClass(void) {
+JSClass * JSX_GetPointerClass(void) {
   return &JSX_PointerClass;
 }
 
@@ -1593,7 +1593,7 @@ static JSBool JSX_InitPointerString(JSContext *cx, JSObject *retobj, JSString *s
 
 // If typeobj is null, a type property must have been assigned to retobj before calling initpointer.
 
-POINTER_API JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
+JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   struct JSX_Pointer *ret;
 
   if (!typeobj) {
@@ -2726,18 +2726,16 @@ static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval
   jsval ptr;
   JSBool ok;
 
-
   funcobj=JSVAL_TO_OBJECT(argv[-2]);
   JS_LookupProperty(cx, funcobj, "__ptr__", &ptr);
 
   ok=JSX_Pointer_call(cx, JSVAL_TO_OBJECT(ptr), argc, argv, rval);
 
-
   return ok;
 }
 
-POINTER_API JSBool
-JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
+
+JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval) {
   JSObject *protoobj;
   jsval tmp;
   JSObject *classobj;
