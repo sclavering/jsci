@@ -1,3 +1,4 @@
+// XXX broken.  Recurses through global/ and builds .so and .pch (now .jswrapper) files for .c and .h files, so that when jsext is run as an unprivileged user (e.g. nobody, or wwwdata) native code actually works
 function() {
 
   // It is necessary to bypass the activedirectory for the current directory, because
