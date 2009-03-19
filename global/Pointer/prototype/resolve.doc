@@ -1,8 +1,0 @@
-resolve()
----
-
-
-Attempts to resolve the pointer, unless it is already resolved, in which case this
-function does nothing.
-
-Throws a [[ReferenceError]] of the symbol could not be resolved.

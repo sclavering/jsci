@@ -1,8 +1,0 @@
-length
----
-
-
-This read-only property contains the number of arguments for functions,
-members of structs and unions and elements of arrays. Undefined for
-other types.
-

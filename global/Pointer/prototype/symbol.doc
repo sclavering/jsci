@@ -1,6 +1,0 @@
-symbol
----
-
-
-This read-only property contains the symbol string which this pointer
-is attached to, or undefined if it is not attached to a symbol.

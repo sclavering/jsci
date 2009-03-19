@@ -1,6 +1,0 @@
-elipsis
----
-
-
-This read-only property contains true or false for function types. Undefined
-for other types.

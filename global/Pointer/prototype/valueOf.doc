@@ -1,6 +1,0 @@
-valueOf()
----
-
-
-Returns a [[Number]] containing the address of the memory location pointed to
-by the pointer object, divided by pointer.sizeof.

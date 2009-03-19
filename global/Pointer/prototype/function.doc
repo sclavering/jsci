@@ -1,6 +1,0 @@
-function
----
-
-
-This read-only property contains the JavaScript function being pointed to
-by a callback pointer

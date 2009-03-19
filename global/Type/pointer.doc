@@ -1,7 +1,0 @@
-    t = Type.pointer(direct)
-
-Creates a new [[Type]] object representing a _pointer_. The argument
-is the Type being pointed to.
-
-Types created with this function have a read-only property named "0" which contains
-the type it points to.

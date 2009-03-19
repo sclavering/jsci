@@ -1,9 +1,0 @@
-A [[Type]] object representing a C _void_.
-
-NOTE
----
-
-
-Because 'void' is a reserved word, you will need to access this property with brackets and quotes:
-
-    Type['void']

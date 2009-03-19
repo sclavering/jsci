@@ -1,6 +1,0 @@
-callConv
----
-
-
-This read-only property contains 'cdecl' or 'stdcall' for function types. Undefined for
-other types.

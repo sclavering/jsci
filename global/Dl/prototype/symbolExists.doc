@@ -1,3 +1,0 @@
-    obj.symbolExists (str)
-
-Returns true or false, depending on whether the symbol exists in the dynamic library.

@@ -1,2 +1,0 @@
-This read-only property contains the filename of the Dl, or _undefined_ if the Dl
-represents the main program.

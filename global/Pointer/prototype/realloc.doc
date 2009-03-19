@@ -1,9 +1,0 @@
-realloc(bytes)
----
-
-
-Changes the size of a memory area allocated with [[Pointer.malloc]], [[Pointer.calloc]] or the [[Pointer]] allocation constructor.
-The contents of the memory block is left unchanged even if it needs to be moved to another location. Newly allocated
-memory is uninitialized. The memory is freed when the
-pointer object is garbage collected.
-

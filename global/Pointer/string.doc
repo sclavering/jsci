@@ -1,7 +1,0 @@
-string(str)
----
-
-
-Creates and returns a new [[Pointer]] which points to a zero-terminated
-string constructed from the argument. The type of the pointer will be
-unsigned char.
