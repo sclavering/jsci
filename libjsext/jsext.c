@@ -50,8 +50,6 @@ static char *strip_file_name(char *ini_file);
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval);
 static JSBool JSX_ReportException(JSContext *cx, char *format, ...);
-static JSBool dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-
 
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
@@ -410,41 +408,6 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   JS_SetPendingException(cx, str);
 
   return JS_FALSE;
-}
-
-
-static JSBool
-dl(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
-{
-  JSNative JSX_init=0;
-  char *filename;
-
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &filename)) {
-    JSX_ReportException(cx, "Wrong parameter");
-    return JS_FALSE;
-  }
-
-  void *dl;
-
-  dl=dlopen(filename, RTLD_LAZY);
-
-  if (!dl) {
-    JSX_ReportException(cx, "Unable to open dl %s", dlerror());
-    return JS_FALSE;
-  }
-
-  JSX_init=(JSNative) dlsym(dl,"JSX_init");
-
-  if (JSX_init) { // Call init
-    if (!(*JSX_init)(cx, obj, 0, 0, rval))
-      return JS_FALSE;
-
-  } else {
-    JSX_ReportException(cx, "Unable to locate JSX_init in '%s'",filename);
-    return JS_FALSE;
-  }
-
-  return JS_TRUE;
 }
 
 
