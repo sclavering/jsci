@@ -138,11 +138,9 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
 }
 
 
-JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval) {
+jsval JSX_make_load(JSContext *cx, JSObject *glo) {
   JSFunction *jsfun=JS_NewFunction(cx, load, 0, 0, 0, 0);
-  if (!jsfun)
-    return JS_FALSE;
-  *rval=OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
-  return JS_TRUE;
+  if(!jsfun) return JSVAL_VOID;
+  return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }
 

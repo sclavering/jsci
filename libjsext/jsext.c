@@ -38,6 +38,14 @@
 #include <stdio.h>
 # include <dlfcn.h>
 
+
+/* these are defined respectively in Type.c Pointer.c Dl.c and load.c */
+jsval JSX_make_Type(JSContext *cx, JSObject *glo);
+jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
+jsval JSX_make_Dl(JSContext *cx, JSObject *glo);
+jsval JSX_make_load(JSContext *cx, JSObject *glo);
+
+
 static char *strip_file_name(char *ini_file);
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval);
@@ -275,7 +283,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   char *filename;
   JSFunction *jsfun;
   char cwd[1024];
-  int init_argc = 2;
+  int init_argc = 6;
 
   JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
 
@@ -292,6 +300,11 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   }
 
   argv[1] = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
+
+  argv[2] = JSX_make_Type(cx, obj);
+  argv[3] = JSX_make_Pointer(cx, obj);
+  argv[4] = JSX_make_Dl(cx, obj);
+  argv[5] = JSX_make_load(cx, obj);
 
   ifdup=strdup(ini_file);
   lastslash=strip_file_name(ifdup);

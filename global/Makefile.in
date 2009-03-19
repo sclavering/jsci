@@ -36,23 +36,10 @@ CFLAGS=-I JSEXT1/C/0-include -shared $(JSAPI_FLAGS) -O3 -fPIC $(XCFLAGS)
 
 %.so : %.c ; cc $(CFLAGS) $< -o $@
 
-TARGETS=Type.so Pointer.so Dl.so load.so clib.so clib.jswrapper
+TARGETS=clib.so clib.jswrapper
 
 all:	$(TARGETS)
 
-Dl.so:	Dl.c Type.so Pointer.so
-	cc $(CFLAGS) ./Pointer.so ./Type.so Dl.c -o Dl.so
-
-Pointer.so:	Pointer.c Type.c
-	cc $(CFLAGS) Type.c -o Type.so
-	cc $(CFLAGS) ./Type.so Pointer.c -o Pointer.so -lffi
-	cc $(CFLAGS) ./Pointer.so Type.c -o Type.so
-
-Type.so:	Type.c Pointer.c
-	cc $(CFLAGS) Pointer.c -o Pointer.so
-	cc $(CFLAGS) ./Pointer.so Type.c -o Type.so
-	cc $(CFLAGS) ./Type.so Pointer.c -o Pointer.so -lffi
-
-clib.jswrapper: Pointer.so Type.so 0-makeclib.js
+clib.jswrapper: 0-makeclib.js
 	$(MAKE) -C JSEXT1/C XCFLAGS="$(XCFLAGS)"
 	JSEXT_INI='0-makeclib.js' ../jsext > clib.jswrapper

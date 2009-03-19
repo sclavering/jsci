@@ -1219,7 +1219,7 @@ JSBool JSX_TypeContainsPointer(struct JSX_Type *type) {
 }
 
 
-JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval) {
+jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeobj;
   JSObject *protoobj;
 
@@ -1245,13 +1245,11 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval
   };
 
   protoobj=JS_NewObject(cx, 0, 0, 0);
-  if (!protoobj)
-    goto end_false;
+  if(!protoobj) return JSVAL_VOID;
 
   typeobj=JS_InitClass(cx, obj, protoobj, &JSX_TypeClass, JSX_Type_new, 0, memberprop, memberfunc, 0, staticfunc);
 
-  if (!typeobj)
-    goto end_false;
+  if(!typeobj) return JSVAL_VOID;
 
   typeobj=JS_GetConstructor(cx, typeobj);
 
@@ -1261,11 +1259,5 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval
   init_other_types(cx, typeobj);
   //  init_void_pointer(cx, typeobj);
 
-  *rval=OBJECT_TO_JSVAL(typeobj);
-
- end_true:
-  return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
+  return OBJECT_TO_JSVAL(typeobj);
 }

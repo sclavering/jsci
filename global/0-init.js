@@ -1,6 +1,8 @@
-function(_dl, cwd) {
-  var mods = ['Type', 'Pointer', 'load', 'Dl'];
-  for(var i in mods) this[mods[i]] = _dl('./' + mods[i] + '.so');
+function(_dl, cwd, Type, Pointer, Dl, load) {
+  this.Type = Type;
+  this.Pointer = Pointer;
+  this.Dl = Dl;
+  this.load = load;
 
   // avoid unwanted closures
   var xload = new Function("filename", "return load(filename);");

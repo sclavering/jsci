@@ -2735,7 +2735,7 @@ static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
-JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval) {
+jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   JSObject *protoobj;
   jsval tmp;
   JSObject *classobj;
@@ -2770,18 +2770,8 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval
 
   protoobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   classobj=JS_InitClass(cx, obj, protoobj, &JSX_PointerClass, JSX_Pointer_new, 0, memberprop, memberfunc, 0, staticfunc);
-  if (!classobj)
-    goto end_false;
+  if(!classobj) return JSVAL_VOID;
 
-  *rval=OBJECT_TO_JSVAL(JS_GetConstructor(cx, classobj));
-
-  goto end_true;
-
- end_true:
-  return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
+  return OBJECT_TO_JSVAL(JS_GetConstructor(cx, classobj));
 }
 

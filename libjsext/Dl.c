@@ -83,7 +83,7 @@ static JSBool JSX_dl_pointer(JSContext *cx, JSObject *origobj, uintN argc, jsval
 }
 
 
-JSBool JSX_init(JSContext *cx, JSObject *glob, uintN argc, jsval *argv, jsval *rval) {
+jsval JSX_make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
     {"symbolExists", JSX_dl_symbolExists, 1, 0, 0},
@@ -94,15 +94,13 @@ JSBool JSX_init(JSContext *cx, JSObject *glob, uintN argc, jsval *argv, jsval *r
   };
 
   JSEXT_dl_proto=JS_InitClass(cx, glob, NULL, &JSEXT_dl_class, dl_new, 1, NULL, memberfunc, NULL, NULL);
-  if (JSEXT_dl_proto==0)
-    return JS_FALSE;
+  if(JSEXT_dl_proto == 0) return JSVAL_VOID;
   JS_SetPrivate(cx, JSEXT_dl_proto, NULL);
 
-  *rval=OBJECT_TO_JSVAL(JS_GetConstructor(cx, JSEXT_dl_proto));
-
-  return JS_TRUE;
+  return OBJECT_TO_JSVAL(JS_GetConstructor(cx, JSEXT_dl_proto));
 }
-  
+
+
 static JSBool
 JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   JSObject *object;
