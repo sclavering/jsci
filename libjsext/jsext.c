@@ -283,7 +283,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   char *filename;
   JSFunction *jsfun;
   char cwd[1024];
-  int init_argc = 6;
+  int init_argc = 5;
 
   JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
 
@@ -299,12 +299,11 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
     ini_file=libdir "/jsext/0-init.js";
   }
 
-  argv[1] = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
-
-  argv[2] = JSX_make_Type(cx, obj);
-  argv[3] = JSX_make_Pointer(cx, obj);
-  argv[4] = JSX_make_Dl(cx, obj);
-  argv[5] = JSX_make_load(cx, obj);
+  argv[0] = JSX_make_Type(cx, obj);
+  argv[1] = JSX_make_Pointer(cx, obj);
+  argv[2] = JSX_make_Dl(cx, obj);
+  argv[3] = JSX_make_load(cx, obj);
+  argv[4] = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
 
   ifdup=strdup(ini_file);
   lastslash=strip_file_name(ifdup);
@@ -317,10 +316,6 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   }
 
   exec(cx, obj, filename, rval);
-
-  jsfun=JS_NewFunction(cx, dl, 0, 0, 0, 0);
-
-  argv[0] = OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 
   JSBool rv = JS_FALSE;
   jsfun=JS_ValueToFunction(cx, *rval);

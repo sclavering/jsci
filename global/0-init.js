@@ -1,4 +1,4 @@
-function(_dl, cwd, Type, Pointer, Dl, load) {
+function(Type, Pointer, Dl, load, cwd) {
   this.Type = Type;
   this.Pointer = Pointer;
   this.Dl = Dl;
