@@ -1,3 +1,15 @@
+/*
+Defines the javascript function:
+
+    script = load(filename [, before [, after]])
+
+Loads and compiles an ISO-8859-1 JavaScript file.  Returns the value of the last expression in the script.
+
+The file may start with a #! line, which is ignored.
+
+If the parameters 'before' and 'after' are given and are strings, they are added before and after the contents of the file before it is interpreted.
+*/
+
 #include <jsapi.h>
 #include <sys/types.h>
 #include <sys/stat.h>
