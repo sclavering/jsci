@@ -1,7 +1,6 @@
 #include <jsapi.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-# define __declspec(x)
 # include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -126,8 +125,8 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
   return JS_FALSE;
 }
 
-__declspec(dllexport) JSBool
-JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
+
+JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval) {
   JSFunction *jsfun=JS_NewFunction(cx, load, 0, 0, 0, 0);
   if (!jsfun)
     return JS_FALSE;
