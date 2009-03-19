@@ -71,7 +71,7 @@ static JSBool JSX_Type_length(JSContext *cx,  JSObject *obj, jsval id, jsval *rv
 
 
 
-TYPE_API ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type) {
+ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type) {
   if (type->cif.arg_types)
     return &type->cif;
 
@@ -89,7 +89,7 @@ TYPE_API ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type) {
 }
 
 
-TYPE_API ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type) {
+ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type) {
   ffi_type *ret;
   int nmember;
   int i;
@@ -429,11 +429,11 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
 
 }
 
-TYPE_API JSClass *JSX_GetTypeClass(void) {
+JSClass *JSX_GetTypeClass(void) {
   return &JSX_TypeClass;
 }
 
-TYPE_API JSBool JSX_InitMemberType(JSContext *cx, struct JSX_MemberType *dest, JSObject *membertype) {
+JSBool JSX_InitMemberType(JSContext *cx, struct JSX_MemberType *dest, JSObject *membertype) {
   if (!JSX_InitNamedType(cx, (struct JSX_NamedType *)dest, membertype, 1)) {
     return JS_FALSE;
   }
@@ -442,7 +442,7 @@ TYPE_API JSBool JSX_InitMemberType(JSContext *cx, struct JSX_MemberType *dest, J
 }
 
 
-TYPE_API JSBool JSX_InitParamType(JSContext *cx, struct JSX_ParamType *dest, JSObject *membertype) {
+JSBool JSX_InitParamType(JSContext *cx, struct JSX_ParamType *dest, JSObject *membertype) {
   jsval tmp;
 
   if (!JSX_InitNamedType(cx, (struct JSX_NamedType *)dest, membertype, 0)) {
@@ -458,7 +458,7 @@ TYPE_API JSBool JSX_InitParamType(JSContext *cx, struct JSX_ParamType *dest, JSO
   return JS_TRUE;
 }
 
-TYPE_API int JSX_TypeAlignBits(struct JSX_Type *type) {
+int JSX_TypeAlignBits(struct JSX_Type *type) {
   switch(type->type) {
   case BITFIELDTYPE:
     return 1;
@@ -467,7 +467,7 @@ TYPE_API int JSX_TypeAlignBits(struct JSX_Type *type) {
   }
 }
 
-TYPE_API int JSX_TypeAlign(struct JSX_Type *type) {
+int JSX_TypeAlign(struct JSX_Type *type) {
   int len;
   int ret;
   int i;
@@ -498,7 +498,7 @@ TYPE_API int JSX_TypeAlign(struct JSX_Type *type) {
   }
 }
 
-TYPE_API int JSX_TypeSizeBits(struct JSX_Type *type) {
+int JSX_TypeSizeBits(struct JSX_Type *type) {
   switch(type->type) {
   case BITFIELDTYPE:
     return ((struct JSX_TypeBitfield *)type)->length;
@@ -508,7 +508,7 @@ TYPE_API int JSX_TypeSizeBits(struct JSX_Type *type) {
 }
 
 
-TYPE_API int JSX_TypeSize(struct JSX_Type *type) {
+int JSX_TypeSize(struct JSX_Type *type) {
   int align;
 
   switch(type->type) {
@@ -800,7 +800,7 @@ JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) 
   return JS_FALSE;
 }
 
-TYPE_API JSObject *JSX_GetType(enum JSX_TypeID type, int size, int signedness) {
+JSObject *JSX_GetType(enum JSX_TypeID type, int size, int signedness) {
   return JSX_Type[type][size][signedness];
 }
 
@@ -1047,7 +1047,7 @@ static JSBool JSX_Type_sizeof(JSContext *cx,  JSObject *obj, jsval id, jsval *rv
   return JS_TRUE;
 }
 
-TYPE_API int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, jsval *vp, ffi_type **arg_types) {
+int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, jsval *vp, ffi_type **arg_types) {
   int ret=0;
   int siz;
   uintN i;
@@ -1108,7 +1108,7 @@ TYPE_API int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType
 }
 
 
-TYPE_API int JSX_JSType(JSContext *cx, jsval v) {
+int JSX_JSType(JSContext *cx, jsval v) {
   int jstype;
 
   // Determine the JS type to an appropriate level of detail for the big 2D switch
@@ -1153,7 +1153,7 @@ TYPE_API int JSX_JSType(JSContext *cx, jsval v) {
   return jstype;
 }
 
-TYPE_API int JSX_CType(struct JSX_Type *type) {
+int JSX_CType(struct JSX_Type *type) {
   int Ctype;
 
   // Determine the C type to an appropriate level of detail for the big 2D switch
@@ -1191,7 +1191,7 @@ TYPE_API int JSX_CType(struct JSX_Type *type) {
 }
 
 
-TYPE_API JSBool JSX_TypeContainsPointer(struct JSX_Type *type) {
+JSBool JSX_TypeContainsPointer(struct JSX_Type *type) {
   int i;
 
   for (;;) {
@@ -1217,9 +1217,9 @@ TYPE_API JSBool JSX_TypeContainsPointer(struct JSX_Type *type) {
     }
   }
 }
-      
-TYPE_API JSBool
-JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
+
+
+JSBool JSX_init(JSContext *cx, JSObject *obj, int argc, jsval *argv, jsval *rval) {
   JSObject *typeobj;
   JSObject *protoobj;
 

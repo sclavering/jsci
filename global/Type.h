@@ -4,8 +4,6 @@
 #include <jsapi.h>
 #include <ffi.h>
 
-# define TYPE_API
-
 
 #define ALIGN_TYPE int
 #define PARAMALIGN sizeof(int)
@@ -117,18 +115,18 @@ struct JSX_TypeBitfield {
 
 
 
-TYPE_API int JSX_TypeSize(struct JSX_Type *type);
-TYPE_API int JSX_TypeAlign(struct JSX_Type *type);
+int JSX_TypeSize(struct JSX_Type *type);
+int JSX_TypeAlign(struct JSX_Type *type);
 
-TYPE_API int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, jsval *vp, ffi_type **arg_types);
-TYPE_API JSClass *JSX_GetTypeClass(void);
+int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, jsval *vp, ffi_type **arg_types);
+JSClass *JSX_GetTypeClass(void);
 
-TYPE_API int JSX_CType(struct JSX_Type *type);
-TYPE_API int JSX_JSType(JSContext *cx, jsval rval);
-TYPE_API JSBool JSX_TypeContainsPointer(struct JSX_Type *type);
-TYPE_API JSObject *JSX_GetType(enum JSX_TypeID, int size, int signedness);
-TYPE_API ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type);
-TYPE_API ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
+int JSX_CType(struct JSX_Type *type);
+int JSX_JSType(JSContext *cx, jsval rval);
+JSBool JSX_TypeContainsPointer(struct JSX_Type *type);
+JSObject *JSX_GetType(enum JSX_TypeID, int size, int signedness);
+ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type);
+ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)
