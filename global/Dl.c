@@ -1,8 +1,6 @@
 #include <jsapi.h>
 #include <stdarg.h>
 
-#define __declspec(x)
-
 #include "Type.h"
 #include "Pointer.h"
 
@@ -85,7 +83,6 @@ static JSBool JSX_dl_pointer(JSContext *cx, JSObject *origobj, uintN argc, jsval
 }
 
 
-__declspec(dllexport)
 JSBool JSX_init(JSContext *cx, JSObject *glob, uintN argc, jsval *argv, jsval *rval) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
