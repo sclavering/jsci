@@ -2017,10 +2017,6 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   ffi_type **arg_types=0;
   ffi_cif *cif;
 
-#ifdef JS_THREADSAFE
-  jsrefcount count;
-#endif
-
   struct JSX_type **C=0;
   int nArgs=0;
 
@@ -2074,15 +2070,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
       goto failure;
   }
 
-#ifdef JS_THREADSAFE
-  count=JS_SuspendRequest(cx);
-#endif
-
   ffi_call(cif, ptr->ptr, (void *)retbuf, argptr);
-
-#ifdef JS_THREADSAFE
-  JS_ResumeRequest(cx, count);
-#endif
 
   JS_free(cx,arg_types);
   arg_types=0;
@@ -2702,18 +2690,8 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   jsval rval=JSVAL_VOID;
   struct JSX_TypeFunction *type=(struct JSX_TypeFunction *)cb->type;
   
-#ifdef JS_THREADSAFE  
-  JS_BeginRequest(cb->cx);
-#endif
-
   tmp_argv=(jsval *)JS_malloc(cb->cx, sizeof(jsval)*type->nParam);
-  if (!tmp_argv) {
-#ifdef JS_THREADSAFE
-    JS_EndRequest(cb->cx);
-#endif
-    return;
-  }
-
+  if(!tmp_argv) return;
   
   for (i=0; i<type->nParam; i++) {
     tmp_argv[i]=JSVAL_VOID;
@@ -2740,10 +2718,6 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   if (type->returnType->type != VOIDTYPE) {
     JSX_Set(cb->cx, ret, 0, type->returnType, rval);
   }
-
-#ifdef JS_THREADSAFE
-  JS_EndRequest(cb->cx);
-#endif
 }
 
 
