@@ -42,20 +42,6 @@ void ctoxml_end(void) {
   stringhash_destroy(ctoxml_typedefs);
 }
 
-void xmlesc(char *str) {
-  char buf[2]={0,0};
-  while (*str) {
-    switch(*str) {
-    case '<': PUTS("&lt;"); break;
-    case '>': PUTS("&gt;"); break;
-    case '&': PUTS("&amp;"); break;
-    default: buf[0]=*str; PUTS(buf); break;
-    }
-    str++;
-  }
-}
-
-
 static void deftypes(struct Xml *e, struct Xml *td) {
 	// 2. find all ident tags and insert them into typedefs container
 
