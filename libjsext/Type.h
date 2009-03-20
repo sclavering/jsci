@@ -5,9 +5,6 @@
 #include <ffi.h>
 
 
-#define ALIGN_TYPE int
-#define PARAMALIGN sizeof(int)
-
 enum JSX_TypeID {
   INTTYPE,
   UINTTYPE,

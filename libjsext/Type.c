@@ -1,4 +1,3 @@
-#define BUILD_TYPE_C
 #include "Type.h"
 #include <string.h>
 #include "Pointer.h"
@@ -68,7 +67,6 @@ static JSBool JSX_Type_length(JSContext *cx,  JSObject *obj, jsval id, jsval *rv
 
   return JS_TRUE;
 }
-
 
 
 ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type) {
