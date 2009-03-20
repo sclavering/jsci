@@ -2664,7 +2664,6 @@ void preprocessor(void) {
      
       xml_print(def);
       xml_free(def);
-//      stringhash_insert(ctoxml_defines, defname, defval);
     }
   } else if (strncmp(directive,"pragma",6)==0) {
     struct Xml *pragma;

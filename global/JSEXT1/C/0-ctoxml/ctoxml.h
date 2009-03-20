@@ -33,11 +33,9 @@ void ctoxml_typedef(struct Xml *e);
 extern stringhash *ctoxml_typedefs;
 extern char *ctoxml_filename;
 extern char ctoxml_filename_errmsg[80];
-//extern stringhash *ctoxml_defines;
 
 void ctoxml_init(void);
 void ctoxml_end(void);
-//void ctoxml_printdefs();
 
 
 #ifdef MAKE_LIB

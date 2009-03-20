@@ -31,7 +31,6 @@
 #include <stdlib.h>
 
 stringhash *ctoxml_typedefs;
-//stringhash *ctoxml_defines;
 
 
 #ifndef MAKE_LIB
@@ -49,13 +48,11 @@ main(int argc, char * argv[])
 
 void ctoxml_init(void) {
   ctoxml_typedefs=stringhash_new();
-  //  ctoxml_defines=stringhash_new();
   ctoxml_filename=0;
 }
 
 void ctoxml_end(void) {
   stringhash_destroy(ctoxml_typedefs);
-  //  stringhash_destroy(ctoxml_defines);
 }
 
 void xmlesc(char *str) {
@@ -71,28 +68,6 @@ void xmlesc(char *str) {
   }
 }
 
-/*
-void ctoxml_printdefs() {
-  if (stringhash_size(ctoxml_defines)==0) return;
-
-  stringhash_itr *I=stringhash_iterator(ctoxml_defines);
-
-  do {
-    char *k=stringhash_iterator_key(I);
-    char *v=stringhash_iterator_value(I);
-    if (strchr(k,'(')==0) {
-      PUTS("<define><ident>");
-      xmlesc(k);
-      PUTS("</ident><value>");
-      xmlesc(v);
-      PUTS("</value></define>\n");
-    }
-  } while (stringhash_iterator_advance(I));
-
-  free(I);
-
-}
-*/
 
 static void deftypes(struct Xml *e, struct Xml *td) {
 	// 2. find all ident tags and insert them into typedefs container
