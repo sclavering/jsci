@@ -87,5 +87,4 @@ cpp-jsext:	$(CPPOBJ)
 
 clean	:
 	rm -f y.output *.o $(TARGETS) c_gram.output lex.yy.c *~ y.tab.h *.olib expr_gram.output *.suo
-	rm -rf Releaselib Debuglib
 #	rm -f c_scan.c c_gram.c expr_gram.c expr_gram.h expr_scan.h expr_scan.c
