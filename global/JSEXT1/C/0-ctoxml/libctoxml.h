@@ -12,14 +12,8 @@
   Returns 0-terminated string allocated with malloc.
  */
 
-#if defined _WIN32 && defined MAKE_LIB
-__declspec(dllexport)
-#endif
 char *ctoxml(char *C, int *errorpos);
 
-#if defined _WIN32 && defined MAKE_LIB
-__declspec(dllexport)
-#endif
 void ctoxml_free(char *C);
 
 /*
@@ -30,8 +24,4 @@ extern struct strbuf *ctoxml_STDOUT;
 
 #endif
 
-#ifdef _WIN32
-#pragma JSEXT dl "./libctoxml.dll"
-#else
 #pragma JSEXT dl "./libctoxml.so"
-#endif

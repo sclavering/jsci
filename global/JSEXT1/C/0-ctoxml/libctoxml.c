@@ -6,16 +6,10 @@
 struct strbuf *ctoxml_STDOUT;
 extern int ctoxml_cfilepos;
 
-#ifdef _WIN32
-__declspec(dllexport)
-#endif
 void ctoxml_free(char *C) {
 	free(C);
 }
 
-#ifdef _WIN32
-__declspec(dllexport)
-#endif
 char *ctoxml(char *C, int *errorpos) {
   int res;
   char *ret;

@@ -1,9 +1,4 @@
-#ifdef _WIN32
-# include <windows.h>
-# define SEP '\\'
-#else
 # define SEP '/'
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -748,13 +743,6 @@ int eval() {
 int pathfopen(char *filename, char *path[]) {
   FILE *file=0;
   struct strbuf *buf;
-#ifdef _WIN32
-  char *p;
-  
-  for (p=filename; *p; p++)
-    if (*p=='/') *p=SEP;
-  
-#endif
   
   if (!path) return -1;
   
@@ -764,11 +752,7 @@ int pathfopen(char *filename, char *path[]) {
   
   while (*path) {
     
-#ifdef _WIN32
-    if (*path[0]!=SEP && !(path[0][0] && path[0][1]==':'))
-#else
     if (*path[0]!=SEP)
-#endif
       {
       strbuf_cpy(buf,curfile[-1].path);
     } else strbuf_clear(buf);
@@ -1098,27 +1082,6 @@ void initclass() {
 // Initialize text buffers, file buffers and IF stack
 
 void initbuf() {
-#ifdef _WIN32
-  include=(char *)malloc(4096);
-  quotepath=(char **)malloc(sizeof(char *)*100);
-  if (!GetEnvironmentVariable("include", include, 4096)) {
-	cpperror("Environment variable 'include' undefined");
-  } else {
-		quotepath[0]="";
-		stdpath=quotepath+1;
-	int i;
-	char *p;
-	include_add=include+strlen(include)+1;
-    for (i=0, p=include; p; p=strchr(p, ';'), i++)
-		p++;
-    for (i=0, p=include; p; (p=strchr(p, ';')) && p++, i++) {
-		if (i) p[-1]=0;
-		stdpath[i+1]=p;
-	}
-	stdpath[i+1]=0;
-  }
-
-#else
   char *posix_stdpath[]={"/usr/local/include", "/usr/include", 0};
   quotepath=(char **)malloc(sizeof(char *)*100);
 	quotepath[0]="";
@@ -1133,8 +1096,6 @@ void initbuf() {
   include_add=include;
   stdpath[i]=0;
 
-#endif
-
   buf=strbuf_new();
   tok=strbuf_new();
   comments=strbuf_new();
@@ -1146,14 +1107,6 @@ void initbuf() {
 }
 
 void freebuf() {
-
-/*
-#ifdef _WIN32
-	  free(stdpath[0]);
-  free(stdpath);
-#endif
-*/
-
   strbuf_free(buf);
   strbuf_free(tok);
   free(file);
@@ -1173,16 +1126,12 @@ void initmacros() {
   struct macro *stdc;
   char **defs;
 
-#ifdef _WIN32
-  char *stddefs[]={"_WIN32","","__STDC__","1","_M_IX86","600","_STDCALL_SUPPORTED","1",0};
-#else
   char *stddefs[]={"__STDC__","1",
 		   "__STDC_VERSION__","199901",
 #ifdef __x86_64__
 		   "__x86_64__","1",
 #endif
 		   0};
-#endif
   
   macros=stringhash_new();
 
@@ -1277,16 +1226,10 @@ static void delpath() {
  
 #ifdef MAKE_LIB
 
-#ifdef _WIN32
-__declspec(dllexport)
-#endif
 void cpp_free(char *C) {
 	free(C);
 }
 
-#ifdef _WIN32
-__declspec(dllexport)
-#endif
 char *cpp(char *C, char **errorpos, char **include_path) {
   char *ret;
   char **p;
