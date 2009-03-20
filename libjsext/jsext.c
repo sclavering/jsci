@@ -27,16 +27,16 @@
 
 
 #include <jsapi.h>
-# include <getopt.h>
+#include <getopt.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-# include <unistd.h>
+#include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
-# include <dlfcn.h>
+#include <dlfcn.h>
 
 
 /* these are defined respectively in Type.c Pointer.c Dl.c and load.c */
@@ -91,9 +91,8 @@ static void *startthread(void *v) {
 
 extern int optind;
 
-int
-main(int argc, char **argv, char **envp)
-{
+
+int main(int argc, char **argv, char **envp) {
   JSRuntime *rt;
 
   char *buf=0;
@@ -154,12 +153,6 @@ main(int argc, char **argv, char **envp)
 
   if (!exitcode && (!evalexpr || argc>optind)) {
     JSObject *obj=glob;
-    /*
-    jsval v;
-    JS_GetProperty(cx, obj, "JSEXT", &v);
-    obj=JSVAL_TO_OBJECT(v);
-    JS_GetProperty(cx, obj, "shell", &v);
-    */
     exitcode=call(cx, obj, rval, argc-optind, argv+optind);
   }
 
@@ -175,6 +168,7 @@ main(int argc, char **argv, char **envp)
   if (rt) JS_DestroyRuntime(rt);
   return 1;
 }
+
 
 static int eval(JSContext *cx, JSObject *obj, char *expr) {
   JSScript *script=0;
@@ -393,14 +387,6 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   va_start(va, format);
   len=vsnprintf(msg,80,format,va);
   msg[80]=0;
-
-    /*
-  len=vsnprintf(NULL,0,format,va);
-  va_end(va);
-  msg=JS_malloc(cx, len+1);
-  va_start(va, format);
-  vsprintf(msg,format,va);
-    */
 
   va_end(va);
   Str=JS_NewString(cx, msg, len);
