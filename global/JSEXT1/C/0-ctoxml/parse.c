@@ -1,5 +1,3 @@
-# define SEP '/'
-
 #include <stdio.h>
 #include <string.h>
 #include "stringhash.h"
@@ -111,15 +109,6 @@ void cpperror(char *str) {
 #endif
 
 // Read one character from buf
-
-/*
-  static int cpp_getchar() {
-  if (*buf->ptr) {
-  return *(buf->ptr++);
-  }
-  return EOF;
-  }
-*/
 
 #define cpp_getchar() (*buf->ptr++)
 
@@ -751,14 +740,14 @@ int pathfopen(char *filename, char *path[]) {
   curfile++;
   
   while (*path) {
-    
-    if (*path[0]!=SEP)
-      {
+    if(*path[0] != '/') {
       strbuf_cpy(buf,curfile[-1].path);
-    } else strbuf_clear(buf);
+    } else {
+      strbuf_clear(buf);
+    }
     strbuf_cat(buf,*path);
     
-    if (buf->len) strbuf_catchar(buf,SEP);
+    if(buf->len) strbuf_catchar(buf, '/');
     
     strbuf_cat(buf,filename);
 
@@ -771,7 +760,7 @@ int pathfopen(char *filename, char *path[]) {
       
       curfile->filename=strdup(buf->buf);
       curfile->path=strdup(buf->buf);
-      lastslash=strrchr(curfile->path,SEP);
+      lastslash = strrchr(curfile->path, '/');
       if (lastslash) {
 	*lastslash=0;
       } else {
