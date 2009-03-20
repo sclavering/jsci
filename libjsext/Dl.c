@@ -1,11 +1,8 @@
 #include <jsapi.h>
 #include <stdarg.h>
-
 #include "Type.h"
 #include "Pointer.h"
-
-# include <dlfcn.h>
-
+#include <dlfcn.h>
 #include <string.h>
 
 
