@@ -472,12 +472,12 @@ void read_token_macro() {
 
 void line_number() {
   char lineno[10];
-  PUTS("#line ");
+  strbuf_cat(cpp_STDOUT, "#line ");
   sprintf(lineno,"%d",curfile->lineno+1);
-  PUTS(lineno);
-  PUTS(" \"");
-  PUTS(curfile->filename);
-  PUTS("\"");
+  strbuf_cat(cpp_STDOUT, lineno);
+  strbuf_cat(cpp_STDOUT, " \"");
+  strbuf_cat(cpp_STDOUT, curfile->filename);
+  strbuf_cat(cpp_STDOUT, "\"");
 }
 
 // Normalize line endings to LF
@@ -540,7 +540,6 @@ void read_line_raw() {
     curfile--;
     if (curfile>=file) {
       line_number();
-//      PUTS("\n");
     }
     return;
   }
@@ -785,7 +784,7 @@ void parse_directive() {
   case 'd':
     if (strcmp(tok->buf,"define")==0) {
       if (*curIF==1) {
-	PUTS(buf->buf);
+        strbuf_cat(cpp_STDOUT, buf->buf);
 	thismacro=(struct macro *)malloc(sizeof(struct macro));
 	read_horiz_ws();
 	read_token_raw();
@@ -881,10 +880,10 @@ void parse_directive() {
   case 'u':
     if (strcmp(tok->buf,"undef")==0) {
       if (*curIF==1) {
-	PUTS(buf->buf);	
-	read_horiz_ws();
-	read_token_raw();
-	stringhash_remove(macros, tok->buf);
+        strbuf_cat(cpp_STDOUT, buf->buf);
+        read_horiz_ws();
+        read_token_raw();
+        stringhash_remove(macros, tok->buf);
       }
       return;
     }
@@ -892,8 +891,8 @@ void parse_directive() {
   case 'p':
     if (strcmp(tok->buf,"pragma")==0) {
       if (*curIF==1) {
-	PUTS(buf->buf);
-	read_horiz_ws();
+        strbuf_cat(cpp_STDOUT, buf->buf);
+        read_horiz_ws();
         read_token_raw();
 	if (strcmp(tok->buf,"JSEXT")==0) {
 	  read_horiz_ws();
@@ -938,9 +937,9 @@ void parse_textline() {
     if (!*buf->ptr) break;
     read_horiz_ws();
     if (!*buf->ptr) break;
-    if (*curIF==1) PUTS(tok->buf);
+    if(*curIF == 1) strbuf_cat(cpp_STDOUT, tok->buf);
     read_token();
-    if (*curIF==1) PUTS(tok->buf);
+    if(*curIF == 1) strbuf_cat(cpp_STDOUT, tok->buf);
   }
 }
 
@@ -949,7 +948,7 @@ void parse_textline() {
 void read_textline() {
   while (curfile>=file) {
     read_line();
-    PUTS("\n");
+    strbuf_cat(cpp_STDOUT, "\n");
     read_horiz_ws();
     if (buf->ptr[0]=='#') {
       parse_directive();
@@ -970,11 +969,11 @@ void parse() {
       parse_textline();
     }
     if (comment==0) {
-      if (*curIF==1) PUTS(comments->buf);
+      if(*curIF == 1) strbuf_cat(cpp_STDOUT, comments->buf);
       strbuf_clear(comments);
     }
     if (!(comment && *curIF==1)) // not accumulating comment
-      PUTS("\n");
+      strbuf_cat(cpp_STDOUT, "\n");
 
     if (cpp_error) return;
   }
@@ -1111,33 +1110,6 @@ void freemacros() {
   stringhash_destroy(macros);
 }
 
-/*
-  void printmacros() {
-  if (stringhash_size(macros)==0) return;
-
-  stringhash_itr *I=stringhash_iterator(macros);
-
-  do {
-  PUTS("#define ");
-  struct macro *m=stringhash_iterator_value(I);
-  PUTS(m->ident);
-  struct paramlist *p=m->params;
-  if (p) PUTS("(");
-  while (p) {
-  PUTS(p->paramname);
-  p=p->next;
-  if (p) PUTS(", ");
-  }
-  if (m->params) PUTS(")");
-  PUTS(" ");
-  PUTS(m->def);
-  PUTS("\n");
-  } while (stringhash_iterator_advance(I));
-
-  free(I);
-  }
-*/
-
 
 static void addpath(char *path) {
   char **p=stdpath;
@@ -1204,7 +1176,7 @@ char *cpp(char *C, char **errorpos, char **include_path) {
   cpp_STDOUT=strbuf_new();
 
   line_number();
-  PUTS("\n");
+  strbuf_cat(cpp_STDOUT, "\n");
   parse();
 
   //  if (!cpp_error)
