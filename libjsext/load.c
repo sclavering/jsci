@@ -1,19 +1,17 @@
 /*
 Defines the javascript function:
 
-    script = load(filename [, before [, after]])
+    script = load(filename)
 
 Loads and compiles an ISO-8859-1 JavaScript file.  Returns the value of the last expression in the script.
 
 The file may start with a #! line, which is ignored.
-
-If the parameters 'before' and 'after' are given and are strings, they are added before and after the contents of the file before it is interpreted.
 */
 
 #include <jsapi.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-# include <unistd.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <fcntl.h>
@@ -46,24 +44,10 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
   int shebanglen=0;
   JSScript *script=0;
   JSObject *scrobj=0;
-  char *before=0;
-  char *after=0;
-  int beforelen=0;
-  int afterlen=0;
 
   if (argc<1) {
     JSX_ReportException(cx, "Too few arguments");
     return JS_FALSE;
-  }
-
-  if (argc>1 && JSVAL_IS_STRING(argv[1])) {
-    before = JS_GetStringBytes(JSVAL_TO_STRING(argv[1]));
-    beforelen = JS_GetStringLength(JSVAL_TO_STRING(argv[1]));
-  }
-
-  if (argc>2 && JSVAL_IS_STRING(argv[2])) {
-    after = JS_GetStringBytes(JSVAL_TO_STRING(argv[2]));
-    afterlen = JS_GetStringLength(JSVAL_TO_STRING(argv[2]));
   }
 
   if (!JS_ConvertArguments(cx, argc, argv, "s", &filename)) {
@@ -77,34 +61,26 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
     return JS_FALSE;
   }
   fstat(fd, &S);
-  buf=malloc(S.st_size+beforelen+afterlen);
+  buf=malloc(S.st_size);
   if (!buf) {
     JSX_ReportException(cx, "load: Out of memory loading %s", filename);
     goto failure;
   }
-  if (read(fd, buf+beforelen, S.st_size)!=S.st_size) {
+  if(read(fd, buf, S.st_size) != S.st_size) {
     JSX_ReportException(cx, "load: Error loading %s",filename);
     goto failure;
   }
 
-  if (S.st_size>1 && buf[beforelen]=='#' && buf[beforelen+1]=='!') {
+  if(S.st_size > 1 && buf[0] == '#' && buf[1] == '!') {
     // shebang
-    while(buf[shebanglen + beforelen] != '\n' && buf[shebanglen + beforelen] != '\r') shebanglen++;
+    while(buf[shebanglen] != '\n' && buf[shebanglen] != '\r') shebanglen++;
     shebanglen++;
-    if(shebanglen < S.st_size &&
-        (buf[shebanglen + beforelen] == '\n' || buf[shebanglen + beforelen] == '\r') &&
-        buf[shebanglen + beforelen] != buf[shebanglen + beforelen - 1]) {
+    if(shebanglen < S.st_size && (buf[shebanglen] == '\n' || buf[shebanglen] == '\r') && buf[shebanglen] != buf[shebanglen - 1]) {
       shebanglen++;
     }
   }
-  if (before) {
-    memcpy(buf+shebanglen, before, beforelen);
-  }
-  if (after) {
-    memcpy(buf+beforelen+S.st_size, after, afterlen);
-  }
 
-  script=JS_CompileScript(cx, obj, buf+shebanglen, S.st_size-shebanglen+beforelen+afterlen, filename, shebanglen?2:1);
+  script=JS_CompileScript(cx, obj, buf + shebanglen, S.st_size - shebanglen, filename, shebanglen ? 2 : 1);
   if (!script) goto failure;
   scrobj=JS_NewScriptObject(cx, script);
   //  JS_AddRoot(cx, &scrobj);
