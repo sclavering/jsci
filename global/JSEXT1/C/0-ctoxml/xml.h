@@ -4,18 +4,18 @@
 #include <stdio.h>
 
 struct Attribute {
-	char *name;
-	char *value;
+  char *name;
+  char *value;
 };
 
 struct Xml {
-	char *tag;
-	int nAttrib;
-	struct Attribute *attrib;
-	struct Xml *inner;
-	char *text;
-	struct Xml *next;
-	struct Xml *last;
+  char *tag;
+  int nAttrib;
+  struct Attribute *attrib;
+  struct Xml *inner;
+  char *text;
+  struct Xml *next;
+  struct Xml *last;
 };
 
 struct Xml *xml(char *tag, ...);
