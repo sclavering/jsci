@@ -112,22 +112,6 @@ void cpperror(char *str) {
 
 #define cpp_getchar() (*buf->ptr++)
 
-// Put one character back to buf
-
-static void cpp_ungetchar(char c) {
-  if (*buf->ptr) {
-    if (buf->ptr==buf->buf) {
-      strbuf_catchar(buf,' '); // Extend by one
-      memmove(buf->buf+1,buf->buf,buf->len-1);
-    } else {
-      buf->ptr--;
-    }
-    *buf->ptr=c;
-  } else {
-    char str[2]={c,0};
-    strbuf_cpy(buf,str);
-  }
-}
 
 char *spc=" \t";
 struct strbuf *tok;
