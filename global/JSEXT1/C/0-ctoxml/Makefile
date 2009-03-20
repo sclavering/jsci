@@ -70,21 +70,12 @@ c_gram.c:	c_gram.y
 
 LIBCTOXMLOBJ	= c_gram.olib c_scan.o ctoxml.olib xml.olib stringhash.o hashtable.o libctoxml.olib strbuf.o hashtable_itr.o
 
-testlibctoxml:	libctoxml.so testlibctoxml.o
-	$(CC) -L. -lctoxml -lcpp testlibctoxml.o -o testlibctoxml -lm -lefence
-
-#testlibcpp:	libcpp.so testlibcpp.o
-#	$(CC) -L. -lcpp testlibcpp.o -o testlibcpp -lm
-
 libctoxml.so:	$(LIBCTOXMLOBJ)
 	$(CC) $(LIBCTOXMLOBJ) -shared -o libctoxml.so
 
 c_scan.o	: c_gram.h
 
 LIBCPPOBJ	= parse.olib stringhash.o hashtable.o expr_gram.o expr_scan.o strbuf.o hashtable_itr.o
-
-testlibcpp:	testlibcpp.o $(LIBCPPOBJ)
-	$(CC) $(LIBCPPOBJ) testlibcpp.o -o testlibcpp -lm -pg
 
 libcpp.so: $(LIBCPPOBJ)
 	$(CC)  $(LIBCPPOBJ) -shared -o libcpp.so
@@ -93,5 +84,3 @@ clean	:
 	rm -f y.output *.o $(TARGETS) c_gram.output lex.yy.c *~ y.tab.h *.olib expr_gram.output *.suo
 	rm -rf Releaselib Debuglib
 #	rm -f c_scan.c c_gram.c expr_gram.c expr_gram.h expr_scan.h expr_scan.c
-
-#	$(MAKE) -C test clean
