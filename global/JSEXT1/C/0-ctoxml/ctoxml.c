@@ -33,19 +33,6 @@
 stringhash *ctoxml_typedefs;
 
 
-#ifndef MAKE_LIB
-main(int argc, char * argv[])
-{
-  ctoxml_init();
-  PUTS("<C>\n");
-  ctoxml_cparse();
-  PUTS("</C>");
-  ctoxml_end();
-
-  return 0;
-}
-#endif
-
 void ctoxml_init(void) {
   ctoxml_typedefs=stringhash_new();
   ctoxml_filename=0;

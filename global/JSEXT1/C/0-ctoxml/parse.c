@@ -8,19 +8,9 @@
 #include <stdlib.h>
 #include "expr_scan.h"
   
-#ifdef MAKE_LIB
-
-  static struct strbuf *cpp_STDOUT;
-  //static char *cpp_STDIN;
-  static char *cpp_error;
-
-# define PUTS(x) strbuf_cat(cpp_STDOUT,x)
-
-#else
-
-# define PUTS(x) fputs(x,stdout);
-
-#endif
+static struct strbuf *cpp_STDOUT;
+static char *cpp_error;
+#define PUTS(x) strbuf_cat(cpp_STDOUT,x)
 
 static struct strbuf *comments;
 
@@ -84,8 +74,6 @@ static void addpath(char *path);
 
 // Report error
 
-#ifdef MAKE_LIB
-
 void cpperror(char *str) {
   if (curfile && curfile->filename) {
     cpp_error=malloc(strlen(curfile->filename)+80);
@@ -94,19 +82,6 @@ void cpperror(char *str) {
 	cpp_error=strdup(str);
   }
 }
-
-#else
-
-void cpperror(char *str) {
-  if (curfile && curfile->filename) {
-    fprintf(stderr,"%s:%d:1: %s\n", curfile->filename, curfile->lineno, str);
-  } else {
-    fprintf(stderr,"%s\n", str);
-  }
-  exit(1);
-}
-
-#endif
 
 // Read one character from buf
 
@@ -242,9 +217,7 @@ void expand_macro() {
   
   for (;;) {
     read_token_macro();
-#ifdef MAKE_LIB
     if (cpp_error) break;
-#endif
     if (tok->len==0) break;
     if (strcmp(tok->buf,"##")==0) { // cat
       char *end;
@@ -850,9 +823,7 @@ void parse_directive() {
 	read_horiz_ws();
 	if (buf->ptr[0]!='<' && buf->ptr[0]!='"') {
 	  expand();
-#ifdef MAKE_LIB
 	  if (cpp_error) return;
-#endif
 	}
 	if (!buf->ptr[0]) {
 	  cpperror("Malformed include directive");
@@ -1005,12 +976,10 @@ void parse() {
     if (!(comment && *curIF==1)) // not accumulating comment
       PUTS("\n");
 
-#ifdef MAKE_LIB
     if (cpp_error) return;
-#endif
-   
   }
 }
+
 
 // Initialize character classes
 
@@ -1197,11 +1166,11 @@ static void delpath() {
   }
 }
  
-#ifdef MAKE_LIB
 
 void cpp_free(char *C) {
 	free(C);
 }
+
 
 char *cpp(char *C, char **errorpos, char **include_path) {
   char *ret;
@@ -1255,82 +1224,3 @@ char *cpp(char *C, char **errorpos, char **include_path) {
 
   return ret;
 }
-
-#else
-
-int main(int argc, char **argv) {
-  struct stat sb;
-  int truelen;
-  int i;
-  int usestdin=1;
-
-  initclass();
-  initbuf();
-
-  for (i=1; i<argc; i++) {
-    FILE *input;
-    
-    if ((argv[i][0]=='-' || argv[i][0]=='/') &&
-	argv[i][1]=='I') {
-			if (argv[i][2]==0) {
-				addpath(argv[i+1]);
-				i++;
-			} else {
-				addpath(argv[i]+2);
-			}
-      continue;
-    }
-
-    usestdin=0;
-    file->lineno=0;
-    file->filename=strdup(argv[i]);
-    file->path=strdup("");
-
-    input=fopen(argv[i],"r");
-    if (!input) cpperror(argv[i]);
-
-    fstat(fileno(input), &sb);
-  
-    file->ptr=file->buf=(char *)malloc(sb.st_size+2);
-    truelen=fread(file->buf,1,sb.st_size,input);
-    file->buf[truelen]=0;
-    cleanup_lines(file->buf);
-
-    initmacros();
-
-    line_number();
-    PUTS("\n");
-    parse();
-  //  printmacros();
-    freemacros();
-	
-  }
-
-  if (usestdin) {
-	file->lineno=0;
-    file->filename=strdup("<stdin>");
-    file->path=strdup("");
-
-    fstat(fileno(stdin), &sb);
-  
-    file->ptr=file->buf=(char *)malloc(sb.st_size+2);
-    truelen=fread(file->buf,1,sb.st_size,stdin);
-    file->buf[truelen]=0;
-    cleanup_lines(file->buf);
-
-    initmacros();
-
-    line_number();
-    PUTS("\n");
-    parse();
-  //  printmacros();
-    freemacros();
-  }
-
-
-  freebuf();
-
-  return 0;
-}
-
-#endif

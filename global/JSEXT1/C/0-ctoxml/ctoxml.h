@@ -37,11 +37,5 @@ extern char ctoxml_filename_errmsg[80];
 void ctoxml_init(void);
 void ctoxml_end(void);
 
-
-#ifdef MAKE_LIB
- #include "libctoxml.h"
- #define PUTS(x) strbuf_cat(ctoxml_STDOUT,x)
-#else
- #define PUTS(x) fputs(x,stdout)
-#endif
-
+#include "libctoxml.h"
+#define PUTS(x) strbuf_cat(ctoxml_STDOUT,x)

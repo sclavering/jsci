@@ -33,10 +33,6 @@ TARGETS	= libctoxml.so libcpp.so
 
 all:	$(TARGETS)
 
-%.olib:	%.c
-	$(CC) -c $(CFLAGS) -DMAKE_LIB $< -o $@
-
-
 c_scan.h:	c_scan.c
 
 c_scan.c:	c_scan.l
@@ -47,7 +43,7 @@ c_scan.o	: c_gram.h
 c_gram.c:	c_gram.y
 	$(YACC) -p ctoxml_c -dv -o c_gram.c c_gram.y
 
-LIBCTOXMLOBJ	= c_gram.olib c_scan.o ctoxml.olib xml.olib stringhash.o hashtable.o libctoxml.olib strbuf.o hashtable_itr.o
+LIBCTOXMLOBJ	= c_gram.o c_scan.o ctoxml.o xml.o stringhash.o hashtable.o libctoxml.o strbuf.o hashtable_itr.o
 
 libctoxml.so:	$(LIBCTOXMLOBJ)
 	$(CC) $(LIBCTOXMLOBJ) -shared -o libctoxml.so
@@ -64,12 +60,12 @@ expr_scan.c:	expr_scan.l
 expr_gram.c:	expr_gram.y
 	$(YACC) -p cpp_expr -dv -o expr_gram.c expr_gram.y
 
-LIBCPPOBJ	= parse.olib stringhash.o hashtable.o expr_gram.o expr_scan.o strbuf.o hashtable_itr.o
+LIBCPPOBJ	= parse.o stringhash.o hashtable.o expr_gram.o expr_scan.o strbuf.o hashtable_itr.o
 
 libcpp.so: $(LIBCPPOBJ)
 	$(CC)  $(LIBCPPOBJ) -shared -o libcpp.so
 
 
 clean	:
-	rm -f y.output *.o $(TARGETS) c_gram.output lex.yy.c *~ y.tab.h *.olib expr_gram.output *.suo
+	rm -f y.output *.o $(TARGETS) c_gram.output lex.yy.c *~ y.tab.h expr_gram.output *.suo
 #	rm -f c_scan.c c_gram.c expr_gram.c expr_gram.h expr_scan.h expr_scan.c
