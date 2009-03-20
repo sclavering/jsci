@@ -49,8 +49,8 @@ libctoxml.so:	$(LIBCTOXMLOBJ)
 	$(CC) $(LIBCTOXMLOBJ) -shared -o libctoxml.so
 
 
-parse.o:	expr_scan.h parse.c
-	$(CC) $(CFLAGS) parse.c -c
+libcpp.o:	expr_scan.h libcpp.c
+	$(CC) $(CFLAGS) libcpp.c -c
 
 expr_scan.h:	expr_scan.c
 
@@ -60,7 +60,7 @@ expr_scan.c:	expr_scan.l
 expr_gram.c:	expr_gram.y
 	$(YACC) -p cpp_expr -dv -o expr_gram.c expr_gram.y
 
-LIBCPPOBJ	= parse.o stringhash.o hashtable.o expr_gram.o expr_scan.o strbuf.o hashtable_itr.o
+LIBCPPOBJ	= libcpp.o stringhash.o hashtable.o expr_gram.o expr_scan.o strbuf.o hashtable_itr.o
 
 libcpp.so: $(LIBCPPOBJ)
 	$(CC)  $(LIBCPPOBJ) -shared -o libcpp.so
