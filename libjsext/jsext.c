@@ -66,15 +66,6 @@ static void printhelp() {
        "\tPrint help\n");
 }
 
-void ReportError(char *format, ...) {
-  va_list va;
-
-  va_start(va, format);
-  vprintf(format,va);
-
-  va_end(va);
-}
-
 static void
 my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
 {
@@ -218,7 +209,7 @@ static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[])
 
   jsargv=(jsval *)JS_malloc(cx, sizeof(jsval) * (argc+1));
   if (!jsargv) {
-    ReportError("Out of memory");
+    printf("Out of memory");
     goto failure;
   }
 
