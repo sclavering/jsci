@@ -7,7 +7,7 @@ struct strbuf *ctoxml_STDOUT;
 extern int ctoxml_cfilepos;
 
 void ctoxml_free(char *C) {
-	free(C);
+    free(C);
 }
 
 char *ctoxml(char *C, int *errorpos) {
@@ -21,11 +21,12 @@ char *ctoxml(char *C, int *errorpos) {
   PUTS("<C>\n");
   res=ctoxml_cparse();
   if (errorpos) {
-    if (res) *errorpos=ctoxml_cfilepos;
-    else {
-		*errorpos=-1;
-	    PUTS("</C>");
-	}
+    if (res) {
+      *errorpos = ctoxml_cfilepos;
+    } else {
+      *errorpos = -1;
+      PUTS("</C>");
+    }
   } else {
     PUTS("</C>");
   }
