@@ -131,39 +131,6 @@ struct Xml *xml_link(struct Xml *e1, struct Xml *e2) {
 }
 
 
-void c_unescape(char *in) {
-  char *out = in;
-  while(*in) {
-    if(*in == '\\') {
-    int val;
-    ++in;
-    switch(*(in++)) {
-    case 'a': val = '\a'; break;
-      case 't': val = '\t'; break;
-      case 'v': val = '\v'; break;
-      case 'b': val = '\b'; break;
-      case 'r': val = '\r'; break;
-      case 'f': val = '\f'; break;
-      case 'n': val = '\n'; break;
-      case '\\': val = '\\'; break;
-      case '?': val = '\?'; break;
-      case '\'': val = '\''; break;
-      case '\"': val = '\"'; break;
-      case 'x': val = strtoul(in, &in, 16); break;
-    }
-    *(out++) = val;
-  } else
-    *(out++) = *(in++);
-  }
-  *out = 0;
-}
-
-
-/*
-
-  Note to self: c_unescape strings as they are put into xml, not when they are taken out
-
-*/
 static void xml_escape(char *s) {
   char str[2];
   while(*s) {

@@ -3742,3 +3742,31 @@ void ctoxml_cerror (char const *msg) {
   fprintf(stderr,"%s:%d: %s\n",ctoxml_filename_errmsg,ctoxml_clineno,msg);
 }
 
+void c_unescape(char *in) {
+  char *out = in;
+  while(*in) {
+    if(*in == '\\') {
+      int val;
+      ++in;
+      switch(*(in++)) {
+      case 'a': val = '\a'; break;
+        case 't': val = '\t'; break;
+        case 'v': val = '\v'; break;
+        case 'b': val = '\b'; break;
+        case 'r': val = '\r'; break;
+        case 'f': val = '\f'; break;
+        case 'n': val = '\n'; break;
+        case '\\': val = '\\'; break;
+        case '?': val = '\?'; break;
+        case '\'': val = '\''; break;
+        case '\"': val = '\"'; break;
+        case 'x': val = strtoul(in, &in, 16); break;
+      }
+      *(out++) = val;
+    } else {
+      *(out++) = *(in++);
+    }
+  }
+  *out = 0;
+}
+
