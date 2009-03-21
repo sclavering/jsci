@@ -54,14 +54,11 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...);
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
 static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[]);
-static int eval(JSContext *cx, JSObject *obj, char *expr);
 
 static void printhelp() {
   puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
        "Evaluates FILE. If it is an anonymous JavaScript function, arguments are passed to it\n\n"
        "Options:\n"
-       "-e, --eval=EXPR\n"
-       "\tEvaluate the expression\n"
        "-h, --help\n"
        "\tPrint help\n");
 }
@@ -89,7 +86,6 @@ int main(int argc, char **argv, char **envp) {
   char *buf=0;
   int fd=0;
   JSContext *cx=0;
-  char *evalexpr=0;
   JSObject *glob;
   int exitcode=0;
   jsval rval;
@@ -97,16 +93,12 @@ int main(int argc, char **argv, char **envp) {
   for (;;) {
     static struct option long_options[] = {
       {"help", 0, 0, 'h'},
-      {"eval", 1, 0, 'e'},
       {0, 0, 0, 0}
     };
 
     int c = getopt_long(argc, argv, "r:he:", long_options, 0);
 
     switch(c) {
-    case 'e':
-      evalexpr=optarg;
-      break;
     case 'h':
       printhelp();
       exit(0);
@@ -138,11 +130,7 @@ int main(int argc, char **argv, char **envp) {
   JS_AddRoot(cx, &rval);
   exitcode = !JSX_init(cx, glob, &rval);
 
-  if (evalexpr && !exitcode) {
-    exitcode=eval(cx, glob, evalexpr);
-  }
-
-  if (!exitcode && (!evalexpr || argc>optind)) {
+  if(!exitcode) {
     JSObject *obj=glob;
     exitcode=call(cx, obj, rval, argc-optind, argv+optind);
   }
@@ -157,44 +145,6 @@ int main(int argc, char **argv, char **envp) {
  failure:
   if (cx) JS_DestroyContext(cx);
   if (rt) JS_DestroyRuntime(rt);
-  return 1;
-}
-
-
-static int eval(JSContext *cx, JSObject *obj, char *expr) {
-  JSScript *script=0;
-  JSObject *scrobj=0;
-  jsval tmpval=JSVAL_VOID;
-
-  JS_AddRoot(cx, &tmpval);
-
-  script=JS_CompileScript(cx, obj, expr, strlen(expr), "<expr>", 1);
-  if (!script)
-    goto failure;
-
-  scrobj=JS_NewScriptObject(cx, script);
-  JS_AddRoot(cx, &scrobj);
-
-  if (!JS_ExecuteScript(cx, obj, script, &tmpval))
-    goto failure;
-
-  if (tmpval!=JSVAL_VOID && expr[strlen(expr)-1]!=';' && expr[strlen(expr)-1]!='}') {
-    puts(JS_GetStringBytes(JS_ValueToString(cx, tmpval)));
-  }
-
-  JS_RemoveRoot(cx, &scrobj);
-  //  JS_DestroyScript(cx, script);
-
-  JS_RemoveRoot(cx, &tmpval);
-  return 0;
-
- failure:
-  if (scrobj)
-    JS_RemoveRoot(cx, &scrobj);
-  //  if (script)
-    //    JS_DestroyScript(cx, script);
-
-  JS_RemoveRoot(cx, &tmpval);
   return 1;
 }
 
