@@ -74,9 +74,6 @@ my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
     fprintf(stderr,"%s\n",message);
 }
 
-static void *startthread(void *v) {
-}
-
 extern int optind;
 
 
