@@ -131,7 +131,7 @@ struct Xml *xml_link(struct Xml *e1, struct Xml *e2) {
 }
 
 
-static void xml_escape(char *s) {
+static void xml_print_escaped(char *s) {
   char str[2];
   while(*s) {
     switch(*s) {
@@ -154,13 +154,12 @@ static void _xml_print(struct Xml *e) {
   int i;
   PUTS("<");
   if(e->tag) PUTS(e->tag);
-  if(e->nAttrib) PUTS(" ");
 
   for(i = 0; i < e->nAttrib; i++) {
-    if(i > 0) PUTS(" ");
+    PUTS(" ");
     PUTS(e->attrib[i].name);
     PUTS("='");
-    if(e->attrib[i].value) xml_escape(e->attrib[i].value);
+    if(e->attrib[i].value) xml_print_escaped(e->attrib[i].value);
     PUTS("'");
   }
 
@@ -171,7 +170,7 @@ static void _xml_print(struct Xml *e) {
 
   PUTS(">");
 
-  if(e->text) xml_escape(e->text);
+  if(e->text) xml_print_escaped(e->text);
   if(e->inner) {
     struct Xml *i = e->inner;
     do {
