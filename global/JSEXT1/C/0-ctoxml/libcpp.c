@@ -1054,15 +1054,6 @@ void freebuf() {
   free(IF);
 }
 
-void define(char *name, char *value) {
-  struct macro *newmacro=(struct macro *)calloc(sizeof(struct macro)+strlen(value)+1,1);
-  newmacro->ident=strdup(name);
-  newmacro->def=(char *)(newmacro+1);
-  strcpy(newmacro->def,value);
-
-  stringhash_insert(macros,newmacro->ident,newmacro);
-}
-
 void initmacros() {
   struct macro *stdc;
   char **defs;
