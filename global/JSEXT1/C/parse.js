@@ -222,7 +222,7 @@ return function(code, default_dl) {
     var pragma;
 
     for each(pragma in code.pragma) {
-      if ((match=pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(default)|(main))[ \t]*$/))) {
+      if ((match=pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(main))[ \t]*$/))) {
         if(match[3]) this['dl ' + (ndl++)] = Dl(match[3]);
         else if(match[5]) this['dl ' + (ndl++)] = Dl(null);
       }
