@@ -8,19 +8,18 @@ Statements are evaluated as they are entered. The value of statements that are n
 (function() {
 
 function interactive() {
-  var normalprompt = "jsx> ";
-  var contprompt = "   > ";
+  const normalprompt = "jsx> ";
+  const contprompt = ".... ";
   var cons;
   var cmdbuf;
 
   if(!stdin.isatty()) {
     cons = stdin;
-    cons.Options = {};
   } else {
     cons = new Console({
       prompt: normalprompt,
       histfile: environment.HOME + "/.jsext_history",
-      complete: completefunc,
+      completion_function: completefunc,
     });
 
     cmdbuf = "";
@@ -32,9 +31,9 @@ function interactive() {
       if(js.isCompilableUnit(cmdbuf)) {
         execline(cmdbuf);
         cmdbuf = "";
-        cons.Options.prompt = normalprompt;
+        cons.prompt = normalprompt;
       } else {
-        cons.Options.prompt = contprompt;
+        cons.prompt = contprompt;
       }
     }
     cons.close();
