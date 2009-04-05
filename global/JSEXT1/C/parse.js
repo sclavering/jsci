@@ -64,7 +64,7 @@ return function(code, default_dl) {
 
   // Parse proper
 
-  code = curdir.ctoxml(curdir.cpp(code, [curdir.$path + '/0-include']));
+  code = curdir.ctoxml(curdir.cpp(code));
 
   // Contains the evaluated code. Used during
   // processing to evaluate sizeof() expressions.
