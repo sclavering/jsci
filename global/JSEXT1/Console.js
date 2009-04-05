@@ -15,7 +15,7 @@ function Console(args) {
   this.prompt = args.prompt || "> ";
   this._completion_function = args.completion_function || null;
 
-  if(this._histfile) Console.history.read(this._histfile);
+  if(this._histfile) JSEXT1.libhistory.read_history(String(this._histfile));
   if(this._completion_function) Console.readline.completion_function(this._completion_function);
 }
 
@@ -30,7 +30,7 @@ Console.prototype = {
   // Writes the history to the history file and closes the console.
   close: function() {
     if(this.closed) return;
-    if(this._histfile) Console.history.write(this._histfile);
+    if(this._histfile) JSEXT1.libhistory.write_history(String(this._histfile));
     print("\n");
     this.closed = true;
   },
@@ -49,7 +49,7 @@ Console.prototype = {
       this.close();
       return;
     }
-    if(line != "") Console.history.add(line);
+    if(line != "") JSEXT1.libhistory.add_history(String(line));
     return line;
   }
 };
