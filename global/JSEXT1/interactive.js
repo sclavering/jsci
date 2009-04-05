@@ -17,7 +17,7 @@ function interactive() {
     cons = stdin;
     cons.Options = {};
   } else {
-    cons = Console.open({
+    cons = new Console({
       prompt: normalprompt,
       histfile: environment.HOME + "/.jsext_history",
       complete: completefunc,
