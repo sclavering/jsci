@@ -8,8 +8,8 @@ Statements are evaluated as they are entered. The value of statements that are n
 (function() {
 
 function interactive() {
-  var normalprompt = "jsext> ";
-  var contprompt = "> ";
+  var normalprompt = "jsx> ";
+  var contprompt = "   > ";
   var cons;
   var cmdbuf;
 
@@ -23,9 +23,6 @@ function interactive() {
       complete: completefunc,
     });
 
-    // Make a function using the Function constructor to avoid closure
-    // underscore all variables, as they are visible to the interactive environment
-    
     cmdbuf = "";
     var global = function(){ return this; }();
 
