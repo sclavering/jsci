@@ -109,9 +109,8 @@ return function(code, default_dl) {
   ps.close();
 
   return {
-    live: that,
-    expsym: expsym,
-    su: su,
+    exported_symbols: expsym,
+    structs_and_unions: su,
     sym: sym,
     symOrder: symOrder
   };

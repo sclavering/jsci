@@ -19,12 +19,12 @@ function(code, default_dl) {
   var parsed = parse(code, default_dl);
   var src = {};
 
-  for(var i in parsed.su)
-    if(parsed.expsym[i])
-      src[i] = parsed.su[i];
+  for(var i in parsed.structs_and_unions)
+    if(parsed.exported_symbols[i])
+      src[i] = parsed.structs_and_unions[i];
 
   for(var i in parsed.sym) {
-    if(parsed.expsym[i]) {
+    if(parsed.exported_symbols[i]) {
       if(src[i]) {
         src[i] = "(this['" + i + "']=" + src[i] + "," + parsed.sym[i] + ")";
       } else {
