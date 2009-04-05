@@ -6,5 +6,5 @@
  */
 
   function(line) {
-    lib.add_history(String(line));
+    JSEXT1.libhistory.add_history(String(line));
   }

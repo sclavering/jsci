@@ -6,5 +6,5 @@
  */
 
   function(filename) {
-    lib.write_history(String(filename));
+    JSEXT1.libhistory.write_history(String(filename));
   }

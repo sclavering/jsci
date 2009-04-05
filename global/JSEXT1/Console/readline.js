@@ -20,7 +20,7 @@ function (prompt) {
     else
       prompt = null;
 
-    var ret=arguments.callee.lib.readline(prompt);
+    var ret = JSEXT1.libreadline.readline(prompt);
 
     if (ret===null) // encountered EOF
       return;

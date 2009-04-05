@@ -5,5 +5,5 @@
  */
 
   function(filename) {
-    lib.read_history(String(filename));
+    JSEXT1.libhistory.read_history(String(filename));
   }
