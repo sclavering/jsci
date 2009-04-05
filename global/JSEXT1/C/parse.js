@@ -204,11 +204,9 @@ return function(code, default_dl) {
 
 
   function allmacros() {
-    var ps=new $parent.Progress;
-    for each (var def in code.define) {
+    for each(var def in code.define) {
       if(expsym[def.id]) macro.call(that,def);
     }
-    ps.close();
   }
 
 
@@ -217,11 +215,9 @@ return function(code, default_dl) {
 
     if(default_dl) this['dl ' + (ndl++)] = default_dl;
 
-    var match;
-    var pragma;
-
-    for each(pragma in code.pragma) {
-      if ((match=pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(main))[ \t]*$/))) {
+    for each(var pragma in code.pragma) {
+      var match = pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(main))[ \t]*$/);
+      if(match) {
         if(match[3]) this['dl ' + (ndl++)] = Dl(match[3]);
         else if(match[5]) this['dl ' + (ndl++)] = Dl(null);
       }
