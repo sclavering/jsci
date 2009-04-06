@@ -19,7 +19,6 @@ function interactive() {
     cons = new Console({
       prompt: normalprompt,
       histfile: environment.HOME + "/.jsext_history",
-      completion_function: completefunc,
     });
 
     cmdbuf = "";
@@ -64,29 +63,6 @@ function execline(line) {
 function do_eval($$code) {
   return eval($$code);
 }
-
-
-// Used to find possible completions to words typed in the console.
-function completefunc(word, root) {
-  try {
-    var parts = word.split(".");
-    var cur = root || (function(){ return this; })(); // global;
-    for(var i = 0; i < parts.length - 1; i++) {
-      if(!cur[parts[i]]) return;
-      cur = cur[parts[i]];
-    }
-    
-    var ret = [];
-    var lastword = parts[parts.length - 1];
-    var firstwords = word.substr(0, word.length - lastword.length);
-    for(var i in cur) {
-      if(i.substr(0, lastword.length) == lastword)
-        ret.push(firstwords + i);
-    }
-    return ret;
-  } catch(x) {}
-}
-
 
 return interactive;
 
