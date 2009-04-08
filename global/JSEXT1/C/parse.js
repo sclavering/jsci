@@ -225,11 +225,8 @@ return function(code, default_dl) {
 
     for (var i=0; i<ndl; i++) {
       var id='dl '+i;
-      var filename=this[id].filename;
-      if (!filename)
-        filename=""
-      else
-        filename="'"+filename.replace(/\\/g,"\\\\")+"'";
+      var filename = this[id].filename || "";
+      if(filename) filename = "'" + filename.replace(/\\/g, "\\\\") + "'";
       sym[id]="Dl("+filename+")";
       symOrder.push(id);
     }
