@@ -21,7 +21,7 @@
   ### Invoked from a web server ###
 
   When JSEXT is started as an fcgi server, the web server should
-  set an environment variable named JSEXT\_FCGI and pass no
+  set an environment variable named JSEXT_FCGI and pass no
   arguments to JSEXT. *shell* will then call [[$curdir.fcgi]] to
   start the fcgi server.
 
