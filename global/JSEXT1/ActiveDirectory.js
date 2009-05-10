@@ -92,24 +92,23 @@ properties stored in the given directory.
 
 
 function ActiveDirectory(path, handlers) {
-  var dir=$curdir.dir(path);
-  var filename;
-  var subdirs=[];
   var self=this;
 
   // Always use 'self' because 'this' may be down the prototype chain somewhere when the ActiveDirectory object is the prototype of another object
-
-  handlers = handlers || JSEXT1.activate;
 
   var hasOwnProperty=Object.prototype.hasOwnProperty;
 
   self.$path=path;
   self.$curdir=self;
+  self.$handlers = handlers = handlers || JSEXT1.activate;
 
   if(!hasOwnProperty.call(self, '$getters')) self.$getters = {};
 
+  var subdirs=[];
+
   var parts;
 
+  var dir = $curdir.dir(path);
   for(var i in dir) {
     if(!hasOwnProperty.call(dir, i)) continue;
 
@@ -122,9 +121,9 @@ function ActiveDirectory(path, handlers) {
       var propname=parts[2];
       var extension=parts[6];
       if(handlers[extension] && !hasOwnProperty.call(self, propname) && propname != "valueOf") {
-        self.$getters[propname] = getGetter(propname, parts[1], extension);
+        self.$getters[propname] = getGetter(self, propname, parts[1], extension);
         self.__defineGetter__(propname, self.$getters[propname]);
-        self.__defineSetter__(propname, getDefaultSetter(propname));
+        self.__defineSetter__(propname, getDefaultSetter(self, propname));
       } else if(handlers[extension] && propname == "prototype") {
         self.prototype = handlers[extension].call(self, parts[1], '.' + extension);
       }
@@ -159,14 +158,15 @@ function ActiveDirectory(path, handlers) {
       }
 
     } else {
-      self.$getters[parts[2]] = getSubdirGetter(parts[2], parts[0], hasOwnProperty.call(self.$getters, parts[2]) && self.$getters[parts[2]]);
+      self.$getters[parts[2]] = getSubdirGetter(self, parts[2], parts[0], hasOwnProperty.call(self.$getters, parts[2]) && self.$getters[parts[2]]);
       self.__defineGetter__(parts[2], self.$getters[parts[2]]);
-      self.__defineSetter__(parts[2], getDefaultSetter(parts[2]));
+      self.__defineSetter__(parts[2], getDefaultSetter(self, parts[2]));
     }
   }
+}
 
 
-  function getSubdirGetter(propname, filename, oldgetter) {
+function getSubdirGetter(self, propname, filename, oldgetter) {
     return function() {
       if(oldgetter) {
         var val = oldgetter.call(self);
@@ -175,37 +175,37 @@ function ActiveDirectory(path, handlers) {
         var val = (self[propname] = {});
       }
 
-      var newpath = path + '/' + filename;
-      ActiveDirectory.call(val, newpath, handlers);
+      var newpath = self.$path + '/' + filename;
+      ActiveDirectory.call(val, newpath, self.$handlers);
       val.$name=propname;
       self[propname].$parent=self;
       return val;
     }
-  }
+}
 
 
-  function getDefaultSetter(propname) {
+function getDefaultSetter(self, propname) {
     return function(value) {
       delete self[propname];
       self[propname] = value;
     }
-  }
+}
 
 
-  function getGetter(propname, filename, extension) {
+function getGetter(self, propname, filename, extension) {
     return function() {
       var olddir;
 
       delete self[propname];
       self[propname] = undefined;
       try {
-        var val = handlers[extension].call(self, filename, "." + extension);
+        var val = self.$handlers[extension].call(self, filename, "." + extension);
         var check = new String(propname);
         check.mtime = $curdir.stat(self.$path + '/' + filename + "." + extension).mtime;
       } catch (x) {
         delete self[propname];
         self.__defineGetter__(propname, arguments.callee);
-        self.__defineSetter__(propname, getDefaultSetter(propname));
+        self.__defineSetter__(propname, getDefaultSetter(self, propname));
         throw(x);
       }
 
@@ -213,7 +213,6 @@ function ActiveDirectory(path, handlers) {
 
       return val;
     }
-  }
 }
 
 
