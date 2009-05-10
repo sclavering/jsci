@@ -43,7 +43,6 @@ function fcgi(path, backlog) {
     while(true) {
       var req = new Request(fcgi_fd);
 
-      // set global vars
       stdin = req['in'];
       stderr = req['err'];
       stdout = req['out'];
@@ -68,8 +67,7 @@ function fcgi(path, backlog) {
 new File( FCGX_stream )
 
 A wrapper class for the stdin, stdout and stderr streams.
-Behaves like [[$parent.File]].
-
+Behaves like JSEXT1.File, in that they both suck.
 */
 function File(stream) {
   this.stream = stream;
@@ -77,18 +75,13 @@ function File(stream) {
 }
 
 File.prototype = {
-  closed: true,
-
   /*
   stream.close()
-    
-  Closes the stream
   */
   close:function() {
-    if (!this.closed) {
-      lib.FCGX_FClose(this.stream);
-      this.closed=true;
-    }
+    if(this.closed) return
+    libfcgi.FCGX_FClose(this.stream);
+    this.closed = true;
   },
 
   /*
@@ -100,28 +93,22 @@ File.prototype = {
   ### Results ###
 
   true if end-of-file has been detected, false if not.
-  
-  
   */
-  
   eof: function() {
-    return lib.FCGX_HasSeenEOF(this.stream)?true:false;
+    return Boolean(libfcgi.FCGX_HasSeenEOF(this.stream));
   },
-  
+
   /*
   stream.flush()
   
   Flushes any buffered output.  Should not be called explicitly, except for server-push.
   */
   flush: function() {
-    if (lib.FCGX_FFlush(this.stream)==-1)
-      throw new Error("fcgi: flush");
+    if(libfcgi.FCGX_FFlush(this.stream) === -1) throw new Error("fcgi: flush");
   },
 
   /*
   stream.isatty()
-    
-  Returns false
   */
   isatty: function() {
     return false;
@@ -151,8 +138,8 @@ File.prototype = {
       }
       return ret;
     }
-    var buf=Pointer.malloc(Number(size));
-    var len=lib.FCGX_GetStr(buf, size, this.stream);
+    const buf = Pointer.malloc(Number(size));
+    const len = libfcgi.FCGX_GetStr(buf, size, this.stream);
     return buf.string(len);
   },
 
@@ -190,14 +177,14 @@ File.prototype = {
     }
     var buf=Pointer.malloc(size+1);
     //      var beforepos=this.tell();
-    var line=lib.FCGX_GetLine(buf, size+1, this.stream);
-    if (!line) return "";
+    const line = libfcgi.FCGX_GetLine(buf, size + 1, this.stream);
+    if(!line) return "";
     return buf.string();
   },
 
   /*
   array = stream.readlines([size])
-    
+  
   Reads up to [size] bytes. If no argument is given, reads until
   EOF. Splits result into lines an returns an array of strings
   which do not contain the '\n' character.
@@ -206,7 +193,7 @@ File.prototype = {
     var buf=this.read(size);
     return buf.split(/\n/);
   },
-  
+
   /*
   stream.write(str)
   
@@ -221,9 +208,8 @@ File.prototype = {
   */
   write: function(str) {
     str=String(str);
-    var ret=lib.FCGX_PutStr(str, str.length, this.stream);
-    if (ret==-1)
-      throw new Error("fcgi: write");
+    const ret = libfcgi.FCGX_PutStr(str, str.length, this.stream);
+    if(ret == -1) throw new Error("fcgi: write");
     return ret;
   },
 
@@ -261,21 +247,19 @@ Contains the following properties:
 */
 function Request(fd) {
   this.request=new Pointer(libfcgi['struct FCGX_Request']);
-  var res=libfcgi.FCGX_InitRequest(this.request, fd, 0);
+  var res = libfcgi.FCGX_InitRequest(this.request, fd, 0);
 
-  if (res!=0)
-    throw new Error("FCGX_InitRequest");
-  
-  var res=libfcgi.FCGX_Accept_r(this.request);
-  if (res!=0)
-    throw new Error("FCGX_Accept_r");
+  if(res != 0) throw new Error("FCGX_InitRequest");
+
+  var res = libfcgi.FCGX_Accept_r(this.request);
+  if(res != 0) throw new Error("FCGX_Accept_r");
   this.request.finalize=libfcgi.FCGX_Finish_r;
-  
+
   this['in']=new File(this.request.member(0,"in").$);
   this['out']=new File(this.request.member(0,"out").$);
   this['err']=new File(this.request.member(0,"err").$);
   this['env']={};
-  
+
   var envp=this.request.member(0,"envp").$;
   if (envp==null) return;
   var i;
