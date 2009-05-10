@@ -209,8 +209,7 @@ CGI.prototype = {
 
   // Returns an object with the name/value pairs given by the posted data in [[stdin]]
   _get_POST_data: function() {
-    const cx = this;
-    if(cx.method != "POST") return {};
+    if(this.method != "POST") return {};
     const ct = this._mime_name_value_pair_decode(this.requestHeaders.contentType);
     if(ct == "application/x-www-form-urlencoded") return this._reinterpret_form_data(this._parse_query(stdin.read()) || {});
     if(ct == "multipart/form-data") {
@@ -282,7 +281,6 @@ CGI.prototype = {
       stream.write(h + "\r\n");
     }
   },
-
 
 
   _write_headers: function(conn, headers) {
