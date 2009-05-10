@@ -33,18 +33,7 @@ function fcgi(path, backlog) {
   if(fcgi_fd == -1) throw new Error("fcgi:OpenSocket");
 
   try {
-    while(true) {
-      var req = new Request(fcgi_fd);
-
-      stdin = req['in'];
-      stderr = req['err'];
-      stdout = req['out'];
-      environment = req['env'];
-      new CGI();
-
-      req.close();
-    }
-
+    while(true) _fcgi_handle_request(fcgi_fd);
   } catch(x) {
     // server shutdown?
   }
@@ -220,24 +209,16 @@ File.prototype = {
 
 
 
-/*
-obj = new Request(fd)
+function _fcgi_handle_request(fd) {
+  const req = new Request(fd);
+  stdin = req['in'];
+  stderr = req['err'];
+  stdout = req['out'];
+  environment = req['env'];
+  new CGI();
+  libfcgi.FCGX_Finish_r(req.request);
+}
 
-Object which represents a request from an HTTP server to an
-fcgi server.
-
-Contains the following properties:
-
-* _in_: A [[$curdir.File]] object representing the per-request standard input
-* _out_: A [[$curdir.File]] object representing the per-request standard output
-* _err_: A [[$curdir.File]] object representing the per-request standard error
-* _env_: An object containing the per-request environment variables
-
-### Arguments ###
-
-* _fd_: The file descriptor used for communication with the HTTP server.
-
-*/
 function Request(fd) {
   this.request=new Pointer(libfcgi['struct FCGX_Request']);
   var res = libfcgi.FCGX_InitRequest(this.request, fd, 0);
@@ -263,25 +244,6 @@ function Request(fd) {
     var eqPos=val.indexOf("=");
     this.env[val.substr(0,eqPos)]=val.substr(eqPos+1);
   }
-}
-
-/*
-  req.close()
-
-Finish & free the request (multi-thread safe).
-
-Side effect:
----
-
-Finishes the request accepted by (and frees any
-storage allocated by) the previous call to accept.
-
-
-*/
-
-Request.prototype.close=function() {
-  this.request.finalize=null;
-  libfcgi.FCGX_Finish_r(this.request);
 }
 
 
