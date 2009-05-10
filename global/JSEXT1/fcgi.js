@@ -149,31 +149,27 @@ File.prototype = {
 
 
 function _fcgi_handle_request(fd) {
-  const req = new Request(fd);
-  stdin = req['in'];
-  stderr = req['err'];
-  stdout = req['out'];
-  environment = req['env'];
-  new CGI();
-  libfcgi.FCGX_Finish_r(req.request);
-}
+  var rq = new Pointer(libfcgi['struct FCGX_Request']);
 
-function Request(fd) {
-  this.request=new Pointer(libfcgi['struct FCGX_Request']);
-  var res = libfcgi.FCGX_InitRequest(this.request, fd, 0);
-
+  var res = libfcgi.FCGX_InitRequest(rq, fd, 0);
   if(res != 0) throw new Error("FCGX_InitRequest");
 
-  var res = libfcgi.FCGX_Accept_r(this.request);
+  var res = libfcgi.FCGX_Accept_r(rq);
   if(res != 0) throw new Error("FCGX_Accept_r");
-  this.request.finalize=libfcgi.FCGX_Finish_r;
+  rq.finalize = libfcgi.FCGX_Finish_r;
 
-  this['in']=new File(this.request.member(0,"in").$);
-  this['out']=new File(this.request.member(0,"out").$);
-  this['err']=new File(this.request.member(0,"err").$);
-  this['env']={};
+  stdin = new File(rq.member(0, "in").$);
+  stdout = new File(rq.member(0, "out").$);
+  stderr = new File(rq.member(0, "err").$);
+  environment = _fcgi_get_env(rq);
 
-  var envp=this.request.member(0,"envp").$;
+  new CGI();
+  libfcgi.FCGX_Finish_r(rq);
+}
+
+function _fcgi_get_env(rq) {
+  var env = {};
+  var envp = rq.member(0,"envp").$;
   if (envp==null) return;
   var i;
   for(i=0;;i++) {
@@ -181,8 +177,9 @@ function Request(fd) {
     if (val==null) break;
     val=val.string();
     var eqPos=val.indexOf("=");
-    this.env[val.substr(0,eqPos)]=val.substr(eqPos+1);
+    env[val.substr(0, eqPos)] = val.substr(eqPos + 1);
   }
+  return env;
 }
 
 
