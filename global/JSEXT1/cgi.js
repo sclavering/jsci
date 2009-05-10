@@ -47,16 +47,16 @@ closing, if there is no response body).
 
 We don't expose this beyond the CGI module.
 */
-function FlashWriter(file, headerFunc) {
+function StdOutWrapper(file, cgicx) {
   this.file = file;
-  this.headerFunc = headerFunc;
+  this.cgicx = cgicx;
 }
 
-FlashWriter.prototype = {
+StdOutWrapper.prototype = {
   write: function(str) {
-    if(this.headerFunc) {
-      this.headerFunc(this.file);
-      delete this.headerFunc;
+    if(this.cgicx) {
+      this.cgicx._write_headers_hook(this.file);
+      delete this.cgicx;
     }
     return this.file.write(str);
   },
@@ -66,9 +66,9 @@ FlashWriter.prototype = {
   },
 
   close: function() {
-    if(this.headerFunc) {
-      this.headerFunc(this.file);
-      delete this.headerFunc;
+    if(this.cgicx) {
+      this.cgicx._write_headers_hook(this.file);
+      delete this.cgicx;
     }
     this.file.close();
   },
@@ -95,7 +95,13 @@ function CGI() {
   // Set a default content type.
   this.responseHeaders = { contentType: 'text/html' };
 
-  this.run();
+  this._real_stdout = stdout;
+  stdout = new StdOutWrapper(stdout, this);
+
+  const filename = environment.SCRIPT_FILENAME;
+  const func = load.call({}, filename);
+  this._exec_safely(func, this, true);
+  stdout.close();
 }
 
 CGI.prototype = {
@@ -123,24 +129,14 @@ CGI.prototype = {
   _exit_nonce: {},
 
 
-  run: function() {
-    const cx = this;
-
-    this._real_stdout = stdout;
-
-    stdout = new FlashWriter(stdout, function(stream) {
-      stdin.close();
-      if(cx.responseHeaders.location) cx.responseLine = "302 Found";
-      if(cx.responseLine) stream.write("Status: " + cx.responseLine + "\r\n");
-      cx.output_cookies(stream);
-      cx._write_headers(stream, cx.responseHeaders);
-      delete cx.responseHeaders;
-    });
-
-    const filename = environment.SCRIPT_FILENAME;
-    const func = load.call({}, filename);
-    this._exec_safely(func, this, true);
-    stdout.close();
+  // called magically before the first write() to stdout
+  _write_headers_hook: function(stream) {
+    stdin.close();
+    if(this.responseHeaders.location) this.responseLine = "302 Found";
+    if(this.responseLine) stream.write("Status: " + this.responseLine + "\r\n");
+    this.output_cookies(stream);
+    this._write_headers(stream, this.responseHeaders);
+    delete this.responseHeaders;
   },
 
 
