@@ -137,7 +137,7 @@ CGI.prototype = {
       delete cx.responseHeaders;
     });
 
-    const filename = environment.PATH_TRANSLATED || environment.SCRIPT_FILENAME;
+    const filename = environment.SCRIPT_FILENAME;
     const func = load.call({}, filename);
     this._exec_safely(func, this, true);
     stdout.close();
