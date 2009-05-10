@@ -6,16 +6,9 @@ This function never returns. This function is
 called by [[$curdir.shell]] when the environment variable
 JSEXT_FCGI is set.
 
-If threads are enabled, each incoming request spawns a new thread.
-Otherwise, only one request can be handled at any one time.
-Each request calls
-[[$curdir.fcgi.serveRequest]] to handle the request.
-That function is passed a [[$curdir.fcgi.Request]] object.
+Only one request can be handled at once (since we don't use threads).
 
-The [[stdin]], [[stdout]], [[stderr]] and [[environment]]
-objects are _unshared_ (see [[$curdir.Thread.unshare]]),
-so that each thread can use
-them to communicate with the correct http client.
+The .stdin, .stdout, .stderr and .environment properties of the global object are replaced with fcgi-specific versions.
 
 ### Arguments ###
 
