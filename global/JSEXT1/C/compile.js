@@ -10,6 +10,6 @@ function(filename, out_filename) {
   const dotpos = filename.lastIndexOf('.');
   if(!out_filename) out_filename = (dotpos === -1 ? filename : filename.substr(0, dotpos)) + '.so';
   const cmd = 'cc -I ' + $path + '/0-include -DXP_UNIX -fPIC -x c ' + filename + ' -shared -o ' + out_filename;
-  const ret = $parent.read(cmd + ' 2>&1 |');
+  const ret = JSEXT1.File.read(cmd + ' 2>&1 |');
   if(/error:/.test(ret)) throw new Error(ret.replace(/^\s+|\s+$/g, ""));
 }

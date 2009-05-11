@@ -270,7 +270,7 @@ function handle_native(name, extension) {
     JSEXT1.chdirLock(this.$path);
     var ps = new JSEXT1.Progress;
     ps.status("Parsing h file");
-    var fragment = JSEXT1.C.fragment(JSEXT1.read(name + '.h'), dlobj);
+    var fragment = JSEXT1.C.fragment(JSEXT1.File.read(name + '.h'), dlobj);
     ps.status("Writing .jswrapper file");
     var wrapperfile = new JSEXT1.File('./' + name + '.jswrapper', 'w');
     wrapperfile.write(JSEXT1.C.jswrapper(fragment));

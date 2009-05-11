@@ -289,6 +289,21 @@ File.tmp = function() {
 
 
 
+/*
+str = File.read(path)
+
+Helper function to read the entire contents of a file.
+*/
+File.read = function(path) {
+  const f = new File(path);
+  const str = f.read();
+  f.close();
+  return str;
+};
+
+
+
+
 return File;
 
 })()
