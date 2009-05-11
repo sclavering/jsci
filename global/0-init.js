@@ -27,9 +27,8 @@ function(Type, Pointer, Dl, load, cwd) {
 
   const ActiveDirectory = xload('JSEXT1/ActiveDirectory.js');
 
-  // bootstrap enough of JSEXT1 that ActiveDirectory itself will work
-  var mods = ['os', 'dir', 'isdir'];
-  for(var i in mods) JSEXT[mods[i]] = ActiveDirectory.handlers.js.call(JSEXT, mods[i], ".js");
+  // os.js has methods like .getcwd() and .stat() that ActiveDirectory requires 
+  JSEXT.os = ActiveDirectory.handlers.js.call(JSEXT, 'os', ".js");
 
   JSEXT.$path = JSEXT.os.getcwd() + '/JSEXT1';
   JSEXT.ActiveDirectory = ActiveDirectory;
@@ -40,7 +39,9 @@ function(Type, Pointer, Dl, load, cwd) {
   JSEXT.chdir(cwd);
 
   // For out-of-tree code using the old names.  We can't just use a JSEXT1.js, because it would be ignored
+  JSEXT1.__defineGetter__('dir', function() { return JSEXT1.os.dir; });
   JSEXT1.__defineGetter__('getcwd', function() { return JSEXT1.os.getcwd; });
+  JSEXT1.__defineGetter__('isdir', function() { return JSEXT1.os.isdir; });
   JSEXT1.__defineGetter__('stat', function() { return JSEXT1.os.stat; });
 
   return JSEXT.shell;

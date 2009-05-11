@@ -80,7 +80,7 @@ function ActiveDirectory(path) {
 
   var subdirs=[];
 
-  var dir = JSEXT1.dir(path);
+  var dir = JSEXT1.os.dir(path);
   for(var i in dir) {
     if(!hasOwnProperty.call(dir, i)) continue;
 
@@ -96,7 +96,7 @@ function ActiveDirectory(path) {
       } else if(handlers[extension] && propname == "prototype") {
         self.prototype = handlers[extension].call(self, propname, '.' + extension);
       }
-    } else if(JSEXT1.isdir(path + '/' + propname)) {
+    } else if(JSEXT1.os.isdir(path + '/' + propname)) {
       subdirs.push(propname);
     }
   }
