@@ -25,17 +25,17 @@ function(Type, Pointer, Dl, load, cwd) {
 
   this.JSEXT1 = JSEXT;
 
-  const activate = xload('JSEXT1/activate.js');
-  const js = activate.js;
+  const ActiveDirectory = xload('JSEXT1/ActiveDirectory.js');
 
-  var mods = ['getcwd', 'os', 'dir', 'stat', 'isdir', 'ActiveDirectory'];
-  for (var i in mods) JSEXT[mods[i]] = js.call(JSEXT, mods[i], ".js");
+  // bootstrap enough of JSEXT1 that ActiveDirectory itself will work
+  var mods = ['getcwd', 'os', 'dir', 'stat', 'isdir'];
+  for(var i in mods) JSEXT[mods[i]] = ActiveDirectory.handlers.js.call(JSEXT, mods[i], ".js");
 
   JSEXT.$path = JSEXT.getcwd() + '/JSEXT1';
-  JSEXT.activate = activate;
+  JSEXT.ActiveDirectory = ActiveDirectory;
 
-  JSEXT.ActiveDirectory.call(this, JSEXT.getcwd(), activate);
-  JSEXT.ActiveDirectory.call(JSEXT, JSEXT.$path, activate);
+  ActiveDirectory.call(this, JSEXT.getcwd());
+  ActiveDirectory.call(JSEXT, JSEXT.$path);
 
   JSEXT.chdir(cwd);
 

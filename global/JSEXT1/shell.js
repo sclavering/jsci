@@ -50,7 +50,7 @@ function() {
   var glob = {};
   JSEXT1.ActiveDirectory.call(glob, progdir);
 
-  var prog = JSEXT1.activate.js.call(glob, progfile, "");
+  var prog = JSEXT1.ActiveDirectory.handlers.js.call(glob, progfile, "");
 
   if(typeof prog === "function" && prog.name === "") {
     var cx = {
