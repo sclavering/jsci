@@ -163,8 +163,6 @@ function make_setter(self, propname) {
 
 function make_getter(self, propname, extension) {
     return function() {
-      var olddir;
-
       delete self[propname];
       self[propname] = undefined;
       try {
