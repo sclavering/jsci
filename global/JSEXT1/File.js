@@ -240,9 +240,7 @@ File.prototype = {
   Returns an object with vital stats from a file's inode.
   */
   stat: function() {
-    var ret = Pointer(clib['struct stat']);
-    if(clib.call_fstat(this.fileno(), ret) == -1) return null;
-    return $parent.$parent.stat.unistat(ret);
+    return JSEXT1.os.stat(this.fileno());
   },
 
 

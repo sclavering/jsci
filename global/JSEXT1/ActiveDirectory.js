@@ -234,7 +234,7 @@ function handle_native(name, extension) {
 
   //clib.puts("cget "+this.$path+"/"+name);
   for each(var ext in ['h', 'c', 'jswrapper', 'so']) {
-    var stat = JSEXT1.stat(this.$path + '/' + name + '.' + ext);
+    var stat = JSEXT1.os.stat(this.$path + '/' + name + '.' + ext);
     timestamp[ext] = stat && stat.mtime;
   }
 
@@ -246,7 +246,7 @@ function handle_native(name, extension) {
     //clib.puts("ccget "+name);
     JSEXT1.chdirLock(this.$path);
     JSEXT1.C.compile(name+'.c');
-    var stat = JSEXT1.stat(name + '.so');
+    var stat = JSEXT1.os.stat(name + '.so');
     timestamp.so = stat && stat.mtime;
     JSEXT1.chdirUnlock();
   }
@@ -276,7 +276,7 @@ function handle_native(name, extension) {
     wrapperfile.write(JSEXT1.C.jswrapper(fragment));
     wrapperfile.close();
     ps.close();
-    timestamp.jswrapper = JSEXT1.stat('./' + name + '.jswrapper');
+    timestamp.jswrapper = JSEXT1.os.stat('./' + name + '.jswrapper');
     JSEXT1.chdirUnlock();
   }
 
