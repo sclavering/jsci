@@ -102,22 +102,20 @@ function ActiveDirectory(path, handlers) {
   for(var i in dir) {
     if(!hasOwnProperty.call(dir, i)) continue;
 
-    var filename = dir[i];
-    var parts = filename.match(/^([^ -@][^.]*)(?:\.(.*))?/);
-
+    var parts = dir[i].match(/^([^ -@][^.]*)(?:\.(.*))?/);
     if(!parts) continue;
 
     var propname = parts[1], extension = parts[2];
     if(extension) {
       if(handlers[extension] && !hasOwnProperty.call(self, propname) && propname != "valueOf") {
-        self.$getters[propname] = getGetter(self, propname, extension);
+        self.$getters[propname] = make_getter(self, propname, extension);
         self.__defineGetter__(propname, self.$getters[propname]);
-        self.__defineSetter__(propname, getDefaultSetter(self, propname));
+        self.__defineSetter__(propname, make_setter(self, propname));
       } else if(handlers[extension] && propname == "prototype") {
         self.prototype = handlers[extension].call(self, propname, '.' + extension);
       }
-    } else if($curdir.isdir(path + '/' + filename)) {
-      subdirs.push(parts);
+    } else if($curdir.isdir(path + '/' + propname)) {
+      subdirs.push(propname);
     }
   }
 
@@ -125,7 +123,7 @@ function ActiveDirectory(path, handlers) {
   for(var i in subdirs) {
     if(!hasOwnProperty.call(subdirs, i)) continue;
 
-    var filename = subdirs[i][0], propname = subdirs[i][1];
+    var propname = subdirs[i];
     if(hasOwnProperty.call(self, propname) && !self.$getters[propname]) {
       // When making a function, the 'prototype' property will be automatically created.
       // If there is also a 'prototype' directory, then read it right away - not possible
@@ -136,9 +134,9 @@ function ActiveDirectory(path, handlers) {
       // it must be prevented from doing self.
 
       if(!self.__lookupGetter__(propname)) {
-        if(typeof(self) == "function" && filename == "prototype") {
+        if(typeof self == "function" && propname == "prototype") {
           var val = self[propname];
-          var newpath = path + '/' + filename;
+          var newpath = path + '/' + propname;
           ActiveDirectory.call(val, newpath, handlers);
         }
         self[propname].$curdir = self[propname];
@@ -147,15 +145,15 @@ function ActiveDirectory(path, handlers) {
       }
 
     } else {
-      self.$getters[propname] = getSubdirGetter(self, propname, filename, hasOwnProperty.call(self.$getters, propname) && self.$getters[propname]);
+      self.$getters[propname] = make_subdir_getter(self, propname, hasOwnProperty.call(self.$getters, propname) && self.$getters[propname]);
       self.__defineGetter__(propname, self.$getters[propname]);
-      self.__defineSetter__(propname, getDefaultSetter(self, propname));
+      self.__defineSetter__(propname, make_setter(self, propname));
     }
   }
 }
 
 
-function getSubdirGetter(self, propname, filename, oldgetter) {
+function make_subdir_getter(self, propname, oldgetter) {
     return function() {
       if(oldgetter) {
         var val = oldgetter.call(self);
@@ -164,7 +162,7 @@ function getSubdirGetter(self, propname, filename, oldgetter) {
         var val = self[propname] = {};
       }
 
-      var newpath = self.$path + '/' + filename;
+      var newpath = self.$path + '/' + propname;
       ActiveDirectory.call(val, newpath, self.$handlers);
       val.$name=propname;
       self[propname].$parent=self;
@@ -173,7 +171,7 @@ function getSubdirGetter(self, propname, filename, oldgetter) {
 }
 
 
-function getDefaultSetter(self, propname) {
+function make_setter(self, propname) {
     return function(value) {
       delete self[propname];
       self[propname] = value;
@@ -181,7 +179,7 @@ function getDefaultSetter(self, propname) {
 }
 
 
-function getGetter(self, propname, extension) {
+function make_getter(self, propname, extension) {
     return function() {
       var olddir;
 
@@ -192,7 +190,7 @@ function getGetter(self, propname, extension) {
       } catch (x) {
         delete self[propname];
         self.__defineGetter__(propname, arguments.callee);
-        self.__defineSetter__(propname, getDefaultSetter(self, propname));
+        self.__defineSetter__(propname, make_setter(self, propname));
         throw(x);
       }
 
