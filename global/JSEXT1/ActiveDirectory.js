@@ -1,4 +1,5 @@
 /*
+ActiveDirectory
 
 This object maps files and directories to properties and objects. Say you have this directory structure:
 
@@ -25,52 +26,34 @@ Will give you the following object structure
     x.a_directory                    // is an object
     x.a_directory.more_text          // is a string: The contents of more_text.txt
 
-Note that the various files and subdirectories are only loaded, listed and evaluated if and when the corresponding
-JavaScript properties are
-accessed for the first time; so-called lazy evaluation. Therefore, there is no performance or
-memory penalty associated with activating a large directory structure, as long as you only
-use a small part of it.
+Files and subdirectories are loaded lazily, i.e. the first time the corresponding property is accessed.
 
 In addition to the user-defined properties, each object is automagically equipped with the
 properties $name, $path and (except for the root object) $parent.
 
-The action taken to convert each file into a javascript value is determined by the file name extension.
-By default, .js files are evaluated, .txt files are read, etc.
-Or you may supply your own set of handler functions. They should be passed as an optional second
-argument to ActiveDirectory. That argument should be an object, where each property name corresponds to
-a filename extension (minus the dot), and each property is a function which handles the conversion from file
-to value. For example, the default txt handler looks like this:
+The action taken to convert each file into a javascript value is determined by the file name extension:
+  .js files are evaluated
+  .txt files are read
+  .c .h and .so files are compiled if necessary, and a .jswrapper file created that does the necessary Pointer and Type magic to expose to JavaScript all the C functions, types, and variable, as well as any constants created via #define
+  .jswrapper files are evaluated like .js files
 
-    function(name,extension) {
-      var file = new JSEXT1.File(this.$path + '/' + name + extension, "r");
-      var ret=file.read();
-      file.close();
-      return ret;
-    }
+Subdirectories are handled by ActiveDirectory, and become new ActiveDirectory objects.
 
-Subdirectories are handled by ActiveDirectory, and become new ActiveDirectory objects with the
-same handler functions as the parent directory.
+Files and directories which start with any ASCII character less than A are ignored (e.g. this includes anything starting with a digit), as are subfolders whose name contains a dot, and files with unknown extensions.
 
-Files and directories which start with any ASCII character less than A are ignored.
-So if you name a directory something like _0-subdir_,
-it and its contents will be hidden from the JavaScript realm.
-Directories whose names include a dot are ignored. Files with unknown extensions are ignored.
-When a directory contains more than one file with the same base name but different extensions,
-any one of their handlers is called. Which one is undefined.
+If there is e.g. both a "foo.js" and a "foo.txt", one or other will be chosen abitrarily.
 
 
-Constructor
+Usage
 ---
 
-new ActiveDirectory( path, [handlers] )
+new ActiveDirectory( path )
 
-### Arguments ###
+or:
 
-* _path_: [[String]] Name of directory to activate
-* _handlers_: [[Object]] contains one function property per file extension. The function
-will be called with two arguments: The bare file name (minus extension and path), and extension (including the dot) as the second argument. The _this_ object
-will be the invoking ActiveDirectory object. The function may always find the path to the file it is loading in _this.$path_. The property names
-should correspond to file name extensions without the dot.
+ActiveDirectory.call(some_obj, path)
+
+...which will add new properties to the existing some_obj
 
 Properties of ActiveDirectory objects
 ---
