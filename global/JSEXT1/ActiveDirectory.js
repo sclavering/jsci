@@ -83,7 +83,7 @@ Properties of ActiveDirectory objects
 (function() {
 
 
-function ActiveDirectory(path, handlers) {
+function ActiveDirectory(path) {
   var self=this;
 
   // Always use 'self' because 'this' may be down the prototype chain somewhere when the ActiveDirectory object is the prototype of another object
@@ -92,7 +92,6 @@ function ActiveDirectory(path, handlers) {
 
   self.$path=path;
   self.$curdir=self;
-  self.$handlers = handlers = handlers || ActiveDirectory.handlers;
 
   if(!hasOwnProperty.call(self, '$getters')) self.$getters = {};
 
@@ -137,7 +136,7 @@ function ActiveDirectory(path, handlers) {
         if(typeof self == "function" && propname == "prototype") {
           var val = self[propname];
           var newpath = path + '/' + propname;
-          ActiveDirectory.call(val, newpath, handlers);
+          ActiveDirectory.call(val, newpath);
         }
         self[propname].$curdir = self[propname];
         self[propname].$name = propname;
@@ -163,7 +162,7 @@ function make_subdir_getter(self, propname, oldgetter) {
       }
 
       var newpath = self.$path + '/' + propname;
-      ActiveDirectory.call(val, newpath, self.$handlers);
+      ActiveDirectory.call(val, newpath);
       val.$name=propname;
       self[propname].$parent=self;
       return val;
@@ -186,7 +185,7 @@ function make_getter(self, propname, extension) {
       delete self[propname];
       self[propname] = undefined;
       try {
-        var val = self.$handlers[extension].call(self, propname, "." + extension);
+        var val = handlers[extension].call(self, propname, "." + extension);
       } catch (x) {
         delete self[propname];
         self.__defineGetter__(propname, arguments.callee);
@@ -203,7 +202,7 @@ function make_getter(self, propname, extension) {
 
 // A mapping from file extensions to handler functions to load and process those files.
 // It's occasionally used outside of this module
-ActiveDirectory.handlers = {
+const handlers = ActiveDirectory.handlers = {
   js: handle_script,
 
   txt: handle_text,
