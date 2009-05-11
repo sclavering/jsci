@@ -226,6 +226,8 @@ When wrapping a system library there is just a .h file and no .c file, and only 
 The .jswrapper file is a javascript file returning an obejct containing the low-level type-marshalling wrappers for C code (using Type, Pointer, etc.).  Each property
 */
 function handle_native(name, extension) {
+  const chdir_stack = [];
+
   // 1. Find timestamps of all files in group
 
   var timestamp={};
@@ -241,18 +243,17 @@ function handle_native(name, extension) {
   var dlobj;
 
   if(timestamp.c && timestamp.c > timestamp.so) {
-    //clib.puts("ccget "+name);
-    JSEXT1.chdirLock(this.$path);
+    pushd(chdir_stack, this.$path);
     JSEXT1.C.compile(name+'.c');
     var stat = JSEXT1.os.stat(name + '.so');
     timestamp.so = stat && stat.mtime;
-    JSEXT1.chdirUnlock();
+    popd(chdir_stack);
   }
 
   if(timestamp.so) {
-    JSEXT1.chdirLock(this.$path);
+    pushd(chdir_stack, this.$path);
     dlobj = Dl('./' + name + '.so');
-    JSEXT1.chdirUnlock();
+    popd(chdir_stack);
   }
 
   // 3. If it is a jsapi module, just load it.
@@ -265,7 +266,7 @@ function handle_native(name, extension) {
   // 4. Build .jswrapper file if possible and necessary
 
   if(timestamp.h && timestamp.h > timestamp.jswrapper) {
-    JSEXT1.chdirLock(this.$path);
+    pushd(chdir_stack, this.$path);
     var ps = new JSEXT1.Progress;
     ps.status("Parsing h file");
     var fragment = JSEXT1.C.fragment(JSEXT1.File.read(name + '.h'), dlobj);
@@ -275,19 +276,32 @@ function handle_native(name, extension) {
     wrapperfile.close();
     ps.close();
     timestamp.jswrapper = JSEXT1.os.stat('./' + name + '.jswrapper');
-    JSEXT1.chdirUnlock();
+    popd(chdir_stack);
   }
 
   // 5. Load .jswrapper file if possible
 
   if(timestamp.jswrapper) {
-    JSEXT1.chdirLock(this.$path);
+    pushd(chdir_stack, this.$path);
     var ret = load.call(this, this.$path + '/' + name + '.jswrapper');
     for(var i = 0; ret['dl ' + i]; i++) { /* pass */ }
-    JSEXT1.chdirUnlock();
+    popd(chdir_stack);
     return ret.hasOwnProperty("main") ? ret.main : ret;
   }
 }
+
+
+function pushd(chdirstack, dir) {
+  const cwd = JSEXT1.os.getcwd();
+  if(clib.chdir(dir) == -1) throw new Error(os.error("chdirLock"));
+  else chdirstack.push(cwd);
+}
+
+
+function popd(chdirstack) {
+  clib.chdir(chdirstack.pop());
+}
+
 
 
 return ActiveDirectory;
