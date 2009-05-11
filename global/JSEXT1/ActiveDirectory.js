@@ -79,14 +79,6 @@ Properties of ActiveDirectory objects
 * _$curdir_: [[Object]] which contains the current ActiveDirectory
 * _$parent_: [[Object]] which contains the parent ActiveDirectory
 * _$path_: [[String]] which contains the path of the directory
-
-Calling as a function
----
-
-
-If ActiveDirectory is called as a function rather than as a constructor, it will populate the _this_ object with the
-properties stored in the given directory.
-
 */
 (function() {
 
