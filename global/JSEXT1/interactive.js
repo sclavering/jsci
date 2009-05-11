@@ -27,7 +27,7 @@ function interactive() {
     for(;;) {
       cmdbuf += cons.readline();
       if(cons.eof()) break;
-      if(js.isCompilableUnit(cmdbuf)) {
+      if(isCompilableUnit(cmdbuf)) {
         execline(cmdbuf);
         cmdbuf = "";
         cons.prompt = normalprompt;
