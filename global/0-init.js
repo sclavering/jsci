@@ -36,7 +36,7 @@ function(Type, Pointer, Dl, load, cwd) {
   ActiveDirectory.call(this, JSEXT.os.getcwd());
   ActiveDirectory.call(JSEXT, JSEXT.$path);
 
-  JSEXT.chdir(cwd);
+  clib.chdir(cwd);
 
   // For out-of-tree code using the old names.  We can't just use a JSEXT1.js, because it would be ignored
   JSEXT1.__defineGetter__('dir', function() { return JSEXT1.os.dir; });
