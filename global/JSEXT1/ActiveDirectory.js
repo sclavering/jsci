@@ -98,26 +98,23 @@ function ActiveDirectory(path, handlers) {
 
   var subdirs=[];
 
-  var parts;
-
   var dir = $curdir.dir(path);
   for(var i in dir) {
     if(!hasOwnProperty.call(dir, i)) continue;
 
     var filename = dir[i];
-    parts = filename.match(/^(([^ -@][^#\.]*)(#([^\.]*))?)(\.(.*))?/);
+    var parts = filename.match(/^([^ -@][^.]*)(?:\.(.*))?/);
 
-    if(!parts || parts[4]) continue;
+    if(!parts) continue;
 
-    if(parts[5]) {
-      var propname=parts[2];
-      var extension=parts[6];
+    var propname = parts[1], extension = parts[2];
+    if(extension) {
       if(handlers[extension] && !hasOwnProperty.call(self, propname) && propname != "valueOf") {
-        self.$getters[propname] = getGetter(self, propname, parts[1], extension);
+        self.$getters[propname] = getGetter(self, propname, extension);
         self.__defineGetter__(propname, self.$getters[propname]);
         self.__defineSetter__(propname, getDefaultSetter(self, propname));
       } else if(handlers[extension] && propname == "prototype") {
-        self.prototype = handlers[extension].call(self, parts[1], '.' + extension);
+        self.prototype = handlers[extension].call(self, propname, '.' + extension);
       }
     } else if($curdir.isdir(path + '/' + filename)) {
       subdirs.push(parts);
@@ -128,8 +125,8 @@ function ActiveDirectory(path, handlers) {
   for(var i in subdirs) {
     if(!hasOwnProperty.call(subdirs, i)) continue;
 
-    var parts = subdirs[i];
-    if(hasOwnProperty.call(self, parts[2]) && !self.$getters[parts[2]]) {
+    var filename = subdirs[i][0], propname = subdirs[i][1];
+    if(hasOwnProperty.call(self, propname) && !self.$getters[propname]) {
       // When making a function, the 'prototype' property will be automatically created.
       // If there is also a 'prototype' directory, then read it right away - not possible
       // to defer. The test above works because the 'prototype' property will have been
@@ -138,21 +135,21 @@ function ActiveDirectory(path, handlers) {
       // However, when ActiveDirectory is called to refresh an existing directory,
       // it must be prevented from doing self.
 
-      if(!self.__lookupGetter__(parts[2])) {
-        if(typeof(self) == "function" && parts[0] == "prototype") {
-          var val = self[parts[1]];
-          var newpath = path + '/' + parts[0];
+      if(!self.__lookupGetter__(propname)) {
+        if(typeof(self) == "function" && filename == "prototype") {
+          var val = self[propname];
+          var newpath = path + '/' + filename;
           ActiveDirectory.call(val, newpath, handlers);
         }
-        self[parts[2]].$curdir = self[parts[2]];
-        self[parts[2]].$name = parts[2];
-        self[parts[2]].$parent = self;
+        self[propname].$curdir = self[propname];
+        self[propname].$name = propname;
+        self[propname].$parent = self;
       }
 
     } else {
-      self.$getters[parts[2]] = getSubdirGetter(self, parts[2], parts[0], hasOwnProperty.call(self.$getters, parts[2]) && self.$getters[parts[2]]);
-      self.__defineGetter__(parts[2], self.$getters[parts[2]]);
-      self.__defineSetter__(parts[2], getDefaultSetter(self, parts[2]));
+      self.$getters[propname] = getSubdirGetter(self, propname, filename, hasOwnProperty.call(self.$getters, propname) && self.$getters[propname]);
+      self.__defineGetter__(propname, self.$getters[propname]);
+      self.__defineSetter__(propname, getDefaultSetter(self, propname));
     }
   }
 }
@@ -164,7 +161,7 @@ function getSubdirGetter(self, propname, filename, oldgetter) {
         var val = oldgetter.call(self);
       } else {
         delete self[propname];
-        var val = (self[propname] = {});
+        var val = self[propname] = {};
       }
 
       var newpath = self.$path + '/' + filename;
@@ -184,16 +181,14 @@ function getDefaultSetter(self, propname) {
 }
 
 
-function getGetter(self, propname, filename, extension) {
+function getGetter(self, propname, extension) {
     return function() {
       var olddir;
 
       delete self[propname];
       self[propname] = undefined;
       try {
-        var val = self.$handlers[extension].call(self, filename, "." + extension);
-        var check = new String(propname);
-        check.mtime = $curdir.stat(self.$path + '/' + filename + "." + extension).mtime;
+        var val = self.$handlers[extension].call(self, propname, "." + extension);
       } catch (x) {
         delete self[propname];
         self.__defineGetter__(propname, arguments.callee);
