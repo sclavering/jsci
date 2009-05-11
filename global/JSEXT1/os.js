@@ -29,6 +29,19 @@ Miscellaneous wrappers for os-related things in clib where the raw ffi interface
 
 
   /*
+  bool = File.exists(path [, perms])
+
+  Does the file exist, and can we open it with the supplied perms (e.g. "a", "w", etc., defaulting to "r").
+  */
+  exists: function(path, perms) {
+    const f = clib.fopen(path, perms || "r");
+    if(!f) return false;
+    clib.fclose(f);
+    return true;
+  },
+
+
+  /*
   string = getcwd()
 
   Return a string representing the path of the current working directory.

@@ -40,6 +40,7 @@ function(Type, Pointer, Dl, load, cwd) {
 
   // For out-of-tree code using the old names.  We can't just use a JSEXT1.js, because it would be ignored
   JSEXT1.__defineGetter__('dir', function() { return JSEXT1.os.dir; });
+  JSEXT1.__defineGetter__('exists', function() { return JSEXT1.os.exists; });
   JSEXT1.__defineGetter__('getcwd', function() { return JSEXT1.os.getcwd; });
   JSEXT1.__defineGetter__('isdir', function() { return JSEXT1.os.isdir; });
   JSEXT1.__defineGetter__('stat', function() { return JSEXT1.os.stat; });
