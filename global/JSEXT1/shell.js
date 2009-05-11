@@ -29,7 +29,6 @@
 
   If JSEXT is started without arguments, an interactive session
   is started by calling [[$curdir.interactive]].
-  
 */
 
 function() {
@@ -42,37 +41,32 @@ function() {
     return;
   }
 
-  if(arguments.length) { // execute a program
-    var progdir=JSEXT1.path(arguments[0]);
-    var progfile=JSEXT1.filename(arguments[0]);
-    
-    var glob={};
-    JSEXT1.ActiveDirectory.call(glob, progdir);
+  if(!arguments.length) return JSEXT1.interactive();
 
-    var prog=JSEXT1.activate.js.call(glob, progfile,"");
+  // run a .js program supplied as a command-line argument
+  var progdir = JSEXT1.path(arguments[0]);
+  var progfile = JSEXT1.filename(arguments[0]);
 
-    if (typeof(prog)==="function" && prog.name==="") {
-      var cx={
-	name: Array.prototype.shift.apply(arguments)
-      };
-      
-      try {
-	var ret=prog.apply(cx, arguments);
-	if (ret!==undefined)
-	  print(ret);
-      } catch(_err) {
-	if (_err.fileName && _err.lineNumber)				
-	  print('Line ' + _err.lineNumber + ' in ' + _err.fileName + ':');	
-	print((_err.message || _err) + '\\n');
-	if (_err.stack) {
-	  var stack=_err.stack.split('\\n');
-	  print(stack.join('\\n')+'\\n');
-	}
-	print("\n");
+  var glob = {};
+  JSEXT1.ActiveDirectory.call(glob, progdir);
+
+  var prog = JSEXT1.activate.js.call(glob, progfile, "");
+
+  if(typeof prog === "function" && prog.name === "") {
+    var cx = {
+      name: Array.prototype.shift.apply(arguments)
+    };
+    try {
+      var ret = prog.apply(cx, arguments);
+      if(ret !== undefined) print(ret);
+    } catch(ex) {
+      if(ex.fileName && ex.lineNumber) print('Line ' + ex.lineNumber + ' in ' + ex.fileName + ':');
+      print((ex.message || ex) + '\\n');
+      if(ex.stack) {
+        var stack = ex.stack.split('\\n');
+        print(stack.join('\\n') + '\\n');
       }
+      print("\n");
     }
-    return;
   }
-
-  return JSEXT1.interactive();
 }
