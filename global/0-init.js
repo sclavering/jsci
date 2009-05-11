@@ -44,5 +44,5 @@ function(Type, Pointer, Dl, load, cwd) {
   JSEXT1.__defineGetter__('isdir', function() { return JSEXT1.os.isdir; });
   JSEXT1.__defineGetter__('stat', function() { return JSEXT1.os.stat; });
 
-  return JSEXT.shell;
+  return JSEXT.shell();
 }

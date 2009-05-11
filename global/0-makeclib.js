@@ -35,7 +35,4 @@ function(Type, Pointer, Dl, load, cwd) {
   const fragment = JSEXT1.C.fragment('#include "clib.h"', Dl('./clib.so'));
   const jswrapper = JSEXT1.C.jswrapper(fragment);
   clib.puts(jswrapper);
-
-  // the C code that calls us expects us to return a function for some reason
-  return function() {}
 }

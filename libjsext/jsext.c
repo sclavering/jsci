@@ -53,8 +53,6 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...);
 
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
-static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[]);
-
 static void printhelp() {
   puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
        "Evaluates FILE. If it is an anonymous JavaScript function, arguments are passed to it\n\n"
@@ -73,9 +71,6 @@ my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
   if (message)
     fprintf(stderr,"%s\n",message);
 }
-
-extern int optind;
-
 
 int main(int argc, char **argv, char **envp) {
   JSRuntime *rt;
@@ -126,12 +121,6 @@ int main(int argc, char **argv, char **envp) {
 
   JS_AddRoot(cx, &rval);
   exitcode = !JSX_init(cx, glob, &rval);
-
-  if(!exitcode) {
-    JSObject *obj=glob;
-    exitcode=call(cx, obj, rval, argc-optind, argv+optind);
-  }
-
   JS_RemoveRoot(cx, &rval);
 
   JS_DestroyContext(cx);
@@ -142,65 +131,6 @@ int main(int argc, char **argv, char **envp) {
  failure:
   if (cx) JS_DestroyContext(cx);
   if (rt) JS_DestroyRuntime(rt);
-  return 1;
-}
-
-
-static int call(JSContext *cx, JSObject *obj, jsval fun, int argc, char *argv[]) {
-  jsval rval=JSVAL_VOID;
-  jsval *jsargv=0;
-  JSFunction *jsfun;
-  int i;
-
-  JS_AddRoot(cx, &rval);
-
-  jsargv=(jsval *)JS_malloc(cx, sizeof(jsval) * (argc+1));
-  if (!jsargv) {
-    printf("Out of memory");
-    goto failure;
-  }
-
-  for (i=0; i<argc; i++) {
-    jsargv[i]=JSVAL_VOID;
-    JS_AddRoot(cx, jsargv+i);
-  }
-
-  for (i=0; i<argc; i++) {
-    JSString *S;
-    S=JS_NewStringCopyZ(cx, argv[i]);
-    if (!S)
-      goto failure;
-    jsargv[i]=STRING_TO_JSVAL(S);
-  }
-
-  jsfun=JS_ValueToFunction(cx, fun);
-  if(!jsfun) goto failure;
-
-  if (!JS_CallFunction(cx, obj, jsfun, argc, jsargv, &rval))
-    goto failure;
-
-  JS_RemoveRoot(cx, &rval);
-
-  for (i=0; i<argc; i++) {
-    JS_RemoveRoot(cx, jsargv+i);
-  }
-
-  JS_free(cx,jsargv);
-
-  if (JSVAL_IS_INT(rval))
-    // xxx shouldn't this be JSVAL_TO_INT ?
-    return INT_TO_JSVAL(rval);
-  else
-    return 0;
-
- failure:
-  JS_RemoveRoot(cx, &rval);
-  if (jsargv) {
-    for (i=0; i<argc; i++)
-      JS_RemoveRoot(cx, jsargv+i);
-    JS_free(cx, jsargv);
-  }
-
   return 1;
 }
 
