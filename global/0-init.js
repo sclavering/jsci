@@ -45,5 +45,17 @@ function(Type, Pointer, Dl, load, cwd) {
   JSEXT1.__defineGetter__('isdir', function() { return JSEXT1.os.isdir; });
   JSEXT1.__defineGetter__('stat', function() { return JSEXT1.os.stat; });
 
-  return JSEXT.shell();
+
+  // And now run as FastCGI, CGI, or an interactive shell
+
+  if(environment.JSEXT_FCGI) {
+    return JSEXT1.fcgi();
+  }
+
+  if(environment.GATEWAY_INTERFACE) {
+    new JSEXT1.CGI();
+    return;
+  }
+
+  return JSEXT1.interactive();
 }
