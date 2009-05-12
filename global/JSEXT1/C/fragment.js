@@ -1,12 +1,12 @@
 /*
-obj = fragment (code, default_dl)
+obj = fragment(code_str, default_dl)
 
-Examines a C program using [[$curdir.parse]] and returns an object containing all the symbols exported by the program.
+Examines a C program and returns an object containing all the symbols exported by the program.
 
 ### Arguments ###
 
-* _code_: An XML object as returned from [[$curdir.ctoxml]]
-* _default\_dl_: A Dl object where pointers can be resolved
+* code_str: A string containing C source code, from a .h file
+* default_dl: A Dl object where pointers can be resolved
 
 ### Return value ###
 
@@ -15,8 +15,8 @@ representing each symbol exported by the C program. Symbols
 are not exported if they generate code and can not be resolved
 in _default\_dl_ or any library mentioned in #pragma directives.
 */
-function(code, default_dl) {
-  var parsed = parse(code, default_dl);
+function(code_str, default_dl) {
+  var parsed = parse(ctoxml(cpp(code_str)), default_dl);
   var src = {};
 
   for(var i in parsed.structs_and_unions)

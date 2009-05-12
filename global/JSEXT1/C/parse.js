@@ -2,7 +2,7 @@
 obj = parse(code, default_dl)
 
 Examines a C program. The program should already have been processed
-by [[$curdir.cpp]] and [[$curdir.ctoxml]]. Recognizes the programming
+by cpp() and ctoxml().  Recognizes the programming
 constructs used to declare functions, structs, unions, global variables,
 macros, #defines and enums. Also recognizes the following #pragma
 directives.
@@ -42,8 +42,8 @@ all C library symbols and symbols from the SpiderMonkey API.
 
 ### Arguments ###
 
-* _code_: An XML object returned from [[$curdir.ctoxml]]
-* _default\_dl_: A Dl object which is used for symbol resolution
+* code: An XML object returned from ctoxml()
+* default_dl: A Dl object which is used for symbol resolution
   in addition to any specified by #pragma JSEXT dl.
 
 ### Return value ###
@@ -58,13 +58,9 @@ Returns an object containing the following properties:
 
 */
 
-(function(curdir) {
+(function() {
 
 return function(code, default_dl) {
-
-  // Parse proper
-
-  code = curdir.ctoxml(curdir.cpp(code));
 
   // Contains the evaluated code. Used during
   // processing to evaluate sizeof() expressions.
@@ -654,5 +650,5 @@ Tries to coerce a C macro into a JavaScript expression
   }
 }
 
-})(this)
+})()
 
