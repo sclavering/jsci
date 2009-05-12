@@ -2,7 +2,6 @@
 
 # define _GNU_SOURCE
 # include <getopt.h>
-# include <pthread.h>
 # include <unistd.h>
 extern char **environ;
 #include <stdlib.h>
