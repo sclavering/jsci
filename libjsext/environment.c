@@ -33,8 +33,6 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
 static JSBool
 env_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-/* XXX porting may be easy, but these don't seem to supply setenv by default */
-#if !defined XP_BEOS && !defined XP_OS2 && !defined SOLARIS
     JSString *idstr, *valstr;
     const char *name, *value;
     int rv;
@@ -51,7 +49,7 @@ env_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_FALSE;
     }
     *vp = STRING_TO_JSVAL(valstr);
-#endif /* !defined XP_BEOS && !defined XP_OS2 && !defined SOLARIS */
+
     return JS_TRUE;
 }
 
@@ -140,20 +138,13 @@ static JSClass jsext_env_class = {
     JS_FinalizeStub
 };
 
-JSBool
-JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
+
+jsval JSX_make_environment(JSContext *cx, JSObject *obj) {
   JSObject *envobj = JS_NewObject(cx, &jsext_env_class, NULL, NULL);
-  JSObject *classobj;
-  if (!envobj)
-    return JS_FALSE;
-  classobj=JS_InitClass(cx, obj, envobj, &jsext_env_class, 0, 0, 0, 0, 0, 0);
-  if (!classobj)
-    goto end_false;
+  if(!envobj) return JSVAL_VOID;
 
-  *rval=OBJECT_TO_JSVAL(classobj);
+  JSObject *classobj = JS_InitClass(cx, obj, envobj, &jsext_env_class, 0, 0, 0, 0, 0, 0);
+  if(!classobj) return JSVAL_VOID;
 
-  return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
+  return OBJECT_TO_JSVAL(classobj);
 }

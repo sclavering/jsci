@@ -1,8 +1,9 @@
-function(Type, Pointer, Dl, load, cwd) {
+function(Type, Pointer, Dl, load, environment, cwd) {
   this.Type = Type;
   this.Pointer = Pointer;
   this.Dl = Dl;
   this.load = load;
+  this.environment = environment;
 
   // avoid unwanted closures
   var xload = new Function("filename", "return load(filename);");

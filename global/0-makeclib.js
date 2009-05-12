@@ -1,8 +1,9 @@
-function(Type, Pointer, Dl, load, cwd) {
+function(Type, Pointer, Dl, load, environment, cwd) {
   this.Type = Type;
   this.Pointer = Pointer;
   this.Dl = Dl;
   this.load = load;
+  this.environment = environment;
 
   clib = {};
   clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [{ 'const': true, name: '__path', type: Type.pointer(Type.char) }], false, 'cdecl')).$;

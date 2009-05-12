@@ -41,5 +41,5 @@ TARGETS	= jsext
 
 all:	$(TARGETS)
 
-jsext:	jsext.o load.o Dl.o Pointer.o Type.o
-	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) jsext.o load.o Dl.o Pointer.o Type.o -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi
+jsext:	jsext.o load.o Dl.o Pointer.o Type.o environment.o
+	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) jsext.o load.o Dl.o Pointer.o Type.o environment.o -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi

@@ -44,6 +44,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *glo);
 jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
 jsval JSX_make_Dl(JSContext *cx, JSObject *glo);
 jsval JSX_make_load(JSContext *cx, JSObject *glo);
+jsval JSX_make_environment(JSContext *cx, JSObject *obj);
 
 
 static char *strip_file_name(char *ini_file);
@@ -143,7 +144,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   char *filename;
   JSFunction *jsfun;
   char cwd[1024];
-  int init_argc = 5;
+  int init_argc = 6;
 
   JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
 
@@ -163,7 +164,8 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   argv[1] = JSX_make_Pointer(cx, obj);
   argv[2] = JSX_make_Dl(cx, obj);
   argv[3] = JSX_make_load(cx, obj);
-  argv[4] = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
+  argv[4] = JSX_make_environment(cx, obj);
+  argv[5] = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
 
   ifdup=strdup(ini_file);
   lastslash=strip_file_name(ifdup);
