@@ -322,8 +322,8 @@ return function(code, default_dl) {
 
 
   function suDeclare(su_xml) {
-
-    var id=su_xml.name()+" "+su_xml.@id;
+    const id = su_xml.name() + " " + su_xml.@id;
+    expsym[id] = true;
 
     if (!su[id]) {
       var expr="Type."+su_xml.name()+"()";
@@ -353,8 +353,6 @@ return function(code, default_dl) {
 
       dep[id]=tmpdep;
     }
-
-    expsym[id]=true;
   }
 
 
