@@ -112,11 +112,10 @@ return function(code, default_dl) {
             expr = decl[i].type;
           } else {
             // Resolve pointer
-            var dlindex = link.call(that, decl[i].id);
-            if (dlindex === undefined) break;
+            var dlid = find_dl(decl[i].id);
+            if(!dlid) break;
 
             id = decl[i].id;
-            var dlid = "dl " + dlindex;
 
             expr = "this['" + dlid + "'].pointer('" + decl[i].id + "'," + decl[i].type + ")" + (decl[i].isFunc ? ".$" : "");
 
@@ -203,11 +202,12 @@ return function(code, default_dl) {
   }
 
 
-  function link(ident) {
+  function find_dl(ident) {
     for(var i = 0; i < ndl; i++) {
-      if(this['dl ' + i].symbolExists(ident))
-        return i;
+      if(that['dl ' + i].symbolExists(ident))
+        return "dl " + i;
     }
+    return null;
   }
 
 
