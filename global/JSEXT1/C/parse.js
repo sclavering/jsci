@@ -9,22 +9,6 @@ directives.
 
 ### Pragma directives ###
 
-    #pragma JSEXT recursion 0
-
-Instructs _parse_ to ignore any symbols defined in files included
-from this point on.
-
-    #pragma JSEXT recursion n
-
-Instructs _parse_ to ignore symbols defined in files included
-beyond recursion level _n_ (program includes a file which includes
-a file etc.)
-
-    #pragma JSEXT recursion
-
-Instructs _parse_ to import symbols from all included files
-from this point on.
-
     #pragma JSEXT dl "filename"
 
 Instructs _parse_ to try to resolve global variables and functions
@@ -77,12 +61,6 @@ return function(code, default_dl) {
   // Contains symbols to be exported
   var expsym={};
 
-  // Contains current include stack
-  var stack=[];
-
-  // Contains current recursion limit
-  var level;
-
   // Count number of dl files
   var ndl=0;
 
@@ -118,21 +96,7 @@ return function(code, default_dl) {
       var tmpdep={};
 
       switch(String(tu.name())) {
-
-      case 'pragma':
-        var match;
-        if((match = tu.match(/JSEXT[ \t]+recursion[ \t]+(-?[0-9]+)?/))) {
-          level = !match[1] || match[1]=="-1" ? undefined : Number(match[1]) + 1;
-        }
-        break;
-
-      case 'line':
-        if(tu.@line == 1) {
-          stack[stack.length] = tu.@file;
-        } else {
-          stack.length--;
-        }
-        break;
+      // ignored values: "pragma", "line", maybe others
 
       case 'd': // declaration
       case 'fdef': // function definition
@@ -169,13 +133,13 @@ return function(code, default_dl) {
 
           dep[id] = tmpdep;
 
-          if(level === undefined || stack.length <= level) expsym[id] = true;
+          expsym[id] = true;
         }
         break;
 
       case 'define': // macro definition
         // Defer processing until later
-        if(level === undefined || stack.length <= level) expsym[tu.id] = true;
+        expsym[tu.id] = true;
         break;
 
       } // swtich
@@ -244,8 +208,6 @@ return function(code, default_dl) {
       if(this['dl ' + i].symbolExists(ident))
         return i;
     }
-//    var warning="Warning: unresolved "+ident;
-//    print(warning,"\n");
   }
 
 
@@ -283,8 +245,7 @@ return function(code, default_dl) {
 
     if (decl.enum.length()) {
       // Enum declaration
-      if (level === undefined || stack.length <= level)
-        enumMembers.call(that, decl);
+      enumMembers.call(that, decl);
       return "Type.int";
     }
 
@@ -392,8 +353,7 @@ return function(code, default_dl) {
       dep[id]=tmpdep;
     }
 
-    if (level === undefined || stack.length <= level)
-      expsym[id]=true;
+    expsym[id]=true;
   }
 
 
