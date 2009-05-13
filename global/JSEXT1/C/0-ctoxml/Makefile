@@ -29,7 +29,7 @@ CFLAGS	= -O3 -fPIC
 LFLAGS	=
 LDFLAGS	= 
 
-TARGETS	= libctoxml.so libcpp.so
+TARGETS	= libctoxml.so
 
 all:	$(TARGETS)
 
@@ -49,23 +49,6 @@ libctoxml.so:	$(LIBCTOXMLOBJ)
 	$(CC) $(LIBCTOXMLOBJ) -shared -o libctoxml.so
 
 
-libcpp.o:	expr_scan.h libcpp.c
-	$(CC) $(CFLAGS) libcpp.c -c
-
-expr_scan.h:	expr_scan.c
-
-expr_scan.c:	expr_scan.l
-	$(LEX) -Pcpp_expr -t --header-file=expr_scan.h expr_scan.l > expr_scan.c
-
-expr_gram.c:	expr_gram.y
-	$(YACC) -p cpp_expr -dv -o expr_gram.c expr_gram.y
-
-LIBCPPOBJ	= libcpp.o stringhash.o hashtable.o expr_gram.o expr_scan.o strbuf.o hashtable_itr.o
-
-libcpp.so: $(LIBCPPOBJ)
-	$(CC)  $(LIBCPPOBJ) -shared -o libcpp.so
-
-
 clean	:
-	rm -f y.output *.o $(TARGETS) c_gram.output lex.yy.c *~ y.tab.h expr_gram.output *.suo
-#	rm -f c_scan.c c_gram.c expr_gram.c expr_gram.h expr_scan.h expr_scan.c
+	rm -f y.output *.o $(TARGETS) c_gram.output lex.yy.c *~ y.tab.h *.suo
+#	rm -f c_scan.c c_gram.c
