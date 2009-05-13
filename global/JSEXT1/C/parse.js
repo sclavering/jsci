@@ -143,13 +143,6 @@ return function(code, default_dl) {
   }
 
 
-  function allmacros() {
-    for each(var def in code.define) {
-      if(expsym[def.id]) macro.call(that,def);
-    }
-  }
-
-
   function loaddls() {
     // Find dls
 
@@ -489,6 +482,12 @@ Tries to coerce a C macro into a JavaScript expression
       if ((this[i] instanceof Type) && i[0]!='$') {
         typelist[i] = true;
       }
+    }
+  }
+
+  function allmacros() {
+    for each(var def in code.define) {
+      if(expsym[def.id]) macro.call(live,def);
     }
   }
 
