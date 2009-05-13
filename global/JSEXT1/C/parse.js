@@ -34,20 +34,17 @@ all C library symbols and symbols from the SpiderMonkey API.
 
 Returns an object containing the following properties:
 
-* _live_: Object containing live pointers, types, dl objects etc.
-* _expsym_: Object containing one key per symbol which is to be imported/exprted.
-* _su_: Object containing one string property per declaration of structs and unions.
-* _sym_: Object containing one string property per symbol
+* expsym: Object containing one key per symbol which is to be imported/exprted.
+* su: Object containing one string property per declaration of structs and unions.
+* sym: Object containing one string property per symbol
 */
 
 (function() {
 
 return function(code, default_dl) {
 
-  // Contains the evaluated code. Used during
-  // processing to evaluate sizeof() expressions.
-
-  var that={};
+  // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
+  var live = {};
 
   // Contains symbols
   var sym={};
@@ -64,10 +61,10 @@ return function(code, default_dl) {
   // Count number of dl files
   var ndl=0;
 
-  loaddls.call(that);
+  loaddls.call(live);
 
-  parse_inner.call(that); // Make 'that' 'this'
-  initmacro.call(that);
+  parse_inner.call(live);
+  initmacro.call(live);
   allmacros();
 
   for(var i in expsym) include_dep(i);
@@ -204,7 +201,7 @@ return function(code, default_dl) {
 
   function find_dl(ident) {
     for(var i = 0; i < ndl; i++) {
-      if(that['dl ' + i].symbolExists(ident))
+      if(live['dl ' + i].symbolExists(ident))
         return "dl " + i;
     }
     return null;
@@ -297,7 +294,7 @@ return function(code, default_dl) {
     for each(var sm in decl.enum.*) {
       if (sm.name()=="id") {
         if(prevsym !== undefined) {
-          that[prevsym] = val;
+          live[prevsym] = val;
           sym[prevsym] = String(val);
           expsym[prevsym] = true;
           val++;
@@ -307,14 +304,14 @@ return function(code, default_dl) {
         var expr = inner_eval(sm);
         try {
           // I'm using .call() because I assume |expr| may explicitly refer to "this"
-          (function() { with(this) val = eval(expr); }).call(that);
+          (function() { with(this) val = eval(expr); }).call(live);
         } catch(x) {
           print("enumMembers\n", x, "\n");
         }
       }
     }
     if (prevsym !== undefined) {
-      that[prevsym]=val;
+      live[prevsym] = val;
       sym[prevsym]=String(val);
       expsym[prevsym]=true;
     }
@@ -329,7 +326,7 @@ return function(code, default_dl) {
       var expr="Type."+su_xml.name()+"()";
       su[id]=expr;
       try {
-        that[id] = eval(expr);
+        live[id] = eval(expr);
       } catch(x) {
         print("suDeclare\n", x, "\n", su_xml, "\n");
       }
@@ -346,7 +343,7 @@ return function(code, default_dl) {
       sym[id] = "(" + exprs + ",this['" + id + "'])";
 
       try {
-        (function() { with(this) eval(exprs.join(";")); }).call(that);
+        (function() { with(this) eval(exprs.join(";")); }).call(live);
       } catch(x) {
         print("suDeclare2\n", x, "\n", su_xml, "\n");
       }
@@ -369,12 +366,11 @@ return function(code, default_dl) {
       var decl=expr.*[0];
       var declor=decl[0].*[decl[0].*.length()-1];
       var d=declaration(decl, {}, declor);
-      return (function(){with(this){return eval(d.type).sizeof}}).call(that);
+      return (function() { with(this) { return eval(d.type).sizeof }}).call(live);
     }
 
     if(expr.@op == "sizeof" && expr.@type == "e") {
-      if (that[expr..id])
-        return that[expr..id].type.sizeof;
+      if(live[expr..id]) return live[expr..id].type.sizeof;
       // assume it's a string
       return Type.char.sizeof * (String(expr..s).length + 1);
     }
