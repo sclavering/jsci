@@ -26,7 +26,7 @@ function(code_str, default_dl) {
   for(var i in parsed.sym) {
     if(parsed.exported_symbols[i]) {
       if(src[i]) {
-        src[i] = "(this['" + i + "']=" + src[i] + "," + parsed.sym[i] + ")";
+        src[i] = "this['" + i + "']=" + src[i] + ";" + parsed.sym[i];
       } else {
         src[i] = parsed.sym[i];
       }
