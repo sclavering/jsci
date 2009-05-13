@@ -16,7 +16,7 @@ are not exported if they generate code and can not be resolved
 in _default\_dl_ or any library mentioned in #pragma directives.
 */
 function(filename, default_dl) {
-  var parsed = parse(ctoxml(cpp(filename)), default_dl);
+  var parsed = parse(ctoxml(runcpp(filename)), default_dl);
   var src = {};
 
   for(var i in parsed.structs_and_unions)
