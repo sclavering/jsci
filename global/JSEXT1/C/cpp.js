@@ -27,7 +27,9 @@ A string.
       { 'const': false, name: 'ptr', type: Type.pointer(Type['void']) }
     ], false, 'cdecl')).$;
 
-  return function(code, include_path) {
+  return function(filename, include_path) {
+    const code = JSEXT1.File.read(filename);
+
     include_path = include_path || [];
     for(var i = 0; i < include_path.length; i++) include_path[i] = String(include_path[i]);
     include_path[i] = null;

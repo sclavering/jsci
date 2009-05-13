@@ -33,7 +33,7 @@ function(Type, Pointer, Dl, load, environment, cwd) {
   JSEXT1.File = js.call(JSEXT1, 'File');
   clib.chdir('..');
 //  puts(String(JSEXT1.C.ctoxml(JSEXT1.C.cpp('#include <io.h>'))));
-  const fragment = JSEXT1.C.fragment('#include "clib.h"', Dl('./clib.so'));
+  const fragment = JSEXT1.C.fragment(cwd + "/clib.h", Dl('./clib.so'));
   const jswrapper = JSEXT1.C.jswrapper(fragment);
   clib.puts(jswrapper);
 }
