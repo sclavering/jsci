@@ -54,8 +54,6 @@ Returns an object containing the following properties:
 * _expsym_: Object containing one key per symbol which is to be imported/exprted.
 * _su_: Object containing one string property per declaration of structs and unions.
 * _sym_: Object containing one string property per symbol
-* _symOrder_: Array containing the keys in _sym_ in the order they should be evaluated
-
 */
 
 (function() {
@@ -72,9 +70,6 @@ return function(code, default_dl) {
 
   // Contains declarations of structs and unions
   var su={};
-
-  // Contains ordering of symbols
-  var symOrder=[];
 
   // Contains dependencies
   var dep={};
@@ -103,7 +98,6 @@ return function(code, default_dl) {
     exported_symbols: expsym,
     structs_and_unions: su,
     sym: sym,
-    symOrder: symOrder
   };
 
 
@@ -166,7 +160,6 @@ return function(code, default_dl) {
           }
 
           sym[id] = expr;
-          symOrder.push(id);
 
           try {
             with(this) eval("this['" + id + "']=" + expr);
@@ -215,7 +208,6 @@ return function(code, default_dl) {
       var filename = this[id].filename || "";
       if(filename) filename = "'" + filename.replace(/\\/g, "\\\\") + "'";
       sym[id]="Dl("+filename+")";
-      symOrder.push(id);
     }
   }
 
@@ -346,7 +338,6 @@ return function(code, default_dl) {
         if(prevsym !== undefined) {
           this[prevsym] = val;
           sym[prevsym] = String(val);
-          symOrder.push(prevsym);
           expsym[prevsym] = true;
           val++;
         }
@@ -363,7 +354,6 @@ return function(code, default_dl) {
     if (prevsym !== undefined) {
       this[prevsym]=val;
       sym[prevsym]=String(val);
-      symOrder.push(prevsym);
       expsym[prevsym]=true;
     }
   }
@@ -392,7 +382,6 @@ return function(code, default_dl) {
       for(var i = 0; i < members.length; i++) exprs.push("this['" + id + "'][" + i + "]=" + members[i]);
 
       sym[id] = "(" + exprs + ",this['" + id + "'])";
-      symOrder.push(id);
 
       try {
         (function() { with(this) eval(exprs.join(";")); }).call(that);
@@ -584,14 +573,12 @@ Tries to coerce a C macro into a JavaScript expression
       try {
         this[macro.id] = eval(expr);
         sym[macro.id] = expr;
-        symOrder.push(macro.id);
       } catch(x) {}
 
     } else if (v=="  ") { // #define x
 
       this[macro.id]=null;
       sym[macro.id]="null";
-      symOrder.push(macro.id);
 
     } else { // #define x 42
       v = v.replace(/^[ \t]+|[ \t]+$/g, "");
@@ -599,14 +586,12 @@ Tries to coerce a C macro into a JavaScript expression
       if(this['struct ' + v]) { // #define _io_file _IO_FILE
         this['struct ' + macro.id] = this['struct ' + v];
         sym['struct ' + macro.id] = "this['struct " + v + "']";
-        symOrder.push('struct ' + macro.id);
         if(expsym['struct ' + v]) expsym['struct ' + macro.id] = true;
       }
 
       if(this['union ' + v]) { // #define _io_file _IO_FILE
         this['union ' + macro.id] = this['union ' + v];
         sym['union ' + macro.id] = "this['union " + v + "']";
-        symOrder.push('union ' + macro.id);
         if(expsym['union ' + v]) expsym['union ' + macro.id] = true;
       }
 
@@ -616,12 +601,10 @@ Tries to coerce a C macro into a JavaScript expression
       if (this[v]) { // #define stdin stdin
         this[macro.id] = this[v];
         sym[macro.id] = sym[v];
-        symOrder.push(macro.id);
       } else {
         try {
           with(this) eval("this['" + macro.id + "']=" + v);
           sym[macro.id] = v;
-          symOrder.push(macro.id);
         } catch(x) {}
       }
     }
