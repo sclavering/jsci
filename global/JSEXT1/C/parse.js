@@ -92,17 +92,12 @@ return function(code, default_dl) {
   var ndl=0;
 
   loaddls.call(that);
-  var ps = new $parent.Progress;
-  ps.status("parse_inner");
+
   parse_inner.call(that); // Make 'that' 'this'
-  ps.status("initmacro");
   initmacro.call(that);
-  ps.status("allmacros");
   allmacros();
 
-  ps.status("include_dep");
   for(var i in expsym) include_dep(i);
-  ps.close();
 
   return {
     exported_symbols: expsym,
@@ -124,7 +119,6 @@ return function(code, default_dl) {
 
   function parse_inner() {
     var tu;
-    var ps=new $parent.Progress;
 
     for each(tu in code.*) {
       var tmpdep={};
@@ -139,7 +133,6 @@ return function(code, default_dl) {
         break;
 
       case 'line':
-        ps.status("Parsing " + tu.@file + ":" + tu.@line);
         if(tu.@line == 1) {
           stack[stack.length] = tu.@file;
         } else {
@@ -194,8 +187,6 @@ return function(code, default_dl) {
 
       } // swtich
     }
-
-    ps.close();
   }
 
 
