@@ -409,44 +409,31 @@ return function(code, default_dl) {
 
 
   function inner_eval(expr) {
-    if (expr.name()=="c") {
-      return String(expr);
-    }
+    if(expr.name() == "c") return String(expr);
+    if(expr.name() == "id") return sym[expr];
+    if(expr.name() == "p") return "(" + inner_eval(expr.*[0]) + ")";
+    if(expr.name() == "op") return _inner_eval_op(expr);
+  }
 
-    if (expr.name()=="id") {
-      return sym[expr];
-      //      return "this['"+String(expr)+"']";
-    }
 
-    if (expr.name()=="p") {
-      return "("+inner_eval(expr.*[0])+")";
-    }
-
-    if (expr.name()=="op" && expr.@op=="sizeof" && expr.@type=="t") {
+  function _inner_eval_op(expr) {
+    if(expr.@op == "sizeof" && expr.@type == "t") {
       var decl=expr.*[0];
       var declor=decl[0].*[decl[0].*.length()-1];
       var d=declaration(decl, {}, declor);
       return (function(){with(this){return eval(d.type).sizeof}}).call(that);
     }
 
-    if (expr.name()=="op" && expr.@op=="sizeof" && expr.@type=="e") {
+    if(expr.@op == "sizeof" && expr.@type == "e") {
       if (that[expr..id])
         return that[expr..id].type.sizeof;
-      else // assume it's a string
-        return Type.char.sizeof*(String(expr..s).length+1);
+      // assume it's a string
+      return Type.char.sizeof * (String(expr..s).length + 1);
     }
 
-    if (expr.name()=="op" && expr.*.length()==1) {
-      return expr.@op+inner_eval(expr.*[0]);
-    }
-
-    if (expr.name()=="op" && expr.*.length()==2) {
-      return inner_eval(expr.*[0])+expr.@op+inner_eval(expr.*[1]);
-    }
-
-    if (expr.name()=="op" && expr.*.length()==3) {
-      return inner_eval(expr.*[0])+"?"+inner_eval(expr.*[1])+":"+inner_eval(expr.*[2]);
-    }
+    if(expr.*.length() == 1) return expr.@op + inner_eval(expr.*[0]);
+    if(expr.*.length() == 2) return inner_eval(expr.*[0]) + expr.@op + inner_eval(expr.*[1]);
+    if(expr.*.length() == 3) return inner_eval(expr.*[0]) + "?"  + inner_eval(expr.*[1]) + ":" + inner_eval(expr.*[2]);
   }
 
 
