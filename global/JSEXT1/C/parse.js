@@ -245,7 +245,7 @@ return function(code, default_dl) {
 
     if (decl.enum.length()) {
       // Enum declaration
-      enumMembers.call(that, decl);
+      enumMembers(decl);
       return "Type.int";
     }
 
@@ -297,7 +297,7 @@ return function(code, default_dl) {
     for each(var sm in decl.enum.*) {
       if (sm.name()=="id") {
         if(prevsym !== undefined) {
-          this[prevsym] = val;
+          that[prevsym] = val;
           sym[prevsym] = String(val);
           expsym[prevsym] = true;
           val++;
@@ -306,14 +306,15 @@ return function(code, default_dl) {
       } else {
         var expr = inner_eval(sm);
         try {
-          with(this) val = eval(expr);
+          // I'm using .call() because I assume |expr| may explicitly refer to "this"
+          (function() { with(this) val = eval(expr); }).call(that);
         } catch(x) {
           print("enumMembers\n", x, "\n");
         }
       }
     }
     if (prevsym !== undefined) {
-      this[prevsym]=val;
+      that[prevsym]=val;
       sym[prevsym]=String(val);
       expsym[prevsym]=true;
     }
