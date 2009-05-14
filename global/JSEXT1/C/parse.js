@@ -61,12 +61,10 @@ return function(code, default_dl) {
   // Count number of dl files
   var ndl=0;
 
-  loaddls.call(live);
-
+  loaddls();
   parse_inner.call(live);
   initmacro.call(live);
   allmacros();
-
   for(var i in expsym) include_dep(i);
 
   return {
@@ -144,21 +142,19 @@ return function(code, default_dl) {
 
 
   function loaddls() {
-    // Find dls
-
-    if(default_dl) this['dl ' + (ndl++)] = default_dl;
+    if(default_dl) live['dl ' + (ndl++)] = default_dl;
 
     for each(var pragma in code.pragma) {
       var match = pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(main))[ \t]*$/);
       if(match) {
-        if(match[3]) this['dl ' + (ndl++)] = Dl(match[3]);
-        else if(match[5]) this['dl ' + (ndl++)] = Dl(null);
+        if(match[3]) live['dl ' + (ndl++)] = Dl(match[3]);
+        else if(match[5]) live['dl ' + (ndl++)] = Dl(null);
       }
     }
 
     for (var i=0; i<ndl; i++) {
       var id='dl '+i;
-      var filename = this[id].filename || "";
+      var filename = live[id].filename || "";
       if(filename) filename = "'" + filename.replace(/\\/g, "\\\\") + "'";
       sym[id]="Dl("+filename+")";
     }
