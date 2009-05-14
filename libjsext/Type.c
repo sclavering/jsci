@@ -1252,10 +1252,8 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   typeobj=JS_GetConstructor(cx, typeobj);
 
   init_int_types(cx, typeobj);
-  //  init_string_types(cx, typeobj);
   init_float_types(cx, typeobj);
   init_other_types(cx, typeobj);
-  //  init_void_pointer(cx, typeobj);
 
   return OBJECT_TO_JSVAL(typeobj);
 }
