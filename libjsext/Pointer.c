@@ -9,7 +9,6 @@
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_add(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-//static JSBool JSX_Pointer_apply(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_resolved(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
@@ -28,9 +27,6 @@ static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsva
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data);
-static JSBool JSX_PointerMemberIndex(JSContext *cx, JSObject *obj, jsval id, struct JSX_Pointer *ptr);
-static JSBool JSX_PointerMember(JSContext *cx, JSObject *obj, char *name, struct JSX_Pointer *newptr);
-static JSBool JSX_PointerIndex(JSContext *cx, JSObject *obj, int n, struct JSX_Pointer *ptr);
 static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_PoiterInit(JSContext *cx,  JSObject *obj);
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
@@ -1965,50 +1961,6 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
 }
 
 
-/*
-static JSBool JSX_Pointer_apply(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  // arg1 is array!
-
-  jsval *tmpv=0;
-  
-  JSObject *array;
-  jsint arraylen;
-
-
-  if (argc!=1) {
-    JSX_ReportException(cx, "Wrong number of arguments to pointer.apply");
-    goto end_false;
-  }
-
-  if (JS_TRUE==JSVAL_IS_OBJECT(argv[0]) &&
-      NULL!=(array=JSVAL_TO_OBJECT(argv[0])) &&
-      JS_GetArrayLength(cx, array, &arraylen)) {
-    int i;
-    tmpv=(jsval *) JS_malloc(cx,sizeof(jsval)*(arraylen+1));
-    if (!tmpv) {
-      JSX_ReportException(cx, "Allocation error");
-      goto end_false;
-    }
-
-    for (i=0; i<arraylen; i++)
-      if (JS_GetElement(cx, array, i, tmpv+i)==JS_FALSE)
-	goto failure;
-
-    if (!JSX_Pointer_call(cx, obj, arraylen, tmpv, rval))
-      goto failure;
-    JS_free(cx, tmpv);
-    goto end_true;
-  }
-
-  JSX_ReportException(cx, "Expected array");
-    
- failure:
-  if (tmpv) JS_free(cx, tmpv);
-  goto end_false;
-}
-*/
-
-
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *argbuf;
   void **argptr=0;
@@ -2033,12 +1985,6 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
     JSX_ReportException(cx, "call: Wrong pointer type");
     goto failure;
   }
-
-/*   if (argc!=Functiontype->nParam) { */
-/*     JSX_ReportException(cx, "Expected %d arguments, got %d", Functiontype->nParam, argc); */
-/*     goto failure; */
-/*   } */
-
 
   arg_types=JS_malloc(cx, sizeof(ffi_cif)+sizeof(ffi_type *)*(argc+1));
   cif=(ffi_cif *)(arg_types+(argc+1));
@@ -2468,18 +2414,6 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
  	  goto end_false;
 	}
 
-/* 	JS_LookupProperty(cx, type->typeObject, JS_GetStringBytes(JSVAL_TO_STRING(argv[i])), &member); */
-/* 	if (member==JSVAL_VOID) { */
-/* 	  JSX_ReportException(cx, "Unknown member %s as index no %d", JS_GetStringBytes(JSVAL_TO_STRING(argv[i])), i); */
-/* 	  goto end_false; */
-/* 	} */
-/* 	JS_LookupProperty(cx, JSVAL_TO_OBJECT(member), "index", &index); */
-/* 	if (index==JSVAL_VOID || !JSVAL_IS_INT(index)) { */
-/* 	  JSX_ReportException(cx, "Missing or bad 'index' property of member %s as index no %d", JS_GetStringBytes(JSVAL_TO_STRING(argv[i])), i); */
-/* 	  goto end_false; */
-/* 	} */
-
-/* 	n=JSVAL_TO_INT(index); */
       } else {
 	JSX_ReportException(cx, "Wrong argument no %d to pointer.member", i);
 	goto end_false;
@@ -2519,84 +2453,6 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 }
 
-/* static JSBool JSX_PointerMemberIndex(JSContext *cx, JSObject *obj, jsval id, struct JSX_Pointer *ptr) { */
-/*   struct JSX_Pointer *oldptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj); */
-  
-/*   if (JSVAL_IS_STRING(id) && */
-/*       (oldptr->type->type==STRUCTTYPE || */
-/*        oldptr->type->type==UNIONTYPE)) { */
-    
-/*     // Fetch struct member */
-    
-/*     return JSX_PointerMember(cx, obj, JS_GetStringBytes(JSVAL_TO_STRING(id)), ptr); */
-/*   } else if (JSVAL_IS_INT(id)) { */
-    
-/*     // Fetch array index */
-    
-/*     return JSX_PointerIndex(cx, obj, JSVAL_TO_INT(id), ptr); */
-/*   } */
-  
-/*   ptr->ptr=0; */
-/*   goto end_true; */
-/* } */
-
-/* static JSBool JSX_PointerMember(JSContext *cx, JSObject *obj, char *name, struct JSX_Pointer *ptr) { */
-/*   struct JSX_Pointer *oldptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj); */
-/*   struct JSX_TypeStructUnion *oldtype=(struct JSX_TypeStructUnion *)oldptr->type; */
-/*   jsval tmp, tmp2; */
-/*   jsval type; */
-  
-/*   JS_LookupProperty(cx, obj, "type", &type); */
-
-/*   // tmp is pointer.type */
-  
-/*   JS_LookupProperty(cx, JSVAL_TO_OBJECT(type), name, &tmp); */
-/*   if (tmp==JSVAL_VOID || !JSVAL_IS_OBJECT(tmp)) { */
-/*     ptr->ptr=0; */
-/*     goto end_true; */
-/*   } */
-  
-/*   // type is pointer.type[name] */
-  
-/*   JS_LookupProperty(cx, JSVAL_TO_OBJECT(tmp), "index", &tmp2); */
-  
-/*   // tmp2 is pointer.type[name].index */
-  
-/*   if (!JSVAL_IS_INT(tmp2) ||  */
-/*       JSVAL_TO_INT(tmp2)<0 || */
-/*       JSVAL_TO_INT(tmp2)>=oldtype->nMember) { */
-/*     ptr->ptr=0; */
-/*     goto end_true; */
-/*   } */
-  
-/*   ptr->ptr=(char *)oldptr->ptr + oldtype->member[JSVAL_TO_INT(tmp2)].offset; */
-/*   ptr->type=oldtype->member[JSVAL_TO_INT(tmp2)].type; */
-
-/*   goto end_true; */
-/* } */
-
-/* static JSBool JSX_PointerIndex(JSContext *cx, JSObject *obj, int n, struct JSX_Pointer *ptr) { */
-/*   struct JSX_Pointer *oldptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj); */
-/*   int size; */
-  
-  
-/*   if (oldptr->type->type==ARRAYTYPE) { */
-/*     // Fetch fixed array member */
-
-/*     ptr->type=((struct JSX_TypeArray *)oldptr->type)->member; */
-
-/*   } else { */
-/*     // Fetch variable array member */
-
-/*     ptr->type=oldptr->type; */
-
-/*   } */
-
-/*   if (oldptr->ptr==0 && !JSX_PointerResolve(cx,obj)) */
-/*     goto end_false; */
-/*   ptr->ptr=(char *)oldptr->ptr+JSX_TypeSize(ptr->type)*n; */
-/*   goto end_true; */
-/* } */
 
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   struct JSX_Pointer *ptr;
