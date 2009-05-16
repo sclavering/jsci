@@ -2536,7 +2536,6 @@ static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   JSObject *protoobj;
-  jsval tmp;
   JSObject *classobj;
 
   static struct JSFunctionSpec staticfunc[]={
