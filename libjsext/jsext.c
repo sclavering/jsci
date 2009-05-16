@@ -73,11 +73,9 @@ my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
     fprintf(stderr,"%s\n",message);
 }
 
+
 int main(int argc, char **argv, char **envp) {
   JSRuntime *rt;
-
-  char *buf=0;
-  int fd=0;
   JSContext *cx=0;
   JSObject *glob;
   int exitcode=0;
