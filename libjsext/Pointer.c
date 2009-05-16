@@ -8,16 +8,11 @@
 
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
-static JSBool JSX_Pointer_add(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_resolved(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
-static JSBool JSX_Pointer_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_resolve(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_Pointer_set(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, struct JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
 static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, struct JSX_ParamType *type, jsval *vp, int convconst, void **argptr);
-static JSBool JSX_Pointer_setType(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_Pointer_sizeof(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
@@ -28,7 +23,6 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data);
 static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_PoiterInit(JSContext *cx,  JSObject *obj);
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSObject *type);
 static JSBool JSX_InitPointerString(JSContext *cx, JSObject *obj, JSString *str);
