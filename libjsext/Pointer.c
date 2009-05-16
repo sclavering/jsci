@@ -110,7 +110,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   struct JSX_Pointer *ptr;
   int typepair;
   int size=-1;
-  jsval *jsvals;
   int i;
   int elemsize;
   int totsize;
@@ -158,9 +157,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   case TYPEPAIR(JSNULL,POINTERTYPE):
 
     // Return a pointer object from a type *
-
-  makepointer:
-
     if (do_clean!=2) {
       if (*(void **)p==NULL) {
 	*rval=JSVAL_NULL;
@@ -853,7 +849,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
   JSObject *obj;
   struct JSX_Pointer *ptr;
   jsdouble tmpdbl;
-  jsval *jsvals;
   jsval tmpval;
   int elemsize;
   JSFunction *fun;
@@ -1656,8 +1651,6 @@ static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval
   JSObject *newobj;
   int length;
   struct JSX_Pointer *ret;
-  void *newptr;
-
 
   if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
     JSX_ReportException(cx, "Wrong argument type to calloc");
@@ -1962,10 +1955,6 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   size_t arg_size=0;
   ffi_type **arg_types=0;
   ffi_cif *cif;
-
-  struct JSX_type **C=0;
-  int nArgs=0;
-
   struct JSX_Type *type;
   struct JSX_Pointer *ptr=JS_GetPrivate(cx,obj);
 
@@ -2100,21 +2089,10 @@ static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 
 static JSBool JSX_Pointer_resolved(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-
   struct JSX_Pointer *ptr;
-
-
   ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
-
   *vp=(ptr->ptr?JSVAL_TRUE:JSVAL_FALSE);
-  goto end_true;
-
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -2191,10 +2169,8 @@ static JSBool JSX_Pointer_resolve(JSContext *cx, JSObject *obj, uintN argc, jsva
 }
 
 static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-
   struct JSX_Pointer *ptr;
   int length;
-
 
   ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
 
@@ -2205,22 +2181,13 @@ static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, 
     *rval=STRING_TO_JSVAL(JS_NewUCStringCopyN(cx, (jschar *)ptr->ptr, length));
   }
 
-  goto end_true;
-
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   struct JSX_Pointer *ptr;
-
   int length;
-
 
   ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
 
@@ -2231,14 +2198,7 @@ static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, js
     *rval=STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *)ptr->ptr, length));
   }
 
-  goto end_true;
-
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -2322,23 +2282,12 @@ static JSBool JSX_Pointer_toString(JSContext *cx, JSObject *obj, uintN argc, jsv
 
 
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-
   struct JSX_Pointer *ptr;
   jsdouble val;
-
-
   ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
   val=((jsdouble)(long)ptr->ptr)/JSX_TypeSize(ptr->type);
-
   JS_NewNumberValue(cx, val, rval);
-  goto end_true;
-
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
