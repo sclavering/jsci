@@ -25,4 +25,6 @@
     return this._DrawingWand;
   },
   _DrawingWand: null,
+
+  _libwand: JSEXT1.libwand, // I moved it
 })
