@@ -52,13 +52,10 @@ env_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     return JS_TRUE;
 }
 
-static JSBool
-env_enumerate(JSContext *cx, JSObject *obj)
-{
+
+static JSBool env_enumerate(JSContext *cx, JSObject *obj) {
     static JSBool reflected;
-    char **evp, *name, *value, *es, **origevp;
-    int nenv = 0;
-    int envcap = 0;
+    char **evp, *name, *value;
     JSString *valstr;
     JSBool ok;
 
@@ -92,11 +89,7 @@ failure:
     return JS_FALSE;
 }
 
-static JSBool
-env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags,
-            JSObject **objp)
-{
-    int vallen;
+static JSBool env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **objp) {
     JSString *idstr, *valstr;
     char *name, *value = 0;
 
