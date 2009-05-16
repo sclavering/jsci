@@ -1781,19 +1781,6 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
   memcpy(name,nametmp,JS_GetStringLength(JSVAL_TO_STRING(tmp)));
   name[JS_GetStringLength(JSVAL_TO_STRING(tmp))]=0;
 
-#ifdef WIN32
-  {
-    static HMODULE globaldl=0;
-    if (globaldl==0) {
-      globaldl=GetModuleHandle(NULL);
-    }
-    if (dl)
-      ptr->ptr=(void *)GetProcAddress((HMODULE)JS_GetPrivate(cx, dl),name);
-    else
-      ptr->ptr=(void *)GetProcAddress(globaldl,name);
-  }
-
-#else
   {
     static void *globaldl=0;
     if (globaldl==0) {
@@ -1804,8 +1791,6 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
     else
       ptr->ptr=(void *)dlsym(globaldl,name);
   }
-  
-#endif
 
   if (!ptr->ptr) {
     JSX_ReportException(cx, "Unresolved symbol %s",name);
