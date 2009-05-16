@@ -88,7 +88,6 @@ ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type) {
 
 
 ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type) {
-  ffi_type *ret;
   int nmember;
   int i;
   int bitsused=0;
