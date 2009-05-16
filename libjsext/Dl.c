@@ -6,7 +6,6 @@
 #include <string.h>
 
 
-static JSBool JS_DLL_CALLBACK JSX_dl_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JS_DLL_CALLBACK JSEXT_dl_finalize(JSContext *cx, JSObject *obj);
 static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
@@ -189,41 +188,6 @@ static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, 
   *rval = dlsym((void *) JS_GetPrivate(cx, obj), symbol) != 0 ? JSVAL_TRUE : JSVAL_FALSE;
 
   return JS_TRUE;
-}
-
-
-static JSBool JS_DLL_CALLBACK JSX_dl_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSNative fun;
-  char *name;
-  JSObject *desobj;
-
-  if (argc<1) {
-    JSX_ReportException(cx, "Too few arguments");
-    return JS_FALSE;
-  }
-
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &name)) {
-    return JS_FALSE;
-  }
-
-  if(argc < 2) {
-    desobj = JS_GetGlobalObject(cx);
-  } else {
-    if(!JSVAL_IS_OBJECT(argv[1]) || JSVAL_IS_NULL(argv[1])) {
-      JSX_ReportException(cx, "Illegal 'this' object");
-      return JS_FALSE;
-    }
-    desobj=JSVAL_TO_OBJECT(argv[1]);
-    argc--;
-    argv++;
-  }
-
-  if (dlsym((void *)JS_GetPrivate(cx, obj),(void *)fun)!=0)
-    *rval=JSVAL_TRUE;
-  else
-    *rval=JSVAL_FALSE;
-
-  return fun(cx, obj, argc-1, argv+1, rval);
 }
 
 
