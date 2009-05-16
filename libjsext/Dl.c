@@ -56,8 +56,6 @@ static JSBool JSX_dl_pointer(JSContext *cx, JSObject *origobj, uintN argc, jsval
 
     // Lazy resolution constructor
 
-    char *symbol=JS_GetStringBytes(JSVAL_TO_STRING(argv[0]));
-
     obj=JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
     *rval=OBJECT_TO_JSVAL(obj);
 
@@ -149,9 +147,8 @@ JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   return JS_TRUE;
 }
 
-static JSBool
-dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
-{
+
+static JSBool dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *filename;
   JSBool res;
 
@@ -172,6 +169,7 @@ dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 
   return JS_TRUE;
 }
+
 
 static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *symbol;
