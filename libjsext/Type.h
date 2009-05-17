@@ -143,7 +143,3 @@ ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
 #define StructUniontype ((struct JSX_TypeStructUnion *)type)
 
 #endif
-
-/*
-  Used by struct, union and function creators, which are used by deserialize and C.
- */
