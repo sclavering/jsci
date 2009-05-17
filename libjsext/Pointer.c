@@ -438,10 +438,8 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
     return size;
 
   case TYPEPAIR(JSVOID,FUNCTIONTYPE):
-
     // Create a new JS function which calls a C function
-
-    fun=JS_NewFunction(cx, JSX_NativeFunction, ((struct JSX_TypeFunction *)type)->nParam, 0, 0, "JSEXT_NATIVE");
+    fun = JS_NewFunction(cx, JSX_NativeFunction, ((JSX_TypeFunction *) type)->nParam, 0, 0, "JSEXT_NATIVE");
     funobj=JS_GetFunctionObject(fun);
     *rval=OBJECT_TO_JSVAL(funobj);
 
@@ -1526,7 +1524,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   retpriv->finalize=ffi_closure_free; //This would free the code address, not always identical to writeable address. So it is checked in finalize.
   retpriv->type=(struct JSX_Type *)JS_GetPrivate(cx, typeobj);
 
-  if (ffi_prep_closure_loc(retpriv->writeable, JSX_GetCIF(cx, (struct JSX_TypeFunction *)retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr)!=FFI_OK)
+  if(ffi_prep_closure_loc(retpriv->writeable, JSX_GetCIF(cx, (JSX_TypeFunction *) retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
     goto end_false;
 
   JS_SetPrivate(cx, retobj, retpriv);
@@ -1941,21 +1939,21 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   cif=(ffi_cif *)(arg_types+(argc+1));
 
   int real_argc;
-  arg_size=JSX_TypeSize_multi(cx, argc, Functiontype->param, argv, arg_types);
+  arg_size = JSX_TypeSize_multi(cx, argc, ((JSX_TypeFunction *) type)->param, argv, arg_types);
 
   for (real_argc=0; arg_types[real_argc]; real_argc++)
     ;
 
 
-  if (real_argc>Functiontype->nParam) {
+  if(real_argc > ((JSX_TypeFunction *) type)->nParam) {
     int callconv=FFI_DEFAULT_ABI;
-    memcpy(arg_types, JSX_GetCIF(cx, Functiontype)->arg_types, sizeof(ffi_type *)*Functiontype->nParam);
-    ffi_prep_cif(cif, callconv, real_argc, JSX_GetFFIType(cx, Functiontype->returnType), arg_types);
+    memcpy(arg_types, JSX_GetCIF(cx, ((JSX_TypeFunction *) type))->arg_types, sizeof(ffi_type *) * ((JSX_TypeFunction *) type)->nParam);
+    ffi_prep_cif(cif, callconv, real_argc, JSX_GetFFIType(cx, ((JSX_TypeFunction *) type)->returnType), arg_types);
   } else {
-    cif=JSX_GetCIF(cx, Functiontype);
+    cif = JSX_GetCIF(cx, (JSX_TypeFunction *) type);
   }
 
-  int retsize=JSX_TypeSize(Functiontype->returnType);
+  int retsize = JSX_TypeSize(((JSX_TypeFunction *) type)->returnType);
 
   argptr=(void **)JS_malloc(cx, arg_size + argc*sizeof(void *) + retsize + 8);
 
@@ -1963,7 +1961,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   argbuf=retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
   if (arg_size) {
-    if (!JSX_Set_multi(cx, (void *)argbuf, 1, argc, Functiontype->param, argv, 1, argptr))
+    if(!JSX_Set_multi(cx, (void *) argbuf, 1, argc, ((JSX_TypeFunction *) type)->param, argv, 1, argptr))
       goto failure;
   }
 
@@ -1974,12 +1972,12 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
   *rval=JSVAL_VOID;
 
-  if (Functiontype->returnType->type!=VOIDTYPE) {
-    JSX_Get(cx, retbuf, 0, 0, Functiontype->returnType, rval);
+  if(((JSX_TypeFunction *) type)->returnType->type != VOIDTYPE) {
+    JSX_Get(cx, retbuf, 0, 0, ((JSX_TypeFunction *) type)->returnType, rval);
   }
-  
+
   if (arg_size) {
-    if (!JSX_Get_multi(cx, 1, argc, Functiontype->param, argv, 0, argptr))
+    if(!JSX_Get_multi(cx, 1, argc, ((JSX_TypeFunction *) type)->param, argv, 0, argptr))
       goto failure;
   }
   JS_free(cx, argptr);
@@ -2095,9 +2093,9 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
   finptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrobj));
   type=finptr->type;
   if (type->type!=FUNCTIONTYPE ||
-      Functiontype->nParam!=1 ||
-      Functiontype->param[0].type->type!=POINTERTYPE ||
-      Functiontype->param[0].isConst) {
+      ((JSX_TypeFunction *) type)->nParam != 1 ||
+      ((JSX_TypeFunction *) type)->param[0].type->type != POINTERTYPE ||
+      ((JSX_TypeFunction *) type)->param[0].isConst) {
     JSX_ReportException(cx, "Wrong function type for finalize property");
     goto end_false;
   }
@@ -2402,8 +2400,8 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   int i;
   int argsize;
   jsval rval=JSVAL_VOID;
-  struct JSX_TypeFunction *type=(struct JSX_TypeFunction *)cb->type;
-  
+  JSX_TypeFunction *type = (JSX_TypeFunction *) cb->type;
+
   tmp_argv=(jsval *)JS_malloc(cb->cx, sizeof(jsval)*type->nParam);
   if(!tmp_argv) return;
   

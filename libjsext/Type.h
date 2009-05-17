@@ -76,6 +76,7 @@ struct JSX_TypeFunction {
   int elipsis;
   ffi_cif cif;
 };
+typedef struct JSX_TypeFunction JSX_TypeFunction;
 
 struct JSX_MemberType { // inherits NamedType
   JSX_Type *type;
@@ -127,7 +128,7 @@ int JSX_JSType(JSContext *cx, jsval rval);
 JSBool JSX_TypeContainsPointer(JSX_Type *type);
 JSObject *JSX_GetType(enum JSX_TypeID, int size, int signedness);
 ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type);
-ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
+ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)
@@ -138,7 +139,6 @@ ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
 
 #define TYPEPAIR(a,b) ((TYPECOUNT2 * (a)) + (b))
 
-#define Functiontype ((struct JSX_TypeFunction *)type)
 #define StructUniontype ((struct JSX_TypeStructUnion *)type)
 
 #endif

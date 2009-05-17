@@ -59,7 +59,7 @@ static JSBool JSX_Type_length(JSContext *cx,  JSObject *obj, jsval id, jsval *rv
 }
 
 
-ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type) {
+ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
   if (type->cif.arg_types)
     return &type->cif;
 
@@ -161,10 +161,10 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
 
 
 static JSBool JSX_Type_callConv(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
-  struct JSX_TypeFunction *type;
+  JSX_TypeFunction *type;
   char *name;
 
-  type=(struct JSX_TypeFunction *)JS_GetPrivate(cx, obj);
+  type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
   if (type->type!=FUNCTIONTYPE)
     return JS_TRUE;
 
@@ -183,9 +183,8 @@ static JSBool JSX_Type_callConv(JSContext *cx,  JSObject *obj, jsval id, jsval *
 
 
 static JSBool JSX_Type_elipsis(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
-  struct JSX_TypeFunction *type;
-
-  type=(struct JSX_TypeFunction *)JS_GetPrivate(cx, obj);
+  JSX_TypeFunction *type;
+  type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
   if (type->type!=FUNCTIONTYPE)
     return JS_TRUE;
 
@@ -205,13 +204,10 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 	
       }
       if (!strcmp(str,"callConv") && JSVAL_IS_STRING(*vp)) {
-	if (!strcmp(JS_GetStringBytes(JSVAL_TO_STRING(*vp)), "stdcall"))
-	  Functiontype->callConv=STDCALLCONV;
-	else
-	  Functiontype->callConv=CDECLCONV;
+	((JSX_TypeFunction *) type)->callConv = !strcmp(JS_GetStringBytes(JSVAL_TO_STRING(*vp)), "stdcall") ? STDCALLCONV : CDECLCONV;
       }
       if (!strcmp(str,"elipsis") && JSVAL_IS_BOOLEAN(*vp)) {
-	Functiontype->elipsis=JSVAL_TO_BOOLEAN(*vp);
+	((JSX_TypeFunction *) type)->elipsis = JSVAL_TO_BOOLEAN(*vp);
       }
       break;
     case ARRAYTYPE:
@@ -329,7 +325,7 @@ static void JSX_DestroyTypeStructUnion(JSContext *cx, struct JSX_TypeStructUnion
 }
 
 
-static void JSX_DestroyTypeFunction(JSContext *cx, struct JSX_TypeFunction *type) {
+static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
   int i;
   if (type) {
     for (i=0; i<type->nParam; i++) {
@@ -351,7 +347,7 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
   JSObject *paramobj;
   int nParam;
   int i;
-  struct JSX_TypeFunction *type;
+  JSX_TypeFunction *type;
 
   if (!JSVAL_IS_OBJECT(params) ||
       !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) {
@@ -359,7 +355,7 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
     return JS_FALSE;
   }
 
-  type=(struct JSX_TypeFunction *)JS_malloc(cx, sizeof(struct JSX_TypeFunction));
+  type = (JSX_TypeFunction *) JS_malloc(cx, sizeof(JSX_TypeFunction));
   type->type=FUNCTIONTYPE;
 
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
@@ -565,16 +561,16 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
   
   switch(type->type) {
   case FUNCTIONTYPE:
-    if (!JSX_InitParamType(cx, Functiontype->param+memberno, JSVAL_TO_OBJECT(member)))
+    if(!JSX_InitParamType(cx, ((JSX_TypeFunction *) type)->param + memberno, JSVAL_TO_OBJECT(member)))
       goto failure;
     if (memberno==type->nMember-1) {
-      Functiontype->param[type->nMember].type=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
-      Functiontype->param[type->nMember].name=0;
-      Functiontype->param[type->nMember].isConst=0;
+      ((JSX_TypeFunction *) type)->param[type->nMember].type = JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
+      ((JSX_TypeFunction *) type)->param[type->nMember].name = 0;
+      ((JSX_TypeFunction *) type)->param[type->nMember].isConst = 0;
     }
-    if (Functiontype->cif.arg_types) {
-      JS_free(cx, Functiontype->cif.arg_types);
-      Functiontype->cif.arg_types=0;
+    if(((JSX_TypeFunction *) type)->cif.arg_types) {
+      JS_free(cx, ((JSX_TypeFunction *) type)->cif.arg_types);
+      ((JSX_TypeFunction *) type)->cif.arg_types=0;
     }
     break;
 
@@ -908,7 +904,7 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
 
   switch(type->type) {
   case FUNCTIONTYPE:
-    JSX_DestroyTypeFunction(cx, (struct JSX_TypeFunction *)type);
+    JSX_DestroyTypeFunction(cx, (JSX_TypeFunction *) type);
     break;
   case UNIONTYPE:
   case STRUCTTYPE:
