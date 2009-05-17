@@ -93,14 +93,14 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
   case FLOATTYPE:
     return &((JSX_TypeFloat *) type)->ffiType;
   case STRUCTTYPE:
-    if (StructUniontype->ffiType.elements)
-      return &StructUniontype->ffiType;
+    if(((JSX_TypeStructUnion *) type)->ffiType.elements)
+      return &((JSX_TypeStructUnion *) type)->ffiType;
 
     nmember=0;
 
-    for (i=0; i<StructUniontype->nMember; i++) {
+    for(i = 0; i < ((JSX_TypeStructUnion *) type)->nMember; i++) {
       int al=1;
-      JSX_Type *memb = StructUniontype->member[i].type;
+      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].type;
       while (memb->type==ARRAYTYPE) {
 	al *= ((JSX_TypeArray *) memb)->length;
 	memb = ((JSX_TypeArray *) memb)->member;
@@ -119,21 +119,21 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
       nmember+=al;
     }
 
-    StructUniontype->ffiType.elements=JS_malloc(cx, sizeof(ffi_type *)*(nmember+1));
+    ((JSX_TypeStructUnion *) type)->ffiType.elements = JS_malloc(cx, sizeof(ffi_type *) * (nmember + 1));
     // must specify size and alignment because
     // bitfields introduce alignment requirements
     // which are not reflected by the ffi members.
-    StructUniontype->ffiType.size=JSX_TypeSize(type);
-    StructUniontype->ffiType.alignment=JSX_TypeAlign(type);
-    StructUniontype->ffiType.type=FFI_TYPE_STRUCT;
+    ((JSX_TypeStructUnion *) type)->ffiType.size = JSX_TypeSize(type);
+    ((JSX_TypeStructUnion *) type)->ffiType.alignment = JSX_TypeAlign(type);
+    ((JSX_TypeStructUnion *) type)->ffiType.type = FFI_TYPE_STRUCT;
 
     bitsused=0;
     nmember=0;
-    for (i=0; i<StructUniontype->nMember; i++) {
+    for(i = 0; i < ((JSX_TypeStructUnion *) type)->nMember; i++) {
       int al=1;
       int j;
       ffi_type *t;
-      JSX_Type *memb = StructUniontype->member[i].type;
+      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].type;
       while (memb->type==ARRAYTYPE) {
 	al *= ((JSX_TypeArray *) memb)->length;
 	memb = ((JSX_TypeArray *) memb)->member;
@@ -151,11 +151,10 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
 	bitsused=0;
 	t=JSX_GetFFIType(cx, memb);
       }
-      for (j=0; j<al; j++)
-	StructUniontype->ffiType.elements[nmember++]=t;
+      for(j = 0; j < al; j++) ((JSX_TypeStructUnion *) type)->ffiType.elements[nmember++] = t;
     }
-    StructUniontype->ffiType.elements[nmember]=NULL;
-    return &StructUniontype->ffiType;
+    ((JSX_TypeStructUnion *) type)->ffiType.elements[nmember] = NULL;
+    return &((JSX_TypeStructUnion *) type)->ffiType;
   }
 }
 
@@ -307,7 +306,7 @@ static JSBool JSX_InitNamedType(JSContext *cx, struct JSX_NamedType *dest, JSObj
 }
 
 
-static void JSX_DestroyTypeStructUnion(JSContext *cx, struct JSX_TypeStructUnion *type) {
+static void JSX_DestroyTypeStructUnion(JSContext *cx, JSX_TypeStructUnion *type) {
   int i;
   if (type) {
     if (type->member) {
@@ -474,10 +473,10 @@ int JSX_TypeAlign(JSX_Type *type) {
     return ((JSX_TypeFloat *) type)->ffiType.alignment;
   case STRUCTTYPE:
   case UNIONTYPE:
-    len=((struct JSX_TypeStructUnion *)type)->nMember;
+    len = ((JSX_TypeStructUnion *) type)->nMember;
     ret=0;
     for (i=0; i<len; i++) {
-      int thisalign=JSX_TypeAlign(((struct JSX_TypeStructUnion *)type)->member[i].type);
+      int thisalign = JSX_TypeAlign(((JSX_TypeStructUnion *) type)->member[i].type);
       if (thisalign>ret) ret=thisalign;
     }
     return ret;
@@ -513,7 +512,7 @@ int JSX_TypeSize(JSX_Type *type) {
   case STRUCTTYPE:
   case UNIONTYPE:
     align=JSX_TypeAlign(type);
-    return (((((struct JSX_TypeStructUnion *)type)->sizeOf+7)/8+align-1)/align)*align;
+    return (((((JSX_TypeStructUnion *) type)->sizeOf + 7) / 8 + align - 1) / align) * align;
   default: // VOIDTYPE, FUNCTIONTYPE
     return 0; // Error
   }
@@ -521,7 +520,7 @@ int JSX_TypeSize(JSX_Type *type) {
 
 
 static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member) {
-  struct JSX_TypeStructUnion *type; // Same as TypeFunction up to params.
+  JSX_TypeStructUnion *type; // Same as TypeFunction up to params.
   int i;
   int thisalign;
   int thissize;
@@ -591,9 +590,9 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
     if (!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member)))
       goto failure;
 
-    if (StructUniontype->ffiType.elements) {
-      JS_free(cx, StructUniontype->ffiType.elements);
-      StructUniontype->ffiType.elements=0;
+    if(((JSX_TypeStructUnion *) type)->ffiType.elements) {
+      JS_free(cx, ((JSX_TypeStructUnion *) type)->ffiType.elements);
+      ((JSX_TypeStructUnion *) type)->ffiType.elements = 0;
     }
 
     if (memberno!=type->nMember-1 && memberno>0 && type->member[memberno-1].type) {
@@ -627,13 +626,13 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
 
 JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, int isStruct) {
   JSObject *retobj;
-  struct JSX_TypeStructUnion *type;
+  JSX_TypeStructUnion *type;
   int i;
   
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
-  type=(struct JSX_TypeStructUnion *)JS_malloc(cx, sizeof(struct JSX_TypeStructUnion));
+  type = (JSX_TypeStructUnion *) JS_malloc(cx, sizeof(JSX_TypeStructUnion));
 
   type->type=isStruct?STRUCTTYPE:UNIONTYPE;
   type->nMember=nMember;
@@ -908,7 +907,7 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
     break;
   case UNIONTYPE:
   case STRUCTTYPE:
-    JSX_DestroyTypeStructUnion(cx, (struct JSX_TypeStructUnion *)type);
+    JSX_DestroyTypeStructUnion(cx, (JSX_TypeStructUnion *) type);
     break;
   default:
     JS_free(cx, type);
@@ -1173,8 +1172,8 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type) {
 
     case UNIONTYPE:
     case STRUCTTYPE:
-      for (i=0; i<StructUniontype->nMember; i++)
-	if (JSX_TypeContainsPointer(StructUniontype->member[i].type))
+      for(i = 0; i < ((JSX_TypeStructUnion *) type)->nMember; i++)
+	if(JSX_TypeContainsPointer(((JSX_TypeStructUnion *) type)->member[i].type))
 	  return JS_TRUE;
 
       // fall through

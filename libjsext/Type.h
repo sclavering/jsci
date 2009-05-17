@@ -93,6 +93,7 @@ struct JSX_TypeStructUnion {
   int sizeOf; // in bits
   ffi_type ffiType;
 };
+typedef struct JSX_TypeStructUnion JSX_TypeStructUnion;
 
 struct JSX_TypePointer {
   enum JSX_TypeID type; // POINTERTYPE
@@ -138,7 +139,5 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type);
 #define JSFUNC (JSVAL_TAGMASK+6)
 
 #define TYPEPAIR(a,b) ((TYPECOUNT2 * (a)) + (b))
-
-#define StructUniontype ((struct JSX_TypeStructUnion *)type)
 
 #endif
