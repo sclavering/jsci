@@ -1550,29 +1550,18 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
 
 
 static JSBool JSX_InitPointerString(JSContext *cx, JSObject *retobj, JSString *str) {
-  int length;
-  struct JSX_Pointer *ret;
-
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetType(INTTYPE,0,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
 
-  length=JS_GetStringLength(str);
+  struct JSX_Pointer *ret;
+  int length = JS_GetStringLength(str);
   ret=JS_malloc(cx, sizeof(struct JSX_Pointer)+sizeof(char)*(length+1));
   ret->ptr=ret+1;
   ret->type=(struct JSX_Type *)JS_GetPrivate(cx,JSX_GetType(INTTYPE,0,0));
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
-
   memcpy(ret->ptr, JS_GetStringBytes(str), sizeof(char)*(length+1));
-
-  goto end_true;
-
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
