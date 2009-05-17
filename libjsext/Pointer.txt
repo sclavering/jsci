@@ -195,14 +195,6 @@ Pointer.prototype.realloc(bytes)
 Changes the size of a memory area allocated with Pointer.malloc(), Pointer.calloc() or Pointer().  The contents of the memory block is left unchanged even if it needs to be moved to another location.  Newly allocated memory is uninitialized.  The memory is freed when the pointer object is garbage collected.
 
 
-Pointer.prototype.resolve()
----------------------------
-
-Attempts to resolve the pointer, unless it is already resolved, in which case this function does nothing.
-
-Throws a |ReferenceError| of the symbol could not be resolved.
-
-
 Pointer.prototype.string([len])
 -------------------------------
 
