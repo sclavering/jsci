@@ -31,43 +31,38 @@ enum JSX_CallConv {
   STDCALLCONV
 };
 
-struct JSX_Type { // Private part of Type objects
+typedef struct { // Private part of Type objects
   enum JSX_TypeID type; // VOID
   JSObject *typeObject;
-};
-typedef struct JSX_Type JSX_Type;
+} JSX_Type;
 
-struct JSX_TypeInt {
+typedef struct {
   enum JSX_TypeID type; // INTTYPE
   JSObject *typeObject;
   int size;
   int signedness;
   ffi_type ffiType;
-};
-typedef struct JSX_TypeInt JSX_TypeInt;
+} JSX_TypeInt;
 
-struct JSX_TypeFloat {
+typedef struct {
   enum JSX_TypeID type; // FLOATTYPE
   JSObject *typeObject;
   int size;
   ffi_type ffiType;
-};
-typedef struct JSX_TypeFloat JSX_TypeFloat;
+} JSX_TypeFloat;
 
-struct JSX_NamedType {
+typedef struct {
   JSX_Type *type;
   char *name;
-};
-typedef struct JSX_NamedType JSX_NamedType;
+} JSX_NamedType;
 
-struct JSX_ParamType { // inherits JSX_NamedType
+typedef struct { // inherits JSX_NamedType
   JSX_Type *type;
   char *name;
   int isConst;
-};
-typedef struct JSX_ParamType JSX_ParamType;
+} JSX_ParamType;
 
-struct JSX_TypeFunction {
+typedef struct {
   enum JSX_TypeID type; // FUNCTIONTYPE
   JSObject *typeObject;
   JSX_ParamType *param;
@@ -77,49 +72,43 @@ struct JSX_TypeFunction {
   JSX_Type *returnType;
   int elipsis;
   ffi_cif cif;
-};
-typedef struct JSX_TypeFunction JSX_TypeFunction;
+} JSX_TypeFunction;
 
-struct JSX_MemberType { // inherits JSX_NamedType
+typedef struct { // inherits JSX_NamedType
   JSX_Type *type;
   char *name;
   int offset; // in bits
-};
-typedef struct JSX_MemberType JSX_MemberType;
+} JSX_MemberType;
 
-struct JSX_TypeStructUnion {
+typedef struct {
   enum JSX_TypeID type; // STRUCTTYPE or UNIONTYPE
   JSObject *typeObject;
-  struct JSX_MemberType *member;
+  JSX_MemberType *member;
   int nMember;
   int member_capacity;
   int sizeOf; // in bits
   ffi_type ffiType;
-};
-typedef struct JSX_TypeStructUnion JSX_TypeStructUnion;
+} JSX_TypeStructUnion;
 
-struct JSX_TypePointer {
+typedef struct {
   enum JSX_TypeID type; // POINTERTYPE
   JSObject *typeObject;
   JSX_Type *direct;
-};
-typedef struct JSX_TypePointer JSX_TypePointer;
+} JSX_TypePointer;
 
-struct JSX_TypeArray {
+typedef struct {
   enum JSX_TypeID type; // ARRAYTYPE
   JSObject *typeObject;
   JSX_Type *member;
   int length;
-};
-typedef struct JSX_TypeArray JSX_TypeArray;
+} JSX_TypeArray;
 
-struct JSX_TypeBitfield {
+typedef struct {
   enum JSX_TypeID type; // BITFIELDTYPE
   JSObject *typeObject;
   JSX_Type *member;
   int length;
-};
-typedef struct JSX_TypeBitfield JSX_TypeBitfield;
+} JSX_TypeBitfield;
 
 
 
