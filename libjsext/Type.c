@@ -3,10 +3,6 @@
 #include "Pointer.h"
 #include <stdarg.h>
 
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
 static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member);
