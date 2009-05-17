@@ -2,6 +2,8 @@
 #include <string.h>
 #include "Pointer.h"
 #include <stdarg.h>
+#include <stdlib.h>
+
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
