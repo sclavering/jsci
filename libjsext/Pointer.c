@@ -6,20 +6,20 @@
 # include <dlfcn.h>
 # include <alloca.h>
 
-struct JSX_Pointer {
+typedef struct {
   void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
-  struct JSX_Type *type;
+  JSX_Type *type;
   void (*finalize) (void *);
-};
+} JSX_Pointer;
 
-struct JSX_Callback {
+typedef struct {
   void *ptr; // Points to executable code
-  struct JSX_Type *type;
+  JSX_Type *type;
   void (*finalize) (void *);
   JSContext *cx;
   JSFunction *fun;
   void *writeable; // Points to writeable code
-};
+} JSX_Callback;
 
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
@@ -115,13 +115,13 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
 // rval should be rooted
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.
 
-int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type *type, jsval *rval) {
+int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval) {
   jsdouble tmpdouble;
   int tmpint;
   int tmpuint;
   JSObject *obj, *funobj;
   JSFunction *fun;
-  struct JSX_Pointer *ptr;
+  JSX_Pointer *ptr;
   int typepair;
   int size=-1;
   int i;
@@ -177,7 +177,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
       } else {
 	obj=JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
 	*rval=OBJECT_TO_JSVAL(obj);
-	ptr=(struct JSX_Pointer *)JS_malloc(cx, sizeof(struct JSX_Pointer));
+	ptr = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer));
 	ptr->ptr=*(void **)p;
 	ptr->type = ((JSX_TypePointer *) type)->direct;
 	ptr->finalize=0;
@@ -835,13 +835,13 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
 // Setting to undefined does nothing, only returns sizeof.
 // Setting to null zeroes memory.
 
-static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type, jsval v) {
+static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   int size=-1;
   int tmpint;
   int totsize;
   int i;
   JSObject *obj;
-  struct JSX_Pointer *ptr;
+  JSX_Pointer *ptr;
   jsdouble tmpdbl;
   jsval tmpval;
   int elemsize;
@@ -1454,7 +1454,7 @@ JSClass * JSX_GetPointerClass(void) {
 }
 
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *type) {
-  struct JSX_Pointer *retpriv;
+  JSX_Pointer *retpriv;
   int size;
   
   if (!JS_InstanceOf(cx, type, JSX_GetTypeClass(), NULL)) {
@@ -1465,8 +1465,8 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(type), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     goto end_false;
 
-  size=JSX_TypeSize((struct JSX_Type *)JS_GetPrivate(cx, type));
-  retpriv=JS_malloc(cx, sizeof(struct JSX_Pointer)+size);
+  size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, type));
+  retpriv = JS_malloc(cx, sizeof(JSX_Pointer) + size);
 
   if (!retpriv)
     goto end_false;
@@ -1474,7 +1474,7 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
   JS_SetPrivate(cx, retobj, retpriv);
 
   retpriv->ptr=retpriv+1;
-  retpriv->type=(struct JSX_Type *)JS_GetPrivate(cx, type);
+  retpriv->type = (JSX_Type *) JS_GetPrivate(cx, type);
   retpriv->finalize=0;
 
   goto end_true;
@@ -1488,10 +1488,9 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
 }
 
 static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JSObject *typeobj) {
-  struct JSX_Callback *retpriv;
+  JSX_Callback *retpriv;
   
-  if (!JS_InstanceOf(cx, typeobj, JSX_GetTypeClass(), NULL) ||
-      ((struct JSX_Type *)JS_GetPrivate(cx, typeobj))->type!=FUNCTIONTYPE) {
+  if (!JS_InstanceOf(cx, typeobj, JSX_GetTypeClass(), NULL) || ((JSX_Type *) JS_GetPrivate(cx, typeobj))->type != FUNCTIONTYPE) {
     JSX_ReportException(cx, "Type is not a C function");
     goto end_false;
   }
@@ -1501,7 +1500,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     goto end_false;
 
-  retpriv=JS_malloc(cx, sizeof(struct JSX_Callback));
+  retpriv = JS_malloc(cx, sizeof(JSX_Callback));
   if (!retpriv)
     goto end_false;
 
@@ -1511,7 +1510,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   retpriv->cx=cx;
   retpriv->fun=fun;
   retpriv->finalize=ffi_closure_free; //This would free the code address, not always identical to writeable address. So it is checked in finalize.
-  retpriv->type=(struct JSX_Type *)JS_GetPrivate(cx, typeobj);
+  retpriv->type = (JSX_Type *) JS_GetPrivate(cx, typeobj);
 
   if(ffi_prep_closure_loc(retpriv->writeable, JSX_GetCIF(cx, (JSX_TypeFunction *) retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
     goto end_false;
@@ -1534,11 +1533,11 @@ static JSBool JSX_InitPointerString(JSContext *cx, JSObject *retobj, JSString *s
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetType(INTTYPE,0,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  struct JSX_Pointer *ret;
+  JSX_Pointer *ret;
   int length = JS_GetStringLength(str);
-  ret=JS_malloc(cx, sizeof(struct JSX_Pointer)+sizeof(char)*(length+1));
+  ret = JS_malloc(cx, sizeof(JSX_Pointer) + sizeof(char) * (length + 1));
   ret->ptr=ret+1;
-  ret->type=(struct JSX_Type *)JS_GetPrivate(cx,JSX_GetType(INTTYPE,0,0));
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(INTTYPE, 0, 0));
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
   memcpy(ret->ptr, JS_GetStringBytes(str), sizeof(char)*(length+1));
@@ -1549,7 +1548,7 @@ static JSBool JSX_InitPointerString(JSContext *cx, JSObject *retobj, JSString *s
 // If typeobj is null, a type property must have been assigned to retobj before calling initpointer.
 
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
-  struct JSX_Pointer *ret;
+  JSX_Pointer *ret;
 
   if (!typeobj) {
     jsval typeval;
@@ -1562,11 +1561,11 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     goto end_false;
 
-  ret=JS_malloc(cx, sizeof(struct JSX_Pointer));
+  ret = JS_malloc(cx, sizeof(JSX_Pointer));
   if (!ret)
     goto end_false;
   ret->ptr=0;
-  ret->type=(struct JSX_Type *)JS_GetPrivate(cx,typeobj);
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, typeobj);
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
 
@@ -1583,8 +1582,7 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
 static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   int length;
-  struct JSX_Pointer *ret;
-
+  JSX_Pointer *ret;
 
   if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
     JSX_ReportException(cx, "Wrong argument type to malloc");
@@ -1598,11 +1596,11 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
     goto end_false;
 
   length=INT_TO_JSVAL(argv[0]);
-  ret=JS_malloc(cx, sizeof(struct JSX_Pointer)+length);
+  ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
     goto end_false;
   ret->ptr=ret+1;
-  ret->type=(struct JSX_Type *)JS_GetPrivate(cx,JSX_GetType(VOIDTYPE,0,0));
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
 
@@ -1620,7 +1618,7 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   int length;
-  struct JSX_Pointer *ret;
+  JSX_Pointer *ret;
 
   if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
     JSX_ReportException(cx, "Wrong argument type to calloc");
@@ -1634,11 +1632,11 @@ static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval
     goto end_false;
 
   length=INT_TO_JSVAL(argv[0]);
-  ret=JS_malloc(cx, sizeof(struct JSX_Pointer)+length);
+  ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
     goto end_false;
   ret->ptr=ret+1;
-  ret->type=(struct JSX_Type *)JS_GetPrivate(cx,JSX_GetType(VOIDTYPE,0,0));
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
   memset(ret->ptr,0,length);
@@ -1656,7 +1654,7 @@ static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   int length;
-  struct JSX_Pointer *ret;
+  JSX_Pointer *ret;
   void *newptr;
 
 
@@ -1676,7 +1674,7 @@ static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   ret=JS_GetPrivate(cx, obj);
 
-  newptr=JS_realloc(cx, ret, sizeof(struct JSX_Pointer)+length);
+  newptr = JS_realloc(cx, ret, sizeof(JSX_Pointer) + length);
   if (!newptr)
     goto end_false;
   ret=newptr;
@@ -1696,15 +1694,15 @@ static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsva
 
 static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *retobj, JSString *str) {
   int length;
-  struct JSX_Pointer *ret;
+  JSX_Pointer *ret;
 
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetType(INTTYPE,1,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     goto end_false;
 
   length=JS_GetStringLength(str);
-  ret=JS_malloc(cx, sizeof(struct JSX_Pointer)+sizeof(short)*(length+1));
+  ret = JS_malloc(cx, sizeof(JSX_Pointer) + sizeof(short) * (length + 1));
   ret->ptr=ret+1;
-  ret->type=(struct JSX_Type *)JS_GetPrivate(cx,JSX_GetType(INTTYPE,1,0));
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(INTTYPE, 1, 0));
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
 
@@ -1726,9 +1724,9 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
   char *name;
   JSObject *dl;
   jsval tmp;
-  struct JSX_Pointer *ptr;
+  JSX_Pointer *ptr;
 
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   if (!ptr)
     goto end_false;
 
@@ -1782,7 +1780,7 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
 
 static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
-  struct JSX_Pointer *ptr, *newptr;
+  JSX_Pointer *ptr, *newptr;
   
 
   if (argc<1 ||
@@ -1843,8 +1841,8 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
 
       // Callback constructor
       
-      struct JSX_Pointer *ptr=JS_GetPrivate(cx, typeObject);
-      struct JSX_Type *type=ptr->type;
+      JSX_Pointer *ptr = JS_GetPrivate(cx, typeObject);
+      JSX_Type *type = ptr->type;
       
       if (type->type==POINTERTYPE) { // Accept both function type and pointer to function type
 	typeObject = ((JSX_TypePointer *) type)->direct->typeObject;
@@ -1865,7 +1863,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
       }
       
       if (argc>=2 && argv[1]!=JSVAL_VOID) {
-	struct JSX_Pointer *ptr=JS_GetPrivate(cx,obj);
+	JSX_Pointer *ptr = JS_GetPrivate(cx,obj);
 	if (!JSX_Set(cx, ptr->ptr, 0, ptr->type, argv[1])) {
 	  goto end_false;
 	}
@@ -1888,12 +1886,12 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
 
 
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
-  struct JSX_Pointer *ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   if (ptr) {
     if (ptr->finalize) {
       if (ptr->finalize==ffi_closure_free) {
-	ffi_closure_free(((struct JSX_Callback *)ptr)->writeable);
+	ffi_closure_free(((JSX_Callback *) ptr)->writeable);
       } else {
 	(*ptr->finalize)(ptr->ptr);
       }
@@ -1910,8 +1908,8 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   size_t arg_size=0;
   ffi_type **arg_types=0;
   ffi_cif *cif;
-  struct JSX_Type *type;
-  struct JSX_Pointer *ptr=JS_GetPrivate(cx,obj);
+  JSX_Type *type;
+  JSX_Pointer *ptr = JS_GetPrivate(cx, obj);
 
   if (ptr->ptr==0 && !JSX_PointerResolve(cx, obj)) {
     goto failure;
@@ -1984,12 +1982,10 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
 
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-
-  struct JSX_Pointer *ptr;
+  JSX_Pointer *ptr;
   int ret;
 
-
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   *vp=JSVAL_VOID;
   
@@ -2020,11 +2016,7 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 
 static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-
-  struct JSX_Pointer *ptr;
-
-
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   if (ptr->ptr==0 && !JSX_PointerResolve(cx, obj))
     goto end_false;
@@ -2048,15 +2040,14 @@ static JSBool JSX_Pointer_getfinalize(JSContext *cx, JSObject *obj, jsval id, js
   return JS_TRUE;
 }
 
-static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
 
-  struct JSX_Pointer *ptr;
-  struct JSX_Pointer *finptr;
-  struct JSX_Type *type;
+static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
+  JSX_Pointer *ptr;
+  JSX_Pointer *finptr;
+  JSX_Type *type;
   jsval ptrobj;
 
-
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   if (*vp==JSVAL_NULL || *vp==JSVAL_VOID) {
     ptr->finalize=0;
@@ -2116,10 +2107,8 @@ static JSBool JSX_Pointer_resolve(JSContext *cx, JSObject *obj, uintN argc, jsva
 }
 
 static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  struct JSX_Pointer *ptr;
   int length;
-
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   if (argc<1 || !JSVAL_IS_INT(argv[0]))
     *rval=STRING_TO_JSVAL(JS_NewUCStringCopyZ(cx, (jschar *)ptr->ptr));
@@ -2133,10 +2122,8 @@ static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, 
 
 
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  struct JSX_Pointer *ptr;
   int length;
-
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   if (argc<1 || !JSVAL_IS_INT(argv[0]))
     *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, (char *)ptr->ptr));
@@ -2192,9 +2179,8 @@ static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 
 static JSBool JSX_Pointer_toString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  struct JSX_Pointer *ptr;
   char buf[20];
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   if(!ptr->ptr && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
   sprintf(buf,"%08x",ptr->ptr);
   *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, buf));
@@ -2203,9 +2189,9 @@ static JSBool JSX_Pointer_toString(JSContext *cx, JSObject *obj, uintN argc, jsv
 
 
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  struct JSX_Pointer *ptr;
+  JSX_Pointer *ptr;
   jsdouble val;
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   val=((jsdouble)(long)ptr->ptr)/JSX_TypeSize(ptr->type);
   JS_NewNumberValue(cx, val, rval);
   return JS_TRUE;
@@ -2220,9 +2206,9 @@ static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsva
 
 static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
-  struct JSX_Pointer *ptr;
+  JSX_Pointer *ptr;
   char *thisptr;
-  struct JSX_Type *type;
+  JSX_Type *type;
   JSX_TypePointer tmptype;
   int n;
   uintN i;
@@ -2234,7 +2220,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
   thisptr=ptr->ptr;
 
-  type=(struct JSX_Type *)&tmptype;
+  type = (JSX_Type *) &tmptype;
   ((JSX_TypePointer *) type)->type = POINTERTYPE;
   ((JSX_TypePointer *) type)->direct = ptr->type;
 
@@ -2299,7 +2285,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
 
-  ptr=(struct JSX_Pointer *)malloc(sizeof(struct JSX_Pointer));
+  ptr = (JSX_Pointer *) malloc(sizeof(JSX_Pointer));
   ptr->type=type;
   ptr->ptr=thisptr;
   ptr->finalize=0;
@@ -2318,14 +2304,13 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  struct JSX_Pointer *ptr;
+  JSX_Pointer *ptr;
   int ret;
-
 
   if (!JSVAL_IS_INT(id))
     goto end_true; // Only handle numerical properties
 
-  ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
+  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
 
   ret = JSX_Get(cx, (char *) ptr->ptr + JSX_TypeSize(ptr->type) * JSVAL_TO_INT(id), 0, 0, ptr->type, vp);
@@ -2358,8 +2343,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
 
-  struct JSX_Pointer *ptr;
-  ptr = (struct JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
 
   int ret;
@@ -2375,7 +2359,7 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
  */
 
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
-  struct JSX_Callback *cb=user_data;
+  JSX_Callback *cb = user_data;
   jsval *tmp_argv;
   int i;
   int argsize;
