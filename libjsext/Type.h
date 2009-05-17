@@ -78,11 +78,12 @@ struct JSX_TypeFunction {
 };
 typedef struct JSX_TypeFunction JSX_TypeFunction;
 
-struct JSX_MemberType { // inherits NamedType
+struct JSX_MemberType { // inherits JSX_NamedType
   JSX_Type *type;
   char *name;
   int offset; // in bits
 };
+typedef struct JSX_MemberType JSX_MemberType;
 
 struct JSX_TypeStructUnion {
   enum JSX_TypeID type; // STRUCTTYPE or UNIONTYPE

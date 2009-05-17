@@ -418,7 +418,7 @@ JSClass *JSX_GetTypeClass(void) {
 }
 
 
-JSBool JSX_InitMemberType(JSContext *cx, struct JSX_MemberType *dest, JSObject *membertype) {
+JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membertype) {
   if (!JSX_InitNamedType(cx, (struct JSX_NamedType *)dest, membertype, 1)) {
     return JS_FALSE;
   }
@@ -543,11 +543,11 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
       type->member_capacity=memberno + (type->type == FUNCTIONTYPE ? 2 : 1);
 
     if (type->member) {
-      type->member=JS_realloc(cx, type->member, sizeof(struct JSX_MemberType)*type->member_capacity); // membertype same size as paramtype
-      memset(type->member+old_capacity, 0, sizeof(struct JSX_MemberType)*(type->member_capacity-old_capacity));
+      type->member = JS_realloc(cx, type->member, sizeof(JSX_MemberType) * type->member_capacity); // membertype same size as paramtype
+      memset(type->member + old_capacity, 0, sizeof(JSX_MemberType) * (type->member_capacity - old_capacity));
     } else {
-      type->member=JS_malloc(cx, sizeof(struct JSX_MemberType)*type->member_capacity); // membertype same size as paramtype
-      memset(type->member, 0, sizeof(struct JSX_MemberType)*type->member_capacity);
+      type->member = JS_malloc(cx, sizeof(JSX_MemberType) * type->member_capacity); // membertype same size as paramtype
+      memset(type->member, 0, sizeof(JSX_MemberType) * type->member_capacity);
     }
   }
 
@@ -637,8 +637,8 @@ JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *
   type->type=isStruct?STRUCTTYPE:UNIONTYPE;
   type->nMember=nMember;
   type->member_capacity=nMember;
-  type->member=nMember?(struct JSX_MemberType *)JS_malloc(cx, sizeof(struct JSX_MemberType)*nMember):0;
-  memset(type->member, 0, sizeof(struct JSX_MemberType)*nMember);
+  type->member = nMember ? (JSX_MemberType *) JS_malloc(cx, sizeof(JSX_MemberType) * nMember) : 0;
+  memset(type->member, 0, sizeof(JSX_MemberType) * nMember);
   type->sizeOf=0;
   JS_SetPrivate(cx, retobj, type);
   type->typeObject=retobj;
