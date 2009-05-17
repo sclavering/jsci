@@ -51,21 +51,12 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
 
 static JSBool JSX_Type_length(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
   struct JSX_TypeArray *type; // also works with structs / unions / functions / bitfields
-
-  type=(struct JSX_TypeArray *)JS_GetPrivate(cx, obj);
-  if (type->type!=FUNCTIONTYPE &&
-      type->type!=STRUCTTYPE &&
-      type->type!=UNIONTYPE &&
-      type->type!=BITFIELDTYPE &&
-      type->type!=ARRAYTYPE) {
-    *rval=JSVAL_VOID;
-    goto end_true;
+  type = (struct JSX_TypeArray *) JS_GetPrivate(cx, obj);
+  if(type->type != FUNCTIONTYPE && type->type != STRUCTTYPE && type->type != UNIONTYPE && type->type != BITFIELDTYPE && type->type != ARRAYTYPE) {
+    *rval = JSVAL_VOID;
+  } else {
+    *rval = INT_TO_JSVAL(type->length);
   }
-
-  *rval=INT_TO_JSVAL(type->length);
-
- end_true:
-
   return JS_TRUE;
 }
 
