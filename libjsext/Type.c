@@ -89,9 +89,9 @@ ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type) {
     return &ffi_type_void;
   case INTTYPE:
   case UINTTYPE:
-    return &Inttype->ffiType;
+    return &((struct JSX_TypeInt *) type)->ffiType;
   case FLOATTYPE:
-    return &Floattype->ffiType;
+    return &((struct JSX_TypeFloat *) type)->ffiType;
   case STRUCTTYPE:
     if (StructUniontype->ffiType.elements)
       return &StructUniontype->ffiType;
@@ -1137,7 +1137,7 @@ int JSX_CType(struct JSX_Type *type) {
 
     switch(Ctype) {
     case INTTYPE:
-      if (Inttype->signedness==0)
+      if (((struct JSX_TypeInt *) type)->signedness==0)
 	Ctype=UINTTYPE;
       break;
     case ARRAYTYPE:

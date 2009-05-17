@@ -339,7 +339,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   case TYPEPAIR(JSVAL_INT,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,BITFIELDTYPE):
 
-    size=((struct JSX_TypeInt *) Bitfieldtype->member)->size;
+    size=((struct JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
 
     // fall through
 
@@ -1059,7 +1059,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
 
   bitfieldcommon:
-    size=((struct JSX_TypeInt *) Bitfieldtype->member)->size;
+    size=((struct JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
     goto intcommon;
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):

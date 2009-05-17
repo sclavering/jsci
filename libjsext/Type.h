@@ -134,10 +134,7 @@ ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
 
 #define Functiontype ((struct JSX_TypeFunction *)type)
 #define Arraytype ((struct JSX_TypeArray *)type)
-#define Bitfieldtype ((struct JSX_TypeBitfield *)type)
 #define Pointertype ((struct JSX_TypePointer *)type)
-#define Inttype ((struct JSX_TypeInt *)type)
-#define Floattype ((struct JSX_TypeFloat *)type)
 #define StructUniontype ((struct JSX_TypeStructUnion *)type)
 
 #endif
