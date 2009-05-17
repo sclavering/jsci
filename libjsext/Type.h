@@ -58,6 +58,7 @@ struct JSX_NamedType {
   JSX_Type *type;
   char *name;
 };
+typedef struct JSX_NamedType JSX_NamedType;
 
 struct JSX_ParamType { // inherits JSX_NamedType
   JSX_Type *type;

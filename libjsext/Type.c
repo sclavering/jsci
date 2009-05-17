@@ -277,7 +277,7 @@ static enum JSX_TypeID JSX_othertypes[]={
 };
 
 
-static JSBool JSX_InitNamedType(JSContext *cx, struct JSX_NamedType *dest, JSObject *membertype, int requireName) {
+static JSBool JSX_InitNamedType(JSContext *cx, JSX_NamedType *dest, JSObject *membertype, int requireName) {
   jsval tmp;
   JS_GetProperty(cx, membertype, "name", &tmp);
 
@@ -419,27 +419,16 @@ JSClass *JSX_GetTypeClass(void) {
 
 
 JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membertype) {
-  if (!JSX_InitNamedType(cx, (struct JSX_NamedType *)dest, membertype, 1)) {
-    return JS_FALSE;
-  }
-
+  if(!JSX_InitNamedType(cx, (JSX_NamedType *) dest, membertype, 1)) return JS_FALSE;
   return JS_TRUE;
 }
 
 
 JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype) {
+  if(!JSX_InitNamedType(cx, (JSX_NamedType *) dest, membertype, 0)) return JS_FALSE;
   jsval tmp;
-
-  if (!JSX_InitNamedType(cx, (struct JSX_NamedType *)dest, membertype, 0)) {
-    return JS_FALSE;
-  }
-
   JS_GetProperty(cx, membertype, "const", &tmp);
-  if (tmp==JSVAL_TRUE)
-    dest->isConst=1;
-  else
-    dest->isConst=0;
-
+  dest->isConst = tmp == JSVAL_TRUE ? 1 : 0;
   return JS_TRUE;
 }
 
