@@ -231,7 +231,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
   case TYPEPAIR(JSVAL_STRING,UINTTYPE):
 
-    switch(((struct JSX_TypeInt *)type)->size) {
+    switch(((JSX_TypeInt *) type)->size) {
     case 0:
 
       // Return a string from a char
@@ -290,7 +290,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
 
     // Return a number from an int (of various sizes)
-    switch(size!=-1 ? size : ((struct JSX_TypeInt *)type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeInt *) type)->size) {
 
     case 0:
       tmpint=*(char *)p;
@@ -339,7 +339,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   case TYPEPAIR(JSVAL_INT,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,BITFIELDTYPE):
 
-    size=((struct JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
+    size = ((JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
 
     // fall through
 
@@ -350,7 +350,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   case TYPEPAIR(JSVAL_DOUBLE,UINTTYPE):
 
     // Return a number from an unsigned int (of various sizes)
-    switch(size!=-1 ? size : ((struct JSX_TypeInt *)type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeInt *) type)->size) {
 
     case 0:
       tmpuint=*(unsigned char *)p;
@@ -968,7 +968,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
   case TYPEPAIR(JSVAL_STRING,UINTTYPE):
 
-    switch(((struct JSX_TypeInt *)type)->size) {
+    switch(((JSX_TypeInt *) type)->size) {
     case 0:
 
       // Copy a string to a char
@@ -1059,7 +1059,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
 
   bitfieldcommon:
-    size=((struct JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
+    size = ((JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
     goto intcommon;
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
@@ -1085,7 +1085,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
   intcommon:
 
     // Return a number from an int (of various sizes)
-    switch(size!=-1 ? size : ((struct JSX_TypeInt *)type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeInt *) type)->size) {
 
     case 0:
       *(char *)p=tmpint;

@@ -89,7 +89,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
     return &ffi_type_void;
   case INTTYPE:
   case UINTTYPE:
-    return &((struct JSX_TypeInt *) type)->ffiType;
+    return &((JSX_TypeInt *) type)->ffiType;
   case FLOATTYPE:
     return &((struct JSX_TypeFloat *) type)->ffiType;
   case STRUCTTYPE:
@@ -473,7 +473,7 @@ int JSX_TypeAlign(JSX_Type *type) {
     return JSX_TypeAlign(((struct JSX_TypeArray *)type)->member);
   case UINTTYPE:
   case INTTYPE:
-    return ((struct JSX_TypeInt *)type)->ffiType.alignment;
+    return ((JSX_TypeInt *)type)->ffiType.alignment;
   case FLOATTYPE:
     return ((struct JSX_TypeFloat *)type)->ffiType.alignment;
   case STRUCTTYPE:
@@ -511,7 +511,7 @@ int JSX_TypeSize(JSX_Type *type) {
     return ((struct JSX_TypeArray *)type)->length*JSX_TypeSize(((struct JSX_TypeArray *)type)->member);
   case UINTTYPE:
   case INTTYPE:
-    return ((struct JSX_TypeInt *)type)->ffiType.size;
+    return ((JSX_TypeInt *)type)->ffiType.size;
   case FLOATTYPE:
     return ((struct JSX_TypeFloat *)type)->ffiType.size;
   case STRUCTTYPE:
@@ -817,7 +817,7 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
 	char name[80];
 	jsval newval;
 
-	struct JSX_TypeInt *type;
+	JSX_TypeInt *type;
 	
 	sprintf(name, "%s%s", JSX_signnames[signedness], JSX_intsizenames[size]);
 	newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
@@ -826,7 +826,7 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
 	JS_SetProperty(cx, typeobj, name, &newval);
 	jsx_Type_objects[inttype][size][signedness]=newtype;
 	
-	type=(struct JSX_TypeInt *)JS_malloc(cx, sizeof(struct JSX_TypeInt));
+	type = (JSX_TypeInt *) JS_malloc(cx, sizeof(JSX_TypeInt));
 	type->type=inttype;
 	type->size=size;
 	type->signedness=signedness;
@@ -991,7 +991,7 @@ static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval
   case INTTYPE:
   case UINTTYPE:
     name=namebuf;
-    sprintf(namebuf, "%s%s", JSX_signnames[((struct JSX_TypeInt *)type)->signedness], JSX_intsizenames[((struct JSX_TypeInt *)type)->size]);
+    sprintf(namebuf, "%s%s", JSX_signnames[((JSX_TypeInt *) type)->signedness], JSX_intsizenames[((JSX_TypeInt *) type)->size]);
     break;
   case FLOATTYPE:
     name=namebuf;
@@ -1137,23 +1137,22 @@ int JSX_CType(JSX_Type *type) {
 
     switch(Ctype) {
     case INTTYPE:
-      if (((struct JSX_TypeInt *) type)->signedness==0)
-	Ctype=UINTTYPE;
+      if(((JSX_TypeInt *) type)->signedness == 0) Ctype = UINTTYPE;
       break;
     case ARRAYTYPE:
       if ((Arraytype->member->type==INTTYPE || Arraytype->member->type==UINTTYPE) &&
-	  ((struct JSX_TypeInt *)Arraytype->member)->size==0)
+	  ((JSX_TypeInt *) Arraytype->member)->size == 0)
 	Ctype=ACHARTYPE;
       else if ((Arraytype->member->type==INTTYPE || Arraytype->member->type==UINTTYPE) &&
-	       ((struct JSX_TypeInt *)Arraytype->member)->size==1)
+	       ((JSX_TypeInt *) Arraytype->member)->size == 1)
 	Ctype=ASHORTTYPE;
       break;
     case POINTERTYPE:
       if ((Pointertype->direct->type==INTTYPE || Pointertype->direct->type==UINTTYPE) &&
-	  ((struct JSX_TypeInt *)Pointertype->direct)->size==0)
+	  ((JSX_TypeInt *) Pointertype->direct)->size == 0)
 	Ctype=PCHARTYPE;
       else if ((Pointertype->direct->type==INTTYPE || Pointertype->direct->type==UINTTYPE) &&
-	       ((struct JSX_TypeInt *)Pointertype->direct)->size==1)
+	       ((JSX_TypeInt *) Pointertype->direct)->size == 1)
 	Ctype=PSHORTTYPE;
       break;
     }

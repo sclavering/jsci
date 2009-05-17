@@ -44,6 +44,7 @@ struct JSX_TypeInt {
   int signedness;
   ffi_type ffiType;
 };
+typedef struct JSX_TypeInt JSX_TypeInt;
 
 struct JSX_TypeFloat {
   enum JSX_TypeID type; // FLOATTYPE
