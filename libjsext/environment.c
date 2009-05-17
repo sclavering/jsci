@@ -78,15 +78,12 @@ static JSBool env_enumerate(JSContext *cx, JSObject *obj) {
                                    NULL, NULL, JSPROP_ENUMERATE);
         }
         value[-1] = '=';
-        if (!ok) goto failure;
+        if(!ok) return JS_FALSE;
     }
 
     reflected = JS_TRUE;
 
     return JS_TRUE;
-
-failure:
-    return JS_FALSE;
 }
 
 static JSBool env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **objp) {
@@ -103,18 +100,13 @@ static JSBool env_resolve(JSContext *cx, JSObject *obj, jsval id, uintN flags, J
     value = getenv(name);
     if (value) {
         valstr = JS_NewStringCopyZ(cx, value);
-        if(!valstr) goto failure;
-        if (!JS_DefineProperty(cx, obj, name, STRING_TO_JSVAL(valstr),
-                               NULL, NULL, JSPROP_ENUMERATE)) {
-            goto failure;
+        if(!valstr || !JS_DefineProperty(cx, obj, name, STRING_TO_JSVAL(valstr), NULL, NULL, JSPROP_ENUMERATE)) {
+            return JS_FALSE;
         }
         *objp = obj;
     }
 
     return JS_TRUE;
-
-failure:
-    return JS_FALSE;
 }
 
 static JSClass jsext_env_class = {
