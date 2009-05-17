@@ -98,6 +98,7 @@ struct JSX_TypePointer {
   JSObject *typeObject;
   JSX_Type *direct;
 };
+typedef struct JSX_TypePointer JSX_TypePointer;
 
 struct JSX_TypeArray {
   enum JSX_TypeID type; // ARRAYTYPE
@@ -138,7 +139,6 @@ ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
 #define TYPEPAIR(a,b) ((TYPECOUNT2 * (a)) + (b))
 
 #define Functiontype ((struct JSX_TypeFunction *)type)
-#define Pointertype ((struct JSX_TypePointer *)type)
 #define StructUniontype ((struct JSX_TypeStructUnion *)type)
 
 #endif

@@ -135,7 +135,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 
   switch(typepair) {
   case TYPEPAIR(JSFUNC,POINTERTYPE):
-    if (Pointertype->direct->type!=FUNCTIONTYPE)
+    if(((JSX_TypePointer *) type)->direct->type != FUNCTIONTYPE)
       goto failure;
     return sizeof(void *);
 
@@ -180,7 +180,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 	*rval=OBJECT_TO_JSVAL(obj);
 	ptr=(struct JSX_Pointer *)JS_malloc(cx, sizeof(struct JSX_Pointer));
 	ptr->ptr=*(void **)p;
-	ptr->type=Pointertype->direct;
+	ptr->type = ((JSX_TypePointer *) type)->direct;
 	ptr->finalize=0;
 	JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(ptr->type->typeObject), 0, 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_SetPrivate(cx, obj, ptr);
@@ -202,7 +202,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 
   case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
 
-    if (((struct JSX_TypePointer *)type)->direct->type!=VOIDTYPE) {
+    if(((JSX_TypePointer *) type)->direct->type != VOIDTYPE) {
       goto failure;
     }
 
@@ -474,10 +474,8 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 
 	for (i=0; i<size; i++) {
 	  jsval tmp;
-	  int thissize;
-
 	  JS_GetElement(cx, obj, i, &tmp);
-	  thissize=JSX_Get(cx, 0, *(char **)oldptr+totsize, 2, Pointertype->direct, &tmp);
+	  int thissize = JSX_Get(cx, 0, *(char **)oldptr + totsize, 2, ((JSX_TypePointer *) type)->direct, &tmp);
 	  if (!thissize) goto vararrayfailure1;
 	  totsize+=thissize;
 	}
@@ -499,10 +497,8 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
       jsval tmp=JSVAL_VOID;
       JS_AddRoot(cx, &tmp);
       for (i=0; i<size; i++) {
-	int thissize;
-	
 	JS_GetElement(cx, obj, i, &tmp);
-	thissize=JSX_Get(cx, *(char **)p+totsize, oldptr ? *(char **)oldptr+totsize : 0, do_clean, Pointertype->direct, &tmp);
+	int thissize = JSX_Get(cx, *(char **)p + totsize, oldptr ? *(char **)oldptr + totsize : 0, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
 	if (!thissize) {
 	  JS_RemoveRoot(cx, &tmp);
 	  goto vararrayfailure1;
@@ -522,12 +518,12 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 
   vararrayfailure1:
     if (do_clean) {
-      int elemsize=JSX_TypeSize(Pointertype->direct);
+      int elemsize = JSX_TypeSize(((JSX_TypePointer *) type)->direct);
       for (;++i<size;) {
 	jsval tmp;
 
 	JS_GetElement(cx, obj, i, &tmp);
-	JSX_Get(cx, *(char **)p + i*elemsize, oldptr ? *(char **)oldptr+i*elemsize : 0, 2, Pointertype->direct, &tmp);
+	JSX_Get(cx, *(char **)p + i * elemsize, oldptr ? *(char **)oldptr + i * elemsize : 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
       }
 
       JS_free(cx, *(char **)p);
@@ -866,7 +862,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
 
   switch(typepair) {
   case TYPEPAIR(JSFUNC,POINTERTYPE):
-    if (Pointertype->direct->type!=FUNCTIONTYPE)
+    if(((JSX_TypePointer *) type)->direct->type != FUNCTIONTYPE)
       goto failure;
 
     fun=JS_ValueToFunction(cx,v);
@@ -878,7 +874,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
       tmpval=OBJECT_TO_JSVAL(newptr);
       JS_DefineProperty(cx, obj, "__ptr__", tmpval, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 
-      if (!JSX_InitPointerCallback(cx, newptr, fun, Pointertype->direct->typeObject)) {
+      if(!JSX_InitPointerCallback(cx, newptr, fun, ((JSX_TypePointer *) type)->direct->typeObject)) {
 	return 0;
       }
     }
@@ -930,7 +926,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
 
   case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
     
-    if (((struct JSX_TypePointer *)type)->direct->type!=VOIDTYPE) {
+    if(((JSX_TypePointer *) type)->direct->type != VOIDTYPE) {
       goto failure;
     }
 
@@ -1186,10 +1182,8 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
     
       for (i=0; i<size; i++) {
 	jsval tmp;
-	int thissize;
-	
 	JS_GetElement(cx, obj, i, &tmp);
-	thissize=JSX_Set(cx, *(char **)p+totsize, will_clean, Pointertype->direct, tmp);
+	int thissize = JSX_Set(cx, *(char **)p + totsize, will_clean, ((JSX_TypePointer *) type)->direct, tmp);
 	if (!thissize)
 	  goto vararrayfailure2;
 	totsize+=thissize;
@@ -1207,7 +1201,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
 	for (;i--;) {
 	  jsval tmp;
 	  JS_GetElement(cx, obj, i, &tmp);
-	  JSX_Get(cx, NULL, 0, 2, Pointertype->direct, &tmp);
+	  JSX_Get(cx, NULL, 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
 	}
 	JS_free(cx, *(void **)p);
       }
@@ -1866,7 +1860,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
       struct JSX_Type *type=ptr->type;
       
       if (type->type==POINTERTYPE) { // Accept both function type and pointer to function type
-	typeObject=Pointertype->direct->typeObject;
+	typeObject = ((JSX_TypePointer *) type)->direct->typeObject;
 	type=JS_GetPrivate(cx, typeObject);
       }
       
@@ -2250,7 +2244,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
   struct JSX_Pointer *ptr;
   char *thisptr;
   struct JSX_Type *type;
-  struct JSX_TypePointer tmptype;
+  JSX_TypePointer tmptype;
   int n;
   uintN i;
 
@@ -2262,8 +2256,8 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
   thisptr=ptr->ptr;
 
   type=(struct JSX_Type *)&tmptype;
-  Pointertype->type=POINTERTYPE;
-  Pointertype->direct=ptr->type;
+  ((JSX_TypePointer *) type)->type = POINTERTYPE;
+  ((JSX_TypePointer *) type)->direct = ptr->type;
 
   if (argc==0) {
     JSX_ReportException(cx, "Missing argument to pointer.member");
@@ -2278,7 +2272,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 	JSX_ReportException(cx, "Wrong argument no %d to pointer.member", i);
 	goto end_false;
       }
-      type=Pointertype->direct;
+      type = ((JSX_TypePointer *) type)->direct;
       thisptr+=JSX_TypeSize(type)*JSVAL_TO_INT(argv[i]);
       break;
 

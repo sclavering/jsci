@@ -665,12 +665,12 @@ JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *
 
 JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
   JSObject *retobj;
-  struct JSX_TypePointer *type;
+  JSX_TypePointer *type;
 
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
-  type=(struct JSX_TypePointer *)JS_malloc(cx, sizeof(struct JSX_TypePointer));
+  type = (JSX_TypePointer *) JS_malloc(cx, sizeof(JSX_TypePointer));
 
   type->type=POINTERTYPE;
   JS_SetPrivate(cx, retobj, type);
@@ -1148,11 +1148,11 @@ int JSX_CType(JSX_Type *type) {
 	Ctype=ASHORTTYPE;
       break;
     case POINTERTYPE:
-      if ((Pointertype->direct->type==INTTYPE || Pointertype->direct->type==UINTTYPE) &&
-	  ((JSX_TypeInt *) Pointertype->direct)->size == 0)
+      if((((JSX_TypePointer *) type)->direct->type == INTTYPE || ((JSX_TypePointer *) type)->direct->type == UINTTYPE) &&
+	  ((JSX_TypeInt *) ((JSX_TypePointer *) type)->direct)->size == 0)
 	Ctype=PCHARTYPE;
-      else if ((Pointertype->direct->type==INTTYPE || Pointertype->direct->type==UINTTYPE) &&
-	       ((JSX_TypeInt *) Pointertype->direct)->size == 1)
+      else if((((JSX_TypePointer *) type)->direct->type == INTTYPE || ((JSX_TypePointer *) type)->direct->type == UINTTYPE) &&
+	       ((JSX_TypeInt *) ((JSX_TypePointer *) type)->direct)->size == 1)
 	Ctype=PSHORTTYPE;
       break;
     }
