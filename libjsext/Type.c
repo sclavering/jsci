@@ -925,44 +925,29 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
 
 }
 
+
 static JSBool JSX_Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSBool ok;
-
-  ok=JSX_NewTypeArray(cx, argc>0?argv[0]:JSVAL_VOID, argc>1?argv[1]:JSVAL_VOID, rval);
-
-  return ok;
+  return JSX_NewTypeArray(cx, argc > 0 ? argv[0] : JSVAL_VOID, argc > 1 ? argv[1] : JSVAL_VOID, rval);
 }
+
 
 static JSBool JSX_Type_bitfield(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSBool ok;
-
-  ok=JSX_NewTypeBitfield(cx, argc>0?argv[0]:JSVAL_VOID, argc>1?argv[1]:JSVAL_VOID, rval);
-
-  return ok;
+  return JSX_NewTypeBitfield(cx, argc > 0 ? argv[0] : JSVAL_VOID, argc > 1 ? argv[1] : JSVAL_VOID, rval);
 }
+
 
 static JSBool JSX_Type_pointer(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSBool ok;
-
-  ok=JSX_NewTypePointer(cx, argc>0?argv[0]:JSVAL_VOID, rval);
-
-  return ok;
+  return JSX_NewTypePointer(cx, argc > 0 ? argv[0] : JSVAL_VOID, rval);
 }
+
 
 static JSBool JSX_Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSBool ok;
-
-  ok=JSX_NewTypeStructUnion(cx, argc, argv, rval, 1);
-
-  return ok;
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, 1);
 }
 
+
 static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSBool ok;
-
-  ok=JSX_NewTypeStructUnion(cx, argc, argv, rval, 0);
-
-  return ok;
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, 0);
 }
 
 static JSBool JSX_Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
