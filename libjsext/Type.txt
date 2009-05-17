@@ -122,14 +122,6 @@ Type.prototype.length
 Read-only.  Contains the number of arguments for functions, members of structs and unions, and elements of arrays. Undefined for other types.
 
 
-Type.prototype.setMembers()
----------------------------
-
-    t.setMembers(member0, member1, ...)
-
-Replaces existing members of struct or union types with new members. This function can be used to alter a forward-declaration into a proper declaration, and is needed to make cyclical type references.
-
-
 Type.prototype.sizeof
 ---------------------
 
