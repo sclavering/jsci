@@ -112,6 +112,7 @@ struct JSX_TypeBitfield {
   JSX_Type *member;
   int length;
 };
+typedef struct JSX_TypeBitfield JSX_TypeBitfield;
 
 
 

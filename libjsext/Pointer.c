@@ -339,7 +339,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
   case TYPEPAIR(JSVAL_INT,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,BITFIELDTYPE):
 
-    size = ((JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
+    size = ((JSX_TypeInt *) ((JSX_TypeBitfield *) type)->member)->size;
 
     // fall through
 
@@ -635,7 +635,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 	}
 	if (do_clean != 2) {
 	  if (StructUniontype->member[i].type->type==BITFIELDTYPE) {
-	    int length=((struct JSX_TypeBitfield *)StructUniontype->member[i].type)->length;
+	    int length = ((JSX_TypeBitfield *) StructUniontype->member[i].type)->length;
 	    int offset=StructUniontype->member[i].offset%8;
 	    int mask=~(-1<<length);
 	    tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp)>>offset)&mask);
@@ -1059,7 +1059,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
 
   bitfieldcommon:
-    size = ((JSX_TypeInt *) ((struct JSX_TypeBitfield *) type)->member)->size;
+    size = ((JSX_TypeInt *) ((JSX_TypeBitfield *) type)->member)->size;
     goto intcommon;
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
@@ -1281,7 +1281,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
       JS_GetProperty(cx, obj, StructUniontype->member[i].name, &tmp);
 
       if (StructUniontype->member[i].type->type == BITFIELDTYPE) {
-	int length=((struct JSX_TypeBitfield *)StructUniontype->member[i].type)->length;
+	int length = ((JSX_TypeBitfield *) StructUniontype->member[i].type)->length;
 	int offset=StructUniontype->member[i].offset%8;
 	int mask=~(-1<<length);
 	int imask=~(imask << offset);

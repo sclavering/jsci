@@ -106,7 +106,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
 	memb=((struct JSX_TypeArray *)memb)->member;
       }
       if (memb->type==BITFIELDTYPE) {
-	int length=((struct JSX_TypeBitfield *)memb)->length;
+	int length = ((JSX_TypeBitfield *) memb)->length;
 	if (bitsused && bitsused+length<8) 
 	  al=0;
 	else {
@@ -139,7 +139,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
 	memb=((struct JSX_TypeArray *)memb)->member;
       }
       if (memb->type==BITFIELDTYPE) {
-	int length=((struct JSX_TypeBitfield *)memb)->length;
+	int length = ((JSX_TypeBitfield *) memb)->length;
 	if (bitsused && bitsused+length<8) 
 	  al=0;
 	else {
@@ -468,7 +468,7 @@ int JSX_TypeAlign(JSX_Type *type) {
   case POINTERTYPE:
     return ffi_type_pointer.alignment;
   case BITFIELDTYPE: // when calculating struct alignment, this is it.
-    return JSX_TypeAlign(((struct JSX_TypeBitfield *)type)->member);
+    return JSX_TypeAlign(((JSX_TypeBitfield *) type)->member);
   case ARRAYTYPE:
     return JSX_TypeAlign(((struct JSX_TypeArray *)type)->member);
   case UINTTYPE:
@@ -494,7 +494,7 @@ int JSX_TypeAlign(JSX_Type *type) {
 int JSX_TypeSizeBits(JSX_Type *type) {
   switch(type->type) {
   case BITFIELDTYPE:
-    return ((struct JSX_TypeBitfield *)type)->length;
+    return ((JSX_TypeBitfield *) type)->length;
   default:
     return JSX_TypeSize(type)*8;
   }
@@ -750,12 +750,12 @@ JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
 
 JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) {
   JSObject *retobj;
-  struct JSX_TypeBitfield *type;
+  JSX_TypeBitfield *type;
 
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
-  type=(struct JSX_TypeBitfield *)JS_malloc(cx, sizeof(struct JSX_TypeBitfield));
+  type = (JSX_TypeBitfield *) JS_malloc(cx, sizeof(JSX_TypeBitfield));
 
   type->type=BITFIELDTYPE;
   JS_SetPrivate(cx, retobj, type);
