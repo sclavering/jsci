@@ -2219,25 +2219,13 @@ static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 
 static JSBool JSX_Pointer_toString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-
   struct JSX_Pointer *ptr;
   char buf[20];
-
-
   ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
-
-  if (!ptr->ptr && !JSX_PointerResolve(cx, obj))
-    goto end_false;
+  if(!ptr->ptr && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
   sprintf(buf,"%08x",ptr->ptr);
   *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, buf));
-  goto end_true;
-
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -2366,19 +2354,10 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
     goto end_true; // Only handle numerical properties
 
   ptr=(struct JSX_Pointer *)JS_GetPrivate(cx, obj);
-  if (ptr->ptr==0 && !JSX_PointerResolve(cx, obj))
-    goto end_false;
+  if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
 
-
-  ret=JSX_Get(cx,
-	      (char *)ptr->ptr+JSX_TypeSize(ptr->type)*JSVAL_TO_INT(id),
-	      0,
-	      0,
-	      ptr->type,
-	      vp);
-
-  if (ret==0)
-    goto end_false;
+  ret = JSX_Get(cx, (char *) ptr->ptr + JSX_TypeSize(ptr->type) * JSVAL_TO_INT(id), 0, 0, ptr->type, vp);
+  if(ret == 0) return JS_FALSE;
 
   if (ret==-1 && id==JSVAL_ZERO) {
 
@@ -2390,7 +2369,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 
     // Created new function through improper use of [] operator.
     JSX_ReportException(cx, "Function pointers can not be treated as arrays");
-    goto end_false;
+    return JS_FALSE;
   }
 
   goto end_true;
