@@ -6,7 +6,7 @@
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
 static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member);
-int JSX_TypeAlign(struct JSX_Type *type);
+int JSX_TypeAlign(JSX_Type *type);
 
 
 static JSClass JSX_TypeClass={
@@ -77,7 +77,7 @@ ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type) {
 }
 
 
-ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type) {
+ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
   int nmember;
   int i;
   int bitsused=0;
@@ -100,7 +100,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type) {
 
     for (i=0; i<StructUniontype->nMember; i++) {
       int al=1;
-      struct JSX_Type *memb=StructUniontype->member[i].type;
+      JSX_Type *memb = StructUniontype->member[i].type;
       while (memb->type==ARRAYTYPE) {
 	al*=((struct JSX_TypeArray *)memb)->length;
 	memb=((struct JSX_TypeArray *)memb)->member;
@@ -133,7 +133,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, struct JSX_Type *type) {
       int al=1;
       int j;
       ffi_type *t;
-      struct JSX_Type *memb=StructUniontype->member[i].type;
+      JSX_Type *memb = StructUniontype->member[i].type;
       while (memb->type==ARRAYTYPE) {
 	al*=((struct JSX_TypeArray *)memb)->length;
 	memb=((struct JSX_TypeArray *)memb)->member;
@@ -195,7 +195,7 @@ static JSBool JSX_Type_elipsis(JSContext *cx,  JSObject *obj, jsval id, jsval *r
 
 
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  struct JSX_Type *type=JS_GetPrivate(cx, obj);
+  JSX_Type *type = JS_GetPrivate(cx, obj);
 
   if (JSVAL_IS_STRING(id)) {
     char *str=JS_GetStringBytes(JSVAL_TO_STRING(id));
@@ -242,7 +242,7 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 	return JS_FALSE;
       }
       
-      Arraytype->member=(struct JSX_Type *)JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
+      Arraytype->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
       
       break;
     }
@@ -449,7 +449,7 @@ JSBool JSX_InitParamType(JSContext *cx, struct JSX_ParamType *dest, JSObject *me
 }
 
 
-int JSX_TypeAlignBits(struct JSX_Type *type) {
+int JSX_TypeAlignBits(JSX_Type *type) {
   switch(type->type) {
   case BITFIELDTYPE:
     return 1;
@@ -459,7 +459,7 @@ int JSX_TypeAlignBits(struct JSX_Type *type) {
 }
 
 
-int JSX_TypeAlign(struct JSX_Type *type) {
+int JSX_TypeAlign(JSX_Type *type) {
   int len;
   int ret;
   int i;
@@ -491,7 +491,7 @@ int JSX_TypeAlign(struct JSX_Type *type) {
 }
 
 
-int JSX_TypeSizeBits(struct JSX_Type *type) {
+int JSX_TypeSizeBits(JSX_Type *type) {
   switch(type->type) {
   case BITFIELDTYPE:
     return ((struct JSX_TypeBitfield *)type)->length;
@@ -501,7 +501,7 @@ int JSX_TypeSizeBits(struct JSX_Type *type) {
 }
 
 
-int JSX_TypeSize(struct JSX_Type *type) {
+int JSX_TypeSize(JSX_Type *type) {
   int align;
 
   switch(type->type) {
@@ -690,7 +690,7 @@ JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
     goto failure;
   }
     
-  type->direct=(struct JSX_Type *)JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
+  type->direct = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
 
   return JS_TRUE;
 
@@ -737,7 +737,7 @@ JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
     goto failure;
   }
     
-  type->member=(struct JSX_Type *)JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
+  type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
 
   return JS_TRUE;
 
@@ -783,7 +783,7 @@ JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) 
     goto failure;
   }
     
-  type->member=(struct JSX_Type *)JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
+  type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
 
   return JS_TRUE;
 
@@ -877,7 +877,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
   for (ot=0; ot<1; ot++) {
     JSObject *newtype;
     jsval newval;
-    struct JSX_Type *type;
+    JSX_Type *type;
   
     newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
     newval=OBJECT_TO_JSVAL(newtype);
@@ -885,7 +885,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
     JS_SetProperty(cx, typeobj, JSX_othertypenames[ot], &newval);
     jsx_Type_objects[JSX_othertypes[ot]][0][0]=newtype;
 
-    type=(struct JSX_Type *)JS_malloc(cx, sizeof(struct JSX_Type));
+    type = (JSX_Type *) JS_malloc(cx, sizeof(JSX_Type));
     type->type=JSX_othertypes[ot];
 
     type->typeObject=newtype;
@@ -902,7 +902,7 @@ static JSBool JSX_Type_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 
 
 static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
-  struct JSX_Type *type=(struct JSX_Type *)JS_GetPrivate(cx, obj);
+  JSX_Type *type = (JSX_Type *) JS_GetPrivate(cx, obj);
   if (type==0)
     return;
 
@@ -960,11 +960,11 @@ static JSBool JSX_Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval
 
 
 static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  struct JSX_Type *type;
+  JSX_Type *type;
   char *name;
   char namebuf[80];
 
-  type=(struct JSX_Type *)JS_GetPrivate(cx, obj);
+  type = (JSX_Type *) JS_GetPrivate(cx, obj);
 
   switch(type->type) {
   case VOIDTYPE:
@@ -1008,7 +1008,7 @@ static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval
 static JSBool JSX_Type_sizeof(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
   int size;
 
-  size=JSX_TypeSize((struct JSX_Type *)JS_GetPrivate(cx, obj));
+  size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, obj));
   if (!size)
     *rval=JSVAL_VOID;
   else
@@ -1022,7 +1022,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, j
   int ret=0;
   int siz;
   uintN i;
-  struct JSX_Type *thistype;
+  JSX_Type *thistype;
 
   for (i=0; i<nargs; i++) {
     if (type && type->type->type==VOIDTYPE) {// End of param list
@@ -1125,7 +1125,7 @@ int JSX_JSType(JSContext *cx, jsval v) {
 }
 
 
-int JSX_CType(struct JSX_Type *type) {
+int JSX_CType(JSX_Type *type) {
   int Ctype;
 
   // Determine the C type to an appropriate level of detail for the big 2D switch
@@ -1163,7 +1163,7 @@ int JSX_CType(struct JSX_Type *type) {
 }
 
 
-JSBool JSX_TypeContainsPointer(struct JSX_Type *type) {
+JSBool JSX_TypeContainsPointer(JSX_Type *type) {
   int i;
 
   for (;;) {
