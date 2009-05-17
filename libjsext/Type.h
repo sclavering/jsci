@@ -52,6 +52,7 @@ struct JSX_TypeFloat {
   int size;
   ffi_type ffiType;
 };
+typedef struct JSX_TypeFloat JSX_TypeFloat;
 
 struct JSX_NamedType {
   JSX_Type *type;

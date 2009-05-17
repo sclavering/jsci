@@ -416,7 +416,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 
     // Return a number from a float (of various sizes)
 
-    switch(size!=-1 ? size : ((struct JSX_TypeFloat *)type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeFloat *) type)->size) {
 
     case 0:
       tmpdouble=*(float *)p;
@@ -1148,7 +1148,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
 
   floatcommon:
 
-    switch(size!=-1 ? size : ((struct JSX_TypeFloat *)type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeFloat *) type)->size) {
 
     case 0:
       *(float *)p=tmpdbl;

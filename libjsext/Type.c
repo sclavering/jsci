@@ -91,7 +91,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
   case UINTTYPE:
     return &((JSX_TypeInt *) type)->ffiType;
   case FLOATTYPE:
-    return &((struct JSX_TypeFloat *) type)->ffiType;
+    return &((JSX_TypeFloat *) type)->ffiType;
   case STRUCTTYPE:
     if (StructUniontype->ffiType.elements)
       return &StructUniontype->ffiType;
@@ -475,7 +475,7 @@ int JSX_TypeAlign(JSX_Type *type) {
   case INTTYPE:
     return ((JSX_TypeInt *)type)->ffiType.alignment;
   case FLOATTYPE:
-    return ((struct JSX_TypeFloat *)type)->ffiType.alignment;
+    return ((JSX_TypeFloat *) type)->ffiType.alignment;
   case STRUCTTYPE:
   case UNIONTYPE:
     len=((struct JSX_TypeStructUnion *)type)->nMember;
@@ -513,7 +513,7 @@ int JSX_TypeSize(JSX_Type *type) {
   case INTTYPE:
     return ((JSX_TypeInt *)type)->ffiType.size;
   case FLOATTYPE:
-    return ((struct JSX_TypeFloat *)type)->ffiType.size;
+    return ((JSX_TypeFloat *) type)->ffiType.size;
   case STRUCTTYPE:
   case UNIONTYPE:
     align=JSX_TypeAlign(type);
@@ -852,7 +852,7 @@ static void init_float_types(JSContext *cx, JSObject *typeobj) {
   for (size=0; size<3; size++) {
     JSObject *newtype;
     jsval newval;
-    struct JSX_TypeFloat *type;
+    JSX_TypeFloat *type;
   
     newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
     newval=OBJECT_TO_JSVAL(newtype);
@@ -860,7 +860,7 @@ static void init_float_types(JSContext *cx, JSObject *typeobj) {
     JS_SetProperty(cx, typeobj, JSX_floatsizenames[size], &newval);
     jsx_Type_objects[FLOATTYPE][size][0]=newtype;
 
-    type=(struct JSX_TypeFloat *)JS_malloc(cx, sizeof(struct JSX_TypeFloat));
+    type = (JSX_TypeFloat *) JS_malloc(cx, sizeof(JSX_TypeFloat));
     type->type=FLOATTYPE;
     type->size=size;
     type->ffiType=ffitypes[size];
@@ -995,7 +995,7 @@ static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval
     break;
   case FLOATTYPE:
     name=namebuf;
-    sprintf(namebuf, "%s", JSX_floatsizenames[((struct JSX_TypeFloat *)type)->size]);
+    sprintf(namebuf, "%s", JSX_floatsizenames[((JSX_TypeFloat *) type)->size]);
     break;
   }
 
