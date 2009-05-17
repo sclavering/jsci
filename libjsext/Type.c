@@ -23,7 +23,7 @@ static JSClass JSX_TypeClass={
 };
 
 
-static JSObject *JSX_Type[7][6][3]; // type, size, signedness
+static JSObject *jsx_Type_objects[7][6][3]; // type, size, signedness
 
 
 static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
@@ -795,7 +795,7 @@ JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) 
 
 
 JSObject *JSX_GetType(enum JSX_TypeID type, int size, int signedness) {
-  return JSX_Type[type][size][signedness];
+  return jsx_Type_objects[type][size][signedness];
 }
 
 
@@ -824,7 +824,7 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
 	newval=OBJECT_TO_JSVAL(newtype);
 	
 	JS_SetProperty(cx, typeobj, name, &newval);
-	JSX_Type[inttype][size][signedness]=newtype;
+	jsx_Type_objects[inttype][size][signedness]=newtype;
 	
 	type=(struct JSX_TypeInt *)JS_malloc(cx, sizeof(struct JSX_TypeInt));
 	type->type=inttype;
@@ -858,7 +858,7 @@ static void init_float_types(JSContext *cx, JSObject *typeobj) {
     newval=OBJECT_TO_JSVAL(newtype);
   
     JS_SetProperty(cx, typeobj, JSX_floatsizenames[size], &newval);
-    JSX_Type[FLOATTYPE][size][0]=newtype;
+    jsx_Type_objects[FLOATTYPE][size][0]=newtype;
 
     type=(struct JSX_TypeFloat *)JS_malloc(cx, sizeof(struct JSX_TypeFloat));
     type->type=FLOATTYPE;
@@ -883,7 +883,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
     newval=OBJECT_TO_JSVAL(newtype);
   
     JS_SetProperty(cx, typeobj, JSX_othertypenames[ot], &newval);
-    JSX_Type[JSX_othertypes[ot]][0][0]=newtype;
+    jsx_Type_objects[JSX_othertypes[ot]][0][0]=newtype;
 
     type=(struct JSX_Type *)JS_malloc(cx, sizeof(struct JSX_Type));
     type->type=JSX_othertypes[ot];
