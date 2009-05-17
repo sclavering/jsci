@@ -203,12 +203,6 @@ Attempts to resolve the pointer, unless it is already resolved, in which case th
 Throws a |ReferenceError| of the symbol could not be resolved.
 
 
-Pointer.prototype.resolved
---------------------------
-
-Read-only.  Contains |true| if the pointer has been successfully resolved.
-
-
 Pointer.prototype.string([len])
 -------------------------------
 
