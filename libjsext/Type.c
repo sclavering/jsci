@@ -48,8 +48,8 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
 
 
 static JSBool JSX_Type_length(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
-  struct JSX_TypeArray *type; // also works with structs / unions / functions / bitfields
-  type = (struct JSX_TypeArray *) JS_GetPrivate(cx, obj);
+  JSX_TypeArray *type; // also works with structs / unions / functions / bitfields
+  type = (JSX_TypeArray *) JS_GetPrivate(cx, obj);
   if(type->type != FUNCTIONTYPE && type->type != STRUCTTYPE && type->type != UNIONTYPE && type->type != BITFIELDTYPE && type->type != ARRAYTYPE) {
     *rval = JSVAL_VOID;
   } else {
@@ -102,8 +102,8 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
       int al=1;
       JSX_Type *memb = StructUniontype->member[i].type;
       while (memb->type==ARRAYTYPE) {
-	al*=((struct JSX_TypeArray *)memb)->length;
-	memb=((struct JSX_TypeArray *)memb)->member;
+	al *= ((JSX_TypeArray *) memb)->length;
+	memb = ((JSX_TypeArray *) memb)->member;
       }
       if (memb->type==BITFIELDTYPE) {
 	int length = ((JSX_TypeBitfield *) memb)->length;
@@ -135,8 +135,8 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
       ffi_type *t;
       JSX_Type *memb = StructUniontype->member[i].type;
       while (memb->type==ARRAYTYPE) {
-	al*=((struct JSX_TypeArray *)memb)->length;
-	memb=((struct JSX_TypeArray *)memb)->member;
+	al *= ((JSX_TypeArray *) memb)->length;
+	memb = ((JSX_TypeArray *) memb)->member;
       }
       if (memb->type==BITFIELDTYPE) {
 	int length = ((JSX_TypeBitfield *) memb)->length;
@@ -216,7 +216,7 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
       break;
     case ARRAYTYPE:
       if (!strcmp(str,"length") && JSVAL_IS_INT(*vp)) {
-	Arraytype->length=JSVAL_TO_INT(*vp);
+	((JSX_TypeArray *) type)->length = JSVAL_TO_INT(*vp);
       }
       break;
     }
@@ -241,9 +241,9 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 	JSX_ReportException(cx, "Wrong type");
 	return JS_FALSE;
       }
-      
-      Arraytype->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
-      
+
+      ((JSX_TypeArray *) type)->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
+
       break;
     }
   }
@@ -470,7 +470,7 @@ int JSX_TypeAlign(JSX_Type *type) {
   case BITFIELDTYPE: // when calculating struct alignment, this is it.
     return JSX_TypeAlign(((JSX_TypeBitfield *) type)->member);
   case ARRAYTYPE:
-    return JSX_TypeAlign(((struct JSX_TypeArray *)type)->member);
+    return JSX_TypeAlign(((JSX_TypeArray *) type)->member);
   case UINTTYPE:
   case INTTYPE:
     return ((JSX_TypeInt *)type)->ffiType.alignment;
@@ -508,7 +508,7 @@ int JSX_TypeSize(JSX_Type *type) {
   case POINTERTYPE:
     return ffi_type_pointer.size;
   case ARRAYTYPE:
-    return ((struct JSX_TypeArray *)type)->length*JSX_TypeSize(((struct JSX_TypeArray *)type)->member);
+    return ((JSX_TypeArray *) type)->length * JSX_TypeSize(((JSX_TypeArray *) type)->member);
   case UINTTYPE:
   case INTTYPE:
     return ((JSX_TypeInt *)type)->ffiType.size;
@@ -704,12 +704,12 @@ JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
 
 JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
   JSObject *retobj;
-  struct JSX_TypeArray *type;
+  JSX_TypeArray *type;
 
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
-  type=(struct JSX_TypeArray *)JS_malloc(cx, sizeof(struct JSX_TypeArray));
+  type = (JSX_TypeArray *) JS_malloc(cx, sizeof(JSX_TypeArray));
 
   type->type=ARRAYTYPE;
   JS_SetPrivate(cx, retobj, type);
@@ -1140,11 +1140,11 @@ int JSX_CType(JSX_Type *type) {
       if(((JSX_TypeInt *) type)->signedness == 0) Ctype = UINTTYPE;
       break;
     case ARRAYTYPE:
-      if ((Arraytype->member->type==INTTYPE || Arraytype->member->type==UINTTYPE) &&
-	  ((JSX_TypeInt *) Arraytype->member)->size == 0)
+      if((((JSX_TypeArray *) type)->member->type == INTTYPE || ((JSX_TypeArray *) type)->member->type == UINTTYPE) &&
+	  ((JSX_TypeInt *) ((JSX_TypeArray *) type)->member)->size == 0)
 	Ctype=ACHARTYPE;
-      else if ((Arraytype->member->type==INTTYPE || Arraytype->member->type==UINTTYPE) &&
-	       ((JSX_TypeInt *) Arraytype->member)->size == 1)
+      else if((((JSX_TypeArray *) type)->member->type == INTTYPE || ((JSX_TypeArray *) type)->member->type == UINTTYPE) &&
+	       ((JSX_TypeInt *) ((JSX_TypeArray *) type)->member)->size == 1)
 	Ctype=ASHORTTYPE;
       break;
     case POINTERTYPE:
@@ -1172,7 +1172,7 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type) {
       return JS_TRUE;
 
     case ARRAYTYPE:
-      type=Arraytype->member;
+      type = ((JSX_TypeArray *) type)->member;
       break;
 
     case UNIONTYPE:

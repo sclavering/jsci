@@ -105,6 +105,7 @@ struct JSX_TypeArray {
   JSX_Type *member;
   int length;
 };
+typedef struct JSX_TypeArray JSX_TypeArray;
 
 struct JSX_TypeBitfield {
   enum JSX_TypeID type; // BITFIELDTYPE
@@ -137,7 +138,6 @@ ffi_cif *JSX_GetCIF(JSContext *cx, struct JSX_TypeFunction *type);
 #define TYPEPAIR(a,b) ((TYPECOUNT2 * (a)) + (b))
 
 #define Functiontype ((struct JSX_TypeFunction *)type)
-#define Arraytype ((struct JSX_TypeArray *)type)
 #define Pointertype ((struct JSX_TypePointer *)type)
 #define StructUniontype ((struct JSX_TypeStructUnion *)type)
 
