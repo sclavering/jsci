@@ -26,8 +26,8 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_resolved(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_resolve(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, struct JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
-static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, struct JSX_ParamType *type, jsval *vp, int convconst, void **argptr);
+static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
+static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, int convconst, void **argptr);
 static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
@@ -736,13 +736,13 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, struct JSX_Type 
 }
 
 
-static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, struct JSX_ParamType *type, jsval *rval, int convconst, void **argptr) {
+static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr) {
   int ret=0;
   int siz;
   uintN i;
   int isconst;
-  struct JSX_ParamType tmptype={0,0,0};
-  struct JSX_ParamType *thistype;
+  JSX_ParamType tmptype = { 0, 0, 0 };
+  JSX_ParamType *thistype;
 
   for (i=0; i<nargs; i++) {
 
@@ -1371,12 +1371,12 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, struct JSX_Type *type
 }
 
 
-static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, struct JSX_ParamType *type, jsval *vp, int convconst, void **argptr) {
+static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, int convconst, void **argptr) {
   int ret=0;
   int siz, cursiz;
   uintN i;
-  struct JSX_ParamType tmptype={0,0,0};
-  struct JSX_ParamType *thistype;
+  JSX_ParamType tmptype = { 0, 0, 0 };
+  JSX_ParamType *thistype;
 
   for (i=0; i<nargs; i++) {
     if (type && type->type->type==VOIDTYPE) // End of param list

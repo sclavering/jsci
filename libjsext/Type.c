@@ -393,8 +393,8 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
   JS_DefineProperty(cx, retobj, "elipsis", JSVAL_VOID, JSX_Type_elipsis, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
 
   type->param_capacity=nParam+1;
-  type->param=(struct JSX_ParamType *)JS_malloc(cx, sizeof(struct JSX_ParamType)*(type->nParam+1));
-  memset(type->param, 0, sizeof(struct JSX_ParamType)*type->nParam);
+  type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
+  memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
 
   type->param[type->nParam].type=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
   type->param[type->nParam].name=0;
@@ -427,7 +427,7 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membert
 }
 
 
-JSBool JSX_InitParamType(JSContext *cx, struct JSX_ParamType *dest, JSObject *membertype) {
+JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype) {
   jsval tmp;
 
   if (!JSX_InitNamedType(cx, (struct JSX_NamedType *)dest, membertype, 0)) {
@@ -1013,7 +1013,7 @@ static JSBool JSX_Type_sizeof(JSContext *cx,  JSObject *obj, jsval id, jsval *rv
 }
 
 
-int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, jsval *vp, ffi_type **arg_types) {
+int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *vp, ffi_type **arg_types) {
   int ret=0;
   int siz;
   uintN i;

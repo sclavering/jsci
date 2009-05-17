@@ -59,16 +59,17 @@ struct JSX_NamedType {
   char *name;
 };
 
-struct JSX_ParamType { // inherits NamedType
+struct JSX_ParamType { // inherits JSX_NamedType
   JSX_Type *type;
   char *name;
   int isConst;
 };
+typedef struct JSX_ParamType JSX_ParamType;
 
 struct JSX_TypeFunction {
   enum JSX_TypeID type; // FUNCTIONTYPE
   JSObject *typeObject;
-  struct JSX_ParamType *param;
+  JSX_ParamType *param;
   int nParam;
   int param_capacity;
   enum JSX_CallConv callConv;
@@ -122,7 +123,7 @@ typedef struct JSX_TypeBitfield JSX_TypeBitfield;
 
 
 int JSX_TypeSize(JSX_Type *type);
-int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, jsval *vp, ffi_type **arg_types);
+int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *vp, ffi_type **arg_types);
 JSClass *JSX_GetTypeClass(void);
 
 int JSX_CType(JSX_Type *type);
