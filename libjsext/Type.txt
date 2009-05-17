@@ -63,45 +63,33 @@ Types created with this function have read-only properties with the same names a
 
 You have to write Type['function'] rather than Type.function in javascript code, because "function" is a reserved word.
 
-
 Pass a zero-length array for "params" to represent a 0-parameter C function (which is written as "int myfunc(void);" in C).
 
 Pass a zero-length array for "params" and |true| for "elipsis" to represent a C function with an undefined paramater list (e.g. "int myfunc();"), which can be called with a variable number of arguments
 
 
-Type.pointer()
---------------
-
-    t = Type.pointer(direct)
+Type.pointer(t)
+---------------
 
 Creates a new Type object representing a pointer. The argument is the Type being pointed to.
 
 Types created with this function have a read-only property named "0" which contains the type it points to.
 
 
-Type.struct()
--------------
+Type.struct(member0, member1, ...)
+----------------------------------
 
-    t = Type.struct(member0, member1, ...)
+Creates a new Type object representing a struct.  The member arguments should be objects containing two properties: .name and .type. The .type property should be a Type object.
 
-Creates a new Type object representing a _struct_. The member arguments should be objects containing two properties: _name_ and _type_. The _type_ property should be a Type object.
-
-Types created with this function have read-only properties with the same names as the members, containing the argument objects passed to this function. These objects are augmented with read-only properties _offset_ and _index_. Also, struct types have read-only properties named 0 through _n_, which point to the same objects.
+Types created with this function have read-only properties with the same names as the members, containing the argument objects passed to this function.  These objects are augmented with read-only properties .offset and .index.  Also, struct types have read-only properties named 0 through n, which point to the same objects.
 
 
-Type.union()
-------------
+Type.union(member0, member1, ...)
+---------------------------------
 
-    t = Type.union(member0, member1, ...)
-
-Creates a new Type object representing a _union_. The member arguments should be objects containing two properties: _name_ and _type_. The _type_ property should be a Type object.
+Creates a new Type object representing a union. The member arguments should be objects containing two properties: .name and .type. The .type property should be a Type object.
 
 
-
-Type.prototype
---------------
-
-All the Type objects returned by the properties and methods above extend Type.prototype, and so have the following instance properties and methods:
 
 
 Type.prototype.callConv
