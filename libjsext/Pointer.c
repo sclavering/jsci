@@ -2205,30 +2205,16 @@ static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsv
 
 
 static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-
-  JSObject *newobj;
-
-
   if (argc<1 || !JSVAL_IS_STRING(argv[0])) {
     JSX_ReportException(cx, "Wrong argument type to string");
-    goto end_false;
+    return JS_FALSE;
   }
 
+  JSObject *newobj;
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
-
-  if (!JSX_InitPointerString(cx, newobj, JSVAL_TO_STRING(argv[0]))) {
-    goto end_false;
-  }
-
-  goto end_true;
-
- end_true:
+  if(!JSX_InitPointerString(cx, newobj, JSVAL_TO_STRING(argv[0]))) return JS_FALSE;
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
