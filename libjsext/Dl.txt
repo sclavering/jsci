@@ -1,0 +1,36 @@
+Dl
+--
+
+    new Dl(filename)
+    Dl(filename)       // the "new" can be omitted
+
+Returns an object representing a dynamically-loaded library (or the main executable if the filename is omitted, undefined or null), which can be used to resolve C function/variable/type names to Pointer and Type objects.
+
+The filename is for a dynamic library (.so file) to open.  It can either be an absolute path, or a path-less filename that will be searched for in platform-specific locations (e.g. LD_LIBRARY_PATH, /usr/lib)
+
+
+Dl.prototype.filename
+---------------------
+
+Read-only.  Contains the filename of the Dl, or |undefined| if the Dl represents the main program.
+
+
+Dl.prototype.pointer()
+----------------------
+
+    obj.pointer(symbol, type)
+
+Creates and returns a new pointer.
+
+* symbol: a string containing the name the object within the dynamic library
+* type: a Type object
+
+The symbol is not actually resolved until the first time the pointer is dereferenced.  Function pointers are not resolved until the they are dereferenced and called for the first time.  If the symbol is not found, a |ReferenceError| will be thrown at that time.
+
+
+Dl.prototype.symbolExists()
+---------------------------
+
+    obj.symbolExists (str)
+
+Returns true or false, depending on whether the symbol exists in the dynamic library.

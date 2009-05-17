@@ -1,0 +1,241 @@
+Pointer
+-------
+
+    new Pointer (type [, value])
+    Pointer(type [, value])       // the "new" can be omitted
+
+Allocates memory for one object of the specified type.
+
+* type: A Type object specifying the kind of object to allocate.
+* value: A javascript value which will be used to initialize the newly created object.  If omitted or |undefined|, the newly created object is left uninitialized.  If |null|, the newly allocated memory is zero-filled.
+
+The address pointed to is a memory location which is allocated and (optionally) initialized by the Pointer constructor.  When the pointer object is garbage collected, that memory is freed.
+
+If the value is a javascript function, the constructor creates a new C function which will invoke the given javascript function when called.  The pointer points to this C function, and can be passed to functions expecting a callback function as one of its arguments.  The "type" should be either 'function' or 'function *'.  The returned pointer will have type 'function' in either case.  Function types also contain information about the types of their arguments and return value.
+
+The memory containing the C function is freed when the pointer object is garbage collected.  Therefore, it is important that the javascript program maintains a reference to the pointer object for as long as a callback may occur.  Failure to do so may cause your program to crash, but only after garbage collection, reallocation of the same memory area, overwriting and callback, which makes this kind of error particularly hard to trace.
+
+To obtain the pointer to a an imported native function, use the __ptr__ property which is automatically assigned to all such functions.  Creating a callback pointer to such a function also works, but causes arguments and return values to be converted to javascript types and back each time the function is called.
+
+All Pointer objects have a property named "$" which gives access to the underlying C object. This property plays the same role as the * unary operator in C.
+
+Pointer objects also have numerical properties, giving access to neighbouring C objects.  |pointer[0]| is equal to |pointer.$|.
+
+Conversion between C and JavaScript
+---
+
+Whenever you access the $ property of a pointer to dereference it or call a C function, values are automatically converted back and forth between javascript and native types.  In some cases, the javascript type and the C types are both known, like when you call a function with a declared parameter list.  At other times, only the javascript type is known, and not the C type, like when you pass an optional parameter to a function or when you pass an array as a valist parameter.  And then there are the cases then the C type is known, but the javascript type is not, like when reading the $ property of a pointer.
+
+The conversions are all listed in the following table:
+
+<table>
+<tr>
+<td colspan='2' rowspan='2'> </td>
+<th colspan='9' align='center'>JavaScript type</th>
+</tr>
+<tr><td>undefined</td><td>null</td><td>Boolean</td><td>Number</td><td>String</td><td>Object</td><td>Array</td><td>Pointer</td><td>Function</td></tr>
+<tr><th rowspan='15'>C type</th>
+    <td>unknown</td> <td> </td><td> </td><td> </td><td>x</td><td>x</td><td> </td><td>x</td><td> </td><td> </td></tr>
+<tr><td>ints</td>    <td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td> </td><td> </td><td>x</td><td> </td></tr>
+<tr><td>floats</td>  <td>x</td><td>x</td><td>x</td><td>x</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td>function</td><td>x</td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td>x</td></tr>
+<tr><td>struct</td>  <td>x</td><td>x</td><td> </td><td> </td><td> </td><td>x</td><td>x</td><td> </td><td> </td></tr>
+<tr><td>union</td>   <td>x</td><td>x</td><td> </td><td> </td><td> </td><td>x</td><td>x</td><td> </td><td> </td></tr>
+<tr><td>valist</td>  <td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td>x</td><td> </td><td> </td></tr>
+<tr><td>void</td>    <td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td>char *</td>  <td>x</td><td>x</td><td> </td><td>x</td><td>x</td><td> </td><td>x</td><td>x</td><td> </td></tr>
+<tr><td>short *</td> <td>x</td><td>x</td><td> </td><td>x</td><td>x</td><td> </td><td>x</td><td>x</td><td> </td></tr>
+<tr><td>void *</td>  <td>x</td><td>x</td><td> </td><td>x</td><td>x</td><td> </td><td>x</td><td>x</td><td>x</td></tr>
+<tr><td>other *</td> <td>x</td><td>x</td><td> </td><td>x</td><td> </td><td> </td><td>x</td><td>x</td><td>x</td></tr>
+<tr><td>char[n]</td> <td>x</td><td>x</td><td> </td><td> </td><td>x</td><td> </td><td>x</td><td>x</td><td> </td></tr>
+<tr><td>short[n]</td><td>x</td><td>x</td><td> </td><td> </td><td>x</td><td> </td><td>x</td><td>x</td><td> </td></tr>
+<tr><td>other[n]</td><td>x</td><td>x</td><td> </td><td> </td><td> </td><td> </td><td>x</td><td>x</td><td> </td></tr>
+<tr><td> </td>       <td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+</table>
+
+Assigning |null| to a C value will fill its memory area with zero characters.  Assigning |undefined| to a C value has no effect.  There is no conversion function from a C |void|, as it never appears as a direct type.
+
+When passing argument lists and valists, you can place a type object directly ahead of a value in order to control its conversion.
+
+
+
+Pointer.UCString(str)
+---------------------
+
+Creates and returns a new Pointer which points to a zero-terminated string constructed from the argument. The type of the object will be unsigned short.  (The javascript string's 16-bit characters will be preserved faithfully.)
+
+
+Pointer.calloc(num_bytes)
+-------------------------
+
+Creates a new Pointer of type Type.void which points to a newly allocated memory area.  The memory is initialized to zero.  The memory is freed when the pointer object is garbage collected.
+
+Warning: using clib.free() or similar on the returned pointer IS AN ERROR, and will result in segfaults.  (Whereas pointers returned by clib.calloc() must be free()'d to avoid memory leaks.)
+
+
+Pointer.malloc(num_bytes)
+---------------------
+
+Creates a new Pointer of type Type.void, which points to a newly-allocated uninitialized memory area.  The memory is freed when the pointer object is garbage collected.
+
+Warning: using clib.free() or similar on the returned pointer IS AN ERROR, and will result in segfaults.  (Whereas pointers returned by clib.malloc() must be free()'d to avoid memory leaks.)
+
+
+Pointer.string(str)
+-------------------
+
+Creates and returns a new Pointer which points to a zero-terminated string constructed from the argument.  The type of the pointer will be unsigned char.  The javascript string's high bytes will be silently ignored.
+
+
+
+
+Pointer.prototype.$
+-------------------
+
+This property gives access to the underlying C object.  Reading the property causes the pointer to be dereferenced and converted into a javascript value.  Writing to this property causes the javascript value to be converted into a C value and stored to memory at the address pointed to by the pointer object.
+
+Function pointers:
+
+Function pointers are used when importing native functions and (less commonly) for callback functions.
+
+A dl library typically contains pointers to functions. These are available as
+Pointer objects of type 'function'.
+
+* The $ property of pointers of type 'function' returns a Function object which
+can be called to invoke the underlying native function. The Function object will
+have a read-only property named __ptr__ containing the pointer.
+* The $ property of pointers of type 'function' is read-only.
+
+C functions can not, by the definition of the C language, return or receive functions.
+They can, however, return and receive pointers to functions, which will be represented
+by a Pointer object of type 'function *'.
+
+* The $ property of pointers of type 'function *' returns a Pointer object of type 'function'.
+* The $ property of pointers of type 'function *' can be assigned a Pointer object or an integer.
+
+Note: Not all javascript values can be converted into all C values.  For instance, there is no conversion from a javascript Array to a C int.  An exception will be thrown if no conversion exists.
+
+Note: The C value is converted each time the $ property is accessed.  This is a cheap operation except for large structs and large arrays, but it is recommended to store the result of the conversion if it is used more than once. For instance, calling a C function with the form
+
+    pointer.$() // bad
+
+creates a new function each time it is called. Iterating over a fixed-size C array with
+
+    for (...)
+      pointer.$[i] // bad
+
+converts the whole array into javascript for each element, turning a O(n) algorithm into an O(n^2) one.
+
+
+Pointer.prototype.UCString(len)
+-------------------------------
+
+Reads |len| 16-bit characters (or until a null terminator, if |len| is omitted) starting from the pointer, and returns it as a javascript string.
+
+This will do the right thing for a UTF16 (or UCS2) string.  For anything else
+
+
+Pointer.prototype.cast(type)
+----------------------------
+
+Creates and returns a new pointer which points to the same address location as the original one.  The new pointer is assigned the type passed to the function.
+
+
+Pointer.prototype.dl
+--------------------
+
+Read-only.  Contains the dl object which this pointer is attached to, or undefined if it is not attached to a dl object.
+
+
+Pointer.prototype.finalize
+--------------------------
+
+You may assign a "finalize" property to any pointer.  This should be an imported native function to be called when the pointer object is garbage collected. The function will be passed the pointer as its only argument.
+
+The "finalize" function must be a function taking exactly one non-const pointer argument.  Any type of pointer is acceptable as the argument type.  Any return value type is acceptable; the return value will be ignored.
+
+Assigning a finalize function to a pointer forces the _function pointer_ to be resolved at the time of assignment, possibly causing a ReferenceError to be thrown.
+
+The finalize property is write-only; it always returns |undefined| if you attempt to read it.  To delete it, explicitly assign |undefined| to it; using the javascript delete statement will have no effect.
+
+
+Pointer.prototype.function
+--------------------------
+
+This read-only property contains the javascript function being pointed to by a callback pointer.
+
+
+Pointer.prototype.member(index0 [, index1] [, ...])
+---------------------------------------------------
+
+Returns a pointer to a member object. The first index is always numerical, since all pointers may be treated as variable-sized arrays.  For pointers that are not variable-sized arrays, "index0" should be zero.
+
+"index1" can be an integer or a string, depending on the kind of object being pointed to.  If the pointer points to a struct or union, "index1" may be a string identifying the member of the struct or union. If the pointer points to a fixed- or variable-sized array, "index1" should be an integer, identifying the element of the array.
+
+The maximal number of indices is equal to the level of indirection plus array dimensionality plus the level of struct / union nesting.
+
+Struct and union members may also be referenced by integers, in which case the number identifies the member by its zero-based order in the struct or union declaration.
+
+Since there is no general way of telling the size of a variable-sized array and since fixed-size arrays are sometimes declared with smaller than actual dimensions, there is no range-checking of numerical indices to arrays.
+
+String indices that do not correspond to member names in structs / unions and numerical indices smaller than zero or greater than or equal to the number of struct / union members cause a ReferenceError to be raised.
+
+Example:
+
+    var x=new Pointer( clib['struct stat'] );
+    clib.stat( "/tmp/file", x );
+    print( x.member( 0, 'st_uid' ).$ );
+
+Note: Pointers to objects in dynamic libraries are not resolved until they are needed. Calling .member() does not logically require it, but it does force resolution of the pointer.
+
+
+Pointer.prototype.realloc(bytes)
+--------------------------------
+
+Changes the size of a memory area allocated with Pointer.malloc(), Pointer.calloc() or Pointer().  The contents of the memory block is left unchanged even if it needs to be moved to another location.  Newly allocated memory is uninitialized.  The memory is freed when the pointer object is garbage collected.
+
+
+Pointer.prototype.resolve()
+---------------------------
+
+Attempts to resolve the pointer, unless it is already resolved, in which case this function does nothing.
+
+Throws a |ReferenceError| of the symbol could not be resolved.
+
+
+Pointer.prototype.resolved
+--------------------------
+
+Read-only.  Contains |true| if the pointer has been successfully resolved.
+
+
+Pointer.prototype.string([len])
+-------------------------------
+
+Reads |len| bytes starting from the pointer's address (or until a null byte, if |len| is omitted), and returns the result as a javascript string.  Since javascript strings are composed of 16-bit "characters", each byte of the C string is padding with a 0 high-byte when forming the javascript string.
+
+(So for an ASCII C string, this will return the correct javascript string.  For any other encoding, including UTF8, it won't.)
+
+
+Pointer.prototype.symbol
+------------------------
+
+Read-only.  Contains the symbol string which this pointer is attached to, or undefined if it is not attached to a symbol.
+
+
+Pointer.prototype.toString()
+----------------------------
+
+Returns a string containing the hexadecimal number representing the memory location pointed to by the pointer object.
+
+
+Pointer.prototype.type
+----------------------
+
+Read-only.  Contains a Type object for the pointer.
+
+
+Pointer.prototype.valueOf()
+---------------------------
+
+Returns a javascript number containing the address of the memory location pointed to by the pointer object, divided by pointer.sizeof.
