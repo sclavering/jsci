@@ -113,8 +113,6 @@ struct JSX_TypeBitfield {
 
 
 int JSX_TypeSize(struct JSX_Type *type);
-int JSX_TypeAlign(struct JSX_Type *type);
-
 int JSX_TypeSize_multi(JSContext *cx, uintN nargs, struct JSX_ParamType *type, jsval *vp, ffi_type **arg_types);
 JSClass *JSX_GetTypeClass(void);
 
