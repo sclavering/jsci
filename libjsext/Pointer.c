@@ -6,6 +6,21 @@
 # include <dlfcn.h>
 # include <alloca.h>
 
+struct JSX_Pointer {
+  void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
+  struct JSX_Type *type;
+  void (*finalize) (void *);
+};
+
+struct JSX_Callback {
+  void *ptr; // Points to executable code
+  struct JSX_Type *type;
+  void (*finalize) (void *);
+  JSContext *cx;
+  JSFunction *fun;
+  void *writeable; // Points to writeable code
+};
+
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
