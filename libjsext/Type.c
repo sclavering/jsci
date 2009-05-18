@@ -953,9 +953,6 @@ static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval
   type = (JSX_Type *) JS_GetPrivate(cx, obj);
 
   switch(type->type) {
-  case VOIDTYPE:
-    name="void";
-    break;
   case FUNCTIONTYPE:
     name="function";
     break;
@@ -974,15 +971,8 @@ static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval
   case BITFIELDTYPE:
     name="bitfield";
     break;
-  case INTTYPE:
-  case UINTTYPE:
-    name=namebuf;
-    sprintf(namebuf, "%s%s", JSX_signnames[((JSX_TypeInt *) type)->signedness], JSX_intsizenames[((JSX_TypeInt *) type)->size]);
-    break;
-  case FLOATTYPE:
-    name=namebuf;
-    sprintf(namebuf, "%s", JSX_floatsizenames[((JSX_TypeFloat *) type)->size]);
-    break;
+  default:
+    name="[Type unknown]";
   }
 
   *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, name));

@@ -8,6 +8,8 @@ function(Type, Pointer, Dl, load, environment, cwd) {
   // avoid unwanted closures
   var xload = new Function("filename", "return load(filename);");
 
+  xload("0-ffi.js");
+
   $path=".";
   $curdir=this;
 
