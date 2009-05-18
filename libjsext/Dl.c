@@ -81,9 +81,8 @@ jsval JSX_make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
     {"symbolExists", JSX_dl_symbolExists, 1, 0, 0},
-    //    {"call", JSX_dl_call, 2, 0, 0},
     {"function", JSX_dl_function, 1, 0, 0},
-    {"pointer",JSX_dl_pointer,2,0,0},
+    {"pointer", JSX_dl_pointer, 2, 0, 0},
     {0,0,0,0,0}
   };
 
