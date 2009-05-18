@@ -97,7 +97,6 @@ jsval JSX_make_Dl(JSContext *cx, JSObject *glob) {
 static JSBool
 JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   JSObject *object;
-  JSNative JSEXT_init=0;
   JSString *JSfilename;
 
   if (!JS_IsConstructing(cx)) { // not called with new
@@ -118,22 +117,6 @@ JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
 
   if (!dl) {
     return JS_FALSE;
-  }
-
-  if(filename) JSEXT_init = (JSNative) dlsym(dl,"JSEXT_init");
-
-  if (JSEXT_init) { // Call init with filename as only argument
-    JSString *tmpstr=0;
-    jsval argv[1];
-    jsval rval=JSVAL_VOID;
-
-    tmpstr = JS_NewStringCopyZ(cx, filename);
-    JS_AddRoot(cx, &tmpstr);
-    argv[0]=STRING_TO_JSVAL(tmpstr);
-
-    (*JSEXT_init)(cx, obj, 1, argv, &rval);
-
-    JS_RemoveRoot(cx, &tmpstr);
   }
 
   if (filename) {
