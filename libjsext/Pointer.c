@@ -24,7 +24,6 @@ typedef struct {
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_Pointer_resolve(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
 static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, int convconst, void **argptr);
 static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
@@ -2088,24 +2087,6 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
 }
 
 
-static JSBool JSX_Pointer_resolve(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-
-
-  if (!JSX_PointerResolve(cx, obj)) {
-    JSX_ReportException(cx, "Unable to resolve");
-    goto end_false;
-  }
-
-  goto end_true;
-
- end_true:
-  return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
-}
-
 static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   int length;
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
@@ -2428,7 +2409,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
     {"cast",JSX_Pointer_cast,1,0,0},
     {"member",JSX_Pointer_member,1,0,0},
     {"realloc",JSX_Pointer_realloc,1,0,0},
-    {"resolve",JSX_Pointer_resolve,0,0,0},
     {"string",JSX_Pointer_pr_string,1,0,0},
     {"valueOf",JSX_Pointer_valueOf,0,0,0},
     {"toString",JSX_Pointer_toString,0,0,0},
