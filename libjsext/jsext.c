@@ -135,35 +135,34 @@ int main(int argc, char **argv, char **envp) {
 
 
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
-  jsval *argv;
-  int i;
+  JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
+
+  JSObject *argobj;
+  argobj = JS_NewObject(cx, 0, 0, 0);
+  JS_AddRoot(cx, &argobj);
+
+  jsval tmp = JSVAL_VOID;
+  JS_AddRoot(cx, &tmp);
+
+  tmp = JSX_make_Type(cx, obj);
+  JS_SetProperty(cx, argobj, "Type", &tmp);
+  tmp = JSX_make_Pointer(cx, obj);
+  JS_SetProperty(cx, argobj, "Pointer", &tmp);
+  tmp = JSX_make_Dl(cx, obj);
+  JS_SetProperty(cx, argobj, "Dl", &tmp);
+  tmp = JSX_make_load(cx, obj);
+  JS_SetProperty(cx, argobj, "load", &tmp);
+  tmp = JSX_make_environment(cx, obj);
+  JS_SetProperty(cx, argobj, "environment", &tmp);
+  char cwd[1024];
+  tmp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
+  JS_SetProperty(cx, argobj, "cwd", &tmp);
+
   char *ifdup=0;
   char *lastslash;
   char *filename;
-  JSFunction *jsfun;
-  char cwd[1024];
-  int init_argc = 6;
-
-  JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
-
-  argv = JS_malloc(cx, sizeof(jsval) * init_argc);
-  for(i = 0; i != init_argc; ++i) {
-    argv[i]=JSVAL_VOID;
-    JS_AddRoot(cx, argv+i);
-  }
-
   char *ini_file = getenv("JSEXT_INI");
-
-  if (ini_file==NULL) {
-    ini_file=libdir "/jsext/0-init.js";
-  }
-
-  argv[0] = JSX_make_Type(cx, obj);
-  argv[1] = JSX_make_Pointer(cx, obj);
-  argv[2] = JSX_make_Dl(cx, obj);
-  argv[3] = JSX_make_load(cx, obj);
-  argv[4] = JSX_make_environment(cx, obj);
-  argv[5] = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
+  if(ini_file == NULL) ini_file = libdir "/jsext/0-init.js";
 
   ifdup=strdup(ini_file);
   lastslash=strip_file_name(ifdup);
@@ -177,16 +176,19 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
 
   exec(cx, obj, filename, rval);
 
+  JSFunction *jsfun;
+
   JSBool rv = JS_FALSE;
   jsfun=JS_ValueToFunction(cx, *rval);
   if(jsfun) {
-    rv = JS_CallFunction(cx, obj, jsfun, init_argc, argv, rval);
+    tmp = OBJECT_TO_JSVAL(argobj);
+    rv = JS_CallFunction(cx, obj, jsfun, 1, &tmp, rval);
   } else {
     JSX_ReportException(cx, "Ini file does not evaluate to a function");
   }
 
-  for(i = init_argc; i--;) JS_RemoveRoot(cx, argv + i);
-  JS_free(cx, argv);
+  JS_RemoveRoot(cx, &argobj);
+  JS_RemoveRoot(cx, &tmp);
   if(ifdup) free(ifdup);
 
   return rv;

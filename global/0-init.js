@@ -1,9 +1,9 @@
-function(Type, Pointer, Dl, load, environment, cwd) {
-  this.Type = Type;
-  this.Pointer = Pointer;
-  this.Dl = Dl;
-  this.load = load;
-  this.environment = environment;
+function(args) {
+  this.Type = args.Type;
+  this.Pointer = args.Pointer;
+  this.Dl = args.Dl;
+  this.load = args.load;
+  this.environment = args.environment;
 
   // avoid unwanted closures
   var xload = new Function("filename", "return load(filename);");
@@ -39,7 +39,7 @@ function(Type, Pointer, Dl, load, environment, cwd) {
   ActiveDirectory.call(this, JSEXT.os.getcwd());
   ActiveDirectory.call(JSEXT, JSEXT.$path);
 
-  clib.chdir(cwd);
+  clib.chdir(args.cwd);
 
   // For out-of-tree code using the old names.  We can't just use a JSEXT1.js, because it would be ignored
   JSEXT1.__defineGetter__('dir', function() { return JSEXT1.os.dir; });

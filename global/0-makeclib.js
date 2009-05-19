@@ -1,9 +1,9 @@
-function(Type, Pointer, Dl, load, environment, cwd) {
-  this.Type = Type;
-  this.Pointer = Pointer;
-  this.Dl = Dl;
-  this.load = load;
-  this.environment = environment;
+function(args) {
+  this.Type = args.Type;
+  this.Pointer = args.Pointer;
+  this.Dl = args.Dl;
+  this.load = args.load;
+  this.environment = args.environment;
 
   clib = {};
   clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [{ 'const': true, name: '__path', type: Type.pointer(Type.char) }], false, 'cdecl')).$;
@@ -46,7 +46,7 @@ function(Type, Pointer, Dl, load, environment, cwd) {
   JSEXT1.File = js.call(JSEXT1, 'File');
   clib.chdir('..');
 //  puts(String(JSEXT1.C.ctoxml(JSEXT1.C.cpp('#include <io.h>'))));
-  const fragment = JSEXT1.C.fragment(cwd + "/clib.h", Dl('./clib.so'));
+  const fragment = JSEXT1.C.fragment(args.cwd + "/clib.h", Dl('./clib.so'));
   const jswrapper = JSEXT1.C.jswrapper(fragment);
   clib.puts(jswrapper);
 }
