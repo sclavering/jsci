@@ -24,27 +24,6 @@ static JSClass JSEXT_dl_class = {
     JSEXT_dl_finalize
 };
 
-static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
-  int len;
-  char *msg;
-  JSString *Str;
-  va_list va;
-  jsval str;
-
-  va_start(va, format);
-  msg=JS_malloc(cx, 801);
-  va_start(va, format);
-  len=vsnprintf(msg,800,format,va);
-  if (len>800) len=800;
-  msg[len]=0;
-  va_end(va);
-  Str=JS_NewString(cx, msg, len);
-  str=STRING_TO_JSVAL(Str);
-  JS_SetPendingException(cx, str);
-
-  return JS_FALSE;
-}
-
 static JSBool JSX_dl_pointer(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *obj;
 

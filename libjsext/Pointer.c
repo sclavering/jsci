@@ -5,6 +5,8 @@
 
 # include <dlfcn.h>
 # include <alloca.h>
+#include "util.h"
+
 
 typedef struct {
   void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
@@ -89,27 +91,6 @@ static char *JSX_jstypenames[]={
   "Array",
   "Function"
 };
-
-static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
-  int len;
-  char *msg;
-  JSString *Str;
-  va_list va;
-  jsval str;
-
-  va_start(va, format);
-  msg=JS_malloc(cx, 81);
-  va_start(va, format);
-  len=vsnprintf(msg,80,format,va);
-  msg[80]=0;
-
-  va_end(va);
-  Str=JS_NewString(cx, msg, len);
-  str=STRING_TO_JSVAL(Str);
-  JS_SetPendingException(cx, str);
-
-  return JS_FALSE;
-}
 
 // rval should be rooted
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.

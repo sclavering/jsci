@@ -16,25 +16,8 @@ The file may start with a #! line, which is ignored.
 #include <stdarg.h>
 #include <fcntl.h>
 #include <string.h>
+#include "util.h"
 
-static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
-  int len;
-  char *msg;
-  JSString *Str;
-  va_list va;
-  jsval str;
-
-  msg=JS_malloc(cx, 81);
-  va_start(va, format);
-  len=vsnprintf(msg,80,format,va);
-  msg[80]=0;
-  va_end(va);
-  Str=JS_NewString(cx, msg, len);
-  str=STRING_TO_JSVAL(Str);
-  JS_SetPendingException(cx, str);
-
-  return JS_FALSE;
-}
 
 static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *filename;
