@@ -907,8 +907,6 @@ static JSBool JSX_Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval
 static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSX_Type *type;
   char *name;
-  char namebuf[80];
-
   type = (JSX_Type *) JS_GetPrivate(cx, obj);
 
   switch(type->type) {
