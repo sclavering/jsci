@@ -1997,21 +1997,9 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-
-  if (ptr->ptr==0 && !JSX_PointerResolve(cx, obj))
-    goto end_false;
-
-  if (!JSX_Set(cx, ptr->ptr, 0, ptr->type, *vp))
-    goto end_false;
-
-  goto end_true;
-
- end_true:
+  if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
+  if(!JSX_Set(cx, ptr->ptr, 0, ptr->type, *vp)) return JS_FALSE;
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
