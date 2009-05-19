@@ -177,28 +177,7 @@ static JSBool JSX_Type_elipsis(JSContext *cx,  JSObject *obj, jsval id, jsval *r
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JSX_Type *type = JS_GetPrivate(cx, obj);
 
-  if (JSVAL_IS_STRING(id)) {
-    char *str=JS_GetStringBytes(JSVAL_TO_STRING(id));
-    switch(type->type) {
-    case FUNCTIONTYPE:
-      if (!strcmp(str,"returnType")) {
-	
-      }
-      if (!strcmp(str,"callConv") && JSVAL_IS_STRING(*vp)) {
-	((JSX_TypeFunction *) type)->callConv = !strcmp(JS_GetStringBytes(JSVAL_TO_STRING(*vp)), "stdcall") ? STDCALLCONV : CDECLCONV;
-      }
-      if (!strcmp(str,"elipsis") && JSVAL_IS_BOOLEAN(*vp)) {
-	((JSX_TypeFunction *) type)->elipsis = JSVAL_TO_BOOLEAN(*vp);
-      }
-      break;
-    case ARRAYTYPE:
-      if (!strcmp(str,"length") && JSVAL_IS_INT(*vp)) {
-	((JSX_TypeArray *) type)->length = JSVAL_TO_INT(*vp);
-      }
-      break;
-    }
-
-  } else if (JSVAL_IS_INT(id)) {
+  if(JSVAL_IS_INT(id)) {
     int index=JSVAL_TO_INT(id);
 
     switch(type->type) {
@@ -371,8 +350,8 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
     type->returnType=JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
   }
 
-  JS_DefineProperty(cx, retobj, "callConv", JSVAL_VOID, JSX_Type_callConv, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  JS_DefineProperty(cx, retobj, "elipsis", JSVAL_VOID, JSX_Type_elipsis, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+  JS_DefineProperty(cx, retobj, "callConv", JSVAL_VOID, JSX_Type_callConv, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
+  JS_DefineProperty(cx, retobj, "elipsis", JSVAL_VOID, JSX_Type_elipsis, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
 
   type->param_capacity=nParam+1;
   type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
@@ -685,7 +664,7 @@ JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
   else
     type->length=0;
 
-  JS_DefineProperty(cx, retobj, "length", JSVAL_VOID, JSX_Type_length, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+  JS_DefineProperty(cx, retobj, "length", JSVAL_VOID, JSX_Type_length, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
   JS_DefineElement(cx, retobj, 0, member, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
 
   type->member=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
