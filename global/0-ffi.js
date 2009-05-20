@@ -24,3 +24,8 @@ Type.float.toString = function() { return "float"; };
 Type.double.toString = function() { return "double"; };
 Type.long_double.toString = function() { return "long double"; };
 Type['void'].toString = function() { return "void"; };
+
+Pointer.prototype.toString = function() {
+  // valueOf() returns position / size-in-bits, for some bizarre reason
+  return (this.valueOf() * this.type.sizeof).toString(16);
+};

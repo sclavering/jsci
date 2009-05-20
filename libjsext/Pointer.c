@@ -32,7 +32,6 @@ static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, 
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_Pointer_toString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
@@ -2095,16 +2094,6 @@ static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
-static JSBool JSX_Pointer_toString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  char buf[20];
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if(!ptr->ptr && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
-  sprintf(buf,"%08x",ptr->ptr);
-  *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, buf));
-  return JS_TRUE;
-}
-
-
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSX_Pointer *ptr;
   jsdouble val;
@@ -2339,7 +2328,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
     {"realloc",JSX_Pointer_realloc,1,0,0},
     {"string",JSX_Pointer_pr_string,1,0,0},
     {"valueOf",JSX_Pointer_valueOf,0,0,0},
-    {"toString",JSX_Pointer_toString,0,0,0},
     {0,0,0,0,0}
   };
 
