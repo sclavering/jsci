@@ -507,7 +507,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     }
 
     goto failure;
-    return 0;
     // error already thrown
 
   case TYPEPAIR(JSVOID,ARRAYTYPE):
@@ -558,7 +557,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       }
     }
     goto failure;
-    return 0;
     // Error already thrown
 
   case TYPEPAIR(JSVOID,STRUCTTYPE):
@@ -625,7 +623,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       }
     }
     goto failure;
-    return 0;
     // Error already thrown
 
   case TYPEPAIR(JSARRAY,STRUCTTYPE):
@@ -676,7 +673,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       }
     }
     goto failure;
-    return 0;
     // error already thrown
 
   case TYPEPAIR(JSPOINTER,ACHARTYPE):
