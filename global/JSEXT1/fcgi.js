@@ -158,9 +158,9 @@ function _fcgi_handle_request(fd) {
   if(res != 0) throw new Error("FCGX_Accept_r");
   rq.finalize = libfcgi.FCGX_Finish_r;
 
-  stdin = new File(rq.member(0, "in").$);
-  stdout = new File(rq.member(0, "out").$);
-  stderr = new File(rq.member(0, "err").$);
+  stdin = new File(rq.field("in").$);
+  stdout = new File(rq.field("out").$);
+  stderr = new File(rq.field("err").$);
   environment = _fcgi_get_env(rq);
 
   new CGI();
@@ -169,11 +169,11 @@ function _fcgi_handle_request(fd) {
 
 function _fcgi_get_env(rq) {
   var env = {};
-  var envp = rq.member(0,"envp").$;
+  var envp = rq.field("envp").$;
   if (envp==null) return;
   var i;
   for(i=0;;i++) {
-    var val=envp.member(i).$;
+    var val = envp[i];
     if (val==null) break;
     val=val.string();
     var eqPos=val.indexOf("=");

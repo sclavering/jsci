@@ -506,7 +506,7 @@ Tries to coerce a C macro into a JavaScript expression
     v=v.replace(/\([ ]*(unsigned +|signed +)?(long +|short +)?(int|char|long|short|signed|unsigned|double|float)[ ]*\)/,"");
 
     // change struct indexing
-    v=v.replace(/->[ \t]*([a-zA-Z_][a-zA-Z_0-9]*)/g,".member(0,'$1').$$");
+    v = v.replace(/->[ \t]*([a-zA-Z_][a-zA-Z_0-9]*)/g, ".field('$1').$$");
     // remove L before string like in L"string"
     v=v.replace(/^([^"])*L"/,'$1"');
 
