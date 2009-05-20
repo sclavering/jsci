@@ -1423,23 +1423,24 @@ JSClass * JSX_GetPointerClass(void) {
   return &JSX_PointerClass;
 }
 
+
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *type) {
   JSX_Pointer *retpriv;
   int size;
   
   if (!JS_InstanceOf(cx, type, JSX_GetTypeClass(), NULL)) {
     JSX_ReportException(cx, "Wrong type argument");
-    goto end_false;
+    return JS_FALSE;
   }
       
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(type), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
 
   size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, type));
   retpriv = JS_malloc(cx, sizeof(JSX_Pointer) + size);
 
   if (!retpriv)
-    goto end_false;
+    return JS_FALSE;
 
   JS_SetPrivate(cx, retobj, retpriv);
 
@@ -1447,30 +1448,26 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
   retpriv->type = (JSX_Type *) JS_GetPrivate(cx, type);
   retpriv->finalize=0;
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
+
 
 static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JSObject *typeobj) {
   JSX_Callback *retpriv;
   
   if (!JS_InstanceOf(cx, typeobj, JSX_GetTypeClass(), NULL) || ((JSX_Type *) JS_GetPrivate(cx, typeobj))->type != FUNCTIONTYPE) {
     JSX_ReportException(cx, "Type is not a C function");
-    goto end_false;
+    return JS_FALSE;
   }
       
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
   if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
 
   retpriv = JS_malloc(cx, sizeof(JSX_Callback));
   if (!retpriv)
-    goto end_false;
+    return JS_FALSE;
 
   void *code;
   retpriv->writeable=ffi_closure_alloc(sizeof(ffi_closure), &code);
@@ -1481,16 +1478,11 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   retpriv->type = (JSX_Type *) JS_GetPrivate(cx, typeobj);
 
   if(ffi_prep_closure_loc(retpriv->writeable, JSX_GetCIF(cx, (JSX_TypeFunction *) retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
-    goto end_false;
+    return JS_FALSE;
 
   JS_SetPrivate(cx, retobj, retpriv);
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1518,29 +1510,25 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   if (!typeobj) {
     jsval typeval;
     if (!JS_GetProperty(cx, retobj, "type", &typeval))
-      goto end_false;
+      return JS_FALSE;
     if (typeval==JSVAL_VOID)
-      goto end_false;
+      return JS_FALSE;
     typeobj=JSVAL_TO_OBJECT(typeval);
   }
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
 
   ret = JS_malloc(cx, sizeof(JSX_Pointer));
   if (!ret)
-    goto end_false;
+    return JS_FALSE;
   ret->ptr=0;
   ret->type = (JSX_Type *) JS_GetPrivate(cx, typeobj);
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
+
 
 static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
@@ -1549,30 +1537,25 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 
   if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
     JSX_ReportException(cx, "Wrong argument type to malloc");
-    goto end_false;
+    return JS_FALSE;
   }
 
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
 
   if (!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetType(VOIDTYPE,0,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
 
   length=INT_TO_JSVAL(argv[0]);
   ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
-    goto end_false;
+    return JS_FALSE;
   ret->ptr=ret+1;
   ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1583,31 +1566,26 @@ static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 
   if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
     JSX_ReportException(cx, "Wrong argument type to calloc");
-    goto end_false;
+    return JS_FALSE;
   }
 
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
 
   if (!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetType(VOIDTYPE,0,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
 
   length=INT_TO_JSVAL(argv[0]);
   ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
-    goto end_false;
+    return JS_FALSE;
   ret->ptr=ret+1;
   ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
   memset(ret->ptr,0,length);
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1619,14 +1597,14 @@ static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   if (argc<1 || !JSVAL_IS_INT(argv[0])) {
     JSX_ReportException(cx, "Wrong argument type to realloc");
-    goto end_false;
+    return JS_FALSE;
   }
 
   ret=JS_GetPrivate(cx, obj);
 
   if (ret->ptr!=ret+1) {
     JSX_ReportException(cx, "Pointer was not allocated with malloc or calloc");
-    goto end_false;
+    return JS_FALSE;
   }
     
   length=INT_TO_JSVAL(argv[0]);
@@ -1635,17 +1613,12 @@ static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   newptr = JS_realloc(cx, ret, sizeof(JSX_Pointer) + length);
   if (!newptr)
-    goto end_false;
+    return JS_FALSE;
   ret=newptr;
   ret->ptr=ret+1;
   JS_SetPrivate(cx, obj, ret);
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1654,7 +1627,7 @@ static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *retobj, JSString 
   JSX_Pointer *ret;
 
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetType(INTTYPE,1,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    goto end_false;
+    return JS_FALSE;
 
   length=JS_GetStringLength(str);
   ret = JS_malloc(cx, sizeof(JSX_Pointer) + sizeof(short) * (length + 1));
@@ -1665,12 +1638,7 @@ static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *retobj, JSString 
 
   memcpy(ret->ptr, JS_GetStringChars(str), sizeof(short)*(length+1));
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1683,10 +1651,10 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
 
   ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   if (!ptr)
-    goto end_false;
+    return JS_FALSE;
 
   if (ptr->ptr)
-    goto end_true;
+    return JS_TRUE;
 
   JS_LookupProperty(cx, obj, "dl", &tmp);
   if (tmp==JSVAL_VOID || tmp==JSVAL_NULL || !JSVAL_IS_OBJECT(tmp))
@@ -1696,10 +1664,9 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
 
   JS_LookupProperty(cx, obj, "symbol", &tmp);
   if (tmp==JSVAL_VOID || !JSVAL_IS_STRING(tmp))
-    goto end_false;
-  else
-    nametmp=JS_GetStringBytes(JSVAL_TO_STRING(tmp));
+    return JS_FALSE;
 
+  nametmp=JS_GetStringBytes(JSVAL_TO_STRING(tmp));
   name=JS_malloc(cx, JS_GetStringLength(JSVAL_TO_STRING(tmp))+1);
   memcpy(name,nametmp,JS_GetStringLength(JSVAL_TO_STRING(tmp)));
   name[JS_GetStringLength(JSVAL_TO_STRING(tmp))]=0;
@@ -1718,17 +1685,12 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
   if (!ptr->ptr) {
     JSX_ReportException(cx, "Unresolved symbol %s",name);
     JS_free(cx, name);
-    goto end_false;
+    return JS_FALSE;
   }
 
   JS_free(cx, name);
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1740,28 +1702,23 @@ static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *
   if (argc<1 ||
       !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
     JSX_ReportException(cx, "Wrong argument to cast");
-    goto end_false;
+    return JS_FALSE;
   }
 
   ptr=JS_GetPrivate(cx, obj);
   if (!ptr->ptr && !JSX_PointerResolve(cx, obj))
-    goto end_false;
+    return JS_FALSE;
 
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
   if (!JSX_InitPointer(cx, newobj, JSVAL_TO_OBJECT(argv[0]))) {
-    goto end_false;
+    return JS_FALSE;
   }
 
   newptr=JS_GetPrivate(cx, newobj);
   newptr->ptr=ptr->ptr;
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1777,7 +1734,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
   }
 
   if (argc==0)
-    goto end_true;
+    return JS_TRUE;
 
   if (argc>=1 &&
       JSVAL_IS_OBJECT(argv[0]) &&
@@ -1802,38 +1759,30 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
       }
       
       if (!JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), typeObject)) {
-	goto end_false;
+	return JS_FALSE;
       }
       
-      goto end_true;
-    } else {
+      return JS_TRUE;
+    }
 
       // Allocation constructor
       
       if (!JSX_InitPointerAlloc(cx, obj, JSVAL_TO_OBJECT(argv[0]))) {
-	goto end_false;
+	return JS_FALSE;
       }
       
       if (argc>=2 && argv[1]!=JSVAL_VOID) {
 	JSX_Pointer *ptr = JS_GetPrivate(cx,obj);
 	if (!JSX_Set(cx, ptr->ptr, 0, ptr->type, argv[1])) {
-	  goto end_false;
+	  return JS_FALSE;
 	}
       }
-    }
 
-    goto end_true;
+    return JS_TRUE;
   }
 
   JSX_ReportException(cx, "Wrong arguments to Pointer");
-  goto end_false;
-
- end_true:
-  return JS_TRUE;
-
- end_false:
   return JS_FALSE;
-
 }
 
 
@@ -1943,25 +1892,20 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
   
   if (ptr->type->type!=FUNCTIONTYPE) {
     if (ptr->ptr==0 && !JSX_PointerResolve(cx, obj))
-      goto end_false;
+      return JS_FALSE;
   }
 
   ret=JSX_Get(cx, ptr->ptr, 0, 0, ptr->type, vp);
 
   if (!ret)
-    goto end_false;
+    return JS_FALSE;
 
   if (ret==-1) {
     // Created new function
     JS_DefineProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", OBJECT_TO_JSVAL(obj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
   }
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -1989,7 +1933,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
 
   if (*vp==JSVAL_NULL || *vp==JSVAL_VOID) {
     ptr->finalize=0;
-    goto end_true;
+    return JS_TRUE;
   }
 
   if (!JSVAL_IS_OBJECT(*vp) ||
@@ -1997,7 +1941,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
       !JS_LookupProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", &ptrobj) ||
       !JS_InstanceOf(cx, JSVAL_TO_OBJECT(ptrobj), JSX_GetPointerClass(), NULL)) {
     JSX_ReportException(cx, "Wrong value type for finalize property");
-    goto end_false;
+    return JS_FALSE;
   }
 
   finptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrobj));
@@ -2007,20 +1951,15 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
       ((JSX_TypeFunction *) type)->param[0].type->type != POINTERTYPE ||
       ((JSX_TypeFunction *) type)->param[0].isConst) {
     JSX_ReportException(cx, "Wrong function type for finalize property");
-    goto end_false;
+    return JS_FALSE;
   }
 
   if (!finptr->ptr && !JSX_PointerResolve(cx, JSVAL_TO_OBJECT(ptrobj)))
-    goto end_false;
+    return JS_FALSE;
 
   ptr->finalize=finptr->ptr;
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -2055,28 +1994,20 @@ static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, js
 
 
 static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-
-  JSObject *newobj;
-
-
   if (argc<1 || !JSVAL_IS_STRING(argv[0])) {
     JSX_ReportException(cx, "Wrong argument type to UCString");
-    goto end_false;
+    return JS_FALSE;
   }
 
+  JSObject *newobj;
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
 
   if (!JSX_InitPointerUCString(cx, newobj, JSVAL_TO_STRING(argv[0]))) {
-    goto end_false;
+    return JS_FALSE;
   }
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
@@ -2122,7 +2053,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
   ptr=JS_GetPrivate(cx, obj);
   if (ptr->ptr==0 && !JSX_PointerResolve(cx,obj))
-    goto end_false;
+    return JS_FALSE;
 
   thisptr=ptr->ptr;
 
@@ -2132,7 +2063,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
   if (argc==0) {
     JSX_ReportException(cx, "Missing argument to pointer.member");
-    goto end_false;
+    return JS_FALSE;
   }
 
   for (i=0; i<argc; i++) {
@@ -2141,7 +2072,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
     case ARRAYTYPE:
       if (!JSVAL_IS_INT(argv[i])) {
 	JSX_ReportException(cx, "Wrong argument no %d to pointer.member", i);
-	goto end_false;
+        return JS_FALSE;
       }
       type = ((JSX_TypePointer *) type)->direct;
       thisptr+=JSX_TypeSize(type)*JSVAL_TO_INT(argv[i]);
@@ -2161,22 +2092,22 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 	if(n == ((JSX_TypeStructUnion *) type)->nMember) {
  	  JSX_ReportException(cx, "Unknown member %s as index no %d", myname, i);
- 	  goto end_false;
+ 	  return JS_FALSE;
 	}
 
 	if(((JSX_TypeStructUnion *) type)->member[n].type->type == BITFIELDTYPE) {
  	  JSX_ReportException(cx, "Bitfield member %s as index no %d", myname, i);
- 	  goto end_false;
+ 	  return JS_FALSE;
 	}
 
       } else {
 	JSX_ReportException(cx, "Wrong argument no %d to pointer.member", i);
-	goto end_false;
+	return JS_FALSE;
       }
 
       if(n < 0 || n >= ((JSX_TypeStructUnion *) type)->nMember) {
 	JSX_ReportException(cx, "Index %d out of bounds: %d not in range [%d, %d]", i, n, 0, ((JSX_TypeStructUnion *) type)->nMember - 1);
-	goto end_false;
+	return JS_FALSE;
       }
       thisptr += ((JSX_TypeStructUnion *) type)->member[n].offset / 8;
       type = ((JSX_TypeStructUnion *) type)->member[n].type;
@@ -2184,7 +2115,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
     default:
       JSX_ReportException(cx, "Index no %d to memberless C type", i);
-      goto end_false;
+      return JS_FALSE;
     }
   }
 
@@ -2199,12 +2130,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
   JS_DefineProperty(cx, newobj, "type", OBJECT_TO_JSVAL(ptr->type->typeObject), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
   JS_SetPrivate(cx, newobj, ptr);
 
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
