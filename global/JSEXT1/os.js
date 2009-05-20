@@ -66,7 +66,7 @@ Miscellaneous wrappers for os-related things in clib where the raw ffi interface
   isdir: function(path) {
     const ret = Pointer(clib['struct stat']);
     if(clib.call_stat(path, ret) == -1) return false;
-    if((ret.member(0, "st_mode").$ & clib.__S_IFMT) == clib.__S_IFDIR) return true;
+    if((ret.field("st_mode").$ & clib.__S_IFMT) == clib.__S_IFDIR) return true;
     return false;
   },
 

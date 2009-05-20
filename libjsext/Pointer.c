@@ -2016,6 +2016,54 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
+// to replace .member(0, "foo")
+
+// Read a field from a struct/union that this pointer points to (without converting the entire struct into a javascript ibject)
+static JSBool JSX_Pointer_field(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  if(argc != 1 || !JSVAL_IS_STRING(argv[0]))
+    return JSX_ReportException(cx, "Pointer.prototype.field(): must be passed a single argument, of type string");
+
+  JSX_Pointer *ptr;
+  ptr = JS_GetPrivate(cx, obj);
+
+  if(!ptr->type->type == POINTERTYPE) return JS_FALSE; // should be impossible
+
+  if(ptr->type->type != STRUCTTYPE && ptr->type->type != UNIONTYPE)
+    return JSX_ReportException(cx, "Pointer.prototype.field(): must only be called on pointers to struct or union types");
+
+  JSX_TypeStructUnion *sutype;
+  sutype = (JSX_TypeStructUnion *) ptr->type;
+
+  char *myname = JS_GetStringBytes(JSVAL_TO_STRING(argv[0]));
+
+  int ix;
+  for(ix = 0; ix < sutype->nMember; ++ix) {
+    if(strcmp(sutype->member[ix].name, myname) == 0)
+      break;
+  }
+
+  if(ix == sutype->nMember)
+    return JSX_ReportException(cx, "Pointer.prototype.field(): unknown struct/union member: %s", myname);
+  if(sutype->member[ix].type->type == BITFIELDTYPE)
+    return JSX_ReportException(cx, "Pointer.prototype.field(): requested member is a bitfield: %s", myname);
+
+  JSObject *newobj;
+  newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+  *rval = OBJECT_TO_JSVAL(newobj);
+
+  JSX_Pointer *newptr;
+  newptr = (JSX_Pointer *) malloc(sizeof(JSX_Pointer));
+  newptr->type = sutype->member[ix].type;
+  newptr->ptr = ptr->ptr + sutype->member[ix].offset / 8;
+  newptr->finalize = 0;
+
+  JS_DefineProperty(cx, newobj, "type", OBJECT_TO_JSVAL(newptr->type->typeObject), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+  JS_SetPrivate(cx, newobj, newptr);
+
+  return JS_TRUE;
+}
+
+
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JSX_Pointer *ptr;
   int ret;
@@ -2131,6 +2179,7 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
     {"UCstring",JSX_Pointer_pr_UCString,1,0,0},
     {"cast",JSX_Pointer_cast,1,0,0},
     {"member",JSX_Pointer_member,1,0,0},
+    {"field",JSX_Pointer_field,1,0,0},
     {"realloc",JSX_Pointer_realloc,1,0,0},
     {"string",JSX_Pointer_pr_string,1,0,0},
     {"valueOf",JSX_Pointer_valueOf,0,0,0},

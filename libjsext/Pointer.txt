@@ -159,6 +159,14 @@ Pointer.prototype.function
 This read-only property contains the javascript function being pointed to by a callback pointer.
 
 
+Pointer.prototype.field(field_name)
+-----------------------------------
+
+If the pointer is to a struct or union, this returns a pointer to the named field within that struct.  For any other pointer type, or if the field name doesn't exist, an exception is thrown.
+
+The purpose of this method is to allow writing ptr.field('foo').$ rather than ptr.$.foo, thus saving converting the entire struct into a javascript value when only one field is needed.
+
+
 Pointer.prototype.member(index0 [, index1] [, ...])
 ---------------------------------------------------
 
