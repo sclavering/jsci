@@ -26,6 +26,5 @@ Type.long_double.toString = function() { return "long double"; };
 Type['void'].toString = function() { return "void"; };
 
 Pointer.prototype.toString = function() {
-  // valueOf() returns position / size-in-bits, for some bizarre reason
-  return (this.valueOf() * this.type.sizeof).toString(16);
+  return Number(this.valueOf()).toString(16);
 };

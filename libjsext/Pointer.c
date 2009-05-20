@@ -1976,10 +1976,8 @@ static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSX_Pointer *ptr;
-  jsdouble val;
-  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  val=((jsdouble)(long)ptr->ptr)/JSX_TypeSize(ptr->type);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  jsdouble val = (jsdouble) (long) ptr->ptr;
   JS_NewNumberValue(cx, val, rval);
   return JS_TRUE;
 }
