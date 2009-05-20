@@ -44,7 +44,7 @@
 jsval JSX_make_Type(JSContext *cx, JSObject *glo);
 jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
 jsval JSX_make_Dl(JSContext *cx, JSObject *glo);
-jsval JSX_make_load(JSContext *cx, JSObject *glo);
+jsval JSX_make_load(JSContext *cx);
 jsval JSX_make_environment(JSContext *cx, JSObject *obj);
 
 
@@ -150,7 +150,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JS_SetProperty(cx, argobj, "Pointer", &tmp);
   tmp = JSX_make_Dl(cx, obj);
   JS_SetProperty(cx, argobj, "Dl", &tmp);
-  tmp = JSX_make_load(cx, obj);
+  tmp = JSX_make_load(cx);
   JS_SetProperty(cx, argobj, "load", &tmp);
   tmp = JSX_make_environment(cx, obj);
   JS_SetProperty(cx, argobj, "environment", &tmp);
