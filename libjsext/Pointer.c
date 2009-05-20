@@ -1674,65 +1674,43 @@ static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *obj;
-
-
-  if (!JS_IsConstructing(cx)) {
-    obj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-    *rval=OBJECT_TO_JSVAL(obj);
+  if(JS_IsConstructing(cx)) {
+    obj = origobj;
   } else {
-    obj=origobj;
+    obj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+    *rval = OBJECT_TO_JSVAL(obj);
   }
 
-  if (argc==0)
-    return JS_TRUE;
+  if(argc == 0) return JS_TRUE;
 
-  if (argc>=1 &&
-      JSVAL_IS_OBJECT(argv[0]) &&
-      !JSVAL_IS_NULL(argv[0]) &&
-      JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
+  if(argc < 1 || !JSVAL_IS_OBJECT(argv[0]) || JSVAL_IS_NULL(argv[0]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
+    JSX_ReportException(cx, "Wrong arguments to Pointer");
+    return JS_FALSE;
+  }
 
+  JSObject *typeObject = JSVAL_TO_OBJECT(argv[0]);
 
-    JSObject *typeObject=JSVAL_TO_OBJECT(argv[0]);
-
-    if (argc>=2 &&
-	JSVAL_IS_OBJECT(argv[1]) &&
-	JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
-
-      // Callback constructor
-      
-      JSX_Pointer *ptr = JS_GetPrivate(cx, typeObject);
-      JSX_Type *type = ptr->type;
-      
-      if (type->type==POINTERTYPE) { // Accept both function type and pointer to function type
-	typeObject = ((JSX_TypePointer *) type)->direct->typeObject;
-	type=JS_GetPrivate(cx, typeObject);
-      }
-      
-      if (!JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), typeObject)) {
-	return JS_FALSE;
-      }
-      
-      return JS_TRUE;
+  // Are we creating a C wrapper for a JS function so it can be used as a callback?
+  if(argc >= 2 && JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
+    JSX_Pointer *ptr = JS_GetPrivate(cx, typeObject);
+    JSX_Type *type = ptr->type;
+    if(type->type == POINTERTYPE) { // Accept both function type and pointer to function type
+      typeObject = ((JSX_TypePointer *) type)->direct->typeObject;
+      type = JS_GetPrivate(cx, typeObject);
     }
-
-      // Allocation constructor
-      
-      if (!JSX_InitPointerAlloc(cx, obj, JSVAL_TO_OBJECT(argv[0]))) {
-	return JS_FALSE;
-      }
-      
-      if (argc>=2 && argv[1]!=JSVAL_VOID) {
-	JSX_Pointer *ptr = JS_GetPrivate(cx,obj);
-	if (!JSX_Set(cx, ptr->ptr, 0, ptr->type, argv[1])) {
-	  return JS_FALSE;
-	}
-      }
-
+    if(JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), typeObject)) return JS_FALSE;
     return JS_TRUE;
   }
 
-  JSX_ReportException(cx, "Wrong arguments to Pointer");
-  return JS_FALSE;
+  // Allocate memory and create Pointer instance
+  if(!JSX_InitPointerAlloc(cx, obj, JSVAL_TO_OBJECT(argv[0]))) return JS_FALSE;
+  // Set initial value, if provided
+  if(argc >= 2 && argv[1] != JSVAL_VOID) {
+    JSX_Pointer *ptr = JS_GetPrivate(cx,obj);
+    if(!JSX_Set(cx, ptr->ptr, 0, ptr->type, argv[1])) return JS_FALSE;
+  }
+
+  return JS_TRUE;
 }
 
 
