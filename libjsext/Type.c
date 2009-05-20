@@ -939,14 +939,9 @@ static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval
 
 
 static JSBool JSX_Type_sizeof(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
-  int size;
-
-  size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, obj));
-  if (!size)
-    *rval=JSVAL_VOID;
-  else
-    *rval=INT_TO_JSVAL(size);
-
+  *rval = JSVAL_VOID;
+  int size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, obj));
+  if(size) *rval = INT_TO_JSVAL(size);
   return JS_TRUE;
 }
 
