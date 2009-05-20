@@ -1927,97 +1927,6 @@ static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsva
 }
 
 
-static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *newobj;
-  JSX_Pointer *ptr;
-  char *thisptr;
-  JSX_Type *type;
-  JSX_TypePointer tmptype;
-  int n;
-  uintN i;
-
-  ptr=JS_GetPrivate(cx, obj);
-  thisptr=ptr->ptr;
-
-  type = (JSX_Type *) &tmptype;
-  ((JSX_TypePointer *) type)->type = POINTERTYPE;
-  ((JSX_TypePointer *) type)->direct = ptr->type;
-
-  if (argc==0) {
-    JSX_ReportException(cx, "Missing argument to pointer.member");
-    return JS_FALSE;
-  }
-
-  for (i=0; i<argc; i++) {
-    switch(type->type) {
-    case POINTERTYPE:
-    case ARRAYTYPE:
-      if (!JSVAL_IS_INT(argv[i])) {
-	JSX_ReportException(cx, "Wrong argument no %d to pointer.member", i);
-        return JS_FALSE;
-      }
-      type = ((JSX_TypePointer *) type)->direct;
-      thisptr+=JSX_TypeSize(type)*JSVAL_TO_INT(argv[i]);
-      break;
-
-    case STRUCTTYPE:
-    case UNIONTYPE:
-      if (JSVAL_IS_INT(argv[i])) {
-	n=JSVAL_TO_INT(argv[i]);
-      } else if (JSVAL_IS_STRING(argv[i])) {
-        char *myname=JS_GetStringBytes(JSVAL_TO_STRING(argv[i]));
-
-	for(n = 0; n < ((JSX_TypeStructUnion *) type)->nMember; n++) {
-	  if(strcmp(((JSX_TypeStructUnion *) type)->member[n].name, myname) == 0)
-	    break;
-	}
-
-	if(n == ((JSX_TypeStructUnion *) type)->nMember) {
- 	  JSX_ReportException(cx, "Unknown member %s as index no %d", myname, i);
- 	  return JS_FALSE;
-	}
-
-	if(((JSX_TypeStructUnion *) type)->member[n].type->type == BITFIELDTYPE) {
- 	  JSX_ReportException(cx, "Bitfield member %s as index no %d", myname, i);
- 	  return JS_FALSE;
-	}
-
-      } else {
-	JSX_ReportException(cx, "Wrong argument no %d to pointer.member", i);
-	return JS_FALSE;
-      }
-
-      if(n < 0 || n >= ((JSX_TypeStructUnion *) type)->nMember) {
-	JSX_ReportException(cx, "Index %d out of bounds: %d not in range [%d, %d]", i, n, 0, ((JSX_TypeStructUnion *) type)->nMember - 1);
-	return JS_FALSE;
-      }
-      thisptr += ((JSX_TypeStructUnion *) type)->member[n].offset / 8;
-      type = ((JSX_TypeStructUnion *) type)->member[n].type;
-      break;
-
-    default:
-      JSX_ReportException(cx, "Index no %d to memberless C type", i);
-      return JS_FALSE;
-    }
-  }
-
-  newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  *rval=OBJECT_TO_JSVAL(newobj);
-
-  ptr = (JSX_Pointer *) malloc(sizeof(JSX_Pointer));
-  ptr->type=type;
-  ptr->ptr=thisptr;
-  ptr->finalize=0;
-
-  JS_DefineProperty(cx, newobj, "type", OBJECT_TO_JSVAL(ptr->type->typeObject), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-  JS_SetPrivate(cx, newobj, ptr);
-
-  return JS_TRUE;
-}
-
-
-// to replace .member(0, "foo")
-
 // Read a field from a struct/union that this pointer points to (without converting the entire struct into a javascript ibject)
 static JSBool JSX_Pointer_field(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   if(argc != 1 || !JSVAL_IS_STRING(argv[0]))
@@ -2178,7 +2087,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   static struct JSFunctionSpec memberfunc[]={
     {"UCstring",JSX_Pointer_pr_UCString,1,0,0},
     {"cast",JSX_Pointer_cast,1,0,0},
-    {"member",JSX_Pointer_member,1,0,0},
     {"field",JSX_Pointer_field,1,0,0},
     {"realloc",JSX_Pointer_realloc,1,0,0},
     {"string",JSX_Pointer_pr_string,1,0,0},
