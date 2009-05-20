@@ -1983,12 +1983,6 @@ static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsva
 }
 
 
-/*
-  Pointer.prototype.pointer
-
-  Returns pointer object
- */
-
 static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   JSX_Pointer *ptr;
