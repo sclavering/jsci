@@ -715,7 +715,6 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
   int ret=0;
   int siz;
   uintN i;
-  int isconst;
   JSX_ParamType tmptype = { 0, 0, 0 };
   JSX_ParamType *thistype;
 
@@ -740,11 +739,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
 	thistype=0;
     }
 
-    if (!convconst &&
-	thistype && 
-	(isconst = thistype->isConst || 
-	 !JSVAL_IS_OBJECT(*rval) ||
-	 *rval==JSVAL_NULL)) { // Const or immutable
+    if (!convconst && thistype && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval==JSVAL_NULL)) { // Const or immutable
       if (do_clean)
 	siz=JSX_Get(cx, *argptr, 0, 2, thistype ? thistype->type : 0, rval);
       else {
