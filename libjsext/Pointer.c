@@ -34,7 +34,6 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type)
 static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSObject *type);
 static JSBool JSX_InitPointerString(JSContext *cx, JSObject *obj, JSString *str);
 static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *obj, JSString *str);
-static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj);
 
 
 static JSClass JSX_PointerClass={
@@ -680,8 +679,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       return size;
 
     ptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
-    if (ptr->ptr==NULL && !JSX_PointerResolve(cx, JSVAL_TO_OBJECT(*rval)))
-      return 0; // Error message in resolve.
     memcpy(ptr->ptr, p, size);
 
     return size;
@@ -854,8 +851,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   pointercommon:
 
     ptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
-    if (ptr->ptr==NULL && !JSX_PointerResolve(cx, JSVAL_TO_OBJECT(v)))
-      return 0; // Error message in resolve.
     *(void **)p=ptr->ptr;
     return sizeof(void *);
 
@@ -1311,13 +1306,9 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   case TYPEPAIR(JSPOINTER,ARRAYTYPE):
 
     // Copy contents pointed to into array
-
     size=JSX_TypeSize(type);
     ptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
-    if (ptr->ptr==NULL && !JSX_PointerResolve(cx, JSVAL_TO_OBJECT(v)))
-      return 0; // Error message in resolve.
     memcpy(p, ptr->ptr, size);
-
     return size;
 
   default:
@@ -1635,15 +1626,6 @@ static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *retobj, JSString 
 }
 
 
-static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
-  JSX_Pointer *ptr;
-  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if(!ptr) return JS_FALSE;
-  if(ptr->ptr) return JS_TRUE;
-  return JS_FALSE;
-}
-
-
 static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   JSX_Pointer *ptr, *newptr;
@@ -1656,8 +1638,6 @@ static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *
   }
 
   ptr=JS_GetPrivate(cx, obj);
-  if (!ptr->ptr && !JSX_PointerResolve(cx, obj))
-    return JS_FALSE;
 
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
@@ -1740,10 +1720,6 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   JSX_Type *type;
   JSX_Pointer *ptr = JS_GetPrivate(cx, obj);
 
-  if (ptr->ptr==0 && !JSX_PointerResolve(cx, obj)) {
-    goto failure;
-  }
-
   type=ptr->type;
 
   if (type->type!=FUNCTIONTYPE) {
@@ -1817,12 +1793,6 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
   ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   *vp=JSVAL_VOID;
-  
-  if (ptr->type->type!=FUNCTIONTYPE) {
-    if (ptr->ptr==0 && !JSX_PointerResolve(cx, obj))
-      return JS_FALSE;
-  }
-
   ret=JSX_Get(cx, ptr->ptr, 0, 0, ptr->type, vp);
 
   if (!ret)
@@ -1839,7 +1809,6 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
   if(!JSX_Set(cx, ptr->ptr, 0, ptr->type, *vp)) return JS_FALSE;
   return JS_TRUE;
 }
@@ -1881,9 +1850,6 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
     JSX_ReportException(cx, "Wrong function type for finalize property");
     return JS_FALSE;
   }
-
-  if (!finptr->ptr && !JSX_PointerResolve(cx, JSVAL_TO_OBJECT(ptrobj)))
-    return JS_FALSE;
 
   ptr->finalize=finptr->ptr;
 
@@ -1970,11 +1936,7 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
   int n;
   uintN i;
 
-
   ptr=JS_GetPrivate(cx, obj);
-  if (ptr->ptr==0 && !JSX_PointerResolve(cx,obj))
-    return JS_FALSE;
-
   thisptr=ptr->ptr;
 
   type = (JSX_Type *) &tmptype;
@@ -2062,7 +2024,6 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
     return JS_TRUE; // Only handle numerical properties
 
   ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
 
   ret = JSX_Get(cx, (char *) ptr->ptr + JSX_TypeSize(ptr->type) * JSVAL_TO_INT(id), 0, 0, ptr->type, vp);
   if(ret == 0) return JS_FALSE;
@@ -2088,7 +2049,6 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
 
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
 
   int ret;
   ret = JSX_Set(cx, (char *) ptr->ptr + JSX_TypeSize(ptr->type) * JSVAL_TO_INT(id), 0, ptr->type, *vp);
