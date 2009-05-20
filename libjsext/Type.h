@@ -67,7 +67,6 @@ typedef struct {
   JSObject *typeObject;
   JSX_ParamType *param;
   int nParam;
-  int param_capacity;
   enum JSX_CallConv callConv;
   JSX_Type *returnType;
   int elipsis;

@@ -353,7 +353,6 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
   JS_DefineProperty(cx, retobj, "callConv", JSVAL_VOID, JSX_Type_callConv, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
   JS_DefineProperty(cx, retobj, "elipsis", JSVAL_VOID, JSX_Type_elipsis, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
 
-  type->param_capacity=nParam+1;
   type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
   memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
 
