@@ -27,7 +27,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *a
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
-static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, int convconst, void **argptr);
+static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, void **argptr);
 static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
@@ -1341,7 +1341,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 }
 
 
-static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, int convconst, void **argptr) {
+static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, void **argptr) {
   int ret=0;
   int siz, cursiz;
   uintN i;
@@ -1901,7 +1901,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   argbuf=retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
   if (arg_size) {
-    if(!JSX_Set_multi(cx, (void *) argbuf, 1, argc, ((JSX_TypeFunction *) type)->param, argv, 1, argptr))
+    if(!JSX_Set_multi(cx, (void *) argbuf, 1, argc, ((JSX_TypeFunction *) type)->param, argv, argptr))
       goto failure;
   }
 
@@ -2290,7 +2290,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
     //    printf("FAILCALL\n");
   }
   
-  JSX_Set_multi(cb->cx, 0, 0, type->nParam, type->param, tmp_argv, 0, args);
+  JSX_Set_multi(cb->cx, 0, 0, type->nParam, type->param, tmp_argv, args);
 
   JS_RemoveRoot(cb->cx, &rval);
   for (i=0; i<type->nParam; i++) {
