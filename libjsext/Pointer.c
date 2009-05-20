@@ -1448,8 +1448,6 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
   retpriv->type = (JSX_Type *) JS_GetPrivate(cx, type);
   retpriv->finalize=0;
 
-  goto end_true;
-
  end_true:
   return JS_TRUE;
 
@@ -1487,9 +1485,6 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
     goto end_false;
 
   JS_SetPrivate(cx, retobj, retpriv);
-
-
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -1540,8 +1535,6 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
 
-  goto end_true;
-
  end_true:
   return JS_TRUE;
 
@@ -1574,8 +1567,6 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
   ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
-
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -1611,8 +1602,6 @@ static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
   memset(ret->ptr,0,length);
-
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -1652,8 +1641,6 @@ static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsva
   ret->ptr=ret+1;
   JS_SetPrivate(cx, obj, ret);
 
-  goto end_true;
-
  end_true:
   return JS_TRUE;
 
@@ -1678,8 +1665,6 @@ static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *retobj, JSString 
   JS_SetPrivate(cx, retobj, ret);
 
   memcpy(ret->ptr, JS_GetStringChars(str), sizeof(short)*(length+1));
-
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -1738,7 +1723,6 @@ static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
   }
 
   JS_free(cx, name);
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -1772,8 +1756,6 @@ static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
   newptr=JS_GetPrivate(cx, newobj);
   newptr->ptr=ptr->ptr;
-
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -1975,8 +1957,6 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
     JS_DefineProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", OBJECT_TO_JSVAL(obj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
   }
 
-  goto end_true;
-
  end_true:
   return JS_TRUE;
 
@@ -2036,8 +2016,6 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
 
   ptr->finalize=finptr->ptr;
 
-  goto end_true;
-
  end_true:
   return JS_TRUE;
 
@@ -2093,8 +2071,6 @@ static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsv
   if (!JSX_InitPointerUCString(cx, newobj, JSVAL_TO_STRING(argv[0]))) {
     goto end_false;
   }
-
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -2233,7 +2209,6 @@ static JSBool JSX_Pointer_member(JSContext *cx, JSObject *obj, uintN argc, jsval
 
   JS_DefineProperty(cx, newobj, "type", OBJECT_TO_JSVAL(ptr->type->typeObject), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
   JS_SetPrivate(cx, newobj, ptr);
-  goto end_true;
 
  end_true:
   return JS_TRUE;
@@ -2249,7 +2224,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
   int ret;
 
   if (!JSVAL_IS_INT(id))
-    goto end_true; // Only handle numerical properties
+    return JS_TRUE; // Only handle numerical properties
 
   ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   if(ptr->ptr == 0 && !JSX_PointerResolve(cx, obj)) return JS_FALSE;
@@ -2270,14 +2245,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
     return JS_FALSE;
   }
 
-  goto end_true;
-
- end_true:
   return JS_TRUE;
-
- end_false:
-  return JS_FALSE;
-
 }
 
 
