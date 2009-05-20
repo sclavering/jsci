@@ -4,6 +4,7 @@
 #include "Pointer.h"
 #include <dlfcn.h>
 #include <string.h>
+#include "util.h"
 
 
 static JSBool dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
