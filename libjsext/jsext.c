@@ -54,7 +54,7 @@ static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval);
 
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
-static void printhelp() {
+static void printhelp(void) {
   puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
        "Evaluates FILE. If it is an anonymous JavaScript function, arguments are passed to it\n\n"
        "Options:\n"
