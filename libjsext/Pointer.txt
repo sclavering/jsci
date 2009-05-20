@@ -141,12 +141,6 @@ Pointer.prototype.cast(type)
 Creates and returns a new pointer which points to the same address location as the original one.  The new pointer is assigned the type passed to the function.
 
 
-Pointer.prototype.dl
---------------------
-
-Read-only.  Contains the dl object which this pointer is attached to, or undefined if it is not attached to a dl object.
-
-
 Pointer.prototype.finalize
 --------------------------
 
@@ -201,12 +195,6 @@ Pointer.prototype.string([len])
 Reads |len| bytes starting from the pointer's address (or until a null byte, if |len| is omitted), and returns the result as a javascript string.  Since javascript strings are composed of 16-bit "characters", each byte of the C string is padding with a 0 high-byte when forming the javascript string.
 
 (So for an ASCII C string, this will return the correct javascript string.  For any other encoding, including UTF8, it won't.)
-
-
-Pointer.prototype.symbol
-------------------------
-
-Read-only.  Contains the symbol string which this pointer is attached to, or undefined if it is not attached to a symbol.
 
 
 Pointer.prototype.toString()

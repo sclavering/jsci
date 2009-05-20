@@ -11,6 +11,7 @@ static JSBool dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsva
 static void JS_DLL_CALLBACK JSEXT_dl_finalize(JSContext *cx, JSObject *obj);
 static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JS_DLL_CALLBACK JSX_dl_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
+static JSBool JSX_dl_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval);
 
 static JSClass JSEXT_dl_class = {
     "Dl",
@@ -24,37 +25,6 @@ static JSClass JSEXT_dl_class = {
     JS_ConvertStub,
     JSEXT_dl_finalize
 };
-
-static JSBool JSX_dl_pointer(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *obj;
-
-  if (argc>=2 &&
-      JSVAL_IS_STRING(argv[0]) &&
-      JSVAL_IS_OBJECT(argv[1]) &&
-      !JSVAL_IS_NULL(argv[1]) &&
-      JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[1]), JSX_GetTypeClass(), NULL)) {
-
-    // Lazy resolution constructor
-
-    obj=JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-    *rval=OBJECT_TO_JSVAL(obj);
-
-    if (!JSX_InitPointer(cx, obj, JSVAL_TO_OBJECT(argv[1]))) {
-      return JS_FALSE;
-    }
-    if (!JS_DefineProperty(cx, obj, "dl", OBJECT_TO_JSVAL(origobj), 0, 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT)) {
-      return JS_FALSE;
-    }
-    if (!JS_DefineProperty(cx, obj, "symbol", argv[0], 0, 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT)) {
-      return JS_FALSE;
-    }
-    return JS_TRUE;
-  }
-
-  JS_ReportError(cx, "Wrong arguments to dl.pointer");
-  return JS_FALSE;
-  
-}
 
 
 jsval JSX_make_Dl(JSContext *cx, JSObject *glob) {
@@ -186,3 +156,29 @@ static void JS_DLL_CALLBACK JSEXT_dl_finalize(JSContext *cx, JSObject *obj) {
   //  dlclose(dl);
 }
 
+
+static JSBool JSX_dl_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval) {
+  if(argc < 2 || !JSVAL_IS_STRING(argv[0]) || !JSVAL_IS_OBJECT(argv[1]) || JSVAL_IS_NULL(argv[1]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[1]), JSX_GetTypeClass(), NULL)) {
+    JS_ReportError(cx, "Dl.prototype.pointer(): bad arguments");
+    return JS_FALSE;
+  }
+
+  JSObject *obj;
+  obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
+  *rval = OBJECT_TO_JSVAL(obj);
+
+  if(!JSX_InitPointer(cx, obj, JSVAL_TO_OBJECT(argv[1]))) return JS_FALSE;
+
+  JSX_Pointer *ptr;
+  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  if(!ptr) return JS_FALSE;
+
+  ptr->ptr = (void *) dlsym(JS_GetPrivate(cx, dl), JS_GetStringBytes(JSVAL_TO_STRING(argv[0])));
+
+  if(!ptr->ptr) {
+    JSX_ReportException(cx, "Dl.prototype.pointer(): couldn't resolve symbol");
+    return JS_FALSE;
+  }
+
+  return JS_TRUE;
+}

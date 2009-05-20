@@ -7,13 +7,6 @@
 # include <alloca.h>
 #include "util.h"
 
-
-typedef struct {
-  void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
-  JSX_Type *type;
-  void (*finalize) (void *);
-} JSX_Pointer;
-
 typedef struct {
   void *ptr; // Points to executable code
   JSX_Type *type;
@@ -1643,54 +1636,11 @@ static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *retobj, JSString 
 
 
 static JSBool JSX_PointerResolve(JSContext *cx, JSObject *obj) {
-  char *nametmp;
-  char *name;
-  JSObject *dl;
-  jsval tmp;
   JSX_Pointer *ptr;
-
   ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if (!ptr)
-    return JS_FALSE;
-
-  if (ptr->ptr)
-    return JS_TRUE;
-
-  JS_LookupProperty(cx, obj, "dl", &tmp);
-  if (tmp==JSVAL_VOID || tmp==JSVAL_NULL || !JSVAL_IS_OBJECT(tmp))
-    dl=0;
-  else
-    dl=JSVAL_TO_OBJECT(tmp);
-
-  JS_LookupProperty(cx, obj, "symbol", &tmp);
-  if (tmp==JSVAL_VOID || !JSVAL_IS_STRING(tmp))
-    return JS_FALSE;
-
-  nametmp=JS_GetStringBytes(JSVAL_TO_STRING(tmp));
-  name=JS_malloc(cx, JS_GetStringLength(JSVAL_TO_STRING(tmp))+1);
-  memcpy(name,nametmp,JS_GetStringLength(JSVAL_TO_STRING(tmp)));
-  name[JS_GetStringLength(JSVAL_TO_STRING(tmp))]=0;
-
-  {
-    static void *globaldl=0;
-    if (globaldl==0) {
-      globaldl=dlopen(0,RTLD_LAZY);
-    }
-    if (dl)
-      ptr->ptr=(void *)dlsym(JS_GetPrivate(cx, dl),name);
-    else
-      ptr->ptr=(void *)dlsym(globaldl,name);
-  }
-
-  if (!ptr->ptr) {
-    JSX_ReportException(cx, "Unresolved symbol %s",name);
-    JS_free(cx, name);
-    return JS_FALSE;
-  }
-
-  JS_free(cx, name);
-
-  return JS_TRUE;
+  if(!ptr) return JS_FALSE;
+  if(ptr->ptr) return JS_TRUE;
+  return JS_FALSE;
 }
 
 
