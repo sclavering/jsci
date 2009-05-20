@@ -66,24 +66,20 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
   script=JS_CompileScript(cx, obj, buf + shebanglen, S.st_size - shebanglen, filename, shebanglen ? 2 : 1);
   if (!script) goto failure;
   scrobj=JS_NewScriptObject(cx, script);
-  //  JS_AddRoot(cx, &scrobj);
   
   free(buf);
   buf=0;
   
-  //  *rval=OBJECT_TO_JSVAL(scrobj);
   *rval=JSVAL_ZERO;
 
   close(fd);
   fd=0;
   
-  //  return JS_TRUE;
-
   if (!JS_ExecuteScript(cx, obj, script, rval))
     goto failure;
 
   JS_RemoveRoot(cx, &scrobj);
-  //  JS_DestroyScript(cx, script);
+
   return JS_TRUE;
 
  failure:
@@ -91,8 +87,6 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
   if (fd) close(fd);
   if (scrobj)
     JS_RemoveRoot(cx, &scrobj);
-  //  if (script)
-  //    JS_DestroyScript(cx, script);
   return JS_FALSE;
 }
 
