@@ -5,8 +5,10 @@ This object lazily maps files and directories to properties on objects.
 
 Usage:
 
-    new ActiveDirectory( path )
-    ActiveDirectory.call(some_obj, path)  // adds properties to some_obj, rather than creating a new object
+    ActiveDirectory.get(path)               // returns a new or cached object
+    ActiveDirectory.get(path, some_object)  // adds properties to some_object (and also returns it)
+
+(For backwards compatibility, |new ActiveDirectory(path)| and |ActiveDirectory.call(some_object, path)| may also be used.)
 
 Say you have this directory structure:
 
@@ -50,6 +52,8 @@ Files and directories which start with any ASCII character less than A are ignor
 
 If there are both e.g. a "foo.js" and a "foo.txt", one or other will be chosen abitrarily.
 
+ActiveDirectory maintains an internal cache of all previously-created ActiveDirectory objects (keyed by filesystem path), and will always return a cached object if available rather than creating a new one.  You should thus be careful about mutating ActiveDirectory instances (since the alterations will be shared).  The cache is unlimited in size, and never expired.
+
 Properties of ActiveDirectory instances:
 
 * $name: [[String]] which contains the name of the property, except for root object, which by default has no name.
@@ -63,8 +67,21 @@ Properties of ActiveDirectory instances:
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
+const cached_instances = ActiveDirectory.cache = {
+}; // mapping from paths to already-created ActiveDirectory instances
+
+
+// ActiveDirectory used to be a constructor, and we retain backwards compatibility.
 function ActiveDirectory(path) {
-  var self=this;
+  ActiveDirectory.get(path, this);
+}
+
+
+ActiveDirectory.get = function get(path, obj) {
+  // "self" is misnamed for historical reasons
+  var self = obj || {};
+
+  if(!obj && cached_instances[path]) return cached_instances[path];
 
   self.$path=path;
   self.$curdir=self;
@@ -107,7 +124,7 @@ function ActiveDirectory(path) {
         if(typeof self == "function" && propname == "prototype") {
           var val = self[propname];
           var newpath = path + '/' + propname;
-          ActiveDirectory.call(val, newpath);
+          ActiveDirectory.get(newpath, val);
         }
         self[propname].$curdir = self[propname];
         self[propname].$name = propname;
@@ -120,20 +137,25 @@ function ActiveDirectory(path) {
       self.__defineSetter__(propname, make_setter(self, propname));
     }
   }
+
+  if(!obj) cached_instances[path] = self;
+
+  return self;
 }
 
 
 function make_subdir_getter(self, propname, oldgetter) {
     return function() {
+      var val, newpath = self.$path + '/' + propname;
+
       if(oldgetter) {
-        var val = oldgetter.call(self);
+        val = oldgetter.call(self);
+        ActiveDirectory.get(newpath, val);
       } else {
         delete self[propname];
-        var val = self[propname] = {};
+        val = self[propname] = ActiveDirectory.get(newpath);
       }
 
-      var newpath = self.$path + '/' + propname;
-      ActiveDirectory.call(val, newpath);
       val.$name=propname;
       self[propname].$parent=self;
       return val;
@@ -289,7 +311,6 @@ function pushd(chdirstack, dir) {
 function popd(chdirstack) {
   clib.chdir(chdirstack.pop());
 }
-
 
 
 return ActiveDirectory;
