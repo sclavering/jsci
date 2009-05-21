@@ -103,10 +103,6 @@ function ActiveDirectory(path) {
       // If there is also a 'prototype' directory, then read it right away - not possible
       // to defer. The test above works because the 'prototype' property will have been
       // defined (hasOwnProperty), but without a getter.
-
-      // However, when ActiveDirectory is called to refresh an existing directory,
-      // it must be prevented from doing self.
-
       if(!self.__lookupGetter__(propname)) {
         if(typeof self == "function" && propname == "prototype") {
           var val = self[propname];
