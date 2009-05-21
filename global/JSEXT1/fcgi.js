@@ -164,6 +164,7 @@ function _fcgi_handle_request(fd) {
   environment = _fcgi_get_env(rq);
 
   new CGI();
+  gc();
   libfcgi.FCGX_Finish_r(rq);
 }
 
