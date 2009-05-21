@@ -1,7 +1,14 @@
 /*
 ActiveDirectory
 
-This object maps files and directories to properties and objects. Say you have this directory structure:
+This object lazily maps files and directories to properties on objects.
+
+Usage:
+
+    new ActiveDirectory( path )
+    ActiveDirectory.call(some_obj, path)  // adds properties to some_obj, rather than creating a new object
+
+Say you have this directory structure:
 
     mydir/
     mydir/some_text.txt
@@ -12,11 +19,11 @@ This object maps files and directories to properties and objects. Say you have t
     mydir/a_directory/
     mydir/a_directory/more_text.txt
 
-Calling
+Calling ...
 
-    var x=new ActiveDirectory('mydir');
+    var x = new ActiveDirectory('mydir');
 
-Will give you the following object structure
+... will give you the following object structure:
 
     x                                // is an object
     x.some_text                      // is a string: The contents of some_text.txt
@@ -41,37 +48,23 @@ Subdirectories are handled by ActiveDirectory, and become new ActiveDirectory ob
 
 Files and directories which start with any ASCII character less than A are ignored (e.g. this includes anything starting with a digit), as are subfolders whose name contains a dot, and files with unknown extensions.
 
-If there is e.g. both a "foo.js" and a "foo.txt", one or other will be chosen abitrarily.
+If there are both e.g. a "foo.js" and a "foo.txt", one or other will be chosen abitrarily.
 
+Properties of ActiveDirectory instances:
 
-Usage
----
-
-new ActiveDirectory( path )
-
-or:
-
-ActiveDirectory.call(some_obj, path)
-
-...which will add new properties to the existing some_obj
-
-Properties of ActiveDirectory objects
----
-
-* _$name_: [[String]] which contains the name of the property, except for root object, which by default has no name.
-* _$curdir_: [[Object]] which contains the current ActiveDirectory
-* _$parent_: [[Object]] which contains the parent ActiveDirectory
-* _$path_: [[String]] which contains the path of the directory
+* $name: [[String]] which contains the name of the property, except for root object, which by default has no name.
+* $curdir: [[Object]] which contains the current ActiveDirectory
+* $parent: [[Object]] which contains the parent ActiveDirectory
+* $path: [[String]] which contains the path of the directory
 */
 (function() {
 
 
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+
 function ActiveDirectory(path) {
   var self=this;
-
-  // Always use 'self' because 'this' may be down the prototype chain somewhere when the ActiveDirectory object is the prototype of another object
-
-  var hasOwnProperty=Object.prototype.hasOwnProperty;
 
   self.$path=path;
   self.$curdir=self;
@@ -100,7 +93,6 @@ function ActiveDirectory(path) {
       subdirs.push(propname);
     }
   }
-
 
   for(var i in subdirs) {
     if(!hasOwnProperty.call(subdirs, i)) continue;
