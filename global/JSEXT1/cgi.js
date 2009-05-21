@@ -132,7 +132,7 @@ CGI.prototype = {
   // called magically before the first write() to stdout
   _write_headers_hook: function(stream) {
     stdin.close();
-    if(this.responseHeaders.location) this.responseLine = "302 Found";
+    if(!this.responseLine && this.responseHeaders.location) this.responseLine = "302 Found";
     if(this.responseLine) stream.write("Status: " + this.responseLine + "\r\n");
     this.output_cookies(stream);
     this._write_headers(stream, this.responseHeaders);
