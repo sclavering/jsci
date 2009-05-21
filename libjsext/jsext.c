@@ -46,6 +46,7 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
 jsval JSX_make_Dl(JSContext *cx, JSObject *glo);
 jsval JSX_make_load(JSContext *cx);
 jsval JSX_make_environment(JSContext *cx, JSObject *obj);
+static jsval make_gc(JSContext *cx);
 
 
 static char *strip_file_name(char *ini_file);
@@ -152,6 +153,8 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JS_SetProperty(cx, argobj, "Dl", &tmp);
   tmp = JSX_make_load(cx);
   JS_SetProperty(cx, argobj, "load", &tmp);
+  tmp = make_gc(cx);
+  JS_SetProperty(cx, argobj, "gc", &tmp);
   tmp = JSX_make_environment(cx, obj);
   JS_SetProperty(cx, argobj, "environment", &tmp);
   char cwd[1024];
@@ -248,4 +251,17 @@ static char *strip_file_name(char *ini_file) {
   char *lastslash=strrchr(ini_file,'/');
   if(lastslash) return lastslash;
   return 0;
+}
+
+
+static JSBool jsx_gc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  JS_GC(cx);
+  return JS_TRUE;
+}
+
+
+static jsval make_gc(JSContext *cx) {
+  JSFunction *jsfun = JS_NewFunction(cx, jsx_gc, 0, 0, 0, 0);
+  if(!jsfun) return JSVAL_VOID;
+  return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }

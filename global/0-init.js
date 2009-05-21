@@ -4,6 +4,7 @@ function(args) {
   this.Dl = args.Dl;
   this.load = args.load;
   this.environment = args.environment;
+  this.gc = args.gc;
 
   // avoid unwanted closures
   var xload = new Function("filename", "return load(filename);");
