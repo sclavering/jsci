@@ -277,14 +277,10 @@ function handle_native(name, extension) {
 
   if(timestamp.h && timestamp.h > timestamp.jswrapper) {
     pushd(chdir_stack, this.$path);
-    var ps = new JSEXT1.Progress;
-    ps.status("Parsing h file");
     var fragment = JSEXT1.C.fragment(name + '.h', dlobj);
-    ps.status("Writing .jswrapper file");
     var wrapperfile = new JSEXT1.File('./' + name + '.jswrapper', 'w');
     wrapperfile.write(JSEXT1.C.jswrapper(fragment));
     wrapperfile.close();
-    ps.close();
     timestamp.jswrapper = JSEXT1.os.stat('./' + name + '.jswrapper');
     popd(chdir_stack);
   }
