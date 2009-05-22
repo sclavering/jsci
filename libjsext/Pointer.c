@@ -2023,7 +2023,6 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   JSX_Callback *cb = user_data;
   jsval *tmp_argv;
   int i;
-  int argsize;
   jsval rval=JSVAL_VOID;
   JSX_TypeFunction *type = (JSX_TypeFunction *) cb->type;
 
@@ -2036,7 +2035,8 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   }
   JS_AddRoot(cb->cx, &rval);
   
-  argsize=JSX_Get_multi(cb->cx, 0, type->nParam, type->param, tmp_argv, 1, args);
+  // pretty sure this has side-effects
+  JSX_Get_multi(cb->cx, 0, type->nParam, type->param, tmp_argv, 1, args);
 
   if (!JS_CallFunction(cb->cx, JS_GetGlobalObject(cb->cx), cb->fun, type->nParam, tmp_argv, &rval)) {
     //    printf("FAILCALL\n");
