@@ -1,7 +1,7 @@
 /*
-obj = fragment(code_str, default_dl)
+obj = fragment(filename)
 
-Examines a C program and returns an object containing all the symbols exported by the program.
+Examines a .h file and returns an object containing all the symbols declared there that are exported in .so files it refers to via the appopriate #pragma.
 
 ### Arguments ###
 
@@ -15,8 +15,8 @@ representing each symbol exported by the C program. Symbols
 are not exported if they generate code and can not be resolved
 in _default\_dl_ or any library mentioned in #pragma directives.
 */
-function(filename, default_dl) {
-  var parsed = parse(ctoxml(runcpp(filename)), default_dl);
+function(filename) {
+  var parsed = parse(ctoxml(runcpp(filename)));
   var src = {};
 
   for(var i in parsed.structs_and_unions)

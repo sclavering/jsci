@@ -1,5 +1,5 @@
 /*
-obj = parse(code, default_dl)
+obj = parse(code)
 
 Examines a C program. The program should already have been processed
 by cpp() and ctoxml().  Recognizes the programming
@@ -27,8 +27,6 @@ all C library symbols and symbols from the SpiderMonkey API.
 ### Arguments ###
 
 * code: An XML object returned from ctoxml()
-* default_dl: A Dl object which is used for symbol resolution
-  in addition to any specified by #pragma JSEXT dl.
 
 ### Return value ###
 
@@ -41,7 +39,7 @@ Returns an object containing the following properties:
 
 (function() {
 
-return function(code, default_dl) {
+return function(code) {
 
   // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
   var live = {};
@@ -142,8 +140,6 @@ return function(code, default_dl) {
 
 
   function loaddls() {
-    if(default_dl) live['dl ' + (ndl++)] = default_dl;
-
     for each(var pragma in code.pragma) {
       var match = pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(main))[ \t]*$/);
       if(match) {
