@@ -43,7 +43,7 @@ properties $name, $path and (except for the root object) $parent.
 The action taken to convert each file into a javascript value is determined by the file name extension:
   .js files are evaluated
   .txt files are read
-  .c .h and .so files are compiled if necessary, and a .jswrapper file created that does the necessary Pointer and Type magic to expose to JavaScript all the C functions, types, and variable, as well as any constants created via #define
+  .h files are used to build a .jswrapper file that does the necessary Pointer and Type magic to expose to JavaScript all the C functions, types, and variable, as well as any constants created via #define
   .jswrapper files are evaluated like .js files
 
 Subdirectories are handled by ActiveDirectory, and become new ActiveDirectory objects.
@@ -223,17 +223,9 @@ function handle_text(name, extension) {
 
 
 /*
-This handler handles .h, .c, .jswrapper, and .so files.
+This handler handles .h files, and the .jswrapper files generated from them.
 
-.h and .c files are source files. .jswrapper and .so files are generated automatically from .h and .c files if necessary.
-
-If a .c file exists, it is compiled as a dynamic library and used as the default .so file when parsing the .h file.
-
-If no .h file exists (but a .c file), then function declarations are extracted from the .c file.
-
-When wrapping a system library there is just a .h file and no .c file, and only a .jswrapper file will be generated.
-
-The .jswrapper file is a javascript file returning an obejct containing the low-level type-marshalling wrappers for C code (using Type, Pointer, etc.).  Each property
+The .jswrapper file is a javascript file returning an obejct containing the low-level type-marshalling wrappers for C code (using Type, Pointer, etc.).
 */
 function handle_native(name, extension) {
   const chdir_stack = [];
@@ -242,42 +234,16 @@ function handle_native(name, extension) {
 
   var timestamp={};
 
-  //clib.puts("cget "+this.$path+"/"+name);
-  for each(var ext in ['h', 'c', 'jswrapper', 'so']) {
+  for each(var ext in ['h', 'jswrapper']) {
     var stat = JSEXT1.os.stat(this.$path + '/' + name + '.' + ext);
     timestamp[ext] = stat && stat.mtime;
-  }
-
-  // 2. Build .so if possible and necessary
-
-  var dlobj;
-
-  if(timestamp.c && timestamp.c > timestamp.so) {
-    pushd(chdir_stack, this.$path);
-    JSEXT1.C.compile(name+'.c');
-    var stat = JSEXT1.os.stat(name + '.so');
-    timestamp.so = stat && stat.mtime;
-    popd(chdir_stack);
-  }
-
-  if(timestamp.so) {
-    pushd(chdir_stack, this.$path);
-    dlobj = Dl('./' + name + '.so');
-    popd(chdir_stack);
-  }
-
-  // 3. If it is a jsapi module, just load it.
-
-  if (dlobj && dlobj.symbolExists('JSX_init')) {
-    var ret = dlobj['function']('JSX_init')();
-    return ret;
   }
 
   // 4. Build .jswrapper file if possible and necessary
 
   if(timestamp.h && timestamp.h > timestamp.jswrapper) {
     pushd(chdir_stack, this.$path);
-    var fragment = JSEXT1.C.fragment(name + '.h', dlobj);
+    var fragment = JSEXT1.C.fragment(name + '.h');
     var wrapperfile = new JSEXT1.File('./' + name + '.jswrapper', 'w');
     wrapperfile.write(JSEXT1.C.jswrapper(fragment));
     wrapperfile.close();
@@ -288,10 +254,8 @@ function handle_native(name, extension) {
   // 5. Load .jswrapper file if possible
 
   if(timestamp.jswrapper) {
-    pushd(chdir_stack, this.$path);
     var ret = load.call(this, this.$path + '/' + name + '.jswrapper');
     for(var i = 0; ret['dl ' + i]; i++) { /* pass */ }
-    popd(chdir_stack);
     return ret.hasOwnProperty("main") ? ret.main : ret;
   }
 }
