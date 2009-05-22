@@ -41,7 +41,7 @@ TARGETS	= jsext
 
 all:	$(TARGETS)
 
-JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o util.o
+JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o
 
 jsext:	$(JSX_OBJS)
 	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSX_OBJS) -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi

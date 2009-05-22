@@ -32,13 +32,7 @@ bindir=@bindir@
 libdir=@libdir@
 version=@PACKAGE_VERSION@
 
-CFLAGS=-I JSEXT1/C/0-include -shared $(JSAPI_FLAGS) -O3 -fPIC $(XCFLAGS)
-
-%.so : %.c ; cc $(CFLAGS) $< -o $@
-
-TARGETS=clib.so clib.jswrapper
-
-all:	$(TARGETS)
+all:	clib.jswrapper
 
 clib.jswrapper: 0-makeclib.js
 	$(MAKE) -C JSEXT1/C XCFLAGS="$(XCFLAGS)"
