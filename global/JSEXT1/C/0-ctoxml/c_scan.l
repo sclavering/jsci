@@ -75,6 +75,7 @@ static void preprocessor(void);
 "signed"		{ count(); return(SIGNED); }
 "sizeof"		{ count(); return(SIZEOF); }
 "static"		{ count(); return(STATIC); }
+"inline"		{ count(); return(INLINE); }
 "_inline"		{ count(); return(INLINE); }
 "__inline"		{ count(); return(INLINE); }
 "struct"		{ count(); return(STRUCT); }
