@@ -708,7 +708,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
   JSX_ParamType *thistype;
 
   for (i=0; i<nargs; i++) {
-
+    // xxx this either is, or should become, obsolete.  we ought to fix up |sometype foo(void)| sooner than this
     if (type && type->type->type==VOIDTYPE) // End of param list
       type=0;
 
