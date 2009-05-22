@@ -47,7 +47,7 @@ jsval JSX_make_Dl(JSContext *cx, JSObject *glo);
 jsval JSX_make_load(JSContext *cx);
 jsval JSX_make_environment(JSContext *cx, JSObject *obj);
 static jsval make_gc(JSContext *cx);
-
+static jsval make_isCompilableUnit(JSContext *cx);
 
 static char *strip_file_name(char *ini_file);
 
@@ -155,6 +155,8 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JS_SetProperty(cx, argobj, "load", &tmp);
   tmp = make_gc(cx);
   JS_SetProperty(cx, argobj, "gc", &tmp);
+  tmp = make_isCompilableUnit(cx);
+  JS_SetProperty(cx, argobj, "isCompilableUnit", &tmp);
   tmp = JSX_make_environment(cx, obj);
   JS_SetProperty(cx, argobj, "environment", &tmp);
   char cwd[1024];
@@ -262,6 +264,25 @@ static JSBool jsx_gc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsva
 
 static jsval make_gc(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, jsx_gc, 0, 0, 0, 0);
+  if(!jsfun) return JSVAL_VOID;
+  return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
+}
+
+
+static JSBool jsx_isCompilableUnit(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  if(argc != 1) {
+    JSX_ReportException(cx, "Wrong number of arguments");
+    return JS_FALSE;
+  }
+  char *expr;
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &expr)) return JS_FALSE;
+  *rval = JS_BufferIsCompilableUnit(cx, obj, expr, strlen(expr)) ? JSVAL_TRUE : JSVAL_FALSE;
+  return JS_TRUE;
+}
+
+
+static jsval make_isCompilableUnit(JSContext *cx) {
+  JSFunction *jsfun = JS_NewFunction(cx, jsx_isCompilableUnit, 0, 0, 0, 0);
   if(!jsfun) return JSVAL_VOID;
   return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }
