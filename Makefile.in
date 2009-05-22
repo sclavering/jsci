@@ -33,7 +33,5 @@ version=@PACKAGE_VERSION@
 all:
 	$(MAKE) -C js/src -f Makefile.ref Linux_All_OPT.OBJ/libjs.so BUILD_OPT=1 XCFLAGS="$(XCFLAGS)"
 	cp js/src/Linux_All_OPT.OBJ/jsautocfg.h js/src
-	mkdir global/JSEXT1/C/0-include || echo 0-include exists
-	cp js/src/*.h js/src/*.tbl js/src/*.msg global/JSEXT1/C/0-include
 	$(MAKE) -C libjsext XCFLAGS="$(XCFLAGS)"
 	$(MAKE) -C global XCFLAGS="$(XCFLAGS)"
