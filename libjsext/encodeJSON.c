@@ -419,11 +419,9 @@ static JSBool encodeJSON(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   return JS_TRUE;
 }
 
-JSBool
-JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
-  JSFunction *jsfun=JS_NewFunction(cx, encodeJSON, 0, 0, 0, 0);
-  if (!jsfun)
-    return JS_FALSE;
-  *rval=OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
-  return JS_TRUE;
+
+jsval make_encodeJSON(JSContext *cx) {
+  JSFunction *jsfun = JS_NewFunction(cx, encodeJSON, 0, 0, 0, 0);
+  if(!jsfun) return JS_FALSE;
+  return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }

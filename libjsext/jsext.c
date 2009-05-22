@@ -46,8 +46,15 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
 jsval JSX_make_Dl(JSContext *cx, JSObject *glo);
 jsval JSX_make_load(JSContext *cx);
 jsval JSX_make_environment(JSContext *cx, JSObject *obj);
+jsval make_encodeUTF8(JSContext *cx);
+jsval make_decodeUTF8(JSContext *cx);
+jsval make_encodeJSON(JSContext *cx);
+jsval make_decodeJSON(JSContext *cx);
+jsval make_encodeBase64(JSContext *cx);
+jsval make_decodeBase64(JSContext *cx);
 static jsval make_gc(JSContext *cx);
 static jsval make_isCompilableUnit(JSContext *cx);
+
 
 static char *strip_file_name(char *ini_file);
 
@@ -159,6 +166,18 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JS_SetProperty(cx, argobj, "isCompilableUnit", &tmp);
   tmp = JSX_make_environment(cx, obj);
   JS_SetProperty(cx, argobj, "environment", &tmp);
+  tmp = make_encodeUTF8(cx);
+  JS_SetProperty(cx, argobj, "encodeUTF8", &tmp);
+  tmp = make_decodeUTF8(cx);
+  JS_SetProperty(cx, argobj, "decodeUTF8", &tmp);
+  tmp = make_encodeJSON(cx);
+  JS_SetProperty(cx, argobj, "encodeJSON", &tmp);
+  tmp = make_decodeJSON(cx);
+  JS_SetProperty(cx, argobj, "decodeJSON", &tmp);
+  tmp = make_encodeBase64(cx);
+  JS_SetProperty(cx, argobj, "encodeBase64", &tmp);
+  tmp = make_decodeBase64(cx);
+  JS_SetProperty(cx, argobj, "decodeBase64", &tmp);
   char cwd[1024];
   tmp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
   JS_SetProperty(cx, argobj, "cwd", &tmp);

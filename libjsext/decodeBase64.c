@@ -93,11 +93,8 @@ static JSBool decodeBase64(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 }
 
 
-JSBool
-JSX_init(JSContext *cx,  JSObject *obj, int argc, jsval *argv, jsval *rval) {
-  JSFunction *jsfun=JS_NewFunction(cx, decodeBase64, 0, 0, 0, 0);
-  if (!jsfun)
-    return JS_FALSE;
-  *rval=OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
-  return JS_TRUE;
+jsval make_decodeBase64(JSContext *cx) {
+  JSFunction *jsfun = JS_NewFunction(cx, decodeBase64, 0, 0, 0, 0);
+  if(!jsfun) return JSVAL_VOID;
+  return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }

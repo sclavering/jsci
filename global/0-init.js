@@ -21,6 +21,13 @@ function(args) {
     $parent: this,
     $name: "JSEXT1",
     $path: './JSEXT1',
+
+    encodeUTF8: args.encodeUTF8,
+    decodeUTF8: args.decodeUTF8,
+    encodeJSON: args.encodeJSON,
+    decodeJSON: args.decodeJSON,
+    encodeBase64: args.encodeBase64,
+    decodeBase64: args.decodeBase64,
   };
 
   JSEXT.$curdir=JSEXT;
