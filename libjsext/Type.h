@@ -54,11 +54,6 @@ typedef struct {
 typedef struct {
   JSX_Type *type;
   char *name;
-} JSX_NamedType;
-
-typedef struct { // inherits JSX_NamedType
-  JSX_Type *type;
-  char *name;
   int isConst;
 } JSX_ParamType;
 
@@ -73,7 +68,7 @@ typedef struct {
   ffi_cif cif;
 } JSX_TypeFunction;
 
-typedef struct { // inherits JSX_NamedType
+typedef struct {
   JSX_Type *type;
   char *name;
   int offset; // in bits
