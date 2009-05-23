@@ -20,18 +20,13 @@ function(args) {
 
   print = function () {} // JSEXT1.C.parse() sometimes calls this
 
-
-  var fd = 1;
-
   function js(name) {
     return load.call(this,name+'.js');
   }
 
   clib.chdir("JSEXT1");
-  JSEXT1={};
-  JSEXT1.Progress=function(){};
-  JSEXT1.Progress.prototype.status=function(){};
-  JSEXT1.Progress.prototype.close=function(){};
+  JSEXT1 = { $path: '.' };
+  JSEXT1.File = js.call(JSEXT1, 'File');
 
   clib.chdir("C");
   JSEXT1.C = { $path: '.', $parent: JSEXT1 };
@@ -42,10 +37,7 @@ function(args) {
   JSEXT1.C.jswrapper = js.call(JSEXT1.C, 'jswrapper');
   clib.chdir('..');
 
-  JSEXT1.$path = '.';
-  JSEXT1.File = js.call(JSEXT1, 'File');
   clib.chdir('..');
-//  puts(String(JSEXT1.C.ctoxml(JSEXT1.C.cpp('#include <io.h>'))));
   const fragment = JSEXT1.C.fragment(args.cwd + "/clib.h", Dl());
   const jswrapper = JSEXT1.C.jswrapper(fragment);
   clib.puts(jswrapper);
