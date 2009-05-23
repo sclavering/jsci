@@ -238,26 +238,23 @@ static enum JSX_TypeID JSX_othertypes[]={
 };
 
 
-static JSBool JSX_InitNamedType(JSContext *cx, JSX_NamedType *dest, JSObject *membertype) {
+static JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membertype) {
   jsval tmp;
-  JS_GetProperty(cx, membertype, "name", &tmp);
 
-  if (tmp==JSVAL_VOID || !JSVAL_IS_STRING(tmp)) {
+  JS_GetProperty(cx, membertype, "name", &tmp);
+  if(tmp == JSVAL_VOID || !JSVAL_IS_STRING(tmp)) {
     JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
     return JS_FALSE;
   }
   dest->name = strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
 
   JS_GetProperty(cx, membertype, "type", &tmp);
-  if (!JSVAL_IS_OBJECT(tmp) ||
-      tmp==JSVAL_NULL ||
-      !JS_InstanceOf(cx, JSVAL_TO_OBJECT(tmp), &JSX_TypeClass, NULL)) {
+  if(!JSVAL_IS_OBJECT(tmp) || tmp == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(tmp), &JSX_TypeClass, NULL)) {
     JSX_ReportException(cx, "Wrong or missing 'type' property in member type object");
     // name is freed later
     return JS_FALSE;
   }
-
-  dest->type=JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+  dest->type = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
 
   return JS_TRUE;
 }
@@ -371,12 +368,6 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
 
 JSClass *JSX_GetTypeClass(void) {
   return &JSX_TypeClass;
-}
-
-
-JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membertype) {
-  if(!JSX_InitNamedType(cx, (JSX_NamedType *) dest, membertype)) return JS_FALSE;
-  return JS_TRUE;
 }
 
 
