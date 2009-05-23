@@ -238,19 +238,15 @@ static enum JSX_TypeID JSX_othertypes[]={
 };
 
 
-static JSBool JSX_InitNamedType(JSContext *cx, JSX_NamedType *dest, JSObject *membertype, int requireName) {
+static JSBool JSX_InitNamedType(JSContext *cx, JSX_NamedType *dest, JSObject *membertype) {
   jsval tmp;
   JS_GetProperty(cx, membertype, "name", &tmp);
 
-  if (tmp==JSVAL_VOID && !requireName) {
-    dest->name=0;
-  } else {
-    if (tmp==JSVAL_VOID || !JSVAL_IS_STRING(tmp)) {
-      JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
-      return JS_FALSE;
-    }
-    dest->name=strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
+  if (tmp==JSVAL_VOID || !JSVAL_IS_STRING(tmp)) {
+    JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
+    return JS_FALSE;
   }
+  dest->name = strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
 
   JS_GetProperty(cx, membertype, "type", &tmp);
   if (!JSVAL_IS_OBJECT(tmp) ||
@@ -379,7 +375,7 @@ JSClass *JSX_GetTypeClass(void) {
 
 
 JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membertype) {
-  if(!JSX_InitNamedType(cx, (JSX_NamedType *) dest, membertype, 1)) return JS_FALSE;
+  if(!JSX_InitNamedType(cx, (JSX_NamedType *) dest, membertype)) return JS_FALSE;
   return JS_TRUE;
 }
 
