@@ -57,18 +57,163 @@ JS_PUBLIC_API(void) JS_Assert(const char *s, const char *file, JSIntn ln)
 #if defined(WIN32)
     DebugBreak();
     exit(3);
-#endif
-#if defined(XP_OS2)
+#elif defined(XP_OS2) || (defined(__GNUC__) && defined(__i386))
     asm("int $3");
 #endif
     abort();
 }
 
+#ifdef JS_BASIC_STATS
+
+#include <math.h>
+#include <string.h>
+#include "jscompat.h"
+#include "jsbit.h"
+
+/*
+ * Histogram bins count occurrences of values <= the bin label, as follows:
+ *
+ *   linear:  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10 or more
+ *     2**x:  0,   1,   2,   4,   8,  16,  32,  64, 128, 256, 512 or more
+ *    10**x:  0,   1,  10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9 or more
+ *
+ * We wish to count occurrences of 0 and 1 values separately, always.
+ */
+static uint32
+BinToVal(uintN logscale, uintN bin)
+{
+    JS_ASSERT(bin <= 10);
+    if (bin <= 1 || logscale == 0)
+        return bin;
+    --bin;
+    if (logscale == 2)
+        return JS_BIT(bin);
+    JS_ASSERT(logscale == 10);
+    return (uint32) pow(10, (double) bin);
+}
+
+static uintN
+ValToBin(uintN logscale, uint32 val)
+{
+    uintN bin;
+
+    if (val <= 1)
+        return val;
+    bin = (logscale == 10)
+          ? (uintN) ceil(log10((double) val))
+          : (logscale == 2)
+          ? (uintN) JS_CeilingLog2(val)
+          : val;
+    return JS_MIN(bin, 10);
+}
+
+void
+JS_BasicStatsAccum(JSBasicStats *bs, uint32 val)
+{
+    uintN oldscale, newscale, bin;
+    double mean;
+
+    ++bs->num;
+    if (bs->max < val)
+        bs->max = val;
+    bs->sum += val;
+    bs->sqsum += (double)val * val;
+
+    oldscale = bs->logscale;
+    if (oldscale != 10) {
+        mean = bs->sum / bs->num;
+        if (bs->max > 16 && mean > 8) {
+            newscale = (bs->max > 1e6 && mean > 1000) ? 10 : 2;
+            if (newscale != oldscale) {
+                uint32 newhist[11], newbin;
+
+                memset(newhist, 0, sizeof newhist);
+                for (bin = 0; bin <= 10; bin++) {
+                    newbin = ValToBin(newscale, BinToVal(oldscale, bin));
+                    newhist[newbin] += bs->hist[bin];
+                }
+                memcpy(bs->hist, newhist, sizeof bs->hist);
+                bs->logscale = newscale;
+            }
+        }
+    }
+
+    bin = ValToBin(bs->logscale, val);
+    ++bs->hist[bin];
+}
+
+double
+JS_MeanAndStdDev(uint32 num, double sum, double sqsum, double *sigma)
+{
+    double var;
+
+    if (num == 0 || sum == 0) {
+        *sigma = 0;
+        return 0;
+    }
+
+    var = num * sqsum - sum * sum;
+    if (var < 0 || num == 1)
+        var = 0;
+    else
+        var /= (double)num * (num - 1);
+
+    /* Windows says sqrt(0.0) is "-1.#J" (?!) so we must test. */
+    *sigma = (var != 0) ? sqrt(var) : 0;
+    return sum / num;
+}
+
+void
+JS_DumpBasicStats(JSBasicStats *bs, const char *title, FILE *fp)
+{
+    double mean, sigma;
+
+    mean = JS_MeanAndStdDevBS(bs, &sigma);
+    fprintf(fp, "\nmean %s %g, std. deviation %g, max %lu\n",
+            title, mean, sigma, (unsigned long) bs->max);
+    JS_DumpHistogram(bs, fp);
+}
+
+void
+JS_DumpHistogram(JSBasicStats *bs, FILE *fp)
+{
+    uintN bin;
+    uint32 cnt, max, prev, val, i;
+    double sum, mean;
+
+    for (bin = 0, max = 0, sum = 0; bin <= 10; bin++) {
+        cnt = bs->hist[bin];
+        if (max < cnt)
+            max = cnt;
+        sum += cnt;
+    }
+    mean = sum / cnt;
+    for (bin = 0, prev = 0; bin <= 10; bin++, prev = val) {
+        val = BinToVal(bs->logscale, bin);
+        cnt = bs->hist[bin];
+        if (prev + 1 >= val)
+            fprintf(fp, "        [%6u]", val);
+        else
+            fprintf(fp, "[%6u, %6u]", prev + 1, val);
+        fprintf(fp, "%s %8u ", (bin == 10) ? "+" : ":", cnt);
+        if (cnt != 0) {
+            if (max > 1e6 && mean > 1e3)
+                cnt = (uint32) ceil(log10((double) cnt));
+            else if (max > 16 && mean > 8)
+                cnt = JS_CeilingLog2(cnt);
+            for (i = 0; i < cnt; i++)
+                putc('*', fp);
+        }
+        putc('\n', fp);
+    }
+}
+
+#endif /* JS_BASIC_STATS */
+
 #if defined DEBUG_notme && defined XP_UNIX
 
 #define __USE_GNU 1
 #include <dlfcn.h>
-#include <setjmp.h>
 #include <string.h>
 #include "jshash.h"
 #include "jsprf.h"
@@ -76,9 +221,9 @@ JS_PUBLIC_API(void) JS_Assert(const char *s, const char *file, JSIntn ln)
 JSCallsite js_calltree_root = {0, NULL, NULL, 0, NULL, NULL, NULL, NULL};
 
 static JSCallsite *
-CallTree(uint32 *bp)
+CallTree(void **bp)
 {
-    uint32 *bpup, *bpdown, pc;
+    void **bpup, **bpdown, *pc;
     JSCallsite *parent, *site, **csp;
     Dl_info info;
     int ok, offset;
@@ -88,9 +233,9 @@ CallTree(uint32 *bp)
     /* Reverse the stack frame list to avoid recursion. */
     bpup = NULL;
     for (;;) {
-        bpdown = (uint32*) bp[0];
-        bp[0] = (uint32) bpup;
-        if ((uint32*) bpdown[0] < bpdown)
+        bpdown = (void**) bp[0];
+        bp[0] = (void*) bpup;
+        if ((void**) bpdown[0] < bpdown)
             break;
         bpup = bp;
         bp = bpdown;
@@ -99,8 +244,8 @@ CallTree(uint32 *bp)
     /* Reverse the stack again, finding and building a path in the tree. */
     parent = &js_calltree_root;
     do {
-        bpup = (uint32*) bp[0];
-        bp[0] = (uint32) bpdown;
+        bpup = (void**) bp[0];
+        bp[0] = (void*) bpdown;
         pc = bp[1];
 
         csp = &parent->kids;
@@ -128,7 +273,7 @@ CallTree(uint32 *bp)
          * XXX static syms are masked by nearest lower global
          */
         info.dli_fname = info.dli_sname = NULL;
-        ok = dladdr((void*) pc, &info);
+        ok = dladdr(pc, &info);
         if (ok < 0) {
             fprintf(stderr, "dladdr failed!\n");
             return NULL;
@@ -172,15 +317,23 @@ CallTree(uint32 *bp)
 JSCallsite *
 JS_Backtrace(int skip)
 {
-    jmp_buf jb;
-    uint32 *bp, *bpdown;
-
-    setjmp(jb);
+    void **bp, **bpdown;
 
     /* Stack walking code adapted from Kipp's "leaky". */
-    bp = (uint32*) jb[0].__jmpbuf[JB_BP];
+#if defined(__i386)
+    __asm__( "movl %%ebp, %0" : "=g"(bp));
+#elif defined(__x86_64__)
+    __asm__( "movq %%rbp, %0" : "=g"(bp));
+#else
+    /*
+     * It would be nice if this worked uniformly, but at least on i386 and
+     * x86_64, it stopped working with gcc 4.1, because it points to the
+     * end of the saved registers instead of the start.
+     */
+    bp = (void**) __builtin_frame_address(0);
+#endif
     while (--skip >= 0) {
-        bpdown = (uint32*) *bp++;
+        bpdown = (void**) *bp++;
         if (bpdown < bp)
             break;
         bp = bpdown;

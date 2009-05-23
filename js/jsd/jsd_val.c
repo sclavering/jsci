@@ -139,7 +139,8 @@ jsd_IsValuePrimitive(JSDContext* jsdc, JSDValue* jsdval)
 JSBool
 jsd_IsValueFunction(JSDContext* jsdc, JSDValue* jsdval)
 {
-    return JSVAL_IS_FUNCTION(jsdc->dumbContext, jsdval->val);
+    return !JSVAL_IS_PRIMITIVE(jsdval->val) &&
+           JS_ObjectIsFunction(jsdc->dumbContext, JSVAL_TO_OBJECT(jsdval->val));
 }
 
 JSBool
@@ -150,22 +151,20 @@ jsd_IsValueNative(JSDContext* jsdc, JSDValue* jsdval)
     JSFunction* fun;
     JSExceptionState* exceptionState;
 
-    if(!JSVAL_IS_OBJECT(val))
-        return JS_FALSE;
-
-    if(JSVAL_IS_FUNCTION(cx, val))
+    if(jsd_IsValueFunction(jsdc, jsdval))
     {
+        JSBool ok = JS_FALSE;
+        JS_BeginRequest(cx);
         exceptionState = JS_SaveExceptionState(cx);
         fun = JS_ValueToFunction(cx, val);
         JS_RestoreExceptionState(cx, exceptionState);
-        if(!fun)
-        {
-            JS_ASSERT(0);
-            return JS_FALSE;
-        }
-        return JS_GetFunctionScript(cx, fun) ? JS_FALSE : JS_TRUE;
+        if(fun)
+            ok = JS_GetFunctionScript(cx, fun) ? JS_FALSE : JS_TRUE;
+        JS_EndRequest(cx);
+        JS_ASSERT(fun);
+        return ok;
     }
-    return JSVAL_TO_OBJECT(val) && OBJ_IS_NATIVE(JSVAL_TO_OBJECT(val));
+    return !JSVAL_IS_PRIMITIVE(val);
 }
 
 /***************************************************************************/
@@ -210,6 +209,7 @@ jsd_GetValueString(JSDContext* jsdc, JSDValue* jsdval)
             jsdval->string = JSVAL_TO_STRING(jsdval->val);
         else
         {
+            JS_BeginRequest(cx);
             exceptionState = JS_SaveExceptionState(cx);
             jsdval->string = JS_ValueToString(cx, jsdval->val);
             JS_RestoreExceptionState(cx, exceptionState);
@@ -218,6 +218,7 @@ jsd_GetValueString(JSDContext* jsdc, JSDValue* jsdval)
                 if(!JS_AddNamedRoot(cx, &jsdval->string, "ValueString"))
                     jsdval->string = NULL;
             }
+            JS_EndRequest(cx);
         }
     }
     return jsdval->string;
@@ -227,15 +228,16 @@ const char*
 jsd_GetValueFunctionName(JSDContext* jsdc, JSDValue* jsdval)
 {
     JSContext* cx = jsdc->dumbContext;
-    jsval val = jsdval->val;
     JSFunction* fun;
     JSExceptionState* exceptionState;
 
-    if(!jsdval->funName && JSVAL_IS_FUNCTION(cx, val))
+    if(!jsdval->funName && jsd_IsValueFunction(jsdc, jsdval))
     {
+        JS_BeginRequest(cx);
         exceptionState = JS_SaveExceptionState(cx);
-        fun = JS_ValueToFunction(cx, val);
+        fun = JS_ValueToFunction(cx, jsdval->val);
         JS_RestoreExceptionState(cx, exceptionState);
+        JS_EndRequest(cx);
         if(!fun)
             return NULL;
         jsdval->funName = JS_GetFunctionName(fun);
@@ -255,7 +257,11 @@ jsd_NewValue(JSDContext* jsdc, jsval val)
 
     if(JSVAL_IS_GCTHING(val))
     {
-        if(!JS_AddNamedRoot(jsdc->dumbContext, &jsdval->val, "JSDValue"))
+        JSBool ok = JS_FALSE;
+        JS_BeginRequest(jsdc->dumbContext);
+        ok = JS_AddNamedRoot(jsdc->dumbContext, &jsdval->val, "JSDValue");
+        JS_EndRequest(jsdc->dumbContext);
+        if(!ok)
         {
             free(jsdval);
             return NULL;
@@ -276,7 +282,11 @@ jsd_DropValue(JSDContext* jsdc, JSDValue* jsdval)
     {
         jsd_RefreshValue(jsdc, jsdval);
         if(JSVAL_IS_GCTHING(jsdval->val))
+        {
+            JS_BeginRequest(jsdc->dumbContext);
             JS_RemoveRoot(jsdc->dumbContext, &jsdval->val);
+            JS_EndRequest(jsdc->dumbContext);
+        }
         free(jsdval);
     }
 }
@@ -343,8 +353,12 @@ static JSBool _buildProps(JSDContext* jsdc, JSDValue* jsdval)
     if(!JSVAL_IS_OBJECT(jsdval->val) || JSVAL_IS_NULL(jsdval->val))
         return JS_FALSE;
 
+    JS_BeginRequest(cx);
     if(!JS_GetPropertyDescArray(cx, JSVAL_TO_OBJECT(jsdval->val), &pda))
+    {
+        JS_EndRequest(cx);
         return JS_FALSE;
+    }
 
     for(i = 0; i < pda.length; i++)
     {
@@ -357,6 +371,7 @@ static JSBool _buildProps(JSDContext* jsdc, JSDValue* jsdval)
         JS_APPEND_LINK(&prop->links, &jsdval->props);
     }
     JS_PutPropertyDescArray(cx, &pda);
+    JS_EndRequest(cx);
     SET_BIT_FLAG(jsdval->flags, GOT_PROPS);
     return !JS_CLIST_IS_EMPTY(&jsdval->props);
 }
@@ -373,7 +388,11 @@ jsd_RefreshValue(JSDContext* jsdc, JSDValue* jsdval)
     {
         /* if the jsval is a string, then we didn't need to root the string */
         if(!JSVAL_IS_STRING(jsdval->val))
+        {
+            JS_BeginRequest(cx);
             JS_RemoveRoot(cx, &jsdval->string);
+            JS_EndRequest(cx);
+        }
         jsdval->string = NULL;
     }
 
@@ -462,9 +481,14 @@ jsd_GetValueProperty(JSDContext* jsdc, JSDValue* jsdval, JSString* name)
     nameChars = JS_GetStringChars(name);
     nameLen   = JS_GetStringLength(name);
 
+    JS_BeginRequest(cx);
+
     JS_GetUCPropertyAttributes(cx, obj, nameChars, nameLen, &attrs, &found);
     if (!found)
+    {
+        JS_EndRequest(cx);
         return NULL;
+    }
 
     JS_ClearPendingException(cx);
 
@@ -473,7 +497,10 @@ jsd_GetValueProperty(JSDContext* jsdc, JSDValue* jsdval, JSString* name)
         if (JS_IsExceptionPending(cx))
         {
             if (!JS_GetPendingException(cx, &pd.value))
+            {
+                JS_EndRequest(cx);
                 return NULL;
+            }
             pd.flags = JSPD_EXCEPTION;
         }
         else
@@ -486,6 +513,8 @@ jsd_GetValueProperty(JSDContext* jsdc, JSDValue* jsdval, JSString* name)
     {
         pd.value = val;
     }
+
+    JS_EndRequest(cx);
 
     pd.id = STRING_TO_JSVAL(name);
     pd.alias = pd.slot = pd.spare = 0;
@@ -510,7 +539,10 @@ jsd_GetValuePrototype(JSDContext* jsdc, JSDValue* jsdval)
             return NULL;
         if(!(obj = JSVAL_TO_OBJECT(jsdval->val)))
             return NULL;
-        if(!(proto = OBJ_GET_PROTO(jsdc->dumbContext,obj)))
+        JS_BeginRequest(jsdc->dumbContext);
+        proto = JS_GetPrototype(jsdc->dumbContext, obj);
+        JS_EndRequest(jsdc->dumbContext);
+        if(!proto)
             return NULL;
         jsdval->proto = jsd_NewValue(jsdc, OBJECT_TO_JSVAL(proto));
     }
@@ -532,7 +564,10 @@ jsd_GetValueParent(JSDContext* jsdc, JSDValue* jsdval)
             return NULL;
         if(!(obj = JSVAL_TO_OBJECT(jsdval->val)))
             return NULL;
-        if(!(parent = OBJ_GET_PARENT(jsdc->dumbContext,obj)))
+        JS_BeginRequest(jsdc->dumbContext);
+        parent = JS_GetParent(jsdc->dumbContext,obj);
+        JS_EndRequest(jsdc->dumbContext);
+        if(!parent)
             return NULL;
         jsdval->parent = jsd_NewValue(jsdc, OBJECT_TO_JSVAL(parent));
     }
@@ -555,9 +590,16 @@ jsd_GetValueConstructor(JSDContext* jsdc, JSDValue* jsdval)
             return NULL;
         if(!(obj = JSVAL_TO_OBJECT(jsdval->val)))
             return NULL;
-        if(!(proto = OBJ_GET_PROTO(jsdc->dumbContext,obj)))
+        JS_BeginRequest(jsdc->dumbContext);
+        proto = JS_GetPrototype(jsdc->dumbContext,obj);
+        if(!proto)
+        {
+            JS_EndRequest(jsdc->dumbContext);
             return NULL;
-        if(!(ctor = JS_GetConstructor(jsdc->dumbContext,proto)))
+        }
+        ctor = JS_GetConstructor(jsdc->dumbContext,proto);
+        JS_EndRequest(jsdc->dumbContext);
+        if(!ctor)
             return NULL;
         jsdval->ctor = jsd_NewValue(jsdc, OBJECT_TO_JSVAL(ctor));
     }
@@ -575,8 +617,10 @@ jsd_GetValueClassName(JSDContext* jsdc, JSDValue* jsdval)
         JSObject* obj;
         if(!(obj = JSVAL_TO_OBJECT(val)))
             return NULL;
-        if(OBJ_GET_CLASS(jsdc->dumbContext, obj))
-            jsdval->className = OBJ_GET_CLASS(jsdc->dumbContext, obj)->name;
+        JS_BeginRequest(jsdc->dumbContext);
+        if(JS_GET_CLASS(jsdc->dumbContext, obj))
+            jsdval->className = JS_GET_CLASS(jsdc->dumbContext, obj)->name;
+        JS_EndRequest(jsdc->dumbContext);
     }
     return jsdval->className;
 }

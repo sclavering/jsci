@@ -45,11 +45,13 @@
 
 CC = cc
 CCC = g++
-CFLAGS +=  -Wall -Wno-format
+CFLAGS +=  -Wall -Wno-format -MMD
 OS_CFLAGS = -DXP_UNIX -DSVR4 -DSYSV -D_BSD_SOURCE -DPOSIX_SOURCE -DDARWIN
 
 RANLIB = ranlib
-MKSHLIB = libtool $(XMKSHLIBOPTS) -framework System
+MKSHLIB = $(CC) -dynamiclib $(XMKSHLIBOPTS) -framework System
+
+SO_SUFFIX = dylib
 
 #.c.o:
 #      $(CC) -c -MD $*.d $(CFLAGS) $<

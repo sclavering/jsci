@@ -49,6 +49,29 @@ LIBRARY_NAME	= mozjs
 LIB_IS_C_ONLY	= 1
 GRE_MODULE	= 1
 
+ifdef GNU_CC
+ifdef INTEL_CC
+# icc gets special optimize flags
+ifdef MOZ_PROFILE_GENERATE
+MODULE_OPTIMIZE_FLAGS = -O0
+else
+MODULE_OPTIMIZE_FLAGS = -O2 -ip
+#XXX: do we want different INTERP_OPTIMIZER flags here?
+endif
+else
+MODULE_OPTIMIZE_FLAGS = -Os -fstrict-aliasing $(MOZ_OPTIMIZE_SIZE_TWEAK)
+# Special optimization flags for jsinterp.c
+INTERP_OPTIMIZER = -O3 -fstrict-aliasing
+endif
+else
+ifeq ($(OS_ARCH),SunOS)
+MODULE_OPTIMIZE_FLAGS = -xO4
+endif
+ifeq ($(OS_ARCH),WINNT)
+MODULE_OPTIMIZE_FLAGS = -O2 -GL
+endif
+endif
+
 ifeq (,$(filter-out WINNT WINCE,$(OS_ARCH)))
 LIBRARY_NAME	= js$(MOZ_BITS)$(VERSION_NUMBER)
 RESFILE		= js$(MOZ_BITS)40.res
@@ -60,7 +83,10 @@ PACKAGE_FILE = js.pkg
 # other modules which are always built shared. Failure to do so results in
 # the js code getting copied into xpinstall and jsd as well as mozilla-bin,
 # and then the static data cells used for locking no longer work.
+
+ifndef JS_STATIC_BUILD
 FORCE_SHARED_LIB = 1
+endif
 
 CSRCS		= \
 		jsapi.c \
@@ -79,6 +105,8 @@ CSRCS		= \
 		jsgc.c \
 		jshash.c \
 		jsinterp.c \
+		jsinvoke.c \
+		jsiter.c \
 		jslock.c \
 		jslog2.c \
 		jslong.c \
@@ -99,8 +127,14 @@ CSRCS		= \
 		prmjtime.c \
 		$(NULL)
 
+ifdef HAVE_DTRACE
+CSRCS 		+= \
+		jsdtracef.c
+endif
+
 EXPORTS		= \
 		jsautocfg.h \
+		jsautokw.h \
 		js.msg \
 		jsapi.h \
 		jsarray.h \
@@ -115,11 +149,13 @@ EXPORTS		= \
 		jsdate.h \
 		jsdbgapi.h \
 		jsdhash.h \
+		jsdtoa.h \
 		jsemit.h \
 		jsfun.h \
 		jsgc.h \
 		jshash.h \
 		jsinterp.h \
+		jsiter.h \
 		jslock.h \
 		jslong.h \
 		jsmath.h \
@@ -127,10 +163,10 @@ EXPORTS		= \
 		jsobj.h \
 		jsopcode.tbl \
 		jsopcode.h \
-		jsosdep.h \
 		jsotypes.h \
 		jsparse.h \
 		jsprf.h \
+		jsproto.tbl \
 		jsprvtd.h \
 		jspubtd.h \
 		jsregexp.h \
@@ -145,27 +181,40 @@ EXPORTS		= \
 		jsxml.h \
 		$(NULL)
 
+ifdef HAVE_DTRACE
+EXPORTS 	+= \
+		jsdtracef.h \
+		javascript-trace.h \
+		$(NULL)
+endif
+
 ifeq (,$(filter-out WINNT WINCE,$(OS_ARCH)))
 EXPORTS		+= jscpucfg.h
 endif
 
-FDLIBM_LIBRARY	= fdlibm/$(LIB_PREFIX)fdm.$(LIB_SUFFIX)
-JSMATH_PRELINK	= jsmathtemp.o
 JS_SAFE_ARENA	= 1
 
 DASH_R		= -r
+
+ifneq (,$(filter OS2 WINCE WINNT,$(OS_ARCH)))
+SDK_LIBRARY = $(IMPORT_LIBRARY)
+else
+SDK_LIBRARY = $(SHARED_LIBRARY)
+endif
 
 include $(topsrcdir)/config/config.mk
 
 EXTRA_DSO_LDOPTS += $(NSPR_LIBS)
 
-ifeq (,$(filter-out OS2 WINNT WINCE,$(OS_ARCH)))
-SHARED_LIBRARY_LIBS += $(FDLIBM_LIBRARY)
+ifdef MOZ_MEMORY
+ifeq ($(OS_ARCH),SunOS)
+EXTRA_DSO_LDOPTS += $(call EXPAND_LIBNAME_PATH,jemalloc,$(DIST)/lib)
+endif
 endif
 
 # When using gcc the assembly is inlined in the C-file (see jslock.c)
 ifeq ($(OS_ARCH),SunOS)
-ifneq ($(OS_TEST),i86pc)
+ifneq (86,$(findstring 86,$(OS_TEST)))
 ifndef GNU_CC
 ASFILES		= lock_$(OS_ARCH).s
 endif
@@ -190,6 +239,18 @@ JSJAVA_CFLAGS	= \
 		-I$(topsrcdir)/sun-java/include \
 		$(JSJAVA_STUBHEADERS)
 
+# Define keyword generator before rules.mk, see bug 323979 comment 50
+
+HOST_SIMPLE_PROGRAMS += host_jskwgen$(HOST_BIN_SUFFIX)
+GARBAGE += jsautokw.h host_jskwgen$(HOST_BIN_SUFFIX)
+
+ifdef HAVE_DTRACE
+ifneq ($(OS_ARCH),Darwin)
+DTRACE_PROBE_OBJ = $(LIBRARY_NAME)-dtrace.$(OBJ_SUFFIX)
+endif
+MOZILLA_DTRACE_SRC = $(srcdir)/javascript-trace.d
+endif
+
 include $(topsrcdir)/config/rules.mk
 
 DEFINES		+= -DEXPORT_JS_API 
@@ -209,7 +270,7 @@ LDFLAGS         += -OPT:NOICF
 endif
 endif
 
-GARBAGE		+= $(JSMATH_PRELINK) jscpucfg.o jsautocfg.h jsautocfg.tmp jscpucfg
+GARBAGE		+= jscpucfg.o jsautocfg.h jsautocfg.tmp jscpucfg
 
 ifneq (,$(CROSS_COMPILE)$(filter-out WINNT,$(OS_ARCH)))
 TARGETS		+= jscpucfg$(HOST_BIN_SUFFIX)
@@ -235,6 +296,12 @@ ifneq ($(findstring -L,$(NSPR_LIBS)),)
 NSPR_STATIC_PATH = $(subst -L,,$(findstring -L,$(NSPR_LIBS)))
 else
 NSPR_STATIC_PATH = $(DIST)/lib
+endif
+
+ifdef MOZ_SHARK
+DEFINES += -DMOZ_SHARK
+CFLAGS += -F/System/Library/PrivateFrameworks
+LDFLAGS += -F/System/Library/PrivateFrameworks -framework CHUD
 endif
 
 LDFLAGS		+= $(pathsubst -l%,$(NSPR_STATIC_PATH)/%.a,$(NSPR_LIBS))
@@ -288,46 +355,19 @@ LDFLAGS		+= -lposix4 -ldl -lnsl -lsocket
 endif
 endif
 
-ifeq ($(OS_ARCH),QNX)
-ifneq ($(OS_TARGET),NTO)
-# Don't use wildcard here, because we only want this resolved at link time.
-OBJS		+= fdlibm/*.o
-endif
+# Allow building jsinterp.c with special optimization flags
+ifdef INTERP_OPTIMIZER
+jsinterp.$(OBJ_SUFFIX): MODULE_OPTIMIZE_FLAGS=$(INTERP_OPTIMIZER)
 endif
 
 ifeq ($(OS_ARCH),IRIX)
 ifndef GNU_CC
 _COMPILE_CFLAGS  = $(patsubst -O%,-O1,$(COMPILE_CFLAGS))
-jsapi.o jsarena.o jsarray.o jsatom.o jsemit.o jsfun.o jsinterp.o jsregexp.o jsparse.o jsopcode.o jsscript.o: %.o: %.c Makefile.in
+jsapi.o jsxdrapi.o jsarena.o jsarray.o jsatom.o jsemit.o jsfun.o jsinterp.o jsregexp.o jsparse.o jsopcode.o jsscript.o: %.o: %.c Makefile.in
 	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO)
+	@$(MAKE_DEPS_AUTO_CC)
 	$(CC) -o $@ -c $(_COMPILE_CFLAGS) $<
 endif
-endif
-
-# On OS/2 & win32 we are already linking against fdlibm, so don't bother
-# creating jsmathtemp
-ifeq (,$(filter OS2 WINNT OpenVMS,$(OS_ARCH)))
-# special rule for jsmath.o since we want to incrementally link
-# against fdlibm to pull in only what is needed
-# Do this in a single step to avoid dependency problems
-jsmath.o: jsmath.c $(FDLIBM_LIBRARY) Makefile.in
-	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO)
-	$(ELOG) $(CC) $(OUTOPTION)$(JSMATH_PRELINK) -c $(COMPILE_CFLAGS) $<
-ifeq ($(OS_ARCH),QNX)
-ifneq ($(OS_TARGET),NTO)
-	@cp $(JSMATH_PRELINK) $@
-else
-	$(LD) $(DASH_R) -o $@ $(JSMATH_PRELINK) $(FDLIBM_LIBRARY)
-endif
-else
-	$(LD) $(DASH_R) -o $@ $(JSMATH_PRELINK) $(FDLIBM_LIBRARY)
-endif
-	@$(RM) -f $(JSMATH_PRELINK)
-else
-# Create dependency so we build fdlibm
-jsmath.o: $(FDLIBM_LIBRARY) Makefile.in
 endif
 
 # An AIX Optimization bug causes PR_dtoa() & JS_dtoa to produce wrong result.
@@ -335,16 +375,13 @@ endif
 ifeq ($(OS_ARCH),AIX)
 jsatom.o: jsatom.c Makefile.in
 	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO)
+	@$(MAKE_DEPS_AUTO_CC)
 	$(CC) -o $@ -c $(filter-out $(MOZ_OPTIMIZE_FLAGS), $(COMPILE_CFLAGS)) $<
 jsdtoa.o: jsdtoa.c Makefile.in
 	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO)
+	@$(MAKE_DEPS_AUTO_CC)
 	$(CC) -o $@ -c $(filter-out $(MOZ_OPTIMIZE_FLAGS), $(COMPILE_CFLAGS)) $<
 endif
-
-$(FDLIBM_LIBRARY):
-	$(MAKE) -C $(@D) $(@F)
 
 jsopcode.h jsopcode.c: jsopcode.tbl
 
@@ -374,19 +411,6 @@ endif
 ifdef CROSS_COMPILE
 # jscpucfg needs to know when it's supposed to produce a config for the target
 JSCPUCFG_DEFINES = $(ACDEFINES)
-
-# This is incredibly hacky.  Darwin NSPR uses the same MDCPUCFG for multiple
-# processors, and determines which processor to configure for based on
-# #ifdef i386.  This macro is among the NSPR defines, but is also automatically
-# defined by the compiler when building for i386.  It therefore needs to be
-# defined here if targeting i386, and explicitly undefined otherwise.
-ifeq ($(OS_ARCH),Darwin)
-ifeq ($(TARGET_CPU),powerpc)
-JSCPUCFG_DEFINES += -Ui386
-else
-JSCPUCFG_DEFINES += -Di386=1
-endif
-endif
 endif
 
 ifeq ($(OS_ARCH),QNX)
@@ -406,5 +430,20 @@ else
 jscpucfg$(HOST_BIN_SUFFIX): jscpucfg.c Makefile.in
 	$(HOST_CC) $(HOST_CFLAGS) $(JSCPUCFG_DEFINES) $(DEFINES) $(NSPR_CFLAGS) $(OUTOPTION)$@ $<
 endif
+endif
+
+# Extra dependancies and rules for keyword switch code
+jsscan.$(OBJ_SUFFIX): jsautokw.h jskeyword.tbl
+
+host_jskwgen.$(OBJ_SUFFIX): jsconfig.h jskeyword.tbl
+
+jsautokw.h: host_jskwgen$(HOST_BIN_SUFFIX)
+	./host_jskwgen$(HOST_BIN_SUFFIX) $@
+
+ifdef HAVE_DTRACE
+javascript-trace.h: $(srcdir)/javascript-trace.d
+	dtrace -h -s $(srcdir)/javascript-trace.d -o javascript-trace.h.in
+	sed 's/if _DTRACE_VERSION/ifdef INCLUDE_MOZILLA_DTRACE/' \
+	    javascript-trace.h.in > javascript-trace.h
 endif
 

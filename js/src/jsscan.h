@@ -44,11 +44,17 @@
  */
 #include <stddef.h>
 #include <stdio.h>
+#include "jsconfig.h"
 #include "jsopcode.h"
 #include "jsprvtd.h"
 #include "jspubtd.h"
 
 JS_BEGIN_EXTERN_C
+
+#define JS_KEYWORD(keyword, type, op, version) \
+    extern const char js_##keyword##_str[];
+#include "jskeyword.tbl"
+#undef JS_KEYWORD
 
 typedef enum JSTokenType {
     TOK_ERROR = -1,                     /* well-known as the only code < EOF */
@@ -78,7 +84,7 @@ typedef enum JSTokenType {
     TOK_NAME = 29,                      /* identifier */
     TOK_NUMBER = 30,                    /* numeric constant */
     TOK_STRING = 31,                    /* string constant */
-    TOK_OBJECT = 32,                    /* RegExp or other object constant */
+    TOK_REGEXP = 32,                    /* RegExp constant */
     TOK_PRIMARY = 33,                   /* true, false, null, this, super */
     TOK_FUNCTION = 34,                  /* function keyword */
     TOK_EXPORT = 35,                    /* export keyword */
@@ -125,6 +131,13 @@ typedef enum JSTokenType {
     TOK_FILTER = 76,                    /* XML filtering predicate op (.()) */
     TOK_XMLELEM = 77,                   /* XML element node type (no token) */
     TOK_XMLLIST = 78,                   /* XML list node type (no token) */
+    TOK_YIELD = 79,                     /* yield from generator function */
+    TOK_ARRAYCOMP = 80,                 /* array comprehension initialiser */
+    TOK_ARRAYPUSH = 81,                 /* array push within comprehension */
+    TOK_LEXICALSCOPE = 82,              /* block scope AST node label */
+    TOK_LET = 83,                       /* let keyword */
+    TOK_BODY = 84,                      /* synthetic body of function with
+                                           destructuring formal parameters */
     TOK_RESERVED,                       /* reserved keywords */
     TOK_LIMIT                           /* domain size */
 } JSTokenType;
@@ -134,6 +147,12 @@ typedef enum JSTokenType {
 
 #define TOKEN_TYPE_IS_XML(tt) \
     (tt == TOK_AT || tt == TOK_DBLCOLON || tt == TOK_ANYNAME)
+
+#if JS_HAS_BLOCK_SCOPE
+# define TOKEN_TYPE_IS_DECL(tt) ((tt) == TOK_VAR || (tt) == TOK_LET)
+#else
+# define TOKEN_TYPE_IS_DECL(tt) ((tt) == TOK_VAR)
+#endif
 
 struct JSStringBuffer {
     jschar      *base;
@@ -181,10 +200,12 @@ struct JSToken {
     JSTokenPos          pos;            /* token position in file */
     jschar              *ptr;           /* beginning of token in line buffer */
     union {
-        struct {                        /* non-numeric literal */
+        struct {                        /* name or string literal */
             JSOp        op;             /* operator, for minimal parser */
             JSAtom      *atom;          /* atom table entry */
         } s;
+        uintN           reflags;        /* regexp flags, use tokenbuf to access
+                                           regexp chars */
         struct {                        /* atom pair, for XML PIs */
             JSAtom      *atom2;         /* auxiliary atom table entry */
             JSAtom      *atom;          /* main atom table entry */
@@ -194,6 +215,7 @@ struct JSToken {
 };
 
 #define t_op            u.s.op
+#define t_reflags       u.reflags
 #define t_atom          u.s.atom
 #define t_atom2         u.p.atom2
 #define t_dval          u.dval
@@ -224,7 +246,6 @@ struct JSTokenStream {
     JSStringBuffer      tokenbuf;       /* current token string buffer */
     const char          *filename;      /* input filename or null */
     FILE                *file;          /* stdio stream if reading from file */
-    JSPrincipals        *principals;    /* principals associated with source */
     JSSourceHandler     listener;       /* callback for source; eg debugger */
     void                *listenerData;  /* listener 'this' data */
     void                *listenerTSData;/* listener data for this TokenStream */
@@ -272,6 +293,9 @@ struct JSTokenStream {
  */
 #define TSF_IN_HTML_COMMENT 0x2000
 
+/* Ignore keywords and return TOK_NAME instead to the parser. */
+#define TSF_KEYWORD_IS_NAME 0x4000
+
 /* Unicode separators that are treated as line terminators, in addition to \n, \r */
 #define LINE_SEPARATOR  0x2028
 #define PARA_SEPARATOR  0x2029
@@ -280,31 +304,27 @@ struct JSTokenStream {
  * Create a new token stream, either from an input buffer or from a file.
  * Return null on file-open or memory-allocation failure.
  *
- * NB: All of js_New{,Buffer,File}TokenStream() return a pointer to transient
- * memory in the current context's temp pool.  This memory is deallocated via
- * JS_ARENA_RELEASE() after parsing is finished.
+ * The function uses JSContext.tempPool to allocate internal buffers. The
+ * caller should release them using JS_ARENA_RELEASE after it has finished
+ * with the token stream and has called js_CloseTokenStream.
  */
-extern JSTokenStream *
-js_NewTokenStream(JSContext *cx, const jschar *base, size_t length,
-                  const char *filename, uintN lineno, JSPrincipals *principals);
+extern JSBool
+js_InitTokenStream(JSContext *cx, JSTokenStream *ts,
+                   const jschar *base, size_t length,
+                   FILE *fp, const char *filename, uintN lineno);
 
-extern JS_FRIEND_API(JSTokenStream *)
-js_NewBufferTokenStream(JSContext *cx, const jschar *base, size_t length);
-
-extern JS_FRIEND_API(JSTokenStream *)
-js_NewFileTokenStream(JSContext *cx, const char *filename, FILE *defaultfp);
-
-extern JS_FRIEND_API(JSBool)
+extern void
 js_CloseTokenStream(JSContext *cx, JSTokenStream *ts);
 
 extern JS_FRIEND_API(int)
 js_fgets(char *buf, int size, FILE *file);
 
 /*
- * Initialize the scanner, installing JS keywords into cx's global scope.
+ * If the given char array forms JavaScript keyword, return corresponding
+ * token. Otherwise return TOK_EOF.
  */
-extern JSBool
-js_InitScanner(JSContext *cx);
+extern JSTokenType
+js_CheckKeyword(const jschar *chars, size_t length);
 
 /*
  * Friend-exported API entry point to call a mapping function on each reserved
@@ -314,22 +334,26 @@ extern JS_FRIEND_API(void)
 js_MapKeywords(void (*mapfun)(const char *));
 
 /*
- * Report a compile-time error by its number, using ts or cg to show context.
- * Return true for a warning, false for an error.
+ * Check that str forms a valid JS identifier name. The function does not
+ * check if str is a JS keyword.
  */
 extern JSBool
-js_ReportCompileErrorNumber(JSContext *cx, void *handle, uintN flags,
-                            uintN errorNumber, ...);
+js_IsIdentifier(JSString *str);
 
-extern JSBool
-js_ReportCompileErrorNumberUC(JSContext *cx, void *handle, uintN flags,
-                              uintN errorNumber, ...);
+/*
+ * Report a compile-time error by its number. Return true for a warning, false
+ * for an error. When pn is not null, use it to report error's location.
+ * Otherwise use ts, which must not be null.
+ */
+JSBool
+js_ReportCompileErrorNumber(JSContext *cx, JSTokenStream *ts, JSParseNode *pn,
+                            uintN flags, uintN errorNumber, ...);
 
-/* Steal some JSREPORT_* bits (see jsapi.h) to tell handle's type. */
-#define JSREPORT_HANDLE 0x300
-#define JSREPORT_TS     0x000
-#define JSREPORT_CG     0x100
-#define JSREPORT_PN     0x200
+/*
+ * Steal one JSREPORT_* bit (see jsapi.h) to tell that arguments to the error
+ * message have const jschar* type, not const char*.
+ */
+#define JSREPORT_UC 0x100
 
 /*
  * Look ahead one token and return its type.

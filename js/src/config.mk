@@ -40,7 +40,7 @@
 ifdef JS_DIST
 DIST = $(JS_DIST)
 else
-DIST = $(DEPTH)/../../dist/$(OBJDIR)
+DIST = $(DEPTH)/../../dist
 endif
 
 # Set os+release dependent make variables
@@ -84,6 +84,10 @@ endif
 ifeq ($(OS_ARCH), CYGWIN32_NT)
 	OS_ARCH    := WINNT
 endif
+ifeq (MINGW32_NT,$(findstring MINGW32_NT,$(OS_ARCH)))
+	OS_RELEASE := $(patsubst MINGW32_NT-%,%,$(OS_ARCH))
+	OS_ARCH    := WINNT
+endif
 
 # Virtually all Linux versions are identical.
 # Any distinctions are handled in linux.h
@@ -108,21 +112,30 @@ ifeq ($(OS_ARCH), WINNT)
 INSTALL = nsinstall
 CP = cp
 else
-INSTALL	= $(DEPTH)/../../dist/$(OBJDIR)/bin/nsinstall
+INSTALL	= $(DIST)/bin/nsinstall
 CP = cp
 endif
 
 ifdef BUILD_OPT
-OPTIMIZER  = -O
-DEFINES    += -UDEBUG -DNDEBUG -UDEBUG_$(shell whoami)
+ifdef USE_MSVC
+OPTIMIZER  = -O2 -GL
+INTERP_OPTIMIZER = -O2 -GL
+LDFLAGS    += -LTCG
+else
+OPTIMIZER  = -Os
+INTERP_OPTIMIZER = -Os
+endif
+DEFINES    += -UDEBUG -DNDEBUG -UDEBUG_$(USER)
 OBJDIR_TAG = _OPT
 else
 ifdef USE_MSVC
 OPTIMIZER  = -Zi
+INTERP_OPTIMIZER = -Zi
 else
-OPTIMIZER  = -g
+OPTIMIZER  = -g3
+INTERP_OPTIMIZER = -g3
 endif
-DEFINES    += -DDEBUG -DDEBUG_$(shell whoami)
+DEFINES    += -DDEBUG -DDEBUG_$(USER)
 OBJDIR_TAG = _DBG
 endif
 
@@ -145,6 +158,22 @@ CLASSPATH    = $(JDK)/lib/classes.zip$(SEP)$(CLASSDIR)/$(OBJDIR)
 
 include $(DEPTH)/config/$(OS_CONFIG).mk
 
+ifndef OBJ_SUFFIX
+ifdef USE_MSVC
+OBJ_SUFFIX = obj
+else
+OBJ_SUFFIX = o
+endif
+endif
+
+ifndef HOST_BIN_SUFFIX
+ifeq ($(OS_ARCH),WINNT)
+HOST_BIN_SUFFIX = .exe
+else
+HOST_BIN_SUFFIX =
+endif
+endif
+
 # Name of the binary code directories
 ifdef BUILD_IDG
 OBJDIR          = $(OS_CONFIG)$(OBJDIR_TAG).OBJD
@@ -152,9 +181,6 @@ else
 OBJDIR          = $(OS_CONFIG)$(OBJDIR_TAG).OBJ
 endif
 VPATH           = $(OBJDIR)
-
-# Automatic make dependencies file
-DEPENDENCIES    = $(OBJDIR)/.md
 
 LCJAR = js15lc30.jar
 
