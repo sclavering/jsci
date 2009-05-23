@@ -268,7 +268,6 @@ static inline JSBool parse_number(struct JSON *s) {
   jsdouble n=0.;
   int sgn=-1;
   int expsgn=1;
-  int exp=0;
   jsdouble mul;
   int expn=0;
 
