@@ -46,6 +46,11 @@ extern char *ctoxml_cterm2;
 extern int ctoxml_clineno;
 extern char *ctoxml_filename;
 static void preprocessor(void);
+
+int check_type(void);
+void ctoxml_linecomment(char *comment);
+void ctoxml_comment(char **at);
+
 %}
 
 %%
@@ -164,187 +169,179 @@ L\"(\\.|[^\\"])*\"      { count(); ctoxml_cterm=strdup(ctoxml_ctext+1); return S
 
 %%
 
-ctoxml_cwrap()
-{
-	return 1;
+ctoxml_cwrap() {
+  return 1;
 }
 
 int ctoxml_ccolumn = 0;
 int ctoxml_cfilepos = 0;
 
 void ctoxml_comment(char **at) {
-        static struct strbuf *dstr=0;
-	struct Xml *commxml;
-	int state=0;
-	if (dstr==0) dstr=strbuf_new();
+  static struct strbuf *dstr = 0;
+  struct Xml *commxml;
+  int state = 0;
+  if(dstr == 0) dstr = strbuf_new();
 
-	if (!at) {
-          ctoxml_ccolumn+=2;
-          ctoxml_cfilepos+=2;
-	}
+  if(!at) {
+    ctoxml_ccolumn += 2;
+    ctoxml_cfilepos += 2;
+  }
 
-	while(state!=2) {
-	    char c;
-	    if (at) c=*((*at)++);
-	    else c=input();
-	    if (c==0) {
-	      if (at==0) break;
-	      at=0;
-	      c=input();
-	      if (c==0) break;
-	    }
+  while(state != 2) {
+    char c;
+    if(at) c = *((*at)++);
+    else c = input();
+    if(c == 0) {
+      if(at == 0) break;
+      at = 0;
+      c = input();
+      if(c == 0) break;
+    }
 
-	    strbuf_catchar(dstr,c);
+    strbuf_catchar(dstr, c);
 
-	    if (!at) {
-	      if (c == '\n') {
-	        ctoxml_ccolumn = 0;
-	        ctoxml_clineno ++;
-	      } else if (c == '\t') {
-	        ctoxml_ccolumn = ((ctoxml_ccolumn+7)/8)*8;
-	      } else
-	        ctoxml_ccolumn++;
-	    }
+    if(!at) {
+      if(c == '\n') {
+        ctoxml_ccolumn = 0;
+        ++ctoxml_clineno;
+      } else if(c == '\t') {
+        ctoxml_ccolumn = ((ctoxml_ccolumn + 7) / 8) * 8;
+      } else {
+        ++ctoxml_ccolumn;
+      }
+    }
 
-	    switch(state) {
-	    case 0:
-	      if (c=='*') state=1;
-	      break;
-	    case 1:
-	      if (c=='/') state=2;
-	      else if (c!='*') state=0;
-	      break;
-	    }
-	}
-	if (state==2)
-	  dstr->buf[dstr->len-2]=0;
+    switch(state) {
+      case 0:
+        if(c == '*') state = 1;
+        break;
+      case 1:
+        if(c == '/') state = 2;
+        else if(c != '*') state = 0;
+        break;
+    }
+  }
+  if(state == 2) dstr->buf[dstr->len - 2] = 0;
 
-	commxml=xml_text("comment","type",strdup("block"),NULL,
-		    strdup(dstr->buf));
-	xml_print(commxml);
-	xml_free(commxml);
+  commxml = xml_text("comment", "type", strdup("block"), NULL, strdup(dstr->buf));
+  xml_print(commxml);
+  xml_free(commxml);
 
-	strbuf_clear(dstr);
+  strbuf_clear(dstr);
 }
+
 
 void ctoxml_linecomment(char *comment) {
-	struct Xml *commxml;
-
-	if (!comment) comment=ctoxml_ctext+2;
-       
-	commxml=xml_text("comment","type",strdup("line"),NULL,
-		    strdup(comment));
-	xml_print(commxml);
-	xml_free(commxml);
+  struct Xml *commxml;
+  if(!comment) comment = ctoxml_ctext + 2;
+  commxml = xml_text("comment", "type", strdup("line"), NULL, strdup(comment));
+  xml_print(commxml);
+  xml_free(commxml);
 }
+
 
 void preprocessor(void) {
   char *directive;
   char *comment;
 
-  comment=strstr(ctoxml_ctext, "/*");
-  if (comment) {
-    *comment=0;
-    comment+=2;
+  comment = strstr(ctoxml_ctext, "/*");
+  if(comment) {
+    *comment = 0;
+    comment += 2;
     ctoxml_comment(&comment);
-  } else
-    comment=ctoxml_ctext;
+  } else {
+    comment = ctoxml_ctext;
+  }
 
-  comment=strstr(comment, "//");
+  comment = strstr(comment, "//");
   if (comment) {
-    *comment=0;
-    comment+=2;
+    *comment = 0;
+    comment += 2;
     ctoxml_linecomment(comment);
   }
 
-  directive=ctoxml_ctext+1;
-  directive+=strspn(directive," \t");
+  directive = ctoxml_ctext+1;
+  directive += strspn(directive," \t");
 
-  if (strncmp(directive,"define",6)==0) {
-    int spclen=strspn(directive+6," \t"); // Find start of identifier
-    if (spclen && directive[6+spclen]) {
+  if(strncmp(directive, "define", 6) == 0) {
+    int spclen = strspn(directive + 6, " \t"); // Find start of identifier
+    if(spclen && directive[6 + spclen]) {
       char *startparen;
       char *endparen;
       char *macrovalue;
       struct Xml *ident_xml;
       struct Xml *def;
-      char *macroname=strdup(directive+spclen+6); // Copy identifier and rest of define
+      char *macroname = strdup(directive + spclen + 6); // Copy identifier and rest of define
 
-      startparen=strchr(macroname,'(');
-      if (startparen && strcspn(macroname," \t")>startparen-macroname) {
-	  endparen=strchr(macroname,')');
-          macrovalue=endparen+1;
-	  macrovalue+=strspn(macrovalue," \t");
-	  macrovalue=strdup(macrovalue);
-	  *startparen=0; // Terminate identifier
+      startparen = strchr(macroname,'(');
+      if(startparen && strcspn(macroname, " \t") > startparen - macroname) {
+        endparen = strchr(macroname, ')');
+        macrovalue = endparen + 1;
+        macrovalue += strspn(macrovalue, " \t");
+        macrovalue = strdup(macrovalue);
+        *startparen = 0; // Terminate identifier
       } else {
-          char *identend=macroname+strcspn(macroname," \t"); // Find end of identifier
-          startparen=0;
-	  macrovalue=identend+strspn(identend," \t");
-	  macrovalue=strdup(macrovalue);
-          *identend=0; // Terminate identifier;
+        char *identend = macroname + strcspn(macroname, " \t"); // Find end of identifier
+        startparen = 0;
+        macrovalue = identend + strspn(identend, " \t");
+        macrovalue = strdup(macrovalue);
+        *identend = 0; // Terminate identifier;
       }
 
-      def=xml("define",NULL,
-	      (ident_xml=xml_text("id",NULL,macroname)),
-	      xml_text("v",NULL,macrovalue),NULL);
+      ident_xml = xml_text("id", NULL, macroname);
+      def = xml("define", NULL, ident_xml, xml_text("v", NULL, macrovalue), NULL);
 
-      if (startparen) {
-        char *ident=startparen+1;
-	if (ident>=endparen) {
-	    xml_link(ident_xml,xml_text("pm",NULL,strdup("")));
-	}
-	while (ident<endparen) {
-	    char *identend=ident+strcspn(ident," \t,)");
-            *identend=0;
-	    xml_link(ident_xml,xml_text("pm",NULL,strdup(ident)));
-            ident=identend+1;
-            ident+=strspn(ident," \t,");
+      if(startparen) {
+        char *ident = startparen + 1;
+        if(ident >= endparen) xml_link(ident_xml, xml_text("pm", NULL, strdup("")));
+        while(ident < endparen) {
+          char *identend = ident + strcspn(ident, " \t,)");
+          *identend = 0;
+          xml_link(ident_xml, xml_text("pm", NULL, strdup(ident)));
+          ident = identend + 1;
+          ident += strspn(ident, " \t,");
         }
       }
-     
+
       xml_print(def);
       xml_free(def);
     }
-  } else if (strncmp(directive,"pragma",6)==0) {
+  }
+  else if(strncmp(directive, "pragma", 6) == 0) {
     struct Xml *pragma;
-
-    if (directive[6])
-      ctoxml_cterm=strdup(directive+7);
-    else
-      ctoxml_cterm=strdup("");
-    
-    pragma = xml_text("pragma",NULL,ctoxml_cterm);
+    ctoxml_cterm = directive[6] ? strdup(directive + 7) : strdup("");
+    pragma = xml_text("pragma", NULL, ctoxml_cterm);
     xml_print(pragma);
     xml_free(pragma);
-
-  } else if (atoi(ctoxml_ctext+1) || strncmp(directive, "line ",5)==0) {
+  }
+  else if(atoi(ctoxml_ctext + 1) || strncmp(directive, "line ", 5) == 0) {
     char *filenameend;
-    char *tmpfilename=strchr(ctoxml_ctext, ' ');
+    char *tmpfilename = strchr(ctoxml_ctext, ' ');
     char *lineno;
     struct Xml *linexml;
 
-    if (!(tmpfilename && tmpfilename[0])) return;
-    ctoxml_clineno=atoi(tmpfilename+1);
-    
-    tmpfilename=strchr(tmpfilename+1, '\"');
-    if (!(tmpfilename && tmpfilename[0])) return;
-    
+    if(!(tmpfilename && tmpfilename[0])) return;
+    ctoxml_clineno = atoi(tmpfilename + 1);
+
+    tmpfilename = strchr(tmpfilename + 1, '\"');
+    if(!(tmpfilename && tmpfilename[0])) return;
+
     tmpfilename++;
 
-    ctoxml_filename=strdup(tmpfilename);
-    filenameend=strchr(ctoxml_filename+1, '\"');
-    if (filenameend) *filenameend=0;
-    strncpy(ctoxml_filename_errmsg,ctoxml_filename,80);
+    ctoxml_filename = strdup(tmpfilename);
+    filenameend = strchr(ctoxml_filename + 1, '\"');
+    if(filenameend) *filenameend = 0;
+    strncpy(ctoxml_filename_errmsg, ctoxml_filename, 80);
 
-    lineno=malloc(10);
-    sprintf(lineno,"%d",ctoxml_clineno);
-    linexml = xml("line","file",ctoxml_filename,"line",lineno,NULL,NULL);
+    lineno = malloc(10);
+    sprintf(lineno, "%d", ctoxml_clineno);
+    linexml = xml("line", "file", ctoxml_filename, "line", lineno, NULL, NULL);
     xml_print(linexml);
     xml_free(linexml);
     ctoxml_clineno--;
   }
 }
+
 
 void count(void) {
   int i;
@@ -366,7 +363,7 @@ char ctoxml_filename_errmsg[80];
 char *ctoxml_cterm2=0;
 int ctoxml_clineno;
 
-int check_type() {
-  if(stringhash_search(ctoxml_typedefs,ctoxml_ctext)) return TYPE_NAME;
+int check_type(void) {
+  if(stringhash_search(ctoxml_typedefs, ctoxml_ctext)) return TYPE_NAME;
   return IDENTIFIER;
 }
