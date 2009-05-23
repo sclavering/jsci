@@ -4,7 +4,6 @@ static char *alpha="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567
 
 static JSBool encodeBase64(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   int length;
-  int i;
   jschar *ret;
   jschar *str;
   jschar *in, *out;
