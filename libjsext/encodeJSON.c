@@ -76,7 +76,6 @@ static inline JSBool check_cycle(struct JSON *s) {
 static JSBool array_to_JSON(struct JSON *s) {
   int i, len, empty=1;
   JSObject *array=JSVAL_TO_OBJECT(s->v);
-  JSIdArray *id;
 
   s->stack[s->recursion]=s->v;
   s->recursion++;
