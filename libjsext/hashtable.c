@@ -1,11 +1,57 @@
 /* Copyright (C) 2004 Christopher Clark <firstname.lastname@cl.cam.ac.uk> */
 
 #include "hashtable.h"
-#include "hashtable_private.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+/*****************************************************************************/
+struct entry
+{
+    void *k, *v;
+    unsigned int h;
+    struct entry *next;
+};
+
+struct hashtable {
+    unsigned int tablelength;
+    struct entry **table;
+    unsigned int entrycount;
+    unsigned int loadlimit;
+    unsigned int primeindex;
+    unsigned int (*hashfn) (void *k);
+    int (*eqfn) (void *k1, void *k2);
+};
+
+/*****************************************************************************/
+unsigned int
+hash(struct hashtable *h, void *k);
+
+/*****************************************************************************/
+/* indexFor */
+/*
+
+// Not all compilers like inline or __inline.
+static __inline unsigned int
+indexFor(unsigned int tablelength, unsigned int hashvalue) {
+    return (hashvalue % tablelength);
+};
+*/
+
+#define indexFor(tablelength,hashvalue) ((hashvalue)%(tablelength))
+
+/* Only works if tablelength == 2^N */
+/*static inline unsigned int
+indexFor(unsigned int tablelength, unsigned int hashvalue)
+{
+    return (hashvalue & (tablelength - 1u));
+}
+*/
+
+
+/*****************************************************************************/
+
 
 /*
 Credit for primes table: Aaron Krowne
@@ -202,7 +248,7 @@ hashtable_remove(struct hashtable *h, void *k)
             *pE = e->next;
             h->entrycount--;
             v = e->v;
-            freekey(e->k);
+            free(e->k);
             free(e);
             return v;
         }
@@ -226,7 +272,7 @@ hashtable_destroy(struct hashtable *h, int free_values)
         {
             e = table[i];
             while (NULL != e)
-            { f = e; e = e->next; freekey(f->k); free(f->v); free(f); }
+            { f = e; e = e->next; free(f->k); free(f->v); free(f); }
         }
     }
     else
@@ -235,7 +281,7 @@ hashtable_destroy(struct hashtable *h, int free_values)
         {
             e = table[i];
             while (NULL != e)
-            { f = e; e = e->next; freekey(f->k); free(f); }
+            { f = e; e = e->next; free(f->k); free(f); }
         }
     }
     free(h->table);
