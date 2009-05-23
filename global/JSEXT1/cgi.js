@@ -1,31 +1,25 @@
 /*
 new CGI()
 
-Interprets the environment variables given in _environment_ according to the
-CGI/1.1 specification: <http://hoohoo.ncsa.uiuc.edu/cgi/env.html>.
+Interprets the environment variables (from the .environment property of the global object) per the CGI/1.1 specification: <http://hoohoo.ncsa.uiuc.edu/cgi/env.html>.
 
-The .jsx file to be executed should contain a single anonymous function, which
-will be called with the _CGI_ instance as its only argument.
-
-### Arguments ###
+The .jsx file to be executed should contain a single anonymous function, which will be called with the CGI instance as its only argument.
 
 ### Properties ###
 
-* _GET_data_: the decoded data from the query string
-* _POST_data_: the decoded data from a POST request, if any
+* GET_data: the decoded data from the query string
+* POST_data: the decoded data from a POST request, if any
 
-* _requestHeaders_: An object containing the following properties:
-  * _contentType_
-  * _contentLength_
+* requestHeaders: An object containing the following properties:
+  * contentType
+  * contentLength
   * all other HTTP headers passed from the HTTP server
-* _responseHeaders_: An object containing the following property:
-  * _contentType_: "text/html"
-* _remoteAddress_: A string
-* _method_: A string containing the HTTP method (usually "GET" or "POST").
-* _requestURL_: A string
-* _cookie_data_: the request cookies, as a name-value mapping
-
-### Methods ###
+* responseHeaders: An object containing the following property:
+  * contentType: "text/html"
+* remoteAddress: A string
+* method: A string containing the HTTP method (usually "GET" or "POST").
+* requestURL: A string
+* cookie_data: the request cookies, as a name-value mapping
 */
 
 (function() {
