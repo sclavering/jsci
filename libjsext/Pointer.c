@@ -704,7 +704,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
   int ret=0;
   int siz;
   uintN i;
-  JSX_ParamType tmptype = { 0, 0, 0 };
+  JSX_ParamType tmptype = { 0, 0 };
   JSX_ParamType *thistype;
 
   for (i=0; i<nargs; i++) {

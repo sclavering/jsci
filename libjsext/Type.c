@@ -281,10 +281,6 @@ static void JSX_DestroyTypeStructUnion(JSContext *cx, JSX_TypeStructUnion *type)
 static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
   int i;
   if (type) {
-    for (i=0; i<type->nParam; i++) {
-      if (type->param[i].name)
-	free(type->param[i].name); //strdup
-    }
     if (type->param)
       JS_free(cx,type->param);
     if (type->cif.arg_types) {
@@ -350,7 +346,6 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
   memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
 
   type->param[type->nParam].type=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
-  type->param[type->nParam].name=0;
   type->param[type->nParam].isConst=0;
   type->cif.arg_types=0;
 
@@ -381,7 +376,6 @@ JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertyp
   dest->type = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
   JS_GetProperty(cx, membertype, "const", &tmp);
   dest->isConst = tmp == JSVAL_TRUE ? 1 : 0;
-  dest->name = 0;
   return JS_TRUE;
 }
 
@@ -506,7 +500,6 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
       goto failure;
     if (memberno==type->nMember-1) {
       ((JSX_TypeFunction *) type)->param[type->nMember].type = JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
-      ((JSX_TypeFunction *) type)->param[type->nMember].name = 0;
       ((JSX_TypeFunction *) type)->param[type->nMember].isConst = 0;
     }
     if(((JSX_TypeFunction *) type)->cif.arg_types) {

@@ -53,7 +53,6 @@ typedef struct {
 
 typedef struct {
   JSX_Type *type;
-  char *name;
   int isConst;
 } JSX_ParamType;
 
