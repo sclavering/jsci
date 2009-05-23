@@ -2,6 +2,7 @@
 #include "xml.h"
 #include <stdarg.h>
 #include <stdlib.h>
+#include "strbuf.h"
 
 
 void xml_free(struct Xml *e) {
