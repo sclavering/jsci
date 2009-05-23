@@ -1468,14 +1468,12 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
 
 
 static JSBool JSX_InitPointerString(JSContext *cx, JSObject *retobj, JSString *str) {
-  if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetType(INTTYPE,0,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
-
+  if(!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetByteType()), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
   JSX_Pointer *ret;
   int length = JS_GetStringLength(str);
   ret = JS_malloc(cx, sizeof(JSX_Pointer) + sizeof(char) * (length + 1));
   ret->ptr=ret+1;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(INTTYPE, 0, 0));
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetByteType());
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
   memcpy(ret->ptr, JS_GetStringBytes(str), sizeof(char)*(length+1));
@@ -1524,15 +1522,14 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
 
-  if (!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetType(VOIDTYPE,0,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
+  if(!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetVoidType()), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
 
   length=INT_TO_JSVAL(argv[0]);
   ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
     return JS_FALSE;
   ret->ptr=ret+1;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetVoidType());
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
 
@@ -1553,15 +1550,14 @@ static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
 
-  if (!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetType(VOIDTYPE,0,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
+  if(!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetVoidType()), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
 
   length=INT_TO_JSVAL(argv[0]);
   ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
     return JS_FALSE;
   ret->ptr=ret+1;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
+  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetVoidType());
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
   memset(ret->ptr,0,length);

@@ -345,7 +345,7 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
   type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
   memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
 
-  type->param[type->nParam].type=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
+  type->param[type->nParam].type = JS_GetPrivate(cx, JSX_GetVoidType());
   type->param[type->nParam].isConst=0;
   type->cif.arg_types=0;
 
@@ -499,7 +499,7 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
     if(!JSX_InitParamType(cx, ((JSX_TypeFunction *) type)->param + memberno, JSVAL_TO_OBJECT(member)))
       goto failure;
     if (memberno==type->nMember-1) {
-      ((JSX_TypeFunction *) type)->param[type->nMember].type = JS_GetPrivate(cx, JSX_GetType(VOIDTYPE, 0, 0));
+      ((JSX_TypeFunction *) type)->param[type->nMember].type = JS_GetPrivate(cx, JSX_GetVoidType());
       ((JSX_TypeFunction *) type)->param[type->nMember].isConst = 0;
     }
     if(((JSX_TypeFunction *) type)->cif.arg_types) {
@@ -605,7 +605,7 @@ JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
   type->type=POINTERTYPE;
   JS_SetPrivate(cx, retobj, type);
 
-  type->direct=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
+  type->direct = JS_GetPrivate(cx, JSX_GetVoidType());
   JS_DefineElement(cx, retobj, 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   type->typeObject=retobj;
 
@@ -652,7 +652,7 @@ JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
   JS_DefineProperty(cx, retobj, "length", JSVAL_VOID, JSX_Type_length, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
   JS_DefineElement(cx, retobj, 0, member, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
 
-  type->member=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
+  type->member = JS_GetPrivate(cx, JSX_GetVoidType());
   type->typeObject=retobj;
 
   if (member==JSVAL_VOID) {
@@ -698,7 +698,7 @@ JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) 
   JS_DefineProperty(cx, retobj, "length", JSVAL_VOID, JSX_Type_length, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   JS_DefineElement(cx, retobj, 0, member, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
 
-  type->member=JS_GetPrivate(cx, JSX_GetType(VOIDTYPE,0,0));
+  type->member = JS_GetPrivate(cx, JSX_GetVoidType());
   type->typeObject=retobj;
 
   if (member==JSVAL_VOID) {
@@ -724,8 +724,13 @@ JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) 
 }
 
 
-JSObject *JSX_GetType(enum JSX_TypeID type, int size, int signedness) {
-  return jsx_Type_objects[type][size][signedness];
+JSObject *JSX_GetByteType(void) {
+  return jsx_Type_objects[INTTYPE][0][0];
+}
+
+
+JSObject *JSX_GetVoidType(void) {
+  return jsx_Type_objects[VOIDTYPE][0][0];
 }
 
 
