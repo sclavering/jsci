@@ -12,7 +12,6 @@ struct strbuf *strbuf_new(void);
 void strbuf_cat(struct strbuf *buf, char *str);
 //void strbuf_catchar(struct strbuf *buf, char c);
 //void strbuf_cpy(struct strbuf *buf, char *str);
-void strbuf_ncpy(struct strbuf *buf, char *str, int n);
 void strbuf_clear(struct strbuf *buf);
 void strbuf_free(struct strbuf *buf);
 

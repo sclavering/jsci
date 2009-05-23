@@ -16,18 +16,6 @@ void strbuf_free(struct strbuf *buf) {
   free(buf);
 }
 
-void strbuf_ncpy(struct strbuf *buf, char *str, int n) {
-  if (n+1>buf->capacity) {
-    buf->capacity=n+1;
-    buf->buf=realloc(buf->buf, buf->capacity);
-    if (!buf->buf) exit(1);
-  }
-  buf->ptr=buf->buf;
-  memcpy(buf->buf, str, n);
-  buf->buf[n]=0;
-  buf->len=n;
-}
-
 void strbuf_clear(struct strbuf *buf) {
   //  memset(buf->buf,0,buf->len);
   buf->ptr=buf->buf;
