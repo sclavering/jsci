@@ -385,10 +385,16 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membert
 
 
 JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype) {
-  if(!JSX_InitNamedType(cx, (JSX_NamedType *) dest, membertype, 0)) return JS_FALSE;
   jsval tmp;
+  JS_GetProperty(cx, membertype, "type", &tmp);
+  if(!JSVAL_IS_OBJECT(tmp) || tmp == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(tmp), &JSX_TypeClass, NULL)) {
+    JSX_ReportException(cx, "Type.function(): one of the argument descriptors has a bad or missing .type property");
+    return JS_FALSE;
+  }
+  dest->type = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
   JS_GetProperty(cx, membertype, "const", &tmp);
   dest->isConst = tmp == JSVAL_TRUE ? 1 : 0;
+  dest->name = 0;
   return JS_TRUE;
 }
 
