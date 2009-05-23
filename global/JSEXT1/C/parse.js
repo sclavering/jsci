@@ -40,7 +40,6 @@ Returns an object containing the following properties:
 (function() {
 
 return function(code) {
-
   // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
   var live = {};
 
@@ -141,18 +140,12 @@ return function(code) {
 
   function loaddls() {
     for each(var pragma in code.pragma) {
-      var match = pragma.match(/JSEXT[ \t]+dl[ \t]+((\"([^\"]*)\")|(main))[ \t]*$/);
-      if(match) {
-        if(match[3]) live['dl ' + (ndl++)] = Dl(match[3]);
-        else if(match[5]) live['dl ' + (ndl++)] = Dl(null);
-      }
-    }
-
-    for (var i=0; i<ndl; i++) {
-      var id='dl '+i;
-      var filename = live[id].filename || "";
-      if(filename) filename = "'" + filename.replace(/\\/g, "\\\\") + "'";
-      sym[id]="Dl("+filename+")";
+      var match = pragma.match(/JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
+      if(!match) continue;
+      var id = 'dl ' + (ndl++);
+      var dl = live[id] = match[1] ? Dl(match[1]) : Dl();
+      var filename = dl.filename ? "'" + dl.filename.replace(/\\/g, "\\\\") + "'" : "";
+      sym[id] = "Dl(" + filename + ")";
     }
   }
 
