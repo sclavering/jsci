@@ -11,6 +11,9 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member);
 int JSX_TypeAlign(JSX_Type *type);
 
+static JSObject *sTypeChar = NULL;
+static JSObject *sTypeVoid = NULL;
+
 
 static JSClass JSX_TypeClass={
     "Type",
@@ -24,9 +27,6 @@ static JSClass JSX_TypeClass={
     JS_ConvertStub,
     JSX_Type_finalize
 };
-
-
-static JSObject *jsx_Type_objects[7][6][3]; // type, size, signedness
 
 
 static JSBool JSX_Type_length(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
@@ -227,14 +227,6 @@ static char *JSX_floatsizenames[]={
   "float",
   "double",
   "long_double"
-};
-
-static char *JSX_othertypenames[]={
-  "void"
-};
-
-static enum JSX_TypeID JSX_othertypes[]={
-  VOIDTYPE
 };
 
 
@@ -724,13 +716,13 @@ JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) 
 }
 
 
-JSObject *JSX_GetByteType(void) {
-  return jsx_Type_objects[INTTYPE][0][0];
+JSObject *JSX_GetCharType(void) {
+  return sTypeChar;
 }
 
 
 JSObject *JSX_GetVoidType(void) {
-  return jsx_Type_objects[VOIDTYPE][0][0];
+  return sTypeVoid;
 }
 
 
@@ -757,10 +749,8 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
 	sprintf(name, "%s%s", JSX_signnames[signedness], JSX_intsizenames[size]);
 	newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
 	newval=OBJECT_TO_JSVAL(newtype);
-	
 	JS_SetProperty(cx, typeobj, name, &newval);
-	jsx_Type_objects[inttype][size][signedness]=newtype;
-	
+
 	type = (JSX_TypeInt *) JS_malloc(cx, sizeof(JSX_TypeInt));
 	type->type=inttype;
 	type->size=size;
@@ -772,6 +762,10 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
       }
     }
   }
+
+  // We created this in the loop above
+  jsval tmp;
+  if(JS_GetProperty(cx, typeobj, "unsigned_char", &tmp)) sTypeChar = JSVAL_TO_OBJECT(tmp);
 }
 
 
@@ -791,9 +785,7 @@ static void init_float_types(JSContext *cx, JSObject *typeobj) {
   
     newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
     newval=OBJECT_TO_JSVAL(newtype);
-  
     JS_SetProperty(cx, typeobj, JSX_floatsizenames[size], &newval);
-    jsx_Type_objects[FLOATTYPE][size][0]=newtype;
 
     type = (JSX_TypeFloat *) JS_malloc(cx, sizeof(JSX_TypeFloat));
     type->type=FLOATTYPE;
@@ -807,25 +799,20 @@ static void init_float_types(JSContext *cx, JSObject *typeobj) {
 
 
 static void init_other_types(JSContext *cx, JSObject *typeobj) {
-  int ot;
+  JSObject *newtype;
+  jsval newval;
+  JSX_Type *type;
 
-  for (ot=0; ot<1; ot++) {
-    JSObject *newtype;
-    jsval newval;
-    JSX_Type *type;
-  
-    newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
-    newval=OBJECT_TO_JSVAL(newtype);
-  
-    JS_SetProperty(cx, typeobj, JSX_othertypenames[ot], &newval);
-    jsx_Type_objects[JSX_othertypes[ot]][0][0]=newtype;
+  newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+  newval = OBJECT_TO_JSVAL(newtype);
+  JS_SetProperty(cx, typeobj, "void", &newval);
 
-    type = (JSX_Type *) JS_malloc(cx, sizeof(JSX_Type));
-    type->type=JSX_othertypes[ot];
+  type = (JSX_Type *) JS_malloc(cx, sizeof(JSX_Type));
+  type->type = VOIDTYPE;
+  type->typeObject = newtype;
+  JS_SetPrivate(cx, newtype, type);
 
-    type->typeObject=newtype;
-    JS_SetPrivate(cx, newtype, type);
-  }
+  sTypeVoid = newtype;
 }
 
 

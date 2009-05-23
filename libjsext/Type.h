@@ -112,7 +112,7 @@ JSClass *JSX_GetTypeClass(void);
 int JSX_CType(JSX_Type *type);
 int JSX_JSType(JSContext *cx, jsval rval);
 JSBool JSX_TypeContainsPointer(JSX_Type *type);
-JSObject *JSX_GetByteType(void); // return a Type instance for a 1-byte integer
+JSObject *JSX_GetCharType(void); // return a Type instance for a 1-byte integer
 JSObject *JSX_GetVoidType(void); // return a Type instance for the C "void" type
 ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type);
 ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type);
