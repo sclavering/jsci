@@ -5,7 +5,7 @@ Runs a C program through a parser and returns an XML object
 containing the parse tree.
 */
 (function(){
-  const libctoxml = Dl($path + '/libctoxml.so');
+  const libctoxml = Dl();
 
   const ctoxml = libctoxml.pointer('ctoxml', Type['function'](Type.pointer(Type.char), [
       { 'const': false, name: 'C', type: Type.pointer(Type.char) },

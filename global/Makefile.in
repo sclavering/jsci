@@ -35,5 +35,4 @@ version=@PACKAGE_VERSION@
 all:	clib.jswrapper
 
 clib.jswrapper: 0-makeclib.js
-	$(MAKE) -C JSEXT1/C XCFLAGS="$(XCFLAGS)"
 	JSEXT_INI='0-makeclib.js' ../jsext > clib.jswrapper

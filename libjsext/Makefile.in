@@ -37,11 +37,25 @@ CFLAGS	= -O3 $(JSAPI_FLAGS) -Dsysconfdir=\"$(sysconfdir)\" -I../js/src -Dlibdir=
 LFLAGS	= 
 LDFLAGS	= -L../js/src/Linux_All_OPT.OBJ
 
-TARGETS	= jsext
-
-all:	$(TARGETS)
+all:	jsext
 
 JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o
 
-jsext:	$(JSX_OBJS)
-	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSX_OBJS) -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi
+CTOXML_OBJS = c_gram.o c_scan.o ctoxml.o xml.o stringhash.o hashtable.o libctoxml.o strbuf.o hashtable_itr.o
+
+
+jsext:	$(JSX_OBJS) $(CTOXML_OBJS)
+	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSX_OBJS) $(CTOXML_OBJS) -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi
+
+
+# c-to-xml stuff
+
+c_scan.h:	c_scan.c
+
+c_scan.c:	c_scan.l
+	$(LEX) -Pctoxml_c -t --header-file=c_scan.h c_scan.l > c_scan.c
+
+c_scan.o	: c_gram.h
+
+c_gram.c:	c_gram.y
+	$(YACC) -p ctoxml_c -dv -o c_gram.c c_gram.y

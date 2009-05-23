@@ -23,5 +23,3 @@ void ctoxml_free(char *C);
 extern struct strbuf *ctoxml_STDOUT;
 
 #endif
-
-#pragma JSEXT dl "./libctoxml.so"
