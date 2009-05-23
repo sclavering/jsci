@@ -38,7 +38,7 @@ static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
   return JS_FALSE;
 }
 
-static inline JSBool expand_buf(struct JSON *s, int n) {
+static inline void expand_buf(struct JSON *s, int n) {
   int len=s->p-s->buf;
   if (len+n > s->capacity) {
     s->capacity*=2;
