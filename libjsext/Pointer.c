@@ -21,9 +21,7 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
 static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, void **argptr);
-static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
@@ -33,7 +31,6 @@ static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSObject *type);
 static JSBool JSX_InitPointerString(JSContext *cx, JSObject *obj, JSString *str);
-static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *obj, JSString *str);
 
 
 static JSClass JSX_PointerClass={
@@ -1606,26 +1603,6 @@ static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsva
 }
 
 
-static JSBool JSX_InitPointerUCString(JSContext *cx, JSObject *retobj, JSString *str) {
-  int length;
-  JSX_Pointer *ret;
-
-  if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetType(INTTYPE,1,0)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
-
-  length=JS_GetStringLength(str);
-  ret = JS_malloc(cx, sizeof(JSX_Pointer) + sizeof(short) * (length + 1));
-  ret->ptr=ret+1;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetType(INTTYPE, 1, 0));
-  ret->finalize=0;
-  JS_SetPrivate(cx, retobj, ret);
-
-  memcpy(ret->ptr, JS_GetStringChars(str), sizeof(short)*(length+1));
-
-  return JS_TRUE;
-}
-
-
 static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   JSX_Pointer *ptr, *newptr;
@@ -1857,21 +1834,6 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
 }
 
 
-static JSBool JSX_Pointer_pr_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  int length;
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-
-  if (argc<1 || !JSVAL_IS_INT(argv[0]))
-    *rval=STRING_TO_JSVAL(JS_NewUCStringCopyZ(cx, (jschar *)ptr->ptr));
-  else {
-    length=JSVAL_TO_INT(argv[0]);
-    *rval=STRING_TO_JSVAL(JS_NewUCStringCopyN(cx, (jschar *)ptr->ptr, length));
-  }
-
-  return JS_TRUE;
-}
-
-
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   int length;
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
@@ -1881,24 +1843,6 @@ static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, js
   else {
     length=JSVAL_TO_INT(argv[0]);
     *rval=STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *)ptr->ptr, length));
-  }
-
-  return JS_TRUE;
-}
-
-
-static JSBool JSX_Pointer_UCString(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  if (argc<1 || !JSVAL_IS_STRING(argv[0])) {
-    JSX_ReportException(cx, "Wrong argument type to UCString");
-    return JS_FALSE;
-  }
-
-  JSObject *newobj;
-  newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  *rval=OBJECT_TO_JSVAL(newobj);
-
-  if (!JSX_InitPointerUCString(cx, newobj, JSVAL_TO_STRING(argv[0]))) {
-    return JS_FALSE;
   }
 
   return JS_TRUE;
@@ -2077,7 +2021,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   JSObject *classobj;
 
   static struct JSFunctionSpec staticfunc[]={
-    {"UCstring",JSX_Pointer_UCString,1,0,0},
     {"string",JSX_Pointer_string,1,0,0},
     {"malloc",JSX_Pointer_malloc,1,0,0},
     {"calloc",JSX_Pointer_calloc,1,0,0},
@@ -2085,7 +2028,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   };
 
   static struct JSFunctionSpec memberfunc[]={
-    {"UCstring",JSX_Pointer_pr_UCString,1,0,0},
     {"cast",JSX_Pointer_cast,1,0,0},
     {"field",JSX_Pointer_field,1,0,0},
     {"realloc",JSX_Pointer_realloc,1,0,0},

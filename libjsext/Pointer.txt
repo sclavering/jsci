@@ -59,12 +59,6 @@ When passing argument lists and valists, you can place a type object directly ah
 
 
 
-Pointer.UCString(str)
----------------------
-
-Creates and returns a new Pointer which points to a zero-terminated string constructed from the argument. The type of the object will be unsigned short.  (The javascript string's 16-bit characters will be preserved faithfully.)
-
-
 Pointer.calloc(num_bytes)
 -------------------------
 
@@ -125,14 +119,6 @@ creates a new function each time it is called. Iterating over a fixed-size C arr
       pointer.$[i] // bad
 
 converts the whole array into javascript for each element, turning a O(n) algorithm into an O(n^2) one.
-
-
-Pointer.prototype.UCString(len)
--------------------------------
-
-Reads |len| 16-bit characters (or until a null terminator, if |len| is omitted) starting from the pointer, and returns it as a javascript string.
-
-This will do the right thing for a UTF16 (or UCS2) string.  For anything else
 
 
 Pointer.prototype.cast(type)
