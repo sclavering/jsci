@@ -151,9 +151,8 @@ static JSBool JS_DLL_CALLBACK JSX_dl_function(JSContext *cx, JSObject *obj, uint
 
 
 static void JS_DLL_CALLBACK JSEXT_dl_finalize(JSContext *cx, JSObject *obj) {
-  void *dl=JS_GetPrivate(cx, obj);
-  if (!dl) return;
-  //  dlclose(dl);
+  void *dl = JS_GetPrivate(cx, obj);
+  if(dl) dlclose(dl);
 }
 
 
