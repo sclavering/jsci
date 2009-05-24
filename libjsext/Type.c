@@ -410,14 +410,12 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
   if (memberno>=type->nMember)
     type->nMember=memberno+1;
 
-  if (!JSVAL_IS_OBJECT(member) || 
-	JSVAL_IS_NULL(member))
-    goto failure;
+  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
   
   switch(type->type) {
   case FUNCTIONTYPE:
-    if(!JSX_InitParamType(cx, ((JSX_TypeFunction *) type)->param + memberno, JSVAL_TO_OBJECT(member)))
-      goto failure;
+    if(!JSX_InitParamType(cx, ((JSX_TypeFunction *) type)->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
+
     if (memberno==type->nMember-1) {
       ((JSX_TypeFunction *) type)->param[type->nMember].type = JS_GetPrivate(cx, JSX_GetVoidType());
       ((JSX_TypeFunction *) type)->param[type->nMember].isConst = 0;
@@ -429,8 +427,7 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
     break;
 
   case UNIONTYPE:
-    if (!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member)))
-      goto failure;
+    if(!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
 
     type->member[memberno].offset=0;
     thissize=JSX_TypeSizeBits(type->member[memberno].type);
@@ -443,7 +440,7 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
     
   case STRUCTTYPE:
     if (!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member)))
-      goto failure;
+      return JS_FALSE;
 
     if(((JSX_TypeStructUnion *) type)->ffiType.elements) {
       JS_free(cx, ((JSX_TypeStructUnion *) type)->ffiType.elements);
@@ -473,9 +470,6 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
   }
 
   return JS_TRUE;
-
- failure:
-  return JS_FALSE;
 }
 
 
