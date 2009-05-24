@@ -47,7 +47,6 @@ jsval JSX_make_Dl(JSContext *cx, JSObject *glob) {
 static JSBool
 JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   JSObject *object;
-  JSString *JSfilename;
 
   if (!JS_IsConstructing(cx)) { // not called with new
     object=JS_NewObject( cx, &JSEXT_dl_class, 0, 0);
@@ -65,17 +64,7 @@ JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
 
   JS_SetPrivate(cx, object, dl);
 
-  if (!dl) {
-    return JS_FALSE;
-  }
-
-  if (filename) {
-    JSfilename = JS_NewStringCopyZ(cx, filename);
-    JS_DefineProperty(cx, object, "filename", STRING_TO_JSVAL(JSfilename), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-  } else {
-    JS_DefineProperty(cx, object, "filename", JSVAL_VOID, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-  }
-
+  if(!dl) return JS_FALSE;
   return JS_TRUE;
 }
 

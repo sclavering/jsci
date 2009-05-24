@@ -9,12 +9,6 @@ Returns an object representing a dynamically-loaded library (or the main executa
 The filename is for a dynamic library (.so file) to open.  It can either be an absolute path, or a path-less filename that will be searched for in platform-specific locations (e.g. LD_LIBRARY_PATH, /usr/lib)
 
 
-Dl.prototype.filename
----------------------
-
-Read-only.  Contains the filename of the Dl, or |undefined| if the Dl represents the main program.
-
-
 Dl.prototype.pointer()
 ----------------------
 

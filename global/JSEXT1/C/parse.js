@@ -143,9 +143,9 @@ return function(code) {
       var match = pragma.match(/JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
       if(!match) continue;
       var id = 'dl ' + (ndl++);
-      var dl = live[id] = match[1] ? Dl(match[1]) : Dl();
-      var filename = dl.filename ? "'" + dl.filename.replace(/\\/g, "\\\\") + "'" : "";
-      sym[id] = "Dl(" + filename + ")";
+      var filename = match[1] || ""
+      live[id] = filename ? Dl(match[1]) : Dl();
+      sym[id] = "Dl(" + (filename ? "'" + filename.replace(/\\/g, "\\\\") + "'" : "") + ")";
     }
   }
 
