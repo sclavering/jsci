@@ -5,6 +5,8 @@ function(args) {
   this.load = args.load;
   this.environment = args.environment;
 
+  load('0-ffi.js');
+
   clib = {};
   clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [{ 'const': true, name: '__path', type: Type.pointer(Type.char) }], false, 'cdecl')).$;
   clib.puts = Dl().pointer('puts', Type['function'](Type.int, [{ 'const': true, name: '__s', type: Type.pointer(Type.char) }], false, 'cdecl')).$;
