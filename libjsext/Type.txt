@@ -59,7 +59,7 @@ Creates a new Type object representing a function.
 * elipsis: ignored (formerly: boolean, default false, indicating a C function with a variable number of arguments)
 * callConv: unused (formerly 'cdecl' (default), 'stdcall' or undefined)
 
-Types created with this function have read-only properties with the same names as the parameters, containing the argument objects passed to this function. These objects are augmented with read-only property "index".  Also, function types have read-only properties named 0 through n, which point to the same objects, and a .returnType property;
+Types created with this function have read-only numeric properties containing the argument objects passed to this function, each augmented with a read-only property "index".  There is also a .returnType property;
 
 You have to write Type['function'] rather than Type.function in javascript code, because "function" is a reserved word.
 

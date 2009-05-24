@@ -148,7 +148,6 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
     int index=JSVAL_TO_INT(id);
 
     switch(type->type) {
-    case FUNCTIONTYPE:
     case STRUCTTYPE:
     case UNIONTYPE:
       return JSX_SetMember(cx, obj, index, *vp);
