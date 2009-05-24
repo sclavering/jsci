@@ -226,6 +226,24 @@ static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
 }
 
 
+static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member) {
+  JSX_TypeFunction *type;
+  type = JS_GetPrivate(cx, obj);
+  if(memberno >= type->nParam) type->nParam = memberno + 1;
+  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
+  if(!JSX_InitParamType(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
+  if(memberno == type->nParam - 1) {
+    type->param[type->nParam].type = JS_GetPrivate(cx, JSX_GetVoidType());
+    type->param[type->nParam].isConst = 0;
+  }
+  if(type->cif.arg_types) {
+    JS_free(cx, type->cif.arg_types);
+    type->cif.arg_types = 0;
+  }
+  return JS_TRUE;
+}
+
+
 static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params, jsval *rval) {
   JSObject *retobj;
   JSObject *paramobj;
@@ -272,9 +290,8 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
 
   for (i=0; i<nParam; i++) { 
     jsval thisparam;
-
     JS_GetElement(cx, paramobj, i, &thisparam);
-    JSX_SetMember(cx, retobj, i, thisparam);
+    TypeFunction_SetMember(cx, retobj, i, thisparam);
     JS_DefineElement(cx, retobj, i, thisparam, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
 
@@ -375,7 +392,7 @@ int JSX_TypeSize(JSX_Type *type) {
 
 
 static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member) {
-  JSX_TypeStructUnion *type; // Same as TypeFunction up to params.
+  JSX_TypeStructUnion *type;
   int i;
   int thisalign;
   int thissize;
@@ -411,21 +428,7 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
 
   if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
   
-  switch(type->type) {
-  case FUNCTIONTYPE:
-    if(!JSX_InitParamType(cx, ((JSX_TypeFunction *) type)->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
-
-    if (memberno==type->nMember-1) {
-      ((JSX_TypeFunction *) type)->param[type->nMember].type = JS_GetPrivate(cx, JSX_GetVoidType());
-      ((JSX_TypeFunction *) type)->param[type->nMember].isConst = 0;
-    }
-    if(((JSX_TypeFunction *) type)->cif.arg_types) {
-      JS_free(cx, ((JSX_TypeFunction *) type)->cif.arg_types);
-      ((JSX_TypeFunction *) type)->cif.arg_types=0;
-    }
-    break;
-
-  case UNIONTYPE:
+  if(type->type == UNIONTYPE) {
     if(!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
 
     type->member[memberno].offset=0;
@@ -435,9 +438,7 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
 
     JS_DefineProperty(cx, JSVAL_TO_OBJECT(member), "offset", INT_TO_JSVAL(0), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 
-    break;
-    
-  case STRUCTTYPE:
+  } else { // STRUCTTYPE
     if (!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member)))
       return JS_FALSE;
 
@@ -464,8 +465,6 @@ static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval me
       
       JS_DefineProperty(cx, JSVAL_TO_OBJECT(member), "offset", INT_TO_JSVAL(type->member[i].offset), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
     }
-
-    break;
   }
 
   return JS_TRUE;
