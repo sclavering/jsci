@@ -11,6 +11,9 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member);
 int JSX_TypeAlign(JSX_Type *type);
 
+static jsval jsx_create_int_Type(JSContext *cx, char *name, int typeid, int signedness, int size, ffi_type ffit);
+
+
 static JSObject *sTypeChar = NULL;
 static JSObject *sTypeVoid = NULL;
 
@@ -740,25 +743,10 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
   for (inttype=INTTYPE; inttype<=UINTTYPE; inttype++) {
     for (size=0; size<6; size++) {
       for (signedness=0; signedness<3; signedness++) {
-	JSObject *newtype;
-	char name[80];
-	jsval newval;
-
-	JSX_TypeInt *type;
-	
-	sprintf(name, "%s%s", JSX_signnames[signedness], JSX_intsizenames[size]);
-	newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
-	newval=OBJECT_TO_JSVAL(newtype);
-	JS_SetProperty(cx, typeobj, name, &newval);
-
-	type = (JSX_TypeInt *) JS_malloc(cx, sizeof(JSX_TypeInt));
-	type->type=inttype;
-	type->size=size;
-	type->signedness=signedness;
-	type->ffiType=ffitypes[signedness][size];
-	
-	type->typeObject=newtype;
-	JS_SetPrivate(cx, newtype, type);
+        char name[80];
+        sprintf(name, "%s%s", JSX_signnames[signedness], JSX_intsizenames[size]);
+        jsval newval = jsx_create_int_Type(cx, name, inttype, signedness, size, ffitypes[signedness][size]);
+        JS_SetProperty(cx, typeobj, name, &newval);
       }
     }
   }
@@ -767,6 +755,23 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
   jsval tmp;
   if(JS_GetProperty(cx, typeobj, "unsigned_char", &tmp)) sTypeChar = JSVAL_TO_OBJECT(tmp);
 }
+
+
+static jsval jsx_create_int_Type(JSContext *cx, char *name, int typeid, int signedness, int size, ffi_type ffit) {
+  JSObject *newtype;
+  newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+  jsval newval = OBJECT_TO_JSVAL(newtype);
+  JSX_TypeInt *type;
+  type = (JSX_TypeInt *) JS_malloc(cx, sizeof(JSX_TypeInt));
+  type->type = typeid;
+  type->size = size;
+  type->signedness = signedness;
+  type->ffiType = ffit;
+  type->typeObject = newtype;
+  JS_SetPrivate(cx, newtype, type);
+  return newval;
+}
+
 
 
 static void init_float_types(JSContext *cx, JSObject *typeobj) {
