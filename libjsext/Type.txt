@@ -59,13 +59,13 @@ Creates a new Type object representing a function.
 * elipsis: Can be false (default), true or undefined
 * callConv: Can be 'cdecl' (default), 'stdcall' or undefined
 
-Types created with this function have read-only properties with the same names as the parameters, containing the argument objects passed to this function. These  objects are augmented with read-only property "index".  Also, function types have read-only properties named 0 through n, which point to the same objects.  Furthermore, there are "returnType", "callConv" and "elipsis" properties.
+Types created with this function have read-only properties with the same names as the parameters, containing the argument objects passed to this function. These objects are augmented with read-only property "index".  Also, function types have read-only properties named 0 through n, which point to the same objects, and a .returnType property;
 
 You have to write Type['function'] rather than Type.function in javascript code, because "function" is a reserved word.
 
 Pass a zero-length array for "params" to represent a 0-parameter C function (which is written as "int myfunc(void);" in C).
 
-Pass a zero-length array for "params" and |true| for "elipsis" to represent a C function with an undefined paramater list (e.g. "int myfunc();"), which can be called with a variable number of arguments
+Pass a zero-length array for .params and |true| for .elipsis to represent a C function with an undefined paramater list (e.g. "int myfunc();"), which can be called with a variable number of arguments
 
 
 Type.pointer(t)
@@ -90,18 +90,6 @@ Type.union(member0, member1, ...)
 Creates a new Type object representing a union. The member arguments should be objects containing two properties: .name and .type. The .type property should be a Type object.
 
 
-
-
-Type.prototype.callConv
------------------------
-
-Read-only.  Contains 'cdecl' or 'stdcall' for function types, and |undefined| for other types.
-
-
-Type.prototype.elipsis
-----------------------
-
-Read-only.  Contains |true| or |false| for function types, and |undefined| for other types.
 
 
 Type.prototype.length

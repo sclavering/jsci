@@ -141,39 +141,6 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
 }
 
 
-static JSBool JSX_Type_callConv(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
-  JSX_TypeFunction *type;
-  char *name;
-
-  type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
-  if (type->type!=FUNCTIONTYPE)
-    return JS_TRUE;
-
-  switch(type->callConv) {
-  case CDECLCONV:
-    name="cdecl";
-    break;
-  case STDCALLCONV:
-    name="stdcall";
-    break;
-  }
-
-  *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, name));
-  return JS_TRUE;
-}
-
-
-static JSBool JSX_Type_elipsis(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
-  JSX_TypeFunction *type;
-  type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
-  if (type->type!=FUNCTIONTYPE)
-    return JS_TRUE;
-
-  *rval=BOOLEAN_TO_JSVAL(type->elipsis);
-  return JS_TRUE;
-}
-
-
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JSX_Type *type = JS_GetPrivate(cx, obj);
 
@@ -307,9 +274,6 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
     JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
     type->returnType=JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
   }
-
-  JS_DefineProperty(cx, retobj, "callConv", JSVAL_VOID, JSX_Type_callConv, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
-  JS_DefineProperty(cx, retobj, "elipsis", JSVAL_VOID, JSX_Type_elipsis, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
 
   type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
   memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
