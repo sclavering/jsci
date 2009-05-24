@@ -984,48 +984,24 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *v
 }
 
 
+// Determine the JS type to an appropriate level of detail for the big 2D switch
 int JSX_JSType(JSContext *cx, jsval v) {
-  int jstype;
-
-  // Determine the JS type to an appropriate level of detail for the big 2D switch
-
-  jstype=JSVAL_TAG(v);
+  int jstype = JSVAL_TAG(v);
   switch(jstype) {
-  case JSVAL_OBJECT:
-    if (v==JSVAL_NULL) {
-      jstype=JSNULL;
+    case JSVAL_OBJECT:
+      if(v == JSVAL_NULL) return JSNULL;
+      if(JS_IsArrayObject(cx, JSVAL_TO_OBJECT(v))) return JSARRAY;
+      if(JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetPointerClass(), NULL)) return JSPOINTER;
+      if(JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetTypeClass(), NULL)) return JSTYPE;
+      if(JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(v))) return JSFUNC;
       break;
-    }
-    if (JS_IsArrayObject(cx, JSVAL_TO_OBJECT(v))) {
-      jstype=JSARRAY;
-      break;
-    }
-    if (JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetPointerClass(), NULL)) {
-      jstype=JSPOINTER;
-      break;
-    }
-    if (JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetTypeClass(), NULL)) {
-      jstype=JSTYPE;
-      break;
-    }
-    if (JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(v))) {
-      jstype=JSFUNC;
-      break;
-    }
-
-    break;
-  case 1:
-  case 3:
-  case 5:
-  case 7:
-    if (v==JSVAL_VOID)
-      jstype=JSVOID;
-    else
-      jstype=JSVAL_INT;
-
-    break;
+    case 1:
+    case 3:
+    case 5:
+    case 7:
+      if(v == JSVAL_VOID) return JSVOID;
+      return JSVAL_INT;
   }
-
   return jstype;
 }
 
