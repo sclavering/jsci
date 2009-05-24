@@ -42,23 +42,6 @@ Miscellaneous wrappers for os-related things in clib where the raw ffi interface
 
 
   /*
-  string = getcwd()
-
-  Return a string representing the path of the current working directory.
-  */
-  getcwd: function() {
-    var trysize = 256;
-    var buf = Pointer.malloc(trysize);
-    for(;;) {
-      if(clib.getcwd(buf, trysize) != null) break;
-      trysize *= 2;
-      buf.realloc(trysize);
-    }
-    return buf.string();
-  },
-
-
-  /*
   isdir(path)
 
   Returns true if path exists and is a directory. Otherwise, returns false
