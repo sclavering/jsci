@@ -72,9 +72,8 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
     return &ffi_type_void;
   case INTTYPE:
   case UINTTYPE:
-    return &((JSX_TypeInt *) type)->ffiType;
   case FLOATTYPE:
-    return &((JSX_TypeFloat *) type)->ffiType;
+    return &((JSX_TypeNumeric *) type)->ffiType;
   case STRUCTTYPE:
     if(((JSX_TypeStructUnion *) type)->ffiType.elements)
       return &((JSX_TypeStructUnion *) type)->ffiType;
@@ -207,13 +206,6 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 
   return JS_TRUE;
 }
-
-
-static char *JSX_floatsizenames[]={
-  "float",
-  "double",
-  "long_double"
-};
 
 
 static JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membertype) {
@@ -382,9 +374,8 @@ int JSX_TypeAlign(JSX_Type *type) {
     return JSX_TypeAlign(((JSX_TypeArray *) type)->member);
   case UINTTYPE:
   case INTTYPE:
-    return ((JSX_TypeInt *)type)->ffiType.alignment;
   case FLOATTYPE:
-    return ((JSX_TypeFloat *) type)->ffiType.alignment;
+    return ((JSX_TypeNumeric *) type)->ffiType.alignment;
   case STRUCTTYPE:
   case UNIONTYPE:
     len = ((JSX_TypeStructUnion *) type)->nMember;
@@ -420,9 +411,8 @@ int JSX_TypeSize(JSX_Type *type) {
     return ((JSX_TypeArray *) type)->length * JSX_TypeSize(((JSX_TypeArray *) type)->member);
   case UINTTYPE:
   case INTTYPE:
-    return ((JSX_TypeInt *)type)->ffiType.size;
   case FLOATTYPE:
-    return ((JSX_TypeFloat *) type)->ffiType.size;
+    return ((JSX_TypeNumeric *) type)->ffiType.size;
   case STRUCTTYPE:
   case UNIONTYPE:
     align=JSX_TypeAlign(type);
@@ -712,12 +702,12 @@ JSObject *JSX_GetVoidType(void) {
 }
 
 
-static jsval jsx_create_int_Type(JSContext *cx, int typeid, int size, ffi_type ffit) {
+static jsval init_numeric_Type(JSContext *cx, int typeid, int size, ffi_type ffit) {
   JSObject *newtype;
   newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
-  JSX_TypeInt *type;
-  type = (JSX_TypeInt *) JS_malloc(cx, sizeof(JSX_TypeInt));
+  JSX_TypeNumeric *type;
+  type = (JSX_TypeNumeric *) JS_malloc(cx, sizeof(JSX_TypeNumeric));
   type->type = typeid;
   type->size = size;
   type->ffiType = ffit;
@@ -729,25 +719,25 @@ static jsval jsx_create_int_Type(JSContext *cx, int typeid, int size, ffi_type f
 
 static void init_int_types(JSContext *cx, JSObject *typeobj) {
   jsval tmp, uchar;
-  tmp = uchar = jsx_create_int_Type(cx, UINTTYPE, 0, ffi_type_uchar);
+  tmp = uchar = init_numeric_Type(cx, UINTTYPE, 0, ffi_type_uchar);
   JS_SetProperty(cx, typeobj, "unsigned_char", &tmp);
-  tmp = jsx_create_int_Type(cx, UINTTYPE, 1, ffi_type_ushort);
+  tmp = init_numeric_Type(cx, UINTTYPE, 1, ffi_type_ushort);
   JS_SetProperty(cx, typeobj, "unsigned_short", &tmp);
-  tmp = jsx_create_int_Type(cx, UINTTYPE, 2, ffi_type_uint);
+  tmp = init_numeric_Type(cx, UINTTYPE, 2, ffi_type_uint);
   JS_SetProperty(cx, typeobj, "unsigned_int", &tmp);
-  tmp = jsx_create_int_Type(cx, UINTTYPE, 3, ffi_type_ulong);
+  tmp = init_numeric_Type(cx, UINTTYPE, 3, ffi_type_ulong);
   JS_SetProperty(cx, typeobj, "unsigned_long", &tmp);
-  tmp = jsx_create_int_Type(cx, UINTTYPE, 4, ffi_type_uint64);
+  tmp = init_numeric_Type(cx, UINTTYPE, 4, ffi_type_uint64);
   JS_SetProperty(cx, typeobj, "unsigned_long_long", &tmp);
-  tmp = jsx_create_int_Type(cx, INTTYPE, 0, ffi_type_schar);
+  tmp = init_numeric_Type(cx, INTTYPE, 0, ffi_type_schar);
   JS_SetProperty(cx, typeobj, "signed_char", &tmp);
-  tmp = jsx_create_int_Type(cx, INTTYPE, 1, ffi_type_sshort);
+  tmp = init_numeric_Type(cx, INTTYPE, 1, ffi_type_sshort);
   JS_SetProperty(cx, typeobj, "signed_short", &tmp);
-  tmp = jsx_create_int_Type(cx, INTTYPE, 2, ffi_type_sint);
+  tmp = init_numeric_Type(cx, INTTYPE, 2, ffi_type_sint);
   JS_SetProperty(cx, typeobj, "signed_int", &tmp);
-  tmp = jsx_create_int_Type(cx, INTTYPE, 3, ffi_type_slong);
+  tmp = init_numeric_Type(cx, INTTYPE, 3, ffi_type_slong);
   JS_SetProperty(cx, typeobj, "signed_long", &tmp);
-  tmp = jsx_create_int_Type(cx, INTTYPE, 4, ffi_type_sint64);
+  tmp = init_numeric_Type(cx, INTTYPE, 4, ffi_type_sint64);
   JS_SetProperty(cx, typeobj, "signed_long_long", &tmp);
 
   // xxx currently we let 0-ffi.js alias Type.int etc to Type.signed_int, which isn't portable.
@@ -759,31 +749,13 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
 
 
 static void init_float_types(JSContext *cx, JSObject *typeobj) {
-  int size;
-
-  ffi_type ffitypes[3]={
-    ffi_type_float,
-    ffi_type_double,
-    ffi_type_longdouble
-  };
-
-  for (size=0; size<3; size++) {
-    JSObject *newtype;
-    jsval newval;
-    JSX_TypeFloat *type;
-  
-    newtype=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
-    newval=OBJECT_TO_JSVAL(newtype);
-    JS_SetProperty(cx, typeobj, JSX_floatsizenames[size], &newval);
-
-    type = (JSX_TypeFloat *) JS_malloc(cx, sizeof(JSX_TypeFloat));
-    type->type=FLOATTYPE;
-    type->size=size;
-    type->ffiType=ffitypes[size];
-
-    type->typeObject=newtype;
-    JS_SetPrivate(cx, newtype, type);
-  }
+  jsval tmp;
+  tmp = init_numeric_Type(cx, FLOATTYPE, 0, ffi_type_float);
+  JS_SetProperty(cx, typeobj, "float", &tmp);
+  tmp = init_numeric_Type(cx, FLOATTYPE, 1, ffi_type_double);
+  JS_SetProperty(cx, typeobj, "double", &tmp);
+  tmp = init_numeric_Type(cx, FLOATTYPE, 2, ffi_type_longdouble);
+  JS_SetProperty(cx, typeobj, "long_double", &tmp);
 }
 
 
@@ -1008,18 +980,18 @@ int JSX_CType(JSX_Type *type) {
     switch(Ctype) {
     case ARRAYTYPE:
       if((((JSX_TypeArray *) type)->member->type == INTTYPE || ((JSX_TypeArray *) type)->member->type == UINTTYPE) &&
-	  ((JSX_TypeInt *) ((JSX_TypeArray *) type)->member)->size == 0)
+	  ((JSX_TypeNumeric *) ((JSX_TypeArray *) type)->member)->size == 0)
 	Ctype=ACHARTYPE;
       else if((((JSX_TypeArray *) type)->member->type == INTTYPE || ((JSX_TypeArray *) type)->member->type == UINTTYPE) &&
-	       ((JSX_TypeInt *) ((JSX_TypeArray *) type)->member)->size == 1)
+	       ((JSX_TypeNumeric *) ((JSX_TypeArray *) type)->member)->size == 1)
 	Ctype=ASHORTTYPE;
       break;
     case POINTERTYPE:
       if((((JSX_TypePointer *) type)->direct->type == INTTYPE || ((JSX_TypePointer *) type)->direct->type == UINTTYPE) &&
-	  ((JSX_TypeInt *) ((JSX_TypePointer *) type)->direct)->size == 0)
+	  ((JSX_TypeNumeric *) ((JSX_TypePointer *) type)->direct)->size == 0)
 	Ctype=PCHARTYPE;
       else if((((JSX_TypePointer *) type)->direct->type == INTTYPE || ((JSX_TypePointer *) type)->direct->type == UINTTYPE) &&
-	       ((JSX_TypeInt *) ((JSX_TypePointer *) type)->direct)->size == 1)
+	       ((JSX_TypeNumeric *) ((JSX_TypePointer *) type)->direct)->size == 1)
 	Ctype=PSHORTTYPE;
       break;
     }

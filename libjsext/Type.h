@@ -37,18 +37,11 @@ typedef struct { // Private part of Type objects
 } JSX_Type;
 
 typedef struct {
-  enum JSX_TypeID type; // INTTYPE
+  enum JSX_TypeID type; // INTTYPE, UINTTYPE, or FLOATTYPE
   JSObject *typeObject;
   int size;
   ffi_type ffiType;
-} JSX_TypeInt;
-
-typedef struct {
-  enum JSX_TypeID type; // FLOATTYPE
-  JSObject *typeObject;
-  int size;
-  ffi_type ffiType;
-} JSX_TypeFloat;
+} JSX_TypeNumeric;
 
 typedef struct {
   JSX_Type *type;

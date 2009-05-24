@@ -198,7 +198,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
   case TYPEPAIR(JSVAL_STRING,UINTTYPE):
 
-    switch(((JSX_TypeInt *) type)->size) {
+    switch(((JSX_TypeNumeric *) type)->size) {
     case 0:
 
       // Return a string from a char
@@ -253,7 +253,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
 
     // Return a number from an int (of various sizes)
-    switch(size != -1 ? size : ((JSX_TypeInt *) type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       tmpint=*(char *)p;
@@ -302,7 +302,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_INT,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,BITFIELDTYPE):
 
-    size = ((JSX_TypeInt *) ((JSX_TypeBitfield *) type)->member)->size;
+    size = ((JSX_TypeNumeric *) ((JSX_TypeBitfield *) type)->member)->size;
 
     // fall through
 
@@ -313,7 +313,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_DOUBLE,UINTTYPE):
 
     // Return a number from an unsigned int (of various sizes)
-    switch(size != -1 ? size : ((JSX_TypeInt *) type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       tmpuint=*(unsigned char *)p;
@@ -379,7 +379,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
     // Return a number from a float (of various sizes)
 
-    switch(size != -1 ? size : ((JSX_TypeFloat *) type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       tmpdouble=*(float *)p;
@@ -902,7 +902,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
   case TYPEPAIR(JSVAL_STRING,UINTTYPE):
 
-    switch(((JSX_TypeInt *) type)->size) {
+    switch(((JSX_TypeNumeric *) type)->size) {
     case 0:
 
       // Copy a string to a char
@@ -989,7 +989,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
 
   bitfieldcommon:
-    size = ((JSX_TypeInt *) ((JSX_TypeBitfield *) type)->member)->size;
+    size = ((JSX_TypeNumeric *) ((JSX_TypeBitfield *) type)->member)->size;
     goto intcommon;
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
@@ -1015,7 +1015,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   intcommon:
 
     // Return a number from an int (of various sizes)
-    switch(size != -1 ? size : ((JSX_TypeInt *) type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       *(char *)p=tmpint;
@@ -1078,7 +1078,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
   floatcommon:
 
-    switch(size != -1 ? size : ((JSX_TypeFloat *) type)->size) {
+    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       *(float *)p=tmpdbl;
