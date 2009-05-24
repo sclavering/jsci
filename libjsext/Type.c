@@ -249,7 +249,6 @@ static void JSX_DestroyTypeStructUnion(JSContext *cx, JSX_TypeStructUnion *type)
 
 
 static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
-  int i;
   if (type) {
     if (type->param)
       JS_free(cx,type->param);
