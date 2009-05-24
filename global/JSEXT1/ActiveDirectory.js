@@ -199,9 +199,7 @@ const handlers = ActiveDirectory.handlers = {
   txt: handle_text,
   html: handle_text,
 
-  c: handle_native,
   h: handle_native,
-  so: handle_native,
   jswrapper: handle_native,
 }
 
