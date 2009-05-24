@@ -303,6 +303,13 @@ File.read = function(path) {
 
 
 
+File.write = function(path, contents) {
+  const f = new File(path, 'w');
+  f.write(contents);
+  f.close();
+};
+
+
 
 return File;
 
