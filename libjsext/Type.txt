@@ -56,7 +56,7 @@ Creates a new Type object representing a function.
 
 * returnType: A Type object
 * params: Array of Objects containing a Type .type property, an optional String .name property identifying the name of the parameter, and an optional boolean .const (default false)
-* elipsis: Can be false (default), true or undefined
+* elipsis: ignored (formerly: boolean, default false, indicating a C function with a variable number of arguments)
 * callConv: unused (formerly 'cdecl' (default), 'stdcall' or undefined)
 
 Types created with this function have read-only properties with the same names as the parameters, containing the argument objects passed to this function. These objects are augmented with read-only property "index".  Also, function types have read-only properties named 0 through n, which point to the same objects, and a .returnType property;

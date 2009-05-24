@@ -227,7 +227,7 @@ static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
 }
 
 
-static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params, jsval elipsis, jsval *rval) {
+static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params, jsval *rval) {
   JSObject *retobj;
   JSObject *paramobj;
   int nParam;
@@ -257,11 +257,6 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
   type->nParam=nParam;
   type->typeObject=retobj;
   JS_SetPrivate(cx, retobj, type);
-
-  if (elipsis == JSVAL_TRUE)
-    type->elipsis=1;
-  else
-    type->elipsis=0;
 
   if (JSVAL_IS_OBJECT(returnType) &&
       !JSVAL_IS_NULL(returnType)) {
@@ -786,7 +781,7 @@ static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *a
 
 
 static JSBool JSX_Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeFunction(cx, argc > 1 ? argv[0] : JSVAL_VOID, argc > 1 ? argv[1] : JSVAL_VOID, argc > 2 ? argv[2] : JSVAL_VOID, rval);
+  return JSX_NewTypeFunction(cx, argc > 1 ? argv[0] : JSVAL_VOID, argc > 2 ? argv[1] : JSVAL_VOID, rval);
 }
 
 

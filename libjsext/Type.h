@@ -49,7 +49,6 @@ typedef struct {
   JSX_ParamType *param;
   int nParam;
   JSX_Type *returnType;
-  int elipsis;
   ffi_cif cif;
 } JSX_TypeFunction;
 
