@@ -11,8 +11,6 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member);
 int JSX_TypeAlign(JSX_Type *type);
 
-static jsval jsx_create_int_Type(JSContext *cx, char *name, int typeid, int signedness, int size, ffi_type ffit);
-
 
 static JSObject *sTypeChar = NULL;
 static JSObject *sTypeVoid = NULL;
@@ -210,20 +208,6 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
   return JS_TRUE;
 }
 
-
-static char *JSX_intsizenames[]={
-  "char",
-  "short",
-  "int",
-  "long",
-  "long_long"
-};
-
-static char *JSX_signnames[]={
-  "unsigned_",
-  "signed_",
-  ""
-};
 
 static char *JSX_floatsizenames[]={
   "float",
@@ -728,35 +712,7 @@ JSObject *JSX_GetVoidType(void) {
 }
 
 
-static void init_int_types(JSContext *cx, JSObject *typeobj) {
-  int size;
-  int signedness;
-  int inttype;
-
-  ffi_type ffitypes[3][5] = {
-    { ffi_type_uchar, ffi_type_ushort, ffi_type_uint, ffi_type_ulong, ffi_type_uint64 },
-    { ffi_type_schar, ffi_type_sshort, ffi_type_sint, ffi_type_slong, ffi_type_sint64 },
-    { ffi_type_schar, ffi_type_sshort, ffi_type_sint, ffi_type_slong, ffi_type_sint64 }
-  };
-
-  for (inttype=INTTYPE; inttype<=UINTTYPE; inttype++) {
-    for (size=0; size<6; size++) {
-      for (signedness=0; signedness<3; signedness++) {
-        char name[80];
-        sprintf(name, "%s%s", JSX_signnames[signedness], JSX_intsizenames[size]);
-        jsval newval = jsx_create_int_Type(cx, name, inttype, signedness, size, ffitypes[signedness][size]);
-        JS_SetProperty(cx, typeobj, name, &newval);
-      }
-    }
-  }
-
-  // We created this in the loop above
-  jsval tmp;
-  if(JS_GetProperty(cx, typeobj, "unsigned_char", &tmp)) sTypeChar = JSVAL_TO_OBJECT(tmp);
-}
-
-
-static jsval jsx_create_int_Type(JSContext *cx, char *name, int typeid, int signedness, int size, ffi_type ffit) {
+static jsval jsx_create_int_Type(JSContext *cx, int typeid, int size, ffi_type ffit) {
   JSObject *newtype;
   newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
@@ -764,13 +720,42 @@ static jsval jsx_create_int_Type(JSContext *cx, char *name, int typeid, int sign
   type = (JSX_TypeInt *) JS_malloc(cx, sizeof(JSX_TypeInt));
   type->type = typeid;
   type->size = size;
-  type->signedness = signedness;
   type->ffiType = ffit;
   type->typeObject = newtype;
   JS_SetPrivate(cx, newtype, type);
   return newval;
 }
 
+
+static void init_int_types(JSContext *cx, JSObject *typeobj) {
+  jsval tmp, uchar;
+  tmp = uchar = jsx_create_int_Type(cx, UINTTYPE, 0, ffi_type_uchar);
+  JS_SetProperty(cx, typeobj, "unsigned_char", &tmp);
+  tmp = jsx_create_int_Type(cx, UINTTYPE, 1, ffi_type_ushort);
+  JS_SetProperty(cx, typeobj, "unsigned_short", &tmp);
+  tmp = jsx_create_int_Type(cx, UINTTYPE, 2, ffi_type_uint);
+  JS_SetProperty(cx, typeobj, "unsigned_int", &tmp);
+  tmp = jsx_create_int_Type(cx, UINTTYPE, 3, ffi_type_ulong);
+  JS_SetProperty(cx, typeobj, "unsigned_long", &tmp);
+  tmp = jsx_create_int_Type(cx, UINTTYPE, 4, ffi_type_uint64);
+  JS_SetProperty(cx, typeobj, "unsigned_long_long", &tmp);
+  tmp = jsx_create_int_Type(cx, INTTYPE, 0, ffi_type_schar);
+  JS_SetProperty(cx, typeobj, "signed_char", &tmp);
+  tmp = jsx_create_int_Type(cx, INTTYPE, 1, ffi_type_sshort);
+  JS_SetProperty(cx, typeobj, "signed_short", &tmp);
+  tmp = jsx_create_int_Type(cx, INTTYPE, 2, ffi_type_sint);
+  JS_SetProperty(cx, typeobj, "signed_int", &tmp);
+  tmp = jsx_create_int_Type(cx, INTTYPE, 3, ffi_type_slong);
+  JS_SetProperty(cx, typeobj, "signed_long", &tmp);
+  tmp = jsx_create_int_Type(cx, INTTYPE, 4, ffi_type_sint64);
+  JS_SetProperty(cx, typeobj, "signed_long_long", &tmp);
+
+  // xxx currently we let 0-ffi.js alias Type.int etc to Type.signed_int, which isn't portable.
+  // limits.h has constants we could use to detect this.  char is particularly odd, since for C type checking it'd distinct from both "signed char" and "unsigned char", though always has the same representation as one or other of them.
+
+  // It seems a bit iffy that this is uchar rather than char (which is typically signed), but that's what the old code did
+  sTypeChar = JSVAL_TO_OBJECT(uchar);
+}
 
 
 static void init_float_types(JSContext *cx, JSObject *typeobj) {
@@ -1021,9 +1006,6 @@ int JSX_CType(JSX_Type *type) {
     Ctype=type->type;
 
     switch(Ctype) {
-    case INTTYPE:
-      if(((JSX_TypeInt *) type)->signedness == 0) Ctype = UINTTYPE;
-      break;
     case ARRAYTYPE:
       if((((JSX_TypeArray *) type)->member->type == INTTYPE || ((JSX_TypeArray *) type)->member->type == UINTTYPE) &&
 	  ((JSX_TypeInt *) ((JSX_TypeArray *) type)->member)->size == 0)

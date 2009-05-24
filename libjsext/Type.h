@@ -40,7 +40,6 @@ typedef struct {
   enum JSX_TypeID type; // INTTYPE
   JSObject *typeObject;
   int size;
-  int signedness;
   ffi_type ffiType;
 } JSX_TypeInt;
 
