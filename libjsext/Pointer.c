@@ -1537,35 +1537,6 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
-static JSBool JSX_Pointer_calloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *newobj;
-  int length;
-  JSX_Pointer *ret;
-
-  if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
-    JSX_ReportException(cx, "Wrong argument type to calloc");
-    return JS_FALSE;
-  }
-
-  newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  *rval=OBJECT_TO_JSVAL(newobj);
-
-  if(!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetVoidType()), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
-
-  length=INT_TO_JSVAL(argv[0]);
-  ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
-  if (!ret)
-    return JS_FALSE;
-  ret->ptr=ret+1;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetVoidType());
-  ret->finalize=0;
-  JS_SetPrivate(cx, newobj, ret);
-  memset(ret->ptr,0,length);
-
-  return JS_TRUE;
-}
-
-
 static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   int length;
   JSX_Pointer *ret;
@@ -1580,7 +1551,7 @@ static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsva
   ret=JS_GetPrivate(cx, obj);
 
   if (ret->ptr!=ret+1) {
-    JSX_ReportException(cx, "Pointer was not allocated with malloc or calloc");
+    JSX_ReportException(cx, "Pointer was not allocated with malloc");
     return JS_FALSE;
   }
     
@@ -2019,7 +1990,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   static struct JSFunctionSpec staticfunc[]={
     {"string",JSX_Pointer_string,1,0,0},
     {"malloc",JSX_Pointer_malloc,1,0,0},
-    {"calloc",JSX_Pointer_calloc,1,0,0},
     {0,0,0,0,0}
   };
 

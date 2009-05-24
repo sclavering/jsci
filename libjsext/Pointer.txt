@@ -59,14 +59,6 @@ When passing argument lists and valists, you can place a type object directly ah
 
 
 
-Pointer.calloc(num_bytes)
--------------------------
-
-Creates a new Pointer of type Type.void which points to a newly allocated memory area.  The memory is initialized to zero.  The memory is freed when the pointer object is garbage collected.
-
-Warning: using clib.free() or similar on the returned pointer IS AN ERROR, and will result in segfaults.  (Whereas pointers returned by clib.calloc() must be free()'d to avoid memory leaks.)
-
-
 Pointer.malloc(num_bytes)
 ---------------------
 
@@ -156,7 +148,7 @@ The purpose of this method is to allow writing ptr.field('foo').$ rather than pt
 Pointer.prototype.realloc(bytes)
 --------------------------------
 
-Changes the size of a memory area allocated with Pointer.malloc(), Pointer.calloc() or Pointer().  The contents of the memory block is left unchanged even if it needs to be moved to another location.  Newly allocated memory is uninitialized.  The memory is freed when the pointer object is garbage collected.
+Changes the size of a memory area allocated with Pointer.malloc() or Pointer().  The contents of the memory block is left unchanged even if it needs to be moved to another location.  Newly allocated memory is uninitialized.  The memory is freed when the pointer object is garbage collected.
 
 
 Pointer.prototype.string([len])
