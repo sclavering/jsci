@@ -216,8 +216,7 @@ static char *JSX_intsizenames[]={
   "short",
   "int",
   "long",
-  "long_long",
-  "int64"
+  "long_long"
 };
 
 static char *JSX_signnames[]={
@@ -734,10 +733,10 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
   int signedness;
   int inttype;
 
-  ffi_type ffitypes[3][6] = {
-    { ffi_type_uchar, ffi_type_ushort, ffi_type_uint, ffi_type_ulong, ffi_type_uint64, ffi_type_uint64 },
-    { ffi_type_schar, ffi_type_sshort, ffi_type_sint, ffi_type_slong, ffi_type_sint64, ffi_type_sint64 },
-    { ffi_type_schar, ffi_type_sshort, ffi_type_sint, ffi_type_slong, ffi_type_sint64, ffi_type_sint64 }
+  ffi_type ffitypes[3][5] = {
+    { ffi_type_uchar, ffi_type_ushort, ffi_type_uint, ffi_type_ulong, ffi_type_uint64 },
+    { ffi_type_schar, ffi_type_sshort, ffi_type_sint, ffi_type_slong, ffi_type_sint64 },
+    { ffi_type_schar, ffi_type_sshort, ffi_type_sint, ffi_type_slong, ffi_type_sint64 }
   };
 
   for (inttype=INTTYPE; inttype<=UINTTYPE; inttype++) {

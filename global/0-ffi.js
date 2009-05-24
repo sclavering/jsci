@@ -17,13 +17,15 @@ Type.long.toString = function() { return "long"; };
 Type.unsigned_long_long.toString = function() { return "unsigned long long"; };
 Type.signed_long_long.toString = function() { return "signed long long"; };
 Type.long_long.toString = function() { return "long long"; };
-Type.unsigned_int64.toString = function() { return "unsigned int64"; };
-Type.signed_int64.toString = function() { return "signed int64"; };
-Type.int64.toString = function() { return "int64"; };
 Type.float.toString = function() { return "float"; };
 Type.double.toString = function() { return "double"; };
 Type.long_double.toString = function() { return "long double"; };
 Type['void'].toString = function() { return "void"; };
+
+// Not sure if these are really necessary
+Type.int64 = Type.long_long;
+Type.signed_int64 = Type.signed_long_long;
+Type.unsigned_int64 = Type.unsigned_long_long;
 
 Pointer.prototype.toString = function() {
   return Number(this.valueOf()).toString(16);
