@@ -26,11 +26,6 @@ enum JSX_TypeID {
 #define UNDEFTYPE (TYPECOUNT+4)
 #define TYPECOUNT2 (TYPECOUNT+5)
 
-enum JSX_CallConv {
-  CDECLCONV,
-  STDCALLCONV
-};
-
 typedef struct { // Private part of Type objects
   enum JSX_TypeID type; // VOID
   JSObject *typeObject;
@@ -53,7 +48,6 @@ typedef struct {
   JSObject *typeObject;
   JSX_ParamType *param;
   int nParam;
-  enum JSX_CallConv callConv;
   JSX_Type *returnType;
   int elipsis;
   ffi_cif cif;

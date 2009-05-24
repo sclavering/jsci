@@ -227,7 +227,7 @@ static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
 }
 
 
-static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params, jsval elipsis, char *callConv, jsval *rval) {
+static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params, jsval elipsis, jsval *rval) {
   JSObject *retobj;
   JSObject *paramobj;
   int nParam;
@@ -253,12 +253,6 @@ static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params,
     if (!JS_GetArrayLength(cx, paramobj, &nParam))
       return JS_FALSE;
   }
-
-  if (callConv &&
-      strcmp(callConv, "stdcall")==0)
-    type->callConv=STDCALLCONV;
-  else
-    type->callConv=CDECLCONV;
 
   type->nParam=nParam;
   type->typeObject=retobj;
@@ -792,16 +786,7 @@ static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *a
 
 
 static JSBool JSX_Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  char *callConv=0;
-  JSBool ok;
-
-  if (argc>3 && 
-      JSVAL_IS_STRING(argv[3]))
-    callConv=JS_GetStringBytes(JSVAL_TO_STRING(argv[3]));
-
-  ok=JSX_NewTypeFunction(cx, argc>1?argv[0]:JSVAL_VOID, argc>1?argv[1]:JSVAL_VOID, argc>2?argv[2]:JSVAL_VOID, callConv, rval);
-
-  return ok;
+  return JSX_NewTypeFunction(cx, argc > 1 ? argv[0] : JSVAL_VOID, argc > 1 ? argv[1] : JSVAL_VOID, argc > 2 ? argv[2] : JSVAL_VOID, rval);
 }
 
 
