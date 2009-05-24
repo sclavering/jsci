@@ -22,25 +22,17 @@ function(args) {
 
   print = function () {} // JSEXT1.C.parse() sometimes calls this
 
-  function js(name) {
-    return load.call(this,name+'.js');
-  }
+  const path = args.cwd;
+  JSEXT1 = { $path: path + '/JSEXT1' };
+  JSEXT1.File = load.call(JSEXT1, path + '/JSEXT1/File.js');
+  JSEXT1.C = { $path: path + '/JSEXT1/C', $parent: JSEXT1 };
+  JSEXT1.C.parse = load.call(JSEXT1.C, path + '/JSEXT1/C/parse.js');
+  JSEXT1.C.fragment = load.call(JSEXT1.C, path + '/JSEXT1/C/fragment.js');
+  JSEXT1.C.runcpp = load.call(JSEXT1.C, path + '/JSEXT1/C/runcpp.js');
+  JSEXT1.C.ctoxml = load.call(JSEXT1.C, path + '/JSEXT1/C/ctoxml.js');
+  JSEXT1.C.jswrapper = load.call(JSEXT1.C, path + '/JSEXT1/C/jswrapper.js');
 
-  clib.chdir("JSEXT1");
-  JSEXT1 = { $path: '.' };
-  JSEXT1.File = js.call(JSEXT1, 'File');
-
-  clib.chdir("C");
-  JSEXT1.C = { $path: '.', $parent: JSEXT1 };
-  JSEXT1.C.parse=js.call(JSEXT1.C,'parse');
-  JSEXT1.C.fragment=js.call(JSEXT1.C,'fragment');
-  JSEXT1.C.runcpp=js.call(JSEXT1.C,'runcpp');
-  JSEXT1.C.ctoxml=js.call(JSEXT1.C,'ctoxml');
-  JSEXT1.C.jswrapper = js.call(JSEXT1.C, 'jswrapper');
-  clib.chdir('..');
-
-  clib.chdir('..');
-  const fragment = JSEXT1.C.fragment(args.cwd + "/clib.h", Dl());
+  const fragment = JSEXT1.C.fragment(path + "/clib.h", Dl());
   const jswrapper = JSEXT1.C.jswrapper(fragment);
   clib.puts(jswrapper);
 }

@@ -228,10 +228,6 @@ This handler handles .h files, and the .jswrapper files generated from them.
 The .jswrapper file is a javascript file returning an obejct containing the low-level type-marshalling wrappers for C code (using Type, Pointer, etc.).
 */
 function handle_native(name, extension) {
-  const chdir_stack = [];
-
-  // 1. Find timestamps of all files in group
-
   var timestamp={};
 
   for each(var ext in ['h', 'jswrapper']) {
@@ -239,37 +235,20 @@ function handle_native(name, extension) {
     timestamp[ext] = stat && stat.mtime;
   }
 
-  // 4. Build .jswrapper file if possible and necessary
-
+  const path = this.$path + '/';
   if(timestamp.h && timestamp.h > timestamp.jswrapper) {
-    pushd(chdir_stack, this.$path);
-    var fragment = JSEXT1.C.fragment(name + '.h');
-    var wrapperfile = new JSEXT1.File('./' + name + '.jswrapper', 'w');
+    var fragment = JSEXT1.C.fragment(path + name + '.h');
+    var wrapperfile = new JSEXT1.File(path + name + '.jswrapper', 'w');
     wrapperfile.write(JSEXT1.C.jswrapper(fragment));
     wrapperfile.close();
-    timestamp.jswrapper = JSEXT1.os.stat('./' + name + '.jswrapper');
-    popd(chdir_stack);
+    timestamp.jswrapper = JSEXT1.os.stat(path + name + '.jswrapper');
   }
-
-  // 5. Load .jswrapper file if possible
 
   if(timestamp.jswrapper) {
     var ret = load.call(this, this.$path + '/' + name + '.jswrapper');
     for(var i = 0; ret['dl ' + i]; i++) { /* pass */ }
     return ret.hasOwnProperty("main") ? ret.main : ret;
   }
-}
-
-
-function pushd(chdirstack, dir) {
-  const cwd = JSEXT1.os.getcwd();
-  if(clib.chdir(dir) == -1) throw new Error(os.error("chdirLock"));
-  else chdirstack.push(cwd);
-}
-
-
-function popd(chdirstack) {
-  clib.chdir(chdirstack.pop());
 }
 
 

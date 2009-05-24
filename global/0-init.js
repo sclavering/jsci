@@ -16,11 +16,13 @@ function(args) {
   $curdir=this;
 
   clib = xload("clib.jswrapper");
+  for(var i = 0; clib['dl ' + i]; i++) ;
 
-  var JSEXT = {
+  const path = args.cwd + '/global/';
+  this.JSEXT1 = {
     $parent: this,
     $name: "JSEXT1",
-    $path: './JSEXT1',
+    $path: path + 'JSEXT1',
 
     encodeUTF8: args.encodeUTF8,
     decodeUTF8: args.decodeUTF8,
@@ -29,26 +31,12 @@ function(args) {
     encodeBase64: args.encodeBase64,
     decodeBase64: args.decodeBase64,
   };
+  JSEXT1.$curdir = JSEXT1;
 
-  JSEXT.$curdir=JSEXT;
-
-  for (var i=0; clib['dl '+i]; i++)
-    ;
-
-  this.JSEXT1 = JSEXT;
-
-  const ActiveDirectory = xload('JSEXT1/ActiveDirectory.js');
-
-  // os.js has methods like .getcwd() and .stat() that ActiveDirectory requires 
-  JSEXT.os = ActiveDirectory.handlers.js.call(JSEXT, 'os', ".js");
-
-  JSEXT.$path = JSEXT.os.getcwd() + '/JSEXT1';
-  JSEXT.ActiveDirectory = ActiveDirectory;
-
-  ActiveDirectory.call(this, JSEXT.os.getcwd());
-  ActiveDirectory.call(JSEXT, JSEXT.$path);
-
-  clib.chdir(args.cwd);
+  const ActiveDirectory = JSEXT1.ActiveDirectory = xload('JSEXT1/ActiveDirectory.js');
+  JSEXT1.os = ActiveDirectory.handlers.js.call(JSEXT1, 'os', ".js"); // ActiveDirectory needs its .stat()
+  ActiveDirectory.call(this, path);
+  ActiveDirectory.call(JSEXT1, JSEXT1.$path);
 
   // For out-of-tree code using the old names.  We can't just use a JSEXT1.js, because it would be ignored
   JSEXT1.__defineGetter__('dir', function() { return JSEXT1.os.dir; });
@@ -56,7 +44,6 @@ function(args) {
   JSEXT1.__defineGetter__('getcwd', function() { return JSEXT1.os.getcwd; });
   JSEXT1.__defineGetter__('isdir', function() { return JSEXT1.os.isdir; });
   JSEXT1.__defineGetter__('stat', function() { return JSEXT1.os.stat; });
-
 
   // And now run as FastCGI, CGI, or an interactive shell
 
