@@ -67,13 +67,6 @@ Creates a new Pointer of type Type.void, which points to a newly-allocated unini
 Warning: using clib.free() or similar on the returned pointer IS AN ERROR, and will result in segfaults.  (Whereas pointers returned by clib.malloc() must be free()'d to avoid memory leaks.)
 
 
-Pointer.string(str)
--------------------
-
-Creates and returns a new Pointer which points to a zero-terminated string constructed from the argument.  The type of the pointer will be unsigned char.  The javascript string's high bytes will be silently ignored.
-
-
-
 
 Pointer.prototype.$
 -------------------

@@ -22,7 +22,6 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
 static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, void **argptr);
 static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
@@ -1412,20 +1411,6 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
 }
 
 
-static JSBool JSX_InitPointerString(JSContext *cx, JSObject *retobj, JSString *str) {
-  if(!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(JSX_GetCharType()), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
-  JSX_Pointer *ret;
-  int length = JS_GetStringLength(str);
-  ret = JS_malloc(cx, sizeof(JSX_Pointer) + sizeof(char) * (length + 1));
-  ret->ptr=ret+1;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetCharType());
-  ret->finalize=0;
-  JS_SetPrivate(cx, retobj, ret);
-  memcpy(ret->ptr, JS_GetStringBytes(str), sizeof(char)*(length+1));
-  return JS_TRUE;
-}
-
-
 // If typeobj is null, a type property must have been assigned to retobj before calling initpointer.
 
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
@@ -1761,20 +1746,6 @@ static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, js
 }
 
 
-static JSBool JSX_Pointer_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  if (argc<1 || !JSVAL_IS_STRING(argv[0])) {
-    JSX_ReportException(cx, "Wrong argument type to string");
-    return JS_FALSE;
-  }
-
-  JSObject *newobj;
-  newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  *rval=OBJECT_TO_JSVAL(newobj);
-  if(!JSX_InitPointerString(cx, newobj, JSVAL_TO_STRING(argv[0]))) return JS_FALSE;
-  return JS_TRUE;
-}
-
-
 static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   jsdouble val = (jsdouble) (long) ptr->ptr;
@@ -1933,7 +1904,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   JSObject *classobj;
 
   static struct JSFunctionSpec staticfunc[]={
-    {"string",JSX_Pointer_string,1,0,0},
     {"malloc",JSX_Pointer_malloc,1,0,0},
     {0,0,0,0,0}
   };
