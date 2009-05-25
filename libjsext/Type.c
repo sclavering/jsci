@@ -8,7 +8,7 @@
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
-static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member);
+static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member);
 int JSX_TypeAlign(JSX_Type *type);
 
 
@@ -150,7 +150,7 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
     switch(type->type) {
     case STRUCTTYPE:
     case UNIONTYPE:
-      return JSX_SetMember(cx, obj, index, *vp);
+      return TypeStructUnion_SetMember(cx, (JSX_TypeStructUnion *) type, index, *vp);
 
     case ARRAYTYPE:
     case POINTERTYPE:
@@ -391,18 +391,11 @@ int JSX_TypeSize(JSX_Type *type) {
 }
 
 
-static JSBool JSX_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member) {
-  JSX_TypeStructUnion *type;
+static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member) {
   int i;
   int thisalign;
   int thissize;
   
-  type=JS_GetPrivate(cx, obj);
-  if (!type) {
-    JSX_ReportException(cx, "Uninitialized type object");
-    return JS_FALSE;
-  }
-
   if (type->member_capacity <= memberno + (type->type == FUNCTIONTYPE ? 1 : 0)) {
     int old_capacity=type->member_capacity;
 
@@ -492,7 +485,7 @@ JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *
   type->ffiType.elements=0;
 
   for (i=0; i<nMember; i++) {
-    if (!JSX_SetMember(cx, retobj, i, member[i]))
+    if(!TypeStructUnion_SetMember(cx, type, i, member[i]))
       goto failure;
     JS_DefineElement(cx, retobj, i, member[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
