@@ -464,7 +464,8 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
 }
 
 
-JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, int isStruct) {
+// typeid must obviously be STRUCTTYPE or UNIONTYPE
+static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, int typeid) {
   JSObject *retobj;
   JSX_TypeStructUnion *type;
   int i;
@@ -474,7 +475,7 @@ JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *
 
   type = (JSX_TypeStructUnion *) JS_malloc(cx, sizeof(JSX_TypeStructUnion));
 
-  type->type=isStruct?STRUCTTYPE:UNIONTYPE;
+  type->type = typeid;;
   type->nMember=nMember;
   type->member_capacity=nMember;
   type->member = nMember ? (JSX_MemberType *) JS_malloc(cx, sizeof(JSX_MemberType) * nMember) : 0;
@@ -756,12 +757,12 @@ static JSBool JSX_Type_pointer(JSContext *cx,  JSObject *obj, uintN argc, jsval 
 
 
 static JSBool JSX_Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeStructUnion(cx, argc, argv, rval, 1);
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, STRUCTTYPE);
 }
 
 
 static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeStructUnion(cx, argc, argv, rval, 0);
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, UNIONTYPE);
 }
 
 
