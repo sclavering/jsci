@@ -396,7 +396,7 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
   int thisalign;
   int thissize;
   
-  if (type->member_capacity <= memberno + (type->type == FUNCTIONTYPE ? 1 : 0)) {
+  if (type->member_capacity <= memberno) {
     int old_capacity=type->member_capacity;
 
     if (type->member_capacity==0)
@@ -404,8 +404,8 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
     else
       type->member_capacity*=2;
 
-    if (type->member_capacity < memberno + (type->type == FUNCTIONTYPE ? 2 : 1))
-      type->member_capacity=memberno + (type->type == FUNCTIONTYPE ? 2 : 1);
+    if (type->member_capacity < memberno + 1)
+      type->member_capacity = memberno + 1;
 
     if (type->member) {
       type->member = JS_realloc(cx, type->member, sizeof(JSX_MemberType) * type->member_capacity); // membertype same size as paramtype
