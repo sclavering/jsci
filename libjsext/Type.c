@@ -9,7 +9,7 @@
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
 static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member);
-int JSX_TypeAlign(JSX_Type *type);
+static int JSX_TypeAlign(JSX_Type *type);
 
 
 static JSObject *sTypeChar = NULL;
@@ -328,7 +328,7 @@ int JSX_TypeAlignBits(JSX_Type *type) {
 }
 
 
-int JSX_TypeAlign(JSX_Type *type) {
+static int JSX_TypeAlign(JSX_Type *type) {
   int len;
   int ret;
   int i;
@@ -498,7 +498,7 @@ JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *
 }
 
 
-JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
+static JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
   JSObject *retobj;
   JSX_TypePointer *type;
 
@@ -537,7 +537,7 @@ JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
 }
 
 
-JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
+static JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
   JSObject *retobj;
   JSX_TypeArray *type;
 
@@ -583,7 +583,7 @@ JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rval) {
 }
 
 
-JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) {
+static JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) {
   JSObject *retobj;
   JSX_TypeBitfield *type;
 
