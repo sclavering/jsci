@@ -84,19 +84,19 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
       int al=1;
       JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].type;
       while (memb->type==ARRAYTYPE) {
-	al *= ((JSX_TypeArray *) memb)->length;
-	memb = ((JSX_TypeArray *) memb)->member;
+        al *= ((JSX_TypeArray *) memb)->length;
+        memb = ((JSX_TypeArray *) memb)->member;
       }
       if (memb->type==BITFIELDTYPE) {
-	int length = ((JSX_TypeBitfield *) memb)->length;
-	if (bitsused && bitsused+length<8) 
-	  al=0;
-	else {
-	  al=(bitsused+length)/8;
-	  bitsused=(bitsused+length)%8;
-	}
+        int length = ((JSX_TypeBitfield *) memb)->length;
+        if(bitsused && bitsused + length < 8) {
+          al = 0;
+        } else {
+          al = (bitsused + length) / 8;
+          bitsused = (bitsused + length) % 8;
+        }
       } else {
-	bitsused=0;
+        bitsused = 0;
       }
       nmember+=al;
     }
@@ -117,21 +117,21 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
       ffi_type *t;
       JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].type;
       while (memb->type==ARRAYTYPE) {
-	al *= ((JSX_TypeArray *) memb)->length;
-	memb = ((JSX_TypeArray *) memb)->member;
+        al *= ((JSX_TypeArray *) memb)->length;
+        memb = ((JSX_TypeArray *) memb)->member;
       }
       if (memb->type==BITFIELDTYPE) {
-	int length = ((JSX_TypeBitfield *) memb)->length;
-	if (bitsused && bitsused+length<8) 
-	  al=0;
-	else {
-	  al=(bitsused+length)/8;
-	  bitsused=(bitsused+length)%8;
-	}
-	t=&ffi_type_uchar;
+        int length = ((JSX_TypeBitfield *) memb)->length;
+        if(bitsused && bitsused + length < 8) {
+          al = 0;
+        } else {
+          al = (bitsused + length) / 8;
+          bitsused = (bitsused + length) % 8;
+        }
+        t = &ffi_type_uchar;
       } else {
-	bitsused=0;
-	t=JSX_GetFFIType(cx, memb);
+        bitsused = 0;
+        t = JSX_GetFFIType(cx, memb);
       }
       for(j = 0; j < al; j++) ((JSX_TypeStructUnion *) type)->ffiType.elements[nmember++] = t;
     }
@@ -154,18 +154,12 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 
     case ARRAYTYPE:
     case POINTERTYPE:
-      if (index!=0)
-	break;
-
-      if (!JSVAL_IS_OBJECT(*vp) || 
-	  JSVAL_IS_NULL(*vp) ||
-	  !JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), &JSX_TypeClass, NULL)) {
-	JSX_ReportException(cx, "Wrong type");
-	return JS_FALSE;
+      if(index != 0) break;
+      if(!JSVAL_IS_OBJECT(*vp) || JSVAL_IS_NULL(*vp) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), &JSX_TypeClass, NULL)) {
+        JSX_ReportException(cx, "Wrong type");
+        return JS_FALSE;
       }
-
       ((JSX_TypeArray *) type)->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
-
       break;
     }
   }
@@ -201,8 +195,8 @@ static void JSX_DestroyTypeStructUnion(JSContext *cx, JSX_TypeStructUnion *type)
   if (type) {
     if (type->member) {
       for (i=0; i<type->nMember; i++) {
-	if (type->member[i].name)
-	  free(type->member[i].name); // strdup
+        if(type->member[i].name)
+          free(type->member[i].name); // strdup'd earlier
       }
       JS_free(cx,type->member);
     }
@@ -448,8 +442,8 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
       thisalign=JSX_TypeAlignBits(type->member[i].type);
 
       if (thisalign==0) {
-	JSX_ReportException(cx, "Division by zero");
-	return JS_FALSE;
+        JSX_ReportException(cx, "Division by zero");
+        return JS_FALSE;
       }
 
       type->sizeOf+=(thisalign - type->sizeOf % thisalign) % thisalign;
@@ -824,9 +818,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *v
       type=0;
     }
 
-    if (JSVAL_IS_OBJECT(*vp) &&
-	*vp!=JSVAL_NULL &&
-        JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
+    if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
       thistype=JS_GetPrivate(cx,JSVAL_TO_OBJECT(*vp));
       vp++;
       i++;
@@ -841,25 +833,22 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *v
     if (!thistype) {
       siz=JSX_Get(cx, 0, 0, 0, 0, vp); // Get size of C type guessed from js type
       if (arg_types) {
-	int jstype=JSX_JSType(cx, *vp);
-
-	switch(jstype) {
-	case JSVAL_STRING:
-	  *(arg_types++)=&ffi_type_pointer;
-	  break;
-	case JSVAL_INT:
-	  *(arg_types++)=&ffi_type_sint;
-	  break;
-	case JSVAL_DOUBLE:
-	  *(arg_types++)=&ffi_type_double;
-	  break;
-	}
+        int jstype = JSX_JSType(cx, *vp);
+        switch(jstype) {
+          case JSVAL_STRING:
+            *(arg_types++) = &ffi_type_pointer;
+            break;
+          case JSVAL_INT:
+            *(arg_types++) = &ffi_type_sint;
+            break;
+          case JSVAL_DOUBLE:
+            *(arg_types++) = &ffi_type_double;
+            break;
+        }
       }
     } else {
       siz=JSX_TypeSize(thistype);
-      if (arg_types) {
-	*(arg_types++)=JSX_GetFFIType(cx, thistype);
-      }
+      if(arg_types) *(arg_types++) = JSX_GetFFIType(cx, thistype);
     }
     if (!siz) return 0; // error
     ret+=siz;
