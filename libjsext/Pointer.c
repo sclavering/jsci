@@ -721,7 +721,6 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
 
     if (do_clean && thistype && thistype->type->type == ARRAYTYPE) {
       JS_free(cx, *(void **)*argptr);
-      //      if (siz)
       siz=sizeof(void *);
     }
 
@@ -730,9 +729,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
     rval++;
     if (!siz)
       goto failure;
-    //    siz=(siz+align-1)&(~(align-1));
     argptr++;
-    //    ptr+=siz;
     ret+=siz;
   }
 
