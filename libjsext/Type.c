@@ -896,37 +896,27 @@ int JSX_JSType(JSContext *cx, jsval v) {
 }
 
 
+// Determine the C type to an appropriate level of detail for the big 2D switch
 int JSX_CType(JSX_Type *type) {
-  int Ctype;
+  if(type == NULL) return UNDEFTYPE;
 
-  // Determine the C type to an appropriate level of detail for the big 2D switch
-
-  if (type==NULL)
-    Ctype=UNDEFTYPE;
-  else {
-    Ctype=type->type;
-
-    switch(Ctype) {
-    case ARRAYTYPE:
-      if((((JSX_TypeArray *) type)->member->type == INTTYPE || ((JSX_TypeArray *) type)->member->type == UINTTYPE) &&
-	  ((JSX_TypeNumeric *) ((JSX_TypeArray *) type)->member)->size == 0)
-	Ctype=ACHARTYPE;
-      else if((((JSX_TypeArray *) type)->member->type == INTTYPE || ((JSX_TypeArray *) type)->member->type == UINTTYPE) &&
-	       ((JSX_TypeNumeric *) ((JSX_TypeArray *) type)->member)->size == 1)
-	Ctype=ASHORTTYPE;
-      break;
-    case POINTERTYPE:
-      if((((JSX_TypePointer *) type)->direct->type == INTTYPE || ((JSX_TypePointer *) type)->direct->type == UINTTYPE) &&
-	  ((JSX_TypeNumeric *) ((JSX_TypePointer *) type)->direct)->size == 0)
-	Ctype=PCHARTYPE;
-      else if((((JSX_TypePointer *) type)->direct->type == INTTYPE || ((JSX_TypePointer *) type)->direct->type == UINTTYPE) &&
-	       ((JSX_TypeNumeric *) ((JSX_TypePointer *) type)->direct)->size == 1)
-	Ctype=PSHORTTYPE;
-      break;
+  if(type->type == ARRAYTYPE) {
+    JSX_TypeArray *atype = (JSX_TypeArray *) type;
+    if(atype->member->type == INTTYPE || atype->member->type == UINTTYPE) {
+      int size = ((JSX_TypeNumeric *) atype->member)->size;
+      if(size == 0) return ACHARTYPE;
+      if(size == 1) return ASHORTTYPE;
     }
   }
-
-  return Ctype;
+  if(type->type == POINTERTYPE) {
+    JSX_TypePointer *ptype = (JSX_TypePointer *) type;
+    if(ptype->direct->type == INTTYPE || ptype->direct->type == UINTTYPE) {
+      int size = ((JSX_TypeNumeric *) ptype->direct)->size;
+      if(size == 0) return PCHARTYPE;
+      if(size == 1) return PSHORTTYPE;
+    }
+  }
+  return type->type;
 }
 
 
