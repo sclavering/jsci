@@ -1325,7 +1325,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
   int ret=0;
   int siz, cursiz;
   uintN i;
-  JSX_ParamType tmptype = { 0, 0, 0 };
+  JSX_ParamType tmptype = { 0, 0 };
   JSX_ParamType *thistype;
 
   for (i=0; i<nargs; i++) {
