@@ -931,26 +931,19 @@ int JSX_CType(JSX_Type *type) {
 
 
 JSBool JSX_TypeContainsPointer(JSX_Type *type) {
-  int i;
-
-  for (;;) {
-    switch (type->type) {
-
+  switch(type->type) {
     case POINTERTYPE:
       return JS_TRUE;
-
     case ARRAYTYPE:
-      type = ((JSX_TypeArray *) type)->member;
-      break;
-
+      return JSX_TypeContainsPointer(((JSX_TypeArray *) type)->member);
     case UNIONTYPE:
-    case STRUCTTYPE:
-      for(i = 0; i < ((JSX_TypeStructUnion *) type)->nMember; i++)
-	if(JSX_TypeContainsPointer(((JSX_TypeStructUnion *) type)->member[i].type))
-	  return JS_TRUE;
-
-      // fall through
-
+    case STRUCTTYPE: {
+      int i;
+      JSX_TypeStructUnion *sutype = (JSX_TypeStructUnion *) type;
+      for(i = 0; i < sutype->nMember; i++)
+        if(JSX_TypeContainsPointer(sutype->member[i].type))
+          return JS_TRUE;
+      return JS_FALSE;
     default:
       return JS_FALSE;
     }
