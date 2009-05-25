@@ -122,11 +122,11 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     // Update pointer object from a type * or int
 
     if (do_clean!=2) {
-      if (*(void **)p==NULL) {
-	*rval=JSVAL_NULL;
+      if(*(void **)p == NULL) {
+        *rval = JSVAL_NULL;
       } else {
-	ptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
-	ptr->ptr=*(void **)p;
+        ptr = JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
+        ptr->ptr = *(void **)p;
       }
     }
     return sizeof(void *);
@@ -140,17 +140,17 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
     // Return a pointer object from a type *
     if (do_clean!=2) {
-      if (*(void **)p==NULL) {
-	*rval=JSVAL_NULL;
+      if(*(void **)p == NULL) {
+        *rval = JSVAL_NULL;
       } else {
-	obj=JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-	*rval=OBJECT_TO_JSVAL(obj);
-	ptr = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer));
-	ptr->ptr=*(void **)p;
-	ptr->type = ((JSX_TypePointer *) type)->direct;
-	ptr->finalize=0;
-	JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(ptr->type->typeObject), 0, 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
-	JS_SetPrivate(cx, obj, ptr);
+        obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
+        *rval = OBJECT_TO_JSVAL(obj);
+        ptr = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer));
+        ptr->ptr = *(void **)p;
+        ptr->type = ((JSX_TypePointer *) type)->direct;
+        ptr->finalize = 0;
+        JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(ptr->type->typeObject), 0, 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
+        JS_SetPrivate(cx, obj, ptr);
       }
     }
     return sizeof(void *);
@@ -428,31 +428,30 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
     if (do_clean) {
       if (oldptr && (do_clean==2 || *(void **)oldptr!=*(void **)p)) {
-	// Pointer has changed, don't update array, just return pointer and clean up
+        // Pointer has changed, don't update array, just return pointer and clean up
+        if(do_clean != 2) {
+          *rval = JSVAL_VOID;
+          JSX_Get(cx, p, 0, 0, type, rval);
+        }
 
-	if (do_clean!=2) {
-	  *rval=JSVAL_VOID;
-	  JSX_Get(cx, p, 0, 0, type, rval);
-	}
+        totsize = 0;
 
-	totsize=0;
+        for (i=0; i<size; i++) {
+          jsval tmp;
+          JS_GetElement(cx, obj, i, &tmp);
+          int thissize = JSX_Get(cx, 0, *(char **)oldptr + totsize, 2, ((JSX_TypePointer *) type)->direct, &tmp);
+          if(!thissize) goto vararrayfailure1;
+          totsize+=thissize;
+        }
 
-	for (i=0; i<size; i++) {
-	  jsval tmp;
-	  JS_GetElement(cx, obj, i, &tmp);
-	  int thissize = JSX_Get(cx, 0, *(char **)oldptr + totsize, 2, ((JSX_TypePointer *) type)->direct, &tmp);
-	  if (!thissize) goto vararrayfailure1;
-	  totsize+=thissize;
-	}
-
-	JS_free(cx, *(char **)p);
-	return sizeof(void *);
+        JS_free(cx, *(char **)p);
+        return sizeof(void *);
       }
 
       if(JSX_TypeContainsPointer(((JSX_TypeArray *) type)->member)) {
-	oldptr=*(char **)p+elemsize*size;
+        oldptr = *(char **)p + elemsize * size;
       } else {
-	oldptr=0;
+        oldptr = 0;
       }
     }
 
@@ -462,15 +461,14 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       jsval tmp=JSVAL_VOID;
       JS_AddRoot(cx, &tmp);
       for (i=0; i<size; i++) {
-	JS_GetElement(cx, obj, i, &tmp);
-	int thissize = JSX_Get(cx, *(char **)p + totsize, oldptr ? *(char **)oldptr + totsize : 0, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
-	if (!thissize) {
-	  JS_RemoveRoot(cx, &tmp);
-	  goto vararrayfailure1;
-	}
-	if (do_clean != 2)
-	  JS_SetElement(cx, obj, i, &tmp);
-	totsize+=thissize;
+        JS_GetElement(cx, obj, i, &tmp);
+        int thissize = JSX_Get(cx, *(char **)p + totsize, oldptr ? *(char **)oldptr + totsize : 0, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
+        if(!thissize) {
+          JS_RemoveRoot(cx, &tmp);
+          goto vararrayfailure1;
+        }
+        if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
+        totsize += thissize;
       }
       JS_RemoveRoot(cx, &tmp);
     }
@@ -485,10 +483,9 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     if (do_clean) {
       int elemsize = JSX_TypeSize(((JSX_TypePointer *) type)->direct);
       for (;++i<size;) {
-	jsval tmp;
-
-	JS_GetElement(cx, obj, i, &tmp);
-	JSX_Get(cx, *(char **)p + i * elemsize, oldptr ? *(char **)oldptr + i * elemsize : 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
+        jsval tmp;
+        JS_GetElement(cx, obj, i, &tmp);
+        JSX_Get(cx, *(char **)p + i * elemsize, oldptr ? *(char **)oldptr + i * elemsize : 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
       }
 
       JS_free(cx, *(char **)p);
@@ -520,15 +517,14 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       jsval tmp=JSVAL_VOID;
       JS_AddRoot(cx, &tmp);
       for (i=0; i<size; i++) {
-	JS_GetElement(cx, obj, i, &tmp);
-	int thissize = JSX_Get(cx, p + totsize, oldptr ? oldptr + totsize : 0, do_clean, ((JSX_TypeArray *) type)->member, &tmp);
-	if (!thissize) {
-	  JS_RemoveRoot(cx, &tmp);
-	  goto fixedarrayfailure;
-	}
-	if (do_clean != 2)
-	  JS_SetElement(cx, obj, i, &tmp);
-	totsize+=thissize;
+        JS_GetElement(cx, obj, i, &tmp);
+        int thissize = JSX_Get(cx, p + totsize, oldptr ? oldptr + totsize : 0, do_clean, ((JSX_TypeArray *) type)->member, &tmp);
+        if(!thissize) {
+          JS_RemoveRoot(cx, &tmp);
+          goto fixedarrayfailure;
+        }
+        if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
+        totsize += thissize;
       }
       JS_RemoveRoot(cx, &tmp);
     }
@@ -539,9 +535,9 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     if (do_clean) {
       int elemsize = JSX_TypeSize(((JSX_TypeArray *) type)->member);
       for (;++i<size;) {
-	jsval tmp;
-	JS_GetElement(cx, obj, i, &tmp);
-	JSX_Get(cx, p + i * elemsize, oldptr ? oldptr + i * elemsize : 0, 2, ((JSX_TypeArray *) type)->member, &tmp);
+        jsval tmp;
+        JS_GetElement(cx, obj, i, &tmp);
+        JSX_Get(cx, p + i * elemsize, oldptr ? oldptr + i * elemsize : 0, 2, ((JSX_TypeArray *) type)->member, &tmp);
       }
     }
     goto failure;
@@ -709,9 +705,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
     if (type && type->type->type==VOIDTYPE) // End of param list
       type=0;
 
-    if (JSVAL_IS_OBJECT(*rval) &&
-	*rval!=JSVAL_NULL &&
-	JS_InstanceOf(cx, JSVAL_TO_OBJECT(*rval), JSX_GetTypeClass(), NULL)) {
+    if(JSVAL_IS_OBJECT(*rval) && *rval != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*rval), JSX_GetTypeClass(), NULL)) {
       // Paramlist-specified type
       thistype=&tmptype;
       tmptype.type=JS_GetPrivate(cx,JSVAL_TO_OBJECT(*rval));
@@ -719,36 +713,29 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
       i++;
       if (i==nargs) break;
     } else {
-      if (type)
-	thistype=type;
-      else
-	thistype=0;
+      thistype = type ? type : 0;
     }
 
     if (!convconst && thistype && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval==JSVAL_NULL)) { // Const or immutable
-      if (do_clean)
-	siz=JSX_Get(cx, *argptr, 0, 2, thistype ? thistype->type : 0, rval);
-      else {
-	if (!thistype)
-	  siz=JSX_Get(cx, 0, 0, 0, 0, rval); // Get size of C type guessed from js type
-	else
-	  siz=JSX_TypeSize(thistype->type);
-	rval++;
+      if(do_clean) {
+        siz = JSX_Get(cx, *argptr, 0, 2, thistype ? thistype->type : 0, rval);
+      } else {
+        if(!thistype) {
+          siz = JSX_Get(cx, 0, 0, 0, 0, rval); // Get size of C type guessed from js type
+        } else {
+          siz = JSX_TypeSize(thistype->type);
+        }
+        rval++;
       }
     } else {
-
-      if (thistype && thistype->type->type == ARRAYTYPE) {
-	if (do_clean) {
-	  // In function calls, arrays are passed by pointer
-	  siz=JSX_Get(cx, *(void **)*argptr, 0, do_clean, thistype->type, rval);
-	  if (siz)
-	    siz=sizeof(void *);
-	} else
-	  goto failure;
+      if(thistype && thistype->type->type == ARRAYTYPE) {
+        if(!do_clean) goto failure;
+        // In function calls, arrays are passed by pointer
+        siz = JSX_Get(cx, *(void **)*argptr, 0, do_clean, thistype->type, rval);
+        if(siz) siz = sizeof(void *);
       } else {
-	siz=JSX_Get(cx, *argptr, 0, do_clean, thistype ? thistype->type : 0, rval);
+        siz = JSX_Get(cx, *argptr, 0, do_clean, thistype ? thistype->type : 0, rval);
       }
-
     }
 
     // In function calls, arrays are passed by pointer
@@ -823,7 +810,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       JS_DefineProperty(cx, obj, "__ptr__", tmpval, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 
       if(!JSX_InitPointerCallback(cx, newptr, fun, ((JSX_TypePointer *) type)->direct->typeObject)) {
-	return 0;
+        return 0;
       }
     }
     v=tmpval;
@@ -927,9 +914,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     size=JS_GetStringLength(JSVAL_TO_STRING(v));
     if(size < ((JSX_TypeArray *) type)->length) {
-      memcpy(*(char **)p,
-	     JS_GetStringBytes(JSVAL_TO_STRING(v)),
-	     size*sizeof(char));
+      memcpy(*(char **)p, JS_GetStringBytes(JSVAL_TO_STRING(v)), size * sizeof(char));
       memset(*(char **)p + size, 0, (((JSX_TypeArray *) type)->length - size) * sizeof(char));
     } else {
       memcpy(*(char **)p, JS_GetStringBytes(JSVAL_TO_STRING(v)), ((JSX_TypeArray *) type)->length * sizeof(char));
@@ -942,9 +927,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     size=JS_GetStringLength(JSVAL_TO_STRING(v));
     if(size < ((JSX_TypeArray *) type)->length) {
-      memcpy(*(jschar **)p,
-	     JS_GetStringChars(JSVAL_TO_STRING(v)),
-	     size*sizeof(jschar));
+      memcpy(*(jschar **)p, JS_GetStringChars(JSVAL_TO_STRING(v)), size * sizeof(jschar));
       memset(*(jschar **)p + size, 0, (((JSX_TypeArray *) type)->length - size) * sizeof(jschar));
     } else {
       memcpy(*(jschar **)p, JS_GetStringChars(JSVAL_TO_STRING(v)), ((JSX_TypeArray *) type)->length * sizeof(jschar));
@@ -1114,42 +1097,39 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       elemsize = JSX_TypeSize(((JSX_TypeArray *) type)->member);
 
       if (will_clean) {
-	// The variable array needs to be allocated
-	containsPointers = JSX_TypeContainsPointer(((JSX_TypeArray *) type)->member);
-	if (containsPointers) {
-	  // Allocate twice the space in order to store old pointers
-	  *(void **)p=JS_malloc(cx, elemsize*size*2);
-	} else {
-	  *(void **)p=JS_malloc(cx, elemsize*size);
-	}
+        // The variable array needs to be allocated
+        containsPointers = JSX_TypeContainsPointer(((JSX_TypeArray *) type)->member);
+        if(containsPointers) {
+          // Allocate twice the space in order to store old pointers
+          *(void **)p = JS_malloc(cx, elemsize * size * 2);
+        } else {
+          *(void **)p = JS_malloc(cx, elemsize * size);
+        }
       }
       
       totsize=0;
     
       for (i=0; i<size; i++) {
-	jsval tmp;
-	JS_GetElement(cx, obj, i, &tmp);
-	int thissize = JSX_Set(cx, *(char **)p + totsize, will_clean, ((JSX_TypePointer *) type)->direct, tmp);
-	if (!thissize)
-	  goto vararrayfailure2;
-	totsize+=thissize;
+        jsval tmp;
+        JS_GetElement(cx, obj, i, &tmp);
+        int thissize = JSX_Set(cx, *(char **)p + totsize, will_clean, ((JSX_TypePointer *) type)->direct, tmp);
+        if(!thissize) goto vararrayfailure2;
+        totsize += thissize;
       }
-      
-      if (containsPointers) {
-	// Make backup of old pointers
-	memcpy(*(char **)p+elemsize*size, *(char **)p, elemsize*size);
-      }
+
+      // Make backup of old pointers
+      if(containsPointers) memcpy(*(char **)p + elemsize * size, *(char **)p, elemsize * size);
       
       return sizeof(void *);
 
     vararrayfailure2:
       if (will_clean) {
-	for (;i--;) {
-	  jsval tmp;
-	  JS_GetElement(cx, obj, i, &tmp);
-	  JSX_Get(cx, NULL, 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
-	}
-	JS_free(cx, *(void **)p);
+        for (;i--;) {
+          jsval tmp;
+          JS_GetElement(cx, obj, i, &tmp);
+          JSX_Get(cx, NULL, 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
+        }
+        JS_free(cx, *(void **)p);
       }
     
       return 0;
@@ -1171,8 +1151,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       jsval tmp;
       JS_GetElement(cx, obj, i, &tmp);
       int thissize = JSX_Set(cx, p + totsize, will_clean, ((JSX_TypeArray *) type)->member, tmp);
-      if (!thissize)
-	goto fixedarrayfailure;
+      if(!thissize) goto fixedarrayfailure;
       totsize+=thissize;
     }
 
@@ -1182,9 +1161,9 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     if (will_clean) {
       for (;i--;) {
-	jsval tmp;
-	JS_GetElement(cx, obj, i, &tmp);
-	JSX_Get(cx, NULL, 0, 2, ((JSX_TypeArray *) type)->member, &tmp);
+        jsval tmp;
+        JS_GetElement(cx, obj, i, &tmp);
+        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeArray *) type)->member, &tmp);
       }
     }
     
@@ -1206,22 +1185,20 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
 
       if(((JSX_TypeStructUnion *) type)->member[i].type->type == BITFIELDTYPE) {
-	int length = ((JSX_TypeBitfield *) ((JSX_TypeStructUnion *) type)->member[i].type)->length;
-	int offset = ((JSX_TypeStructUnion *) type)->member[i].offset % 8;
-	int mask=~(-1<<length);
-	int imask=~(imask << offset);
-	int tmpint;
-	int tmpint2;
-
-	thissize=JSX_Set(cx, (char *)&tmpint, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
-	memcpy((char *)&tmpint2, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, thissize);
-	tmpint=(tmpint2 & imask) | ((tmpint & mask) << offset);
-	memcpy(p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, (char *)&tmpint, thissize);
+        int length = ((JSX_TypeBitfield *) ((JSX_TypeStructUnion *) type)->member[i].type)->length;
+        int offset = ((JSX_TypeStructUnion *) type)->member[i].offset % 8;
+        int mask = ~(-1 << length);
+        int imask = ~(imask << offset);
+        int tmpint;
+        int tmpint2;
+        thissize = JSX_Set(cx, (char *) &tmpint, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
+        memcpy((char *) &tmpint2, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, thissize);
+        tmpint = (tmpint2 & imask) | ((tmpint & mask) << offset);
+        memcpy(p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, (char *) &tmpint, thissize);
       } else {
-	thissize = JSX_Set(cx, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
+        thissize = JSX_Set(cx, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
       }
-      if (!thissize)
-	goto structfailure;
+      if(!thissize) goto structfailure;
     }
 
     return JSX_TypeSize(type);
@@ -1230,9 +1207,9 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     if (will_clean) {
       for (;i--;) {
-	jsval tmp;
-	JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
-	JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].type, &tmp);
+        jsval tmp;
+        JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
+        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].type, &tmp);
       }
     }
 
@@ -1249,8 +1226,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       jsval tmp;
       JS_GetElement(cx, obj, i, &tmp);
       int thissize = JSX_Set(cx, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
-      if (!thissize)
-	goto structfailure2;
+      if(!thissize) goto structfailure2;
     }
 
     return JSX_TypeSize(type);
@@ -1259,9 +1235,9 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     if (will_clean) {
       for (;i--;) {
-	jsval tmp;
-	JS_GetElement(cx, obj, i, &tmp);
-	JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].type, &tmp);
+        jsval tmp;
+        JS_GetElement(cx, obj, i, &tmp);
+        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].type, &tmp);
       }
     }
 
@@ -1332,9 +1308,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
     if (type && type->type->type==VOIDTYPE) // End of param list
       type=0;
 
-    if (JSVAL_IS_OBJECT(*vp) &&
-	*vp!=JSVAL_NULL &&
-	JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
+    if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
       // Paramlist-specified type
       thistype=&tmptype;
       tmptype.type=JS_GetPrivate(cx,JSVAL_TO_OBJECT(*vp));
@@ -1342,25 +1316,20 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
       i++;
       if (i==nargs) break;
     } else {
-      if (type)
-	thistype=type;
-      else
-	thistype=0;
+      thistype = type ? type : 0;
     }
 
     if (thistype && thistype->type->type==ARRAYTYPE) {
-      if (will_clean) {
-	// In function calls, arrays are passed by pointer
-	*(void **)ptr=JS_malloc(cx, JSX_TypeSize(thistype->type));
-	cursiz=JSX_Set(cx, *(void **)ptr, will_clean, thistype->type, *vp);
-	if (cursiz)
-	  cursiz=sizeof(void *);
-	else {
-	  JS_free(cx, *(void **)ptr);
-	  goto failure;
-	}
-      } else
-	goto failure;
+      if(!will_clean) goto failure;
+      // In function calls, arrays are passed by pointer
+      *(void **)ptr = JS_malloc(cx, JSX_TypeSize(thistype->type));
+      cursiz = JSX_Set(cx, *(void **)ptr, will_clean, thistype->type, *vp);
+      if(cursiz) {
+        cursiz = sizeof(void *);
+      } else {
+        JS_free(cx, *(void **)ptr);
+        goto failure;
+      }
     } else {
       cursiz=JSX_Set(cx, ptr?ptr:*argptr, will_clean, thistype ? thistype->type : 0, *vp);
     }
@@ -1644,9 +1613,9 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
   if (ptr) {
     if (ptr->finalize) {
       if (ptr->finalize==ffi_closure_free) {
-	ffi_closure_free(((JSX_Callback *) ptr)->writeable);
+        ffi_closure_free(((JSX_Callback *) ptr)->writeable);
       } else {
-	(*ptr->finalize)(ptr->ptr);
+        (*ptr->finalize)(ptr->ptr);
       }
     }
     JS_free(cx, ptr);
