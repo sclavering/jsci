@@ -565,26 +565,22 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       JS_AddRoot(cx, &tmp);
 
       for (i=0; i<size; i++) {
-	JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
-	int thissize = JSX_Get(cx,
-			 p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8,
-			 oldptr ? oldptr + ((JSX_TypeStructUnion *) type)->member[i].offset / 8 : 0,
-			 do_clean,
-			 ((JSX_TypeStructUnion *) type)->member[i].type,
-			 &tmp);
-	if (!thissize) {
-	  goto structfailure;
-	  JS_RemoveRoot(cx, &tmp);
-	}
-	if (do_clean != 2) {
-	  if(((JSX_TypeStructUnion *) type)->member[i].type->type == BITFIELDTYPE) {
-	    int length = ((JSX_TypeBitfield *) ((JSX_TypeStructUnion *) type)->member[i].type)->length;
-	    int offset = ((JSX_TypeStructUnion *) type)->member[i].offset % 8;
-	    int mask=~(-1<<length);
-	    tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp)>>offset)&mask);
-	  }
-	  JS_SetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
-	}
+        JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
+        JS_GetProperty(cx, obj, mtype.name, &tmp);
+        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.type, &tmp);
+        if(!thissize) {
+          goto structfailure;
+          JS_RemoveRoot(cx, &tmp);
+        }
+        if(do_clean != 2) {
+          if(mtype.type->type == BITFIELDTYPE) {
+            int length = ((JSX_TypeBitfield *) mtype.type)->length;
+            int offset = mtype.offset % 8;
+            int mask = ~(-1 << length);
+            tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);
+          }
+          JS_SetProperty(cx, obj, mtype.name, &tmp);
+        }
       }
 
       JS_RemoveRoot(cx, &tmp);
@@ -595,15 +591,10 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   structfailure:
     if (do_clean) {
       for (;++i<size;) {
-	jsval tmp;
-
-	JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
-	JSX_Get(cx,
-		p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8,
-		oldptr ? oldptr + ((JSX_TypeStructUnion *) type)->member[i].offset / 8 : 0,
-		2,
-		((JSX_TypeStructUnion *) type)->member[i].type,
-		&tmp);
+        jsval tmp;
+        JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
+        JS_GetProperty(cx, obj, mtype.name, &tmp);
+        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.type, &tmp);
       }
     }
     goto failure;
@@ -620,21 +611,14 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       JS_AddRoot(cx, &tmp);
 
       for (i=0; i<size; i++) {
-	int thissize;
-	
-	JS_GetElement(cx, obj, i, &tmp);
-	thissize=JSX_Get(cx,
-			 p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8,
-			 oldptr ? oldptr + ((JSX_TypeStructUnion *) type)->member[i].offset / 8 : 0,
-			 do_clean,
-			 ((JSX_TypeStructUnion *) type)->member[i].type,
-			 &tmp);
-	if (!thissize) {
-	  JS_RemoveRoot(cx, &tmp);
-	  goto structfailure2;
-	}
-	if (do_clean != 2)
-	  JS_SetElement(cx, obj, i, &tmp);
+        JS_GetElement(cx, obj, i, &tmp);
+        JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
+        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.type, &tmp);
+        if(!thissize) {
+          JS_RemoveRoot(cx, &tmp);
+          goto structfailure2;
+        }
+        if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
       }
 
       JS_RemoveRoot(cx, &tmp);
@@ -645,15 +629,10 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   structfailure2:
     if (do_clean) {
       for (;++i<size;) {
-	jsval tmp;
-
-	JS_GetElement(cx, obj, i, &tmp);
-	JSX_Get(cx,
-		p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8,
-		oldptr ? oldptr + ((JSX_TypeStructUnion *) type)->member[i].offset / 8 : 0,
-		2,
-		((JSX_TypeStructUnion *) type)->member[i].type,
-		&tmp);
+        jsval tmp;
+        JS_GetElement(cx, obj, i, &tmp);
+        JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
+        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.type, &tmp);
       }
     }
     goto failure;
