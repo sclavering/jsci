@@ -601,8 +601,6 @@ static JSBool Type_bitfield(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   else
     type->length=0;
 
-  JS_DefineElement(cx, retobj, 0, member, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-
   type->member = JS_GetPrivate(cx, JSX_GetVoidType());
   type->typeObject=retobj;
 
