@@ -520,8 +520,17 @@ static JSBool Type_pointer(JSContext *cx,  JSObject *obj, uintN argc, jsval *arg
 
 
 static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval member = argc > 0 ? argv[0] : JSVAL_VOID;
-  jsval len = argc > 1 ? argv[1] : JSVAL_VOID;
+  jsval member = argv[0];
+  jsval len = argv[1];
+
+  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(member), &JSX_TypeClass, NULL)) {
+    JSX_ReportException(cx, "Type.array(): first argument must be a Type instance");
+    return JS_FALSE;
+  }
+  if(!JSVAL_IS_INT(len)) {
+    JSX_ReportException(cx, "Type.array(): second argument must be an integer");
+    return JS_FALSE;
+  }
 
   JSObject *retobj;
   JSX_TypeArray *type;
@@ -545,23 +554,10 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   if (member==JSVAL_VOID) {
     return JS_TRUE;
   }
-
-  if (!JSVAL_IS_OBJECT(member) || 
-      JSVAL_IS_NULL(member) ||
-      !JS_InstanceOf(cx, JSVAL_TO_OBJECT(member), &JSX_TypeClass, NULL) ||
-      !JSVAL_IS_INT(len)) {
-    JSX_ReportException(cx, "Wrong type to Type.array");
-    goto failure;
-  }
     
   type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
 
   return JS_TRUE;
-
- failure:
-  if (type)
-    JS_free(cx, type);
-  return JS_FALSE;
 }
 
 
@@ -902,7 +898,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   JSObject *protoobj;
 
   static struct JSFunctionSpec staticfunc[]={
-    {"array", Type_array, 1, 0, 0},
+    {"array", Type_array, 2, 0, 0},
     {"bitfield", Type_bitfield, 1, 0, 0},
     {"pointer", Type_pointer, 1, 0, 0},
     {"struct",JSX_Type_struct,1,0,0},
