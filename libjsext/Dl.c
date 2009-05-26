@@ -7,11 +7,11 @@
 #include "util.h"
 
 
-static JSBool dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static void JS_DLL_CALLBACK JSEXT_dl_finalize(JSContext *cx, JSObject *obj);
-static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JS_DLL_CALLBACK JSX_dl_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_dl_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval);
+static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
+static void Dl_finalize(JSContext *cx, JSObject *obj);
+static JSBool Dl_proto_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
+static JSBool JSX_dl_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
+static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval);
 
 static JSClass JSEXT_dl_class = {
     "Dl",
@@ -23,20 +23,20 @@ static JSClass JSEXT_dl_class = {
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
-    JSEXT_dl_finalize
+    Dl_finalize
 };
 
 
-jsval JSX_make_Dl(JSContext *cx, JSObject *glob) {
+jsval make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
-    {"symbolExists", JSX_dl_symbolExists, 1, 0, 0},
+    {"symbolExists", Dl_proto_symbolExists, 1, 0, 0},
     {"function", JSX_dl_function, 1, 0, 0},
-    {"pointer", JSX_dl_pointer, 2, 0, 0},
+    {"pointer", Dl_proto_pointer, 2, 0, 0},
     {0,0,0,0,0}
   };
 
-  JSEXT_dl_proto=JS_InitClass(cx, glob, NULL, &JSEXT_dl_class, dl_new, 1, NULL, memberfunc, NULL, NULL);
+  JSEXT_dl_proto = JS_InitClass(cx, glob, NULL, &JSEXT_dl_class, Dl_new, 1, NULL, memberfunc, NULL, NULL);
   if(JSEXT_dl_proto == 0) return JSVAL_VOID;
   JS_SetPrivate(cx, JSEXT_dl_proto, NULL);
 
@@ -69,7 +69,7 @@ JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
 }
 
 
-static JSBool dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *filename;
   JSBool res;
 
@@ -92,7 +92,7 @@ static JSBool dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsva
 }
 
 
-static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Dl_proto_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *symbol;
 
   if (argc!=1) {
@@ -110,7 +110,7 @@ static JSBool JS_DLL_CALLBACK JSX_dl_symbolExists(JSContext *cx, JSObject *obj, 
 }
 
 
-static JSBool JS_DLL_CALLBACK JSX_dl_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool JSX_dl_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSNative fun;
   JSFunction *jsfun;
   char *name;
@@ -139,13 +139,13 @@ static JSBool JS_DLL_CALLBACK JSX_dl_function(JSContext *cx, JSObject *obj, uint
 }
 
 
-static void JS_DLL_CALLBACK JSEXT_dl_finalize(JSContext *cx, JSObject *obj) {
+static void Dl_finalize(JSContext *cx, JSObject *obj) {
   void *dl = JS_GetPrivate(cx, obj);
   if(dl) dlclose(dl);
 }
 
 
-static JSBool JSX_dl_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval) {
   if(argc < 2 || !JSVAL_IS_STRING(argv[0]) || !JSVAL_IS_OBJECT(argv[1]) || JSVAL_IS_NULL(argv[1]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[1]), JSX_GetTypeClass(), NULL)) {
     JS_ReportError(cx, "Dl.prototype.pointer(): bad arguments");
     return JS_FALSE;

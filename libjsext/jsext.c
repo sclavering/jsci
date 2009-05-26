@@ -43,7 +43,7 @@
 /* these are defined respectively in Type.c Pointer.c Dl.c and load.c */
 jsval JSX_make_Type(JSContext *cx, JSObject *glo);
 jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
-jsval JSX_make_Dl(JSContext *cx, JSObject *glo);
+jsval make_Dl(JSContext *cx, JSObject *glo);
 jsval JSX_make_load(JSContext *cx);
 jsval JSX_make_environment(JSContext *cx, JSObject *obj);
 jsval make_encodeUTF8(JSContext *cx);
@@ -156,7 +156,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JS_SetProperty(cx, argobj, "Type", &tmp);
   tmp = JSX_make_Pointer(cx, obj);
   JS_SetProperty(cx, argobj, "Pointer", &tmp);
-  tmp = JSX_make_Dl(cx, obj);
+  tmp = make_Dl(cx, obj);
   JS_SetProperty(cx, argobj, "Dl", &tmp);
   tmp = JSX_make_load(cx);
   JS_SetProperty(cx, argobj, "load", &tmp);
