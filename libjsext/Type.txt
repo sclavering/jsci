@@ -40,7 +40,7 @@ Type objects representing C structs, unions, functions, pointers, and fixed-leng
 Type.array(type, length)
 ------------------------
 
-Creates a new Type object representing a fixed-size array.  The first argument is the Type of array elements, and the second is the number of elements.  Types created with this function have a property named "0" which contains the type of its members.
+Creates a new Type object representing a fixed-size array.  The first argument is the Type of array elements, and the second is the number of elements.
 
 
 Type.bitfield(type, length)
