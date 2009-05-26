@@ -229,40 +229,36 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
 static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval returnType = argv[0];
   jsval params = argv[1];
-  JSObject *retobj;
-  JSObject *paramobj;
-  int nParam;
-  int i;
-  JSX_TypeFunction *type;
+
+  if(!JSVAL_IS_OBJECT(returnType) || returnType == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(returnType), &JSX_TypeClass, NULL)) {
+    JSX_ReportException(cx, "Type.function: the returnType arg must be a Type instance");
+    return JS_FALSE;
+  }
 
   if(!JSVAL_IS_OBJECT(params) || params == JSVAL_NULL || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) {
     JSX_ReportException(cx, "Type.function: the params arg must be an array");
     return JS_FALSE;
   }
 
+  JSX_TypeFunction *type;
   type = (JSX_TypeFunction *) JS_malloc(cx, sizeof(JSX_TypeFunction));
   type->type=FUNCTIONTYPE;
 
+  JSObject *retobj;
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
-  if (params==JSVAL_VOID)
-    nParam=0;
-  else {
-    paramobj=JSVAL_TO_OBJECT(params);
-    if (!JS_GetArrayLength(cx, paramobj, &nParam))
-      return JS_FALSE;
-  }
+  JSObject *paramobj;
+  int nParam;
+  paramobj = JSVAL_TO_OBJECT(params);
+  if(!JS_GetArrayLength(cx, paramobj, &nParam)) return JS_FALSE;
 
   type->nParam=nParam;
   type->typeObject=retobj;
   JS_SetPrivate(cx, retobj, type);
 
-  if (JSVAL_IS_OBJECT(returnType) &&
-      !JSVAL_IS_NULL(returnType)) {
-    JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-    type->returnType=JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
-  }
+  JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+  type->returnType=JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
 
   type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
   memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
@@ -271,7 +267,8 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   type->param[type->nParam].isConst=0;
   type->cif.arg_types=0;
 
-  for (i=0; i<nParam; i++) { 
+  int i;
+  for(i = 0; i < nParam; i++) {
     jsval thisparam;
     JS_GetElement(cx, paramobj, i, &thisparam);
     TypeFunction_SetMember(cx, retobj, i, thisparam);
