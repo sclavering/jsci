@@ -697,9 +697,14 @@ static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval
 }
 
 
-static JSBool JSX_Type_sizeof(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
+static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  jsval arg = argv[0];
   *rval = JSVAL_VOID;
-  int size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, obj));
+  if(!JSVAL_IS_OBJECT(arg) || arg == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(arg), &JSX_TypeClass, NULL)) {
+    JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
+    return JS_FALSE;
+  }
+  int size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(arg)));
   if(size) *rval = INT_TO_JSVAL(size);
   return JS_TRUE;
 }
@@ -839,6 +844,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
     {"function", Type_function, 2, 0, 0},
+    {"sizeof", Type_sizeof, 1, 0, 0},
     {0,0,0,0,0}
   };
 
@@ -847,15 +853,10 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
     {0,0,0,0,0}
   };
 
-  static struct JSPropertySpec memberprop[]={
-    {"sizeof",0,JSPROP_READONLY | JSPROP_PERMANENT, JSX_Type_sizeof,0},
-    {0,0,0,0,0}
-  };
-
   protoobj=JS_NewObject(cx, 0, 0, 0);
   if(!protoobj) return JSVAL_VOID;
 
-  typeobj=JS_InitClass(cx, obj, protoobj, &JSX_TypeClass, JSX_Type_new, 0, memberprop, memberfunc, 0, staticfunc);
+  typeobj=JS_InitClass(cx, obj, protoobj, &JSX_TypeClass, JSX_Type_new, 0, 0, memberfunc, 0, staticfunc);
 
   if(!typeobj) return JSVAL_VOID;
 

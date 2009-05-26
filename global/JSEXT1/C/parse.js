@@ -344,13 +344,13 @@ return function(code) {
       var decl=expr.*[0];
       var declor=decl[0].*[decl[0].*.length()-1];
       var d=declaration(decl, {}, declor);
-      return (function() { with(this) { return eval(d.type).sizeof }}).call(live);
+      return (function() { with(this) { return Type.sizeof(eval(d.type)) }}).call(live);
     }
 
     if(expr.@op == "sizeof" && expr.@type == "e") {
-      if(live[expr..id]) return live[expr..id].type.sizeof;
+      if(live[expr..id]) return Type.sizeof(live[expr..id].type);
       // assume it's a string
-      return Type.char.sizeof * (String(expr..s).length + 1);
+      return Type.sizeof(Type.char) * (String(expr..s).length + 1);
     }
 
     if(expr.*.length() == 1) return expr.@op + inner_eval(expr.*[0]);

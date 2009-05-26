@@ -90,9 +90,7 @@ Type.union(member0, member1, ...)
 Creates a new Type object representing a union. The member arguments should be objects containing two properties: .name and .type. The .type property should be a Type object.
 
 
-
-
-Type.prototype.sizeof
+Type.sizeof(type)
 ---------------------
 
-Read-only.  Contains the size, in bytes, of objects of this type.
+Returns the size, in bytes, of the C type represented by the passed Type instance.
