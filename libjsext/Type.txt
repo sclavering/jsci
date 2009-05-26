@@ -92,12 +92,6 @@ Creates a new Type object representing a union. The member arguments should be o
 
 
 
-Type.prototype.length
----------------------
-
-Read-only.  Contains the number of arguments for functions, members of structs and unions, and elements of arrays. Undefined for other types.
-
-
 Type.prototype.sizeof
 ---------------------
 

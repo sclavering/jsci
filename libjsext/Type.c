@@ -549,7 +549,6 @@ static JSBool JSX_NewTypeArray(JSContext *cx, jsval member, jsval len, jsval *rv
   else
     type->length=0;
 
-  JS_DefineProperty(cx, retobj, "length", JSVAL_VOID, JSX_Type_length, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
   JS_DefineElement(cx, retobj, 0, member, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
 
   type->member = JS_GetPrivate(cx, JSX_GetVoidType());
@@ -595,7 +594,6 @@ static JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval 
   else
     type->length=0;
 
-  JS_DefineProperty(cx, retobj, "length", JSVAL_VOID, JSX_Type_length, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   JS_DefineElement(cx, retobj, 0, member, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
 
   type->member = JS_GetPrivate(cx, JSX_GetVoidType());
@@ -951,7 +949,6 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
 
   static struct JSPropertySpec memberprop[]={
     {"sizeof",0,JSPROP_READONLY | JSPROP_PERMANENT, JSX_Type_sizeof,0},
-    {"length",0,JSPROP_READONLY | JSPROP_PERMANENT, JSX_Type_length,0},
     {0,0,0,0,0}
   };
 
