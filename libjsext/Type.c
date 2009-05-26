@@ -30,18 +30,6 @@ static JSClass JSX_TypeClass={
 };
 
 
-static JSBool JSX_Type_length(JSContext *cx,  JSObject *obj, jsval id, jsval *rval) {
-  JSX_TypeArray *type; // also works with structs / unions / functions / bitfields
-  type = (JSX_TypeArray *) JS_GetPrivate(cx, obj);
-  if(type->type != FUNCTIONTYPE && type->type != STRUCTTYPE && type->type != UNIONTYPE && type->type != BITFIELDTYPE && type->type != ARRAYTYPE) {
-    *rval = JSVAL_VOID;
-  } else {
-    *rval = INT_TO_JSVAL(type->length);
-  }
-  return JS_TRUE;
-}
-
-
 ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
   if (type->cif.arg_types)
     return &type->cif;
