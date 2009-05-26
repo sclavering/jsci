@@ -10,7 +10,6 @@
 static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void Dl_finalize(JSContext *cx, JSObject *obj);
 static JSBool Dl_proto_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_dl_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval);
 
 static JSClass JSEXT_dl_class = {
@@ -31,7 +30,6 @@ jsval make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
     {"symbolExists", Dl_proto_symbolExists, 1, 0, 0},
-    {"function", JSX_dl_function, 1, 0, 0},
     {"pointer", Dl_proto_pointer, 2, 0, 0},
     {0,0,0,0,0}
   };
@@ -106,35 +104,6 @@ static JSBool Dl_proto_symbolExists(JSContext *cx, JSObject *obj, uintN argc, js
 
   *rval = dlsym((void *) JS_GetPrivate(cx, obj), symbol) != 0 ? JSVAL_TRUE : JSVAL_FALSE;
 
-  return JS_TRUE;
-}
-
-
-static JSBool JSX_dl_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSNative fun;
-  JSFunction *jsfun;
-  char *name;
-
-  if (argc<1) {
-    JSX_ReportException(cx, "Too few arguments");
-    return JS_FALSE;
-  }
-
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &name)) {
-    JSX_ReportException(cx, "Illegal arguments");
-    return JS_FALSE;
-  }
-
-  fun=dlsym((void *)JS_GetPrivate(cx, obj),name);
-  
-  if (!fun) {
-    JSX_ReportException(cx, "Unknown symbol '%s'",name);
-    return JS_FALSE;
-  }
-
-  jsfun=JS_NewFunction(cx, fun, 0, 0, 0, name);
-  *rval=OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
-  
   return JS_TRUE;
 }
 
