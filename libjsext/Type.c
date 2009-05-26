@@ -580,7 +580,10 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-static JSBool JSX_NewTypeBitfield(JSContext *cx, jsval member, jsval len, jsval *rval) {
+static JSBool Type_bitfield(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  jsval member = argc > 0 ? argv[0] : JSVAL_VOID;
+  jsval len = argc > 1 ? argv[1] : JSVAL_VOID;
+
   JSObject *retobj;
   JSX_TypeBitfield *type;
 
@@ -733,11 +736,6 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
   default:
     JS_free(cx, type);
   }
-}
-
-
-static JSBool JSX_Type_bitfield(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeBitfield(cx, argc > 0 ? argv[0] : JSVAL_VOID, argc > 1 ? argv[1] : JSVAL_VOID, rval);
 }
 
 
@@ -932,7 +930,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
 
   static struct JSFunctionSpec staticfunc[]={
     {"array", Type_array, 1, 0, 0},
-    {"bitfield",JSX_Type_bitfield,1,0,0},
+    {"bitfield", Type_bitfield, 1, 0, 0},
     {"pointer",JSX_Type_pointer,1,0,0},
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
