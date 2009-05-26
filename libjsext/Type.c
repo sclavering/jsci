@@ -493,7 +493,8 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 }
 
 
-static JSBool JSX_NewTypePointer(JSContext *cx, jsval direct, jsval *rval) {
+static JSBool Type_pointer(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  jsval direct = argc > 0 ? argv[0] : JSVAL_VOID;
   JSObject *retobj;
   JSX_TypePointer *type;
 
@@ -739,11 +740,6 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
 }
 
 
-static JSBool JSX_Type_pointer(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypePointer(cx, argc > 0 ? argv[0] : JSVAL_VOID, rval);
-}
-
-
 static JSBool JSX_Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   return JSX_NewTypeStructUnion(cx, argc, argv, rval, STRUCTTYPE);
 }
@@ -931,7 +927,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   static struct JSFunctionSpec staticfunc[]={
     {"array", Type_array, 1, 0, 0},
     {"bitfield", Type_bitfield, 1, 0, 0},
-    {"pointer",JSX_Type_pointer,1,0,0},
+    {"pointer", Type_pointer, 1, 0, 0},
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
     {"function",JSX_Type_function,3,0,0},
