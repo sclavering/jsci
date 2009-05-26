@@ -133,23 +133,9 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
   JSX_Type *type = JS_GetPrivate(cx, obj);
 
   if(JSVAL_IS_INT(id)) {
-    int index=JSVAL_TO_INT(id);
-
-    switch(type->type) {
-    case STRUCTTYPE:
-    case UNIONTYPE:
+    int index = JSVAL_TO_INT(id);
+    if(type->type == STRUCTTYPE || type->type == UNIONTYPE)
       return TypeStructUnion_SetMember(cx, (JSX_TypeStructUnion *) type, index, *vp);
-
-    case ARRAYTYPE:
-    case POINTERTYPE:
-      if(index != 0) break;
-      if(!JSVAL_IS_OBJECT(*vp) || JSVAL_IS_NULL(*vp) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), &JSX_TypeClass, NULL)) {
-        JSX_ReportException(cx, "Wrong type");
-        return JS_FALSE;
-      }
-      ((JSX_TypeArray *) type)->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
-      break;
-    }
   }
 
   return JS_TRUE;
