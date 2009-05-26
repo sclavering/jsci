@@ -395,8 +395,6 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
     if (thissize > type->sizeOf)
       type->sizeOf=thissize;
 
-    JS_DefineProperty(cx, JSVAL_TO_OBJECT(member), "offset", INT_TO_JSVAL(0), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-
   } else { // STRUCTTYPE
     if (!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member)))
       return JS_FALSE;
@@ -421,8 +419,6 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
       type->sizeOf+=(thisalign - type->sizeOf % thisalign) % thisalign;
       type->member[i].offset=type->sizeOf;
       type->sizeOf+=JSX_TypeSizeBits(type->member[i].type);
-      
-      JS_DefineProperty(cx, JSVAL_TO_OBJECT(member), "offset", INT_TO_JSVAL(type->member[i].offset), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
     }
   }
 
