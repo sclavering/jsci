@@ -1467,39 +1467,6 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
-static JSBool JSX_Pointer_realloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  int length;
-  JSX_Pointer *ret;
-  void *newptr;
-
-
-  if (argc<1 || !JSVAL_IS_INT(argv[0])) {
-    JSX_ReportException(cx, "Wrong argument type to realloc");
-    return JS_FALSE;
-  }
-
-  ret=JS_GetPrivate(cx, obj);
-
-  if (ret->ptr!=ret+1) {
-    JSX_ReportException(cx, "Pointer was not allocated with malloc");
-    return JS_FALSE;
-  }
-    
-  length=INT_TO_JSVAL(argv[0]);
-
-  ret=JS_GetPrivate(cx, obj);
-
-  newptr = JS_realloc(cx, ret, sizeof(JSX_Pointer) + length);
-  if (!newptr)
-    return JS_FALSE;
-  ret=newptr;
-  ret->ptr=ret+1;
-  JS_SetPrivate(cx, obj, ret);
-
-  return JS_TRUE;
-}
-
-
 static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   JSX_Pointer *ptr, *newptr;
@@ -1911,7 +1878,6 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   static struct JSFunctionSpec memberfunc[]={
     {"cast",JSX_Pointer_cast,1,0,0},
     {"field",JSX_Pointer_field,1,0,0},
-    {"realloc",JSX_Pointer_realloc,1,0,0},
     {"string",JSX_Pointer_pr_string,1,0,0},
     {"valueOf",JSX_Pointer_valueOf,0,0,0},
     {0,0,0,0,0}
