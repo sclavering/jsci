@@ -547,49 +547,31 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-static JSBool Type_bitfield(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval member = argc > 0 ? argv[0] : JSVAL_VOID;
-  jsval len = argc > 1 ? argv[1] : JSVAL_VOID;
+static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  jsval member = argv[0];
+  jsval len = argv[1];
+
+  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(member), &JSX_TypeClass, NULL)) {
+    JSX_ReportException(cx, "Type.bitfield(): first argument must be a Type instance");
+    return JS_FALSE;
+  }
+  if(!JSVAL_IS_INT(len)) {
+    JSX_ReportException(cx, "Type.bitfield(): second argument must be an integer");
+    return JS_FALSE;
+  }
 
   JSObject *retobj;
-  JSX_TypeBitfield *type;
-
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
-
+  JSX_TypeBitfield *type;
   type = (JSX_TypeBitfield *) JS_malloc(cx, sizeof(JSX_TypeBitfield));
-
   type->type=BITFIELDTYPE;
   JS_SetPrivate(cx, retobj, type);
-
-  if (JSVAL_IS_INT(len)) 
-    type->length=JSVAL_TO_INT(len);
-  else
-    type->length=0;
-
+  type->length = JSVAL_TO_INT(len);
   type->member = JS_GetPrivate(cx, JSX_GetVoidType());
   type->typeObject=retobj;
-
-  if (member==JSVAL_VOID) {
-    return JS_TRUE;
-  }
-
-  if (!JSVAL_IS_OBJECT(member) || 
-      JSVAL_IS_NULL(member) ||
-      !JS_InstanceOf(cx, JSVAL_TO_OBJECT(member), &JSX_TypeClass, NULL) ||
-      !JSVAL_IS_INT(len)) {
-    JSX_ReportException(cx, "Wrong type to Type.bitfield");
-    goto failure;
-  }
-    
   type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
-
   return JS_TRUE;
-
- failure:
-  if (type)
-    JS_free(cx, type);
-  return JS_FALSE;
 }
 
 
@@ -885,7 +867,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
 
   static struct JSFunctionSpec staticfunc[]={
     {"array", Type_array, 2, 0, 0},
-    {"bitfield", Type_bitfield, 1, 0, 0},
+    {"bitfield", Type_bitfield, 2, 0, 0},
     {"pointer", Type_pointer, 1, 0, 0},
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
