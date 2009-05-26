@@ -238,7 +238,9 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
 }
 
 
-static JSBool JSX_NewTypeFunction(JSContext *cx, jsval returnType, jsval params, jsval *rval) {
+static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  jsval returnType = argc > 1 ? argv[0] : JSVAL_VOID;
+  jsval params = argc > 2 ? argv[1] : JSVAL_VOID;
   JSObject *retobj;
   JSObject *paramobj;
   int nParam;
@@ -750,11 +752,6 @@ static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *a
 }
 
 
-static JSBool JSX_Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeFunction(cx, argc > 1 ? argv[0] : JSVAL_VOID, argc > 2 ? argv[1] : JSVAL_VOID, rval);
-}
-
-
 static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSX_Type *type;
   char *name;
@@ -930,7 +927,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
     {"pointer", Type_pointer, 1, 0, 0},
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
-    {"function",JSX_Type_function,3,0,0},
+    {"function", Type_function, 3, 0, 0},
     {0,0,0,0,0}
   };
 
