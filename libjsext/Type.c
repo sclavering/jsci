@@ -14,6 +14,13 @@ static int JSX_TypeAlign(JSX_Type *type);
 
 static JSObject *sTypeChar = NULL;
 static JSObject *sTypeVoid = NULL;
+// __proto__ for results of Type.function(...) and similar
+static JSObject *s_Type_array_proto = NULL;
+static JSObject *s_Type_bitfield_proto = NULL;
+static JSObject *s_Type_pointer_proto = NULL;
+static JSObject *s_Type_function_proto = NULL;
+static JSObject *s_Type_struct_proto = NULL;
+static JSObject *s_Type_union_proto = NULL;
 
 
 static JSClass JSX_TypeClass={
@@ -231,7 +238,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   type->type=FUNCTIONTYPE;
 
   JSObject *retobj;
-  retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_function_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
   JSObject *paramobj;
@@ -427,12 +434,12 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
 
 
 // typeid must obviously be STRUCTTYPE or UNIONTYPE
-static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, int typeid) {
+static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, int typeid, JSObject* proto) {
   JSObject *retobj;
   JSX_TypeStructUnion *type;
   int i;
   
-  retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+  retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
   type = (JSX_TypeStructUnion *) JS_malloc(cx, sizeof(JSX_TypeStructUnion));
@@ -470,7 +477,7 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
   }
 
   JSObject *retobj;
-  retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_pointer_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
   JSX_TypePointer *type;
@@ -501,7 +508,7 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 
   JSObject *retobj;
   JSX_TypeArray *type;
-  retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_array_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
   type = (JSX_TypeArray *) JS_malloc(cx, sizeof(JSX_TypeArray));
   type->type=ARRAYTYPE;
@@ -528,7 +535,7 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   }
 
   JSObject *retobj;
-  retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_bitfield_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
   JSX_TypeBitfield *type;
   type = (JSX_TypeBitfield *) JS_malloc(cx, sizeof(JSX_TypeBitfield));
@@ -654,46 +661,12 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
 
 
 static JSBool JSX_Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeStructUnion(cx, argc, argv, rval, STRUCTTYPE);
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, STRUCTTYPE, s_Type_struct_proto);
 }
 
 
 static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeStructUnion(cx, argc, argv, rval, UNIONTYPE);
-}
-
-
-static JSBool JSX_Type_toString(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSX_Type *type;
-  char *name;
-  type = (JSX_Type *) JS_GetPrivate(cx, obj);
-
-  switch(type->type) {
-  case FUNCTIONTYPE:
-    name="function";
-    break;
-  case STRUCTTYPE:
-    name="struct";
-    break;
-  case UNIONTYPE:
-    name="union";
-    break;
-  case POINTERTYPE:
-    name="pointer";
-    break;
-  case ARRAYTYPE:
-    name="array";
-    break;
-  case BITFIELDTYPE:
-    name="bitfield";
-    break;
-  default:
-    name="[Type unknown]";
-  }
-
-  *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, name));
-
-  return JS_TRUE;
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, UNIONTYPE, s_Type_union_proto);
 }
 
 
@@ -835,32 +808,41 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type) {
 
 jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeobj;
-  JSObject *protoobj;
+  JSObject *typeproto;
 
   static struct JSFunctionSpec staticfunc[]={
     {"array", Type_array, 2, 0, 0},
     {"bitfield", Type_bitfield, 2, 0, 0},
+    {"function", Type_function, 2, 0, 0},
     {"pointer", Type_pointer, 1, 0, 0},
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
-    {"function", Type_function, 2, 0, 0},
     {"sizeof", Type_sizeof, 1, 0, 0},
     {0,0,0,0,0}
   };
 
-  static struct JSFunctionSpec memberfunc[]={
-    {"toString",JSX_Type_toString,0,0,0},
-    {0,0,0,0,0}
-  };
-
-  protoobj=JS_NewObject(cx, 0, 0, 0);
-  if(!protoobj) return JSVAL_VOID;
-
-  typeobj=JS_InitClass(cx, obj, protoobj, &JSX_TypeClass, JSX_Type_new, 0, 0, memberfunc, 0, staticfunc);
-
-  if(!typeobj) return JSVAL_VOID;
-
-  typeobj=JS_GetConstructor(cx, typeobj);
+  uintN flags = JSPROP_READONLY | JSPROP_PERMANENT;
+  if(!(1
+      // init Type itself
+      && (typeproto = JS_NewObject(cx, 0, 0, 0))
+      && (typeobj = JS_InitClass(cx, obj, typeproto, &JSX_TypeClass, JSX_Type_new, 0, 0, 0, 0, staticfunc))
+      && (typeobj = JS_GetConstructor(cx, typeobj))
+      // expose __proto__ objects for Type.function(...) and similar, so 0-ffi can extend them
+      && (s_Type_array_proto = JS_NewObject(cx, 0, typeproto, 0))
+      && JS_DefineProperty(cx, typeobj, "array_prototype", OBJECT_TO_JSVAL(s_Type_array_proto), 0, 0, flags)
+      && (s_Type_bitfield_proto = JS_NewObject(cx, 0, typeproto, 0))
+      && JS_DefineProperty(cx, typeobj, "bitfield_prototype", OBJECT_TO_JSVAL(s_Type_bitfield_proto), 0, 0, flags)
+      && (s_Type_function_proto = JS_NewObject(cx, 0, typeproto, 0))
+      && JS_DefineProperty(cx, typeobj, "function_prototype", OBJECT_TO_JSVAL(s_Type_function_proto), 0, 0, flags)
+      && (s_Type_pointer_proto = JS_NewObject(cx, 0, typeproto, 0))
+      && JS_DefineProperty(cx, typeobj, "pointer_prototype", OBJECT_TO_JSVAL(s_Type_pointer_proto), 0, 0, flags)
+      && (s_Type_struct_proto = JS_NewObject(cx, 0, typeproto, 0))
+      && JS_DefineProperty(cx, typeobj, "struct_prototype", OBJECT_TO_JSVAL(s_Type_struct_proto), 0, 0, flags)
+      && (s_Type_union_proto = JS_NewObject(cx, 0, typeproto, 0))
+      && JS_DefineProperty(cx, typeobj, "union_prototype", OBJECT_TO_JSVAL(s_Type_union_proto), 0, 0, flags)
+      )) {
+    return JSVAL_VOID;
+  }
 
   init_int_types(cx, typeobj);
   init_float_types(cx, typeobj);

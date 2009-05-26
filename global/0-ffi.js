@@ -26,6 +26,13 @@ Type.long_double.toString = function() { return "long double"; };
 
 Type['void'].toString = function() { return "void"; };
 
+Type.array_prototype.toString = function() { return "array"; };
+Type.bitfield_prototype.toString = function() { return "bitfield"; };
+Type.function_prototype.toString = function() { return "function"; };
+Type.pointer_prototype.toString = function() { return "pointer"; };
+Type.struct_prototype.toString = function() { return "struct"; };
+Type.union_prototype.toString = function() { return "union"; };
+
 // Not sure if these are really necessary
 Type.int64 = Type.long_long;
 Type.signed_int64 = Type.signed_long_long;
