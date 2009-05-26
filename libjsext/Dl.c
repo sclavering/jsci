@@ -42,31 +42,6 @@ jsval make_Dl(JSContext *cx, JSObject *glob) {
 }
 
 
-static JSBool
-JSEXT_dl_new(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
-  JSObject *object;
-
-  if (!JS_IsConstructing(cx)) { // not called with new
-    object=JS_NewObject( cx, &JSEXT_dl_class, 0, 0);
-    *rval=OBJECT_TO_JSVAL(object);
-  } else {
-    object=obj;
-  }
-
-  void *dl;
-    
-  if (filename)
-    dl=dlopen(filename, RTLD_LAZY | RTLD_GLOBAL);
-  else
-    dl=dlopen(0,RTLD_LAZY);
-
-  JS_SetPrivate(cx, object, dl);
-
-  if(!dl) return JS_FALSE;
-  return JS_TRUE;
-}
-
-
 static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *filename;
   JSBool res;
@@ -77,12 +52,24 @@ static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsva
     JSX_ReportException(cx, "Wrong parameter for dl");
     return JS_FALSE;
   }
-  if (filename && filename[0]==0)
-    filename=0;
+  if(filename && filename[0] == 0) filename = 0;
 
-  res=JSEXT_dl_new(cx, obj, filename, rval);
-  if (res==JS_FALSE) {
-    JSX_ReportException(cx, "can't open dl %s", dlerror());
+  // treat "Dl(...)" the same as "new Dl(...)"
+  if(!JS_IsConstructing(cx)) {
+    obj = JS_NewObject(cx, &JSEXT_dl_class, 0, 0);
+    *rval = OBJECT_TO_JSVAL(obj);
+  }
+
+  void *dl;
+  if(filename) {
+    dl = dlopen(filename, RTLD_LAZY | RTLD_GLOBAL);
+  } else {
+    dl = dlopen(0, RTLD_LAZY);
+  }
+  JS_SetPrivate(cx, obj, dl);
+
+  if(!dl) {
+    JSX_ReportException(cx, "Dl: can't open %s", dlerror());
     return JS_FALSE;
   }
 
