@@ -227,17 +227,16 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
 
 
 static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval returnType = argc > 1 ? argv[0] : JSVAL_VOID;
-  jsval params = argc > 2 ? argv[1] : JSVAL_VOID;
+  jsval returnType = argv[0];
+  jsval params = argv[1];
   JSObject *retobj;
   JSObject *paramobj;
   int nParam;
   int i;
   JSX_TypeFunction *type;
 
-  if (!JSVAL_IS_OBJECT(params) ||
-      !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) {
-    JSX_ReportException(cx, "Invalid params argument");
+  if(!JSVAL_IS_OBJECT(params) || params == JSVAL_NULL || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) {
+    JSX_ReportException(cx, "Type.function: the params arg must be an array");
     return JS_FALSE;
   }
 
@@ -911,7 +910,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
     {"pointer", Type_pointer, 1, 0, 0},
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
-    {"function", Type_function, 3, 0, 0},
+    {"function", Type_function, 2, 0, 0},
     {0,0,0,0,0}
   };
 
