@@ -479,43 +479,28 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 }
 
 
-static JSBool Type_pointer(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval direct = argc > 0 ? argv[0] : JSVAL_VOID;
-  JSObject *retobj;
-  JSX_TypePointer *type;
+static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  jsval direct = argv[0];
 
+  if(direct != JSVAL_VOID && (!JSVAL_IS_OBJECT(direct) || JSVAL_IS_NULL(direct) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(direct), &JSX_TypeClass, NULL))) {
+    JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
+    return JS_FALSE;
+  }
+
+  JSObject *retobj;
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
+  JSX_TypePointer *type;
   type = (JSX_TypePointer *) JS_malloc(cx, sizeof(JSX_TypePointer));
-
   type->type=POINTERTYPE;
   JS_SetPrivate(cx, retobj, type);
-
   type->direct = JS_GetPrivate(cx, JSX_GetVoidType());
   JS_DefineElement(cx, retobj, 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   type->typeObject=retobj;
-
-  if (direct==JSVAL_VOID) {
-    return JS_TRUE;
-  }
-
-  if (!JSVAL_IS_OBJECT(direct) || 
-      JSVAL_IS_NULL(direct) ||
-      !JS_InstanceOf(cx, JSVAL_TO_OBJECT(direct), &JSX_TypeClass, NULL)) {
-    JSX_ReportException(cx, "Wrong type to Type.pointer");
-    goto failure;
-  }
-    
-  type->direct = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
+  if(direct != JSVAL_VOID) type->direct = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
 
   return JS_TRUE;
-
- failure:
-  if (type)
-    JS_free(cx, type);
-
-  return JS_FALSE;
 }
 
 
