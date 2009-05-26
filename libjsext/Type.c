@@ -534,29 +534,15 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 
   JSObject *retobj;
   JSX_TypeArray *type;
-
   retobj=JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
-
   type = (JSX_TypeArray *) JS_malloc(cx, sizeof(JSX_TypeArray));
-
   type->type=ARRAYTYPE;
   JS_SetPrivate(cx, retobj, type);
-
-  if (JSVAL_IS_INT(len)) 
-    type->length=JSVAL_TO_INT(len);
-  else
-    type->length=0;
-
+  type->length = JSVAL_TO_INT(len);
   type->member = JS_GetPrivate(cx, JSX_GetVoidType());
   type->typeObject=retobj;
-
-  if (member==JSVAL_VOID) {
-    return JS_TRUE;
-  }
-    
   type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
-
   return JS_TRUE;
 }
 
