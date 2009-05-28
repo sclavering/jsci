@@ -2,6 +2,7 @@
 #include <jsobj.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 struct JSON {
   JSContext *cx;
@@ -198,7 +199,7 @@ static JSBool date_to_JSON(struct JSON *s) {
 
 static inline JSBool value_to_JSON(struct JSON *s) {
   jschar *str;
-  int strlen;
+  int len;
   int tmpint;
   jsdouble tmpdbl;
   JSClass *clasp;
@@ -248,10 +249,10 @@ static inline JSBool value_to_JSON(struct JSON *s) {
 
   case JSVAL_STRING:
     str=JS_GetStringChars(JSVAL_TO_STRING(s->v));
-    strlen=JS_GetStringLength(JSVAL_TO_STRING(s->v));
-    expand_buf(s, strlen*6+2);
+    len = JS_GetStringLength(JSVAL_TO_STRING(s->v));
+    expand_buf(s, len * 6 + 2);
     *(s->p++)='\"';
-    while (strlen--) {
+    while(len--) {
       switch (*str) {
       case '\"':
 	*(s->p++)='\\';
