@@ -57,46 +57,14 @@ extern char *ctoxml_cterm2;
 extern int ctoxml_clineno;
 extern char *ctoxml_filename;
 void ctoxml_cerror (char const *msg);
+struct Xml *parse_constant(void);
 %}
 
 %%
 
 primary_expr
 	: identifier     { $$ = xml_text("id", 0, $1); }
-	| CONSTANT       { 
-
-    if (ctoxml_cterm[0]=='\'') {
-      char txt[20];
-      c_unescape(ctoxml_cterm);
-
-      sprintf(txt,"%d",(int)(ctoxml_cterm[0]));
-      $$ = xml_text("c",0,strdup(txt));
-      free(ctoxml_cterm);
-
-    } else {
-	  char *attrib=0;
-	  char *value=0;
-	  if (ctoxml_cterm[0]!='0') {
-	    char lc=ctoxml_cterm[strlen(ctoxml_cterm)-1];
-	    switch(lc) {
-	    case 'f': attrib="length"; value="f"; break;
-	    case 'F': attrib="length"; value="F"; break;
-	    case 'l': attrib="length"; value="l"; break;
-	    case 'L': attrib="length"; value="L"; break;
-	    case 'u': attrib="length"; value="u"; break;
-	    case 'U': attrib="length"; value="U"; break;
-	    }
-	    if (lc=='f' || lc=='F' || lc=='l' || lc=='L' || lc=='u' || lc=='U') {
-	      ctoxml_cterm[strlen(ctoxml_cterm)-1]=0;
-	    }
-	  }
-	  if (attrib)
-	    $$ = xml_text("c",attrib,strdup(value),0,ctoxml_cterm);
-	  else
-	    $$ = xml_text("c",0,ctoxml_cterm);
-    }
-    
-}
+	| CONSTANT       { $$ = parse_constant(); }
 	| strings	 { $$ = $1; }
 	| '(' expr ')'   { $$ = xml("p",NULL,$2,NULL); }
 	;
@@ -614,4 +582,34 @@ void c_unescape(char *in) {
     }
   }
   *out = 0;
+}
+
+
+struct Xml *parse_constant(void) {
+  if(ctoxml_cterm[0] == '\'') {
+    char txt[20];
+    c_unescape(ctoxml_cterm);
+    sprintf(txt, "%d", (int) (ctoxml_cterm[0]));
+    struct Xml *rv = xml_text("c", 0, strdup(txt));
+    free(ctoxml_cterm);
+    return rv;
+  }
+  char *attrib = 0;
+  char *value = 0;
+  if(ctoxml_cterm[0] != '0') {
+    char lc = ctoxml_cterm[strlen(ctoxml_cterm) - 1];
+    switch(lc) {
+      case 'f': attrib="length"; value="f"; break;
+      case 'F': attrib="length"; value="F"; break;
+      case 'l': attrib="length"; value="l"; break;
+      case 'L': attrib="length"; value="L"; break;
+      case 'u': attrib="length"; value="u"; break;
+      case 'U': attrib="length"; value="U"; break;
+    }
+    if(lc == 'f' || lc == 'F' || lc == 'l' || lc == 'L' || lc == 'u' || lc == 'U') {
+      ctoxml_cterm[strlen(ctoxml_cterm) - 1] = 0;
+    }
+  }
+  if(attrib) return xml_text("c", attrib, strdup(value), 0, ctoxml_cterm);
+  return xml_text("c", 0, ctoxml_cterm);
 }
