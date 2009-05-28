@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006, Berges Allmenndigitale Rådgivningstjeneste
+* Copyright (c) 2006, Berges Allmenndigitale RÃ¥dgivningstjeneste
 * All rights reserved.
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@
 *     * Redistributions in binary form must reproduce the above copyright
 *       notice, this list of conditions and the following disclaimer in the
 *       documentation and/or other materials provided with the distribution.
-*     * Neither the name of Berges Allmenndigitale Rådgivningstjeneste nor the
+*     * Neither the name of Berges Allmenndigitale RÃ¥dgivningstjeneste nor the
 *       names of its contributors may be used to endorse or promote products
 *       derived from this software without specific prior written permission.
 *
@@ -37,5 +37,13 @@ extern char ctoxml_filename_errmsg[80];
 void ctoxml_init(void);
 void ctoxml_end(void);
 
-#include "libctoxml.h"
+// C is a 0-terminated string
+// errorpos, if not null, will be used to store string offset of 1st syntax error or -1 if parsing was ok
+// Returns 0-terminated string allocated with malloc.
+char *ctoxml(char *C, int *errorpos);
+
+void ctoxml_free(char *C);
+
+extern struct strbuf *ctoxml_STDOUT;
+
 #define PUTS(x) strbuf_cat(ctoxml_STDOUT,x)
