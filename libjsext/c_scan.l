@@ -48,14 +48,13 @@ extern char *ctoxml_filename;
 static void preprocessor(void);
 
 int check_type(void);
-void ctoxml_linecomment(char *comment);
-void ctoxml_comment(char **at);
+void lexerror(char *msg);
 
 %}
 
 %%
-"/*"                    { ctoxml_comment(0); }
-\/\/[^\n]*              { count(); ctoxml_linecomment(0); }
+"/*"                    { lexerror("encountered C block comment start: /*"); }
+\/\/[^\n]*              { lexerror("encountered C line comment start: //"); }
 "auto"                  { count(); return AUTO; }
 "break"                 { count(); return BREAK; }
 "case"                  { count(); return CASE; }
@@ -176,70 +175,6 @@ ctoxml_cwrap() {
 int ctoxml_ccolumn = 0;
 int ctoxml_cfilepos = 0;
 
-void ctoxml_comment(char **at) {
-  static struct strbuf *dstr = 0;
-  struct Xml *commxml;
-  int state = 0;
-  if(dstr == 0) dstr = strbuf_new();
-
-  if(!at) {
-    ctoxml_ccolumn += 2;
-    ctoxml_cfilepos += 2;
-  }
-
-  while(state != 2) {
-    char c;
-    if(at) c = *((*at)++);
-    else c = input();
-    if(c == 0) {
-      if(at == 0) break;
-      at = 0;
-      c = input();
-      if(c == 0) break;
-    }
-
-    strbuf_catchar(dstr, c);
-
-    if(!at) {
-      if(c == '\n') {
-        ctoxml_ccolumn = 0;
-        ++ctoxml_clineno;
-      } else if(c == '\t') {
-        ctoxml_ccolumn = ((ctoxml_ccolumn + 7) / 8) * 8;
-      } else {
-        ++ctoxml_ccolumn;
-      }
-    }
-
-    switch(state) {
-      case 0:
-        if(c == '*') state = 1;
-        break;
-      case 1:
-        if(c == '/') state = 2;
-        else if(c != '*') state = 0;
-        break;
-    }
-  }
-  if(state == 2) dstr->buf[dstr->len - 2] = 0;
-
-  commxml = xml_text("comment", "type", strdup("block"), NULL, strdup(dstr->buf));
-  xml_print(commxml);
-  xml_free(commxml);
-
-  strbuf_clear(dstr);
-}
-
-
-void ctoxml_linecomment(char *comment) {
-  struct Xml *commxml;
-  if(!comment) comment = ctoxml_ctext + 2;
-  commxml = xml_text("comment", "type", strdup("line"), NULL, strdup(comment));
-  xml_print(commxml);
-  xml_free(commxml);
-}
-
-
 void preprocessor(void) {
   char *directive;
 
@@ -349,4 +284,9 @@ int ctoxml_clineno;
 int check_type(void) {
   if(stringhash_search(ctoxml_typedefs, ctoxml_ctext)) return TYPE_NAME;
   return IDENTIFIER;
+}
+
+// xxx long-term, we want this to throw a JS exception or error
+void lexerror(char *msg) {
+  puts(msg);
 }
