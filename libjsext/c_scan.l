@@ -242,23 +242,6 @@ void ctoxml_linecomment(char *comment) {
 
 void preprocessor(void) {
   char *directive;
-  char *comment;
-
-  comment = strstr(ctoxml_ctext, "/*");
-  if(comment) {
-    *comment = 0;
-    comment += 2;
-    ctoxml_comment(&comment);
-  } else {
-    comment = ctoxml_ctext;
-  }
-
-  comment = strstr(comment, "//");
-  if (comment) {
-    *comment = 0;
-    comment += 2;
-    ctoxml_linecomment(comment);
-  }
 
   directive = ctoxml_ctext+1;
   directive += strspn(directive," \t");
