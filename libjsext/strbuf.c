@@ -16,13 +16,6 @@ void strbuf_free(struct strbuf *buf) {
   free(buf);
 }
 
-void strbuf_clear(struct strbuf *buf) {
-  //  memset(buf->buf,0,buf->len);
-  buf->ptr=buf->buf;
-  *(buf->ptr)=0;
-  buf->len=0;
-}
-
 void strbuf_cat(struct strbuf *buf, char *str) {
   int len=strlen(str);
   while (len+buf->len+1 > buf->capacity) {
