@@ -30,7 +30,7 @@
   char *str;
 }
 
-%type <xml> primary_expr postfix_expr argument_expr_list unary_expr cast_expr multiplicative_expr additive_expr shift_expr relational_expr equality_expr and_expr exclusive_or_expr inclusive_or_expr logical_and_expr logical_or_expr conditional_expr assignment_expr expr constant_expr declaration declaration_specifiers init_declarator_list init_declarator struct_or_union_specifier struct_declaration_list struct_declaration struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator declarator direct_declarator pointer identifier_list parameter_type_list parameter_list parameter_declaration type_name abstract_declarator direct_abstract_declarator initializer initializer_list statement labeled_statement compound_statement declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement external_definition function_definition translation_unit type_specifier specifier_qualifier_list type_qualifier_list file storage_class_specifier type_qualifier asm_statement declspec callspec direct_declarator2 declarator2 declarator_list2 strings callspecs
+%type <xml> primary_expr postfix_expr argument_expr_list unary_expr cast_expr multiplicative_expr additive_expr shift_expr relational_expr equality_expr and_expr exclusive_or_expr inclusive_or_expr logical_and_expr logical_or_expr conditional_expr assignment_expr expr constant_expr declaration declaration_specifiers init_declarator_list init_declarator struct_or_union_specifier struct_declaration_list struct_declaration struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator declarator direct_declarator pointer identifier_list parameter_type_list parameter_list parameter_declaration type_name abstract_declarator direct_abstract_declarator initializer initializer_list statement labeled_statement compound_statement declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement external_definition function_definition translation_unit type_specifier specifier_qualifier_list type_qualifier_list file storage_class_specifier type_qualifier asm_statement callspec direct_declarator2 declarator2 declarator_list2 strings callspecs
 
 %type <str> identifier assignment_operator unary_operator struct_or_union typedeffed_name
 
@@ -213,9 +213,6 @@ declaration
   | TYPEDEF declaration_specifiers declarator_list2 ';'    { $$ = xml("d", xml("typedef", 0), $2, $3,0); ctoxml_typedef($$); }
   | TYPEDEF declaration_specifiers ',' declarator_list2 ';' { $$ = xml("d", xml("typedef", 0), $2, $4, 0); ctoxml_typedef($$); }
   | TYPEDEF declaration_specifiers ';'                     { $$ = xml("d", xml("typedef", 0), $2, 0); ctoxml_typedef($$); }
-  | declspec TYPEDEF declaration_specifiers declarator_list2 ';' { $$ = xml("d", xml("typedef", 0), $3, $4, 0); ctoxml_typedef($$); }
-  | declspec TYPEDEF declaration_specifiers ',' declarator_list2 ';' { $$ = xml("d", xml("typedef", 0), $3, $5, 0); ctoxml_typedef($$); }
-  | declspec TYPEDEF declaration_specifiers ';'            { $$ = xml("d", xml("typedef", 0), $3, 0); ctoxml_typedef($$); }
   ;
 
 declaration_specifiers
@@ -225,8 +222,6 @@ declaration_specifiers
   | type_specifier declaration_specifiers                  { $$ = xml_link($1,$2); }
   | type_qualifier                                         { $$ = $1; }
   | type_qualifier declaration_specifiers                  { $$ = xml_link($1,$2); }
-  | declspec                                               { $$ = $1; }
-  | declspec declaration_specifiers                        { $$ = xml_link($1,$2); }
   ;
 
 init_declarator_list
@@ -242,11 +237,6 @@ declarator_list2
 init_declarator
   : declarator                                             { $$ = $1; }
   | declarator '=' initializer                             { $$ = xml("init", $1, $3, 0); }
-  ;
-
-declspec
-  : DECLSPEC '(' identifier ')'                            { $$ = xml_attrs(xml("declspec", 0), "type", $3, 0); }
-  | DECLSPEC '(' identifier '(' strings ')' ')'            { $$ = xml_attrs(xml("declspec", $5, 0), "type", $3, 0); }
   ;
 
 storage_class_specifier

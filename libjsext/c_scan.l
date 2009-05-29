@@ -95,7 +95,7 @@ void lexerror(char *msg);
 "_cdecl"                { count(); return CDECL; }
 "volatile"              { count(); return VOLATILE; }
 "while"                 { count(); return WHILE; }
-"__declspec"            { count(); return DECLSPEC; }
+"__declspec"            { lexerror("encountered __declspec, which is not supported"); }
 _?_asm[\t ]+\{[^}]*\}   { count(); ctoxml_cterm=strdup(ctoxml_ctext); return ASM; }
 _?_asm[^{}\n]*          { count(); ctoxml_cterm=strdup(ctoxml_ctext); return ASM; }
 
