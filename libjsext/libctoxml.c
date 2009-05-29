@@ -8,11 +8,9 @@ struct strbuf *ctoxml_STDOUT;
 extern int ctoxml_cfilepos;
 
 // C is a 0-terminated string
-// errorpos, if not null, will be used to store string offset of 1st syntax error or -1 if parsing was ok
+// errorpos will be used to store string offset of 1st syntax error or -1 if parsing was ok
 // Returns 0-terminated string allocated with malloc.
 char *ctoxml(char *C, int *errorpos) {
-  int res;
-  char *ret;
   YY_BUFFER_STATE I=ctoxml_c_scan_string(C); // Input buffer
   
   ctoxml_STDOUT=strbuf_new();
@@ -20,24 +18,19 @@ char *ctoxml(char *C, int *errorpos) {
   ctoxml_filename = 0;
 
   PUTS("<C>\n");
-  res=ctoxml_cparse();
-  if (errorpos) {
-    if (res) {
-      *errorpos = ctoxml_cfilepos;
-    } else {
-      *errorpos = -1;
-      PUTS("</C>");
-    }
+  int res = ctoxml_cparse();
+  if (res) {
+    *errorpos = ctoxml_cfilepos;
   } else {
+    *errorpos = -1;
     PUTS("</C>");
   }
 
   ctoxml_c_delete_buffer(I);
   stringhash_destroy(ctoxml_typedefs);
 
-  ret=realloc(ctoxml_STDOUT->buf,ctoxml_STDOUT->len+1);
+  char *ret = realloc(ctoxml_STDOUT->buf, ctoxml_STDOUT->len + 1);
   free(ctoxml_STDOUT);
-
   return ret;
 }
 
