@@ -619,7 +619,7 @@ XmlNode *parse_constant(void) {
 
 
 static void deftypes(XmlNode *e, XmlNode *td) {
-  // 2. find all ident tags and insert them into typedefs container
+  // find all ident tags and insert them into typedefs container
   XmlNode *i = e;
   do {
     if(i->text && strcmp(i->tag, "id") == 0) {
@@ -644,7 +644,7 @@ void ctoxml_deftype_to_ident(XmlNode *e) {
     ptrstop = ptrstop->next;
   }
 
-  if(ptrstop==ptr) return; // only one token, must be dt
+  if(ptrstop == ptr) return; // only one token, must be dt
 
   while((strcmp(ptr->tag, "id") == 0 || strcmp(ptr->tag, "ptr") == 0 || strcmp(ptr->tag, "ix") == 0) && ptr->last != ptrstop) {
     ptr = ptr->last;
@@ -655,8 +655,7 @@ void ctoxml_deftype_to_ident(XmlNode *e) {
 
 
 void ctoxml_typedef(XmlNode *e) {
-  // check if identifier is replaced with a deftype,
-  //    in which case it is a redefinition
+  // check if identifier is replaced with a deftype, in which case it is a redefinition
   ctoxml_deftype_to_ident(e);
   deftypes(e->inner,e);
 }
