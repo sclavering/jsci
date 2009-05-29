@@ -37,12 +37,6 @@ extern char *ctoxml_filename;
 extern char ctoxml_filename_errmsg[80];
 extern struct strbuf *ctoxml_STDOUT;
 
-// C is a 0-terminated string
-// errorpos, if not null, will be used to store string offset of 1st syntax error or -1 if parsing was ok
-// Returns 0-terminated string allocated with malloc.
-char *ctoxml(char *C, int *errorpos);
-void ctoxml_free(char *C);
-
 static inline void PUTS(char* x) {
   strbuf_cat(ctoxml_STDOUT, x);
 }

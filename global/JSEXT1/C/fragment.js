@@ -16,7 +16,7 @@ are not exported if they generate code and can not be resolved
 in _default\_dl_ or any library mentioned in #pragma directives.
 */
 function(filename) {
-  var parsed = parse(ctoxml(runcpp(filename)));
+  var parsed = parse(new XML(jsxcore.cToXML(runcpp(filename))));
   var src = {};
 
   for(var i in parsed.structs_and_unions)

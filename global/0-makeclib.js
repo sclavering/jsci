@@ -4,6 +4,7 @@ function(args) {
   this.Dl = args.Dl;
   this.load = args.load;
   this.environment = args.environment;
+  this.jsxcore = args;
 
   load('0-ffi.js');
 
@@ -29,7 +30,6 @@ function(args) {
   JSEXT1.C.parse = load.call(JSEXT1.C, path + '/JSEXT1/C/parse.js');
   JSEXT1.C.fragment = load.call(JSEXT1.C, path + '/JSEXT1/C/fragment.js');
   JSEXT1.C.runcpp = load.call(JSEXT1.C, path + '/JSEXT1/C/runcpp.js');
-  JSEXT1.C.ctoxml = load.call(JSEXT1.C, path + '/JSEXT1/C/ctoxml.js');
   JSEXT1.C.jswrapper = load.call(JSEXT1.C, path + '/JSEXT1/C/jswrapper.js');
 
   const fragment = JSEXT1.C.fragment(path + "/clib.h", Dl());

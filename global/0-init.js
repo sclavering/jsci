@@ -6,6 +6,7 @@ function(args) {
   this.environment = args.environment;
   this.gc = args.gc;
   this.isCompilableUnit = args.isCompilableUnit;
+  this.jsxcore = args;
 
   // avoid unwanted closures
   var xload = new Function("filename", "return load(filename);");

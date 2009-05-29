@@ -1,8 +1,7 @@
 /*
 obj = parse(code)
 
-Examines a C program. The program should already have been processed
-by cpp() and ctoxml().  Recognizes the programming
+Examines the XML representation of a C program.  Recognizes the programming
 constructs used to declare functions, structs, unions, global variables,
 macros, #defines and enums. Also recognizes the following #pragma
 directives.
@@ -23,11 +22,6 @@ Instructs _parse_ to try to resolve global variables and functions
 in the executing program. On Linux, this can be used to resolve
 all C library symbols and symbols from the SpiderMonkey API.
 
-
-### Arguments ###
-
-* code: An XML object returned from ctoxml()
-
 ### Return value ###
 
 Returns an object containing the following properties:
@@ -39,7 +33,9 @@ Returns an object containing the following properties:
 
 (function() {
 
-return function(code) {
+return function(xml) {
+  var code = xml;
+
   // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
   var live = {};
 
