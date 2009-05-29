@@ -42,29 +42,28 @@ void ctoxml_end(void) {
   stringhash_destroy(ctoxml_typedefs);
 }
 
-static void deftypes(struct Xml *e, struct Xml *td) {
-	// 2. find all ident tags and insert them into typedefs container
-
-	struct Xml *i=e;
-	do {
-		if (i->text && strcmp(i->tag,"id")==0) {
-                  struct Xml *shallowcopy=malloc(sizeof(struct Xml));
-                  memcpy(shallowcopy,td,sizeof(struct Xml));
-		  stringhash_remove(ctoxml_typedefs, i->text);
-		  stringhash_insert(ctoxml_typedefs, strdup(i->text), shallowcopy);
-		}
-		if (i->inner && (strcmp(i->tag,"ptr")==0 ||
-				 strcmp(i->tag,"ix")==0 ||
-				 strcmp(i->tag,"p")==0 ||
-				 strcmp(i->tag,"fd")==0
-				 )) deftypes(i->inner, td);
-		i=i->next;
-	} while (i!=e);
+static void deftypes(XmlNode *e, XmlNode *td) {
+  // 2. find all ident tags and insert them into typedefs container
+  XmlNode *i = e;
+  do {
+    if(i->text && strcmp(i->tag, "id") == 0) {
+      XmlNode *shallowcopy = malloc(sizeof(XmlNode));
+      memcpy(shallowcopy, td, sizeof(XmlNode));
+      stringhash_remove(ctoxml_typedefs, i->text);
+      stringhash_insert(ctoxml_typedefs, strdup(i->text), shallowcopy);
+    }
+    if(i->inner && (strcmp(i->tag,"ptr")==0 ||
+         strcmp(i->tag,"ix")==0 ||
+         strcmp(i->tag,"p")==0 ||
+         strcmp(i->tag,"fd")==0
+         )) deftypes(i->inner, td);
+    i = i->next;
+  } while(i != e);
 }
 
-void ctoxml_deftype_to_ident(struct Xml *e) {
-  struct Xml *ptr=e->inner->last;
-  struct Xml *ptrstop=e->inner;
+void ctoxml_deftype_to_ident(XmlNode *e) {
+  XmlNode *ptr=e->inner->last;
+  XmlNode *ptrstop=e->inner;
 
   //  if (e->inner==e->inner->next) return; (should be covered by next test)
 
@@ -83,7 +82,7 @@ void ctoxml_deftype_to_ident(struct Xml *e) {
 
 }
 
-void ctoxml_typedef(struct Xml *e) {
+void ctoxml_typedef(XmlNode *e) {
   // check if identifier is replaced with a deftype,
   //    in which case it is a redefinition
 

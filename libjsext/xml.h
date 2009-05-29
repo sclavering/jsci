@@ -3,26 +3,33 @@
 
 #include <stdio.h>
 
-struct Attribute {
+typedef struct _XmlAttr {
   char *name;
   char *value;
-};
+} XmlAttr;
 
-struct Xml {
+typedef struct _XmlNode {
   char *tag;
   int nAttrib;
-  struct Attribute *attrib;
-  struct Xml *inner;
+  XmlAttr *attrib;
+  struct _XmlNode *inner;
   char *text;
-  struct Xml *next;
-  struct Xml *last;
-};
+  struct _XmlNode *next;
+  struct _XmlNode *last;
+} XmlNode;
 
-struct Xml *xml(char *tag, ...);
-struct Xml *xml_text(char *tag, ...);
-struct Xml *xml_link(struct Xml *e1, struct Xml *e2);
-void xml_print(struct Xml *e);
-void xml_free(struct Xml *e);
+// Create an XmlNode with XmlNode children (or no children)
+XmlNode *xml(char *tag, ...);
+
+// Create an XmlNode with a text node child
+XmlNode *xml_text(char *tag, char *txt);
+
+// Replace the attributes of a node and return it
+XmlNode *xml_attrs(XmlNode *node, ...);
+
+XmlNode *xml_link(XmlNode *e1, XmlNode *e2);
+void xml_print(XmlNode *e);
+void xml_free(XmlNode *e);
 void c_unescape(char *in);
 
 #endif

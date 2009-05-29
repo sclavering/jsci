@@ -25,11 +25,14 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef _CTOXML_H
+#define _CTOXML_H
+
 #include "xml.h"
 #include "stringhash.h"
 
-void ctoxml_deftype_to_ident(struct Xml *e);
-void ctoxml_typedef(struct Xml *e);
+void ctoxml_deftype_to_ident(XmlNode *e);
+void ctoxml_typedef(XmlNode *e);
 extern stringhash *ctoxml_typedefs;
 extern char *ctoxml_filename;
 extern char ctoxml_filename_errmsg[80];
@@ -46,4 +49,8 @@ void ctoxml_free(char *C);
 
 extern struct strbuf *ctoxml_STDOUT;
 
-#define PUTS(x) strbuf_cat(ctoxml_STDOUT,x)
+static inline void PUTS(char* x) {
+  strbuf_cat(ctoxml_STDOUT, x);
+}
+
+#endif

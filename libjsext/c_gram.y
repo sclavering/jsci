@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006, Berges Allmenndigitale Rådgivningstjeneste
+* Copyright (c) 2006, Berges Allmenndigitale Rï¿½dgivningstjeneste
 * All rights reserved.
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@
 *     * Redistributions in binary form must reproduce the above copyright
 *       notice, this list of conditions and the following disclaimer in the
 *       documentation and/or other materials provided with the distribution.
-*     * Neither the name of Berges Allmenndigitale Rådgivningstjeneste nor the
+*     * Neither the name of Berges Allmenndigitale Rï¿½dgivningstjeneste nor the
 *       names of its contributors may be used to endorse or promote products
 *       derived from this software without specific prior written permission.
 *
@@ -26,7 +26,7 @@
 */
 
 %union {
-  struct Xml *xml;
+  struct _XmlNode *xml;
   char *str;
 }
 
@@ -57,494 +57,494 @@ extern char *ctoxml_cterm2;
 extern int ctoxml_clineno;
 extern char *ctoxml_filename;
 void ctoxml_cerror (char const *msg);
-struct Xml *parse_constant(void);
+XmlNode *parse_constant(void);
 %}
 
 %%
 
 primary_expr
-	: identifier     { $$ = xml_text("id", 0, $1); }
-	| CONSTANT       { $$ = parse_constant(); }
-	| strings	 { $$ = $1; }
-	| '(' expr ')'   { $$ = xml("p",NULL,$2,NULL); }
-	;
+  : identifier                                             { $$ = xml_text("id", $1); }
+  | CONSTANT                                               { $$ = parse_constant(); }
+  | strings                                                { $$ = $1; }
+  | '(' expr ')'                                           { $$ = xml("p", $2, 0); }
+  ;
 
 strings
-	: STRING_LITERAL { c_unescape(ctoxml_cterm); ctoxml_cterm[strlen(ctoxml_cterm)-1]=0; $$ = xml_text("s", NULL, strdup(ctoxml_cterm+1)); free(ctoxml_cterm);}
-	| strings STRING_LITERAL { c_unescape(ctoxml_cterm); ctoxml_cterm[strlen(ctoxml_cterm)-1]=0; $$ = xml_link($1, xml_text("s", NULL, strdup(ctoxml_cterm+1))); free(ctoxml_cterm);}
-	;
+  : STRING_LITERAL { c_unescape(ctoxml_cterm); ctoxml_cterm[strlen(ctoxml_cterm)-1]=0; $$ = xml_text("s", ctoxml_cterm + 1); free(ctoxml_cterm);}
+  | strings STRING_LITERAL { c_unescape(ctoxml_cterm); ctoxml_cterm[strlen(ctoxml_cterm)-1]=0; $$ = xml_link($1, xml_text("s", ctoxml_cterm + 1)); free(ctoxml_cterm);}
+  ;
 
 postfix_expr
-	: primary_expr                             { $$ = $1; }
-	| postfix_expr '[' expr ']'                { $$ = xml("ix",NULL,$1,$3,NULL); }
-	| postfix_expr '(' ')'                     { $$ = xml("call",NULL,$1,NULL); }
-	| postfix_expr '(' argument_expr_list ')'  { $$ = xml("call",NULL,$1,$3,NULL); }
-	| postfix_expr '.' identifier              { $$ = xml("mb",NULL,$1,xml_text("id",NULL,$3),NULL); }
-	| postfix_expr PTR_OP identifier           { $$ = xml("ptr",NULL,$1, xml_text("id",NULL,$3),NULL); }
-	| postfix_expr INC_OP                      { $$ = xml("op","op",strdup("++"), "post",strdup("1"),NULL, $1,NULL); }
-	| postfix_expr DEC_OP                      { $$ = xml("op","op",strdup("--"), "post",strdup("1"),NULL, $1,NULL); }
-	;
+  : primary_expr                                           { $$ = $1; }
+  | postfix_expr '[' expr ']'                              { $$ = xml("ix", $1, $3, 0); }
+  | postfix_expr '(' ')'                                   { $$ = xml("call", $1, 0); }
+  | postfix_expr '(' argument_expr_list ')'                { $$ = xml("call", $1, $3, 0); }
+  | postfix_expr '.' identifier                            { $$ = xml("mb", $1, xml_text("id", $3), 0); }
+  | postfix_expr PTR_OP identifier                         { $$ = xml("ptr", $1, xml_text("id", $3), 0); }
+  | postfix_expr INC_OP                                    { $$ = xml_attrs(xml("op", $1, 0), "op", "++", "post", "1", 0); }
+  | postfix_expr DEC_OP                                    { $$ = xml_attrs(xml("op", $1, 0), "op", "--", "post", "1", 0); }
+  ;
 
 argument_expr_list
-	: assignment_expr                          { $$ = $1; }
-	| argument_expr_list ',' assignment_expr   { $$ = xml_link($1, $3); }
-	;
+  : assignment_expr                                        { $$ = $1; }
+  | argument_expr_list ',' assignment_expr                 { $$ = xml_link($1, $3); }
+  ;
 
 unary_expr
-	: postfix_expr                             { $$ = $1; }
-	| INC_OP unary_expr                        { $$ = xml("op","op",strdup("++"),"pre",strdup("1"), NULL, $2,NULL); }
-	| DEC_OP unary_expr                        { $$ = xml("op","op",strdup("--"),"pre",strdup("1"), NULL, $2,NULL); }
-	| unary_operator cast_expr                 { $$ = xml("op", "op", strdup($1), NULL, $2,NULL); }
-	| SIZEOF unary_expr                        { $$ = xml("op", "op", strdup("sizeof"), "type",strdup("e"), NULL,$2,NULL); }
-	| SIZEOF '(' type_name ')'                 { $$ = xml("op", "op", strdup("sizeof"), "type",strdup("t"), NULL,$3,NULL); }
-	;
+  : postfix_expr                                           { $$ = $1; }
+  | INC_OP unary_expr                                      { $$ = xml_attrs(xml("op", $2, 0), "op", "++", "pre", "1", 0); }
+  | DEC_OP unary_expr                                      { $$ = xml_attrs(xml("op", $2, 0), "op", "--", "pre", "1", 0); }
+  | unary_operator cast_expr                               { $$ = xml_attrs(xml("op", $2, 0), "op", $1, 0); }
+  | SIZEOF unary_expr                                      { $$ = xml_attrs(xml("op", $2, 0), "op", "sizeof", "type", "e", 0); }
+  | SIZEOF '(' type_name ')'                               { $$ = xml_attrs(xml("op", $3, 0), "op", "sizeof", "type", "t", 0); }
+  ;
 
 unary_operator
-	: '&' { $$ = "&"; }
-	| '*' { $$ = "*"; }
-	| '+' { $$ = "+"; }
-	| '-' { $$ = "-"; }
-	| '~' { $$ = "~"; }
-	| '!' { $$ = "!"; }
-	;
+  : '&'                                                    { $$ = "&"; }
+  | '*'                                                    { $$ = "*"; }
+  | '+'                                                    { $$ = "+"; }
+  | '-'                                                    { $$ = "-"; }
+  | '~'                                                    { $$ = "~"; }
+  | '!'                                                    { $$ = "!"; }
+  ;
 
 cast_expr
-	: unary_expr                   { $$ = $1; }
-	| '(' type_name ')' cast_expr  { $$ = xml("cast", NULL, $2, $4,NULL); }
-	;
+  : unary_expr                                             { $$ = $1; }
+  | '(' type_name ')' cast_expr                            { $$ = xml("cast", $2, $4, 0); }
+  ;
 
 multiplicative_expr
-	: cast_expr                         { $$ = $1; }
-	| multiplicative_expr '*' cast_expr { $$ = xml("op","op",strdup("*"), NULL,$1, $3,NULL); }
-	| multiplicative_expr '/' cast_expr { $$ = xml("op","op",strdup("/"), NULL,$1, $3,NULL); }
-	| multiplicative_expr '%' cast_expr { $$ = xml("op","op",strdup("%"), NULL,$1, $3,NULL); }
-	;
+  : cast_expr                                              { $$ = $1; }
+  | multiplicative_expr '*' cast_expr                      { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "*", 0); }
+  | multiplicative_expr '/' cast_expr                      { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "/", 0); }
+  | multiplicative_expr '%' cast_expr                      { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "%", 0); }
+  ;
 
 additive_expr
-	: multiplicative_expr                    { $$ = $1; }
-	| additive_expr '+' multiplicative_expr  { $$ = xml("op","op",strdup("+"), NULL,$1, $3,NULL); }
-	| additive_expr '-' multiplicative_expr  { $$ = xml("op","op",strdup("-"), NULL,$1, $3,NULL); }
-	;
+  : multiplicative_expr                                    { $$ = $1; }
+  | additive_expr '+' multiplicative_expr                  { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "+", 0); }
+  | additive_expr '-' multiplicative_expr                  { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "-", 0); }
+  ;
 
 shift_expr
-	: additive_expr                      { $$ = $1; }
-	| shift_expr LEFT_OP additive_expr   { $$ = xml("op","op",strdup("<<"), NULL,$1, $3,NULL); }
-	| shift_expr RIGHT_OP additive_expr  { $$ = xml("op","op",strdup(">>"), NULL,$1, $3,NULL); }
-	;
+  : additive_expr                                          { $$ = $1; }
+  | shift_expr LEFT_OP additive_expr                       { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "<<", 0); }
+  | shift_expr RIGHT_OP additive_expr                      { $$ = xml_attrs(xml("op", $1, $3, 0), "op", ">>", 0); }
+  ;
 
 relational_expr
-	: shift_expr                         { $$ = $1; }
-	| relational_expr '<' shift_expr     { $$ = xml("op","op",strdup("<"), NULL,$1, $3,NULL); }
-	| relational_expr '>' shift_expr     { $$ = xml("op","op",strdup(">"), NULL,$1, $3,NULL); }
-	| relational_expr LE_OP shift_expr   { $$ = xml("op","op",strdup("<="), NULL,$1, $3,NULL); }
-	| relational_expr GE_OP shift_expr   { $$ = xml("op","op",strdup(">="), NULL,$1, $3,NULL); }
-	;
+  : shift_expr                                             { $$ = $1; }
+  | relational_expr '<' shift_expr                         { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "<", 0); }
+  | relational_expr '>' shift_expr                         { $$ = xml_attrs(xml("op", $1, $3, 0), "op", ">", 0); }
+  | relational_expr LE_OP shift_expr                       { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "<=", 0); }
+  | relational_expr GE_OP shift_expr                       { $$ = xml_attrs(xml("op", $1, $3, 0), "op", ">=", 0); }
+  ;
 
 equality_expr
-	: relational_expr                      { $$ = $1; }
-	| equality_expr EQ_OP relational_expr  { $$ = xml("op","op",strdup("=="), NULL,$1, $3,NULL); }
-	| equality_expr NE_OP relational_expr  { $$ = xml("op","op",strdup("!="), NULL,$1, $3,NULL); }
-	;
+  : relational_expr                                        { $$ = $1; }
+  | equality_expr EQ_OP relational_expr                    { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "==", 0); }
+  | equality_expr NE_OP relational_expr                    { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "!=", 0); }
+  ;
 
 and_expr
-	: equality_expr               { $$ = $1; }
-	| and_expr '&' equality_expr  { $$ = xml("op","op",strdup("&"), NULL,$1, $3,NULL); }
-	;
+  : equality_expr                                          { $$ = $1; }
+  | and_expr '&' equality_expr                             { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "&", 0); }
+  ;
 
 exclusive_or_expr
-	: and_expr                         { $$ = $1; }
-	| exclusive_or_expr '^' and_expr   { $$ = xml("op","op",strdup("^"), NULL,$1, $3,NULL); }
-	;
+  : and_expr                                               { $$ = $1; }
+  | exclusive_or_expr '^' and_expr                         { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "^", 0); }
+  ;
 
 inclusive_or_expr
-	: exclusive_or_expr                         { $$ = $1; }
-	| inclusive_or_expr '|' exclusive_or_expr   { $$ = xml("op","op",strdup("|"), NULL,$1, $3,NULL); }
-	;
+  : exclusive_or_expr                                      { $$ = $1; }
+  | inclusive_or_expr '|' exclusive_or_expr                { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "|", 0); }
+  ;
 
 logical_and_expr
-	: inclusive_or_expr                           { $$ = $1; }
-	| logical_and_expr AND_OP inclusive_or_expr   { $$ = xml("op","op",strdup("&&"), NULL,$1, $3,NULL); }
-	;
+  : inclusive_or_expr                                      { $$ = $1; }
+  | logical_and_expr AND_OP inclusive_or_expr              { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "&&", 0); }
+  ;
 
 logical_or_expr
-	: logical_and_expr                         { $$ = $1; }
-	| logical_or_expr OR_OP logical_and_expr   { $$ = xml("op","op",strdup("||"), NULL,$1, $3,NULL); }
-	;
+  : logical_and_expr                                       { $$ = $1; }
+  | logical_or_expr OR_OP logical_and_expr                 { $$ = xml_attrs(xml("op", $1, $3, 0), "op", "||", 0); }
+  ;
 
 conditional_expr
-	: logical_or_expr                                { $$ = $1; }
-	| logical_or_expr '?' expr ':' conditional_expr  { $$ = xml("op","op",strdup("?:"), NULL,$1, $3,$5,NULL); }
-	;
+  : logical_or_expr                                        { $$ = $1; }
+  | logical_or_expr '?' expr ':' conditional_expr          { $$ = xml_attrs(xml("op", $1, $3, $5, 0), "op", "?:", 0); }
+  ;
 
 assignment_expr
-	: conditional_expr                                 { $$ = $1; }
-	| unary_expr assignment_operator assignment_expr   { $$ = xml("op","op",strdup($2), NULL,$1, $3,NULL); }
-	;
+  : conditional_expr                                       { $$ = $1; }
+  | unary_expr assignment_operator assignment_expr         { $$ = xml_attrs(xml("op", $1, $3, 0), "op", $2, 0); }
+  ;
 
 assignment_operator
-	: '='             { $$ = "="; }
-	| MUL_ASSIGN      { $$ = "*="; }
-	| DIV_ASSIGN      { $$ = "/="; }
-	| MOD_ASSIGN      { $$ = "%="; }
-	| ADD_ASSIGN      { $$ = "+="; }
-	| SUB_ASSIGN      { $$ = "-="; }
-	| LEFT_ASSIGN     { $$ = "<<="; }
-	| RIGHT_ASSIGN    { $$ = ">>="; }
-	| AND_ASSIGN      { $$ = "&="; }
-	| XOR_ASSIGN      { $$ = "^="; }
-	| OR_ASSIGN       { $$ = "|="; }
-	;
+  : '='                                                    { $$ = "="; }
+  | MUL_ASSIGN                                             { $$ = "*="; }
+  | DIV_ASSIGN                                             { $$ = "/="; }
+  | MOD_ASSIGN                                             { $$ = "%="; }
+  | ADD_ASSIGN                                             { $$ = "+="; }
+  | SUB_ASSIGN                                             { $$ = "-="; }
+  | LEFT_ASSIGN                                            { $$ = "<<="; }
+  | RIGHT_ASSIGN                                           { $$ = ">>="; }
+  | AND_ASSIGN                                             { $$ = "&="; }
+  | XOR_ASSIGN                                             { $$ = "^="; }
+  | OR_ASSIGN                                              { $$ = "|="; }
+  ;
 
 expr
-	: assignment_expr           { $$ = $1; }
-	| expr ',' assignment_expr  { $$ = xml("op","op",strdup(","), NULL,$1, $3,NULL); }
-	;
+  : assignment_expr                                        { $$ = $1; }
+  | expr ',' assignment_expr                               { $$ = xml_attrs(xml("op", $1, $3), "op", ",", 0); }
+  ;
 
 constant_expr
-	: conditional_expr          { $$ = $1; }
-	;
+  : conditional_expr                                       { $$ = $1; }
+  ;
 
 declaration
-	: declaration_specifiers ';'                        { $$ = xml("d",NULL,$1, NULL); }
-	| declaration_specifiers init_declarator_list ';'   { $$ = xml("d",NULL,$1,$2,NULL); }
-	| TYPEDEF declaration_specifiers declarator_list2 ';'   { $$ = xml("d",NULL,xml("typedef",NULL,NULL),$2,$3,NULL); ctoxml_typedef($$); }
-	| TYPEDEF declaration_specifiers ',' declarator_list2 ';'   { $$ = xml("d",NULL,xml("typedef",NULL,NULL),$2,$4,NULL); ctoxml_typedef($$); }
-	| TYPEDEF declaration_specifiers ';'   { $$ = xml("d",NULL,xml("typedef",NULL,NULL),$2,NULL); ctoxml_typedef($$); }
-	| declspec TYPEDEF declaration_specifiers declarator_list2 ';'   { $$ = xml("d",NULL,xml("typedef",NULL,NULL),$3,$4,NULL); ctoxml_typedef($$); }
-	| declspec TYPEDEF declaration_specifiers ',' declarator_list2 ';'   { $$ = xml("d",NULL,xml("typedef",NULL,NULL),$3,$5,NULL); ctoxml_typedef($$); }
-	| declspec TYPEDEF declaration_specifiers ';'   { $$ = xml("d",NULL,xml("typedef",NULL,NULL),$3,NULL); ctoxml_typedef($$); }
-	;
+  : declaration_specifiers ';'                             { $$ = xml("d", $1, 0); }
+  | declaration_specifiers init_declarator_list ';'        { $$ = xml("d", $1, $2, 0); }
+  | TYPEDEF declaration_specifiers declarator_list2 ';'    { $$ = xml("d", xml("typedef", 0), $2, $3,0); ctoxml_typedef($$); }
+  | TYPEDEF declaration_specifiers ',' declarator_list2 ';' { $$ = xml("d", xml("typedef", 0), $2, $4, 0); ctoxml_typedef($$); }
+  | TYPEDEF declaration_specifiers ';'                     { $$ = xml("d", xml("typedef", 0), $2, 0); ctoxml_typedef($$); }
+  | declspec TYPEDEF declaration_specifiers declarator_list2 ';' { $$ = xml("d", xml("typedef", 0), $3, $4, 0); ctoxml_typedef($$); }
+  | declspec TYPEDEF declaration_specifiers ',' declarator_list2 ';' { $$ = xml("d", xml("typedef", 0), $3, $5, 0); ctoxml_typedef($$); }
+  | declspec TYPEDEF declaration_specifiers ';'            { $$ = xml("d", xml("typedef", 0), $3, 0); ctoxml_typedef($$); }
+  ;
 
 declaration_specifiers
-	: storage_class_specifier                         { $$ = $1; }
-	| storage_class_specifier declaration_specifiers  { $$ = xml_link($1,$2); }
-	| type_specifier                                  { $$ = $1; }
-	| type_specifier declaration_specifiers           { $$ = xml_link($1,$2); }
-	| type_qualifier                                  { $$ = $1; }
-	| type_qualifier declaration_specifiers           { $$ = xml_link($1,$2); }
-	| declspec                                        { $$ = $1; }
-	| declspec declaration_specifiers                 { $$ = xml_link($1,$2); }
-	;
+  : storage_class_specifier                                { $$ = $1; }
+  | storage_class_specifier declaration_specifiers         { $$ = xml_link($1,$2); }
+  | type_specifier                                         { $$ = $1; }
+  | type_specifier declaration_specifiers                  { $$ = xml_link($1,$2); }
+  | type_qualifier                                         { $$ = $1; }
+  | type_qualifier declaration_specifiers                  { $$ = xml_link($1,$2); }
+  | declspec                                               { $$ = $1; }
+  | declspec declaration_specifiers                        { $$ = xml_link($1,$2); }
+  ;
 
 init_declarator_list
-	: init_declarator                           { $$ = $1; }
-	| init_declarator_list ',' init_declarator  { $$ = xml_link($1, $3); }
-	;
+  : init_declarator                                        { $$ = $1; }
+  | init_declarator_list ',' init_declarator               { $$ = xml_link($1, $3); }
+  ;
 
 declarator_list2
-	: declarator2                           { $$ = $1; }
-	| declarator_list2 ',' declarator2  { $$ = xml_link($1, $3); }
-	;
+  : declarator2                                            { $$ = $1; }
+  | declarator_list2 ',' declarator2                       { $$ = xml_link($1, $3); }
+  ;
 
 init_declarator
-	: declarator                  { $$ = $1; }
-	| declarator '=' initializer  { $$ = xml("init",NULL,$1,$3,NULL); }
-	;
+  : declarator                                             { $$ = $1; }
+  | declarator '=' initializer                             { $$ = xml("init", $1, $3, 0); }
+  ;
 
 declspec
-	: DECLSPEC '(' identifier ')' { $$ = xml_text("declspec","type",$3,NULL,NULL); }
-	| DECLSPEC '(' identifier '(' strings ')' ')' { $$ = xml("declspec","type",$3,NULL,$5,NULL); }
-	;
+  : DECLSPEC '(' identifier ')'                            { $$ = xml_attrs(xml("declspec", 0), "type", $3, 0); }
+  | DECLSPEC '(' identifier '(' strings ')' ')'            { $$ = xml_attrs(xml("declspec", $5, 0), "type", $3, 0); }
+  ;
 
 storage_class_specifier
-	: EXTERN   { $$ = xml("extern",NULL,NULL); }
-	| STATIC   { $$ = xml("static",NULL,NULL); }
-	| INLINE   { $$ = xml("inline",NULL,NULL); }
-	| AUTO     { $$ = xml("auto",NULL,NULL); }
-	| REGISTER { $$ = xml("register",NULL,NULL); }
-	;
+  : EXTERN                                                 { $$ = xml("extern", 0); }
+  | STATIC                                                 { $$ = xml("static", 0); }
+  | INLINE                                                 { $$ = xml("inline", 0); }
+  | AUTO                                                   { $$ = xml("auto", 0); }
+  | REGISTER                                               { $$ = xml("register", 0); }
+  ;
 
 type_specifier
-	: CHAR                        { $$ = xml_text("t",NULL,strdup("char")); }
-	| SHORT                       { $$ = xml_text("t",NULL,strdup("short")); }
-	| INT                         { $$ = xml_text("t",NULL,strdup("int")); }
-	| INT64                       { $$ = xml_text("t",NULL,strdup("__int64")); }
-	| LONG                        { $$ = xml_text("t",NULL,strdup("long")); }
-	| SIGNED                      { $$ = xml_text("t",NULL,strdup("signed")); }
-	| UNSIGNED                    { $$ = xml_text("t",NULL,strdup("unsigned")); }
-	| FLOAT                       { $$ = xml_text("t",NULL,strdup("float")); }
-	| DOUBLE                      { $$ = xml_text("t",NULL,strdup("double")); }
-	| VOID                        { $$ = xml_text("t",NULL,strdup("void")); }
-	| VA                          { $$ = xml_text("t",NULL,strdup("__builtin_va_list")); }
-	| struct_or_union_specifier   { $$ = $1; }
-	| enum_specifier              { $$ = $1; }
-	| typedeffed_name             { $$ = xml_text("dt",NULL,$1); }
-	;
+  : CHAR                                                   { $$ = xml_text("t", "char"); }
+  | SHORT                                                  { $$ = xml_text("t", "short"); }
+  | INT                                                    { $$ = xml_text("t", "int"); }
+  | INT64                                                  { $$ = xml_text("t", "__int64"); }
+  | LONG                                                   { $$ = xml_text("t", "long"); }
+  | SIGNED                                                 { $$ = xml_text("t", "signed"); }
+  | UNSIGNED                                               { $$ = xml_text("t", "unsigned"); }
+  | FLOAT                                                  { $$ = xml_text("t", "float"); }
+  | DOUBLE                                                 { $$ = xml_text("t", "double"); }
+  | VOID                                                   { $$ = xml_text("t", "void"); }
+  | VA                                                     { $$ = xml_text("t", "__builtin_va_list"); }
+  | struct_or_union_specifier                              { $$ = $1; }
+  | enum_specifier                                         { $$ = $1; }
+  | typedeffed_name                                        { $$ = xml_text("dt", $1); }
+  ;
 
 struct_or_union_specifier
-	: struct_or_union identifier '{' struct_declaration_list '}'  { $$ = xml($1,"id",$2,NULL,$4,NULL); }
-	| struct_or_union typedeffed_name '{' struct_declaration_list '}'  { $$ = xml($1,"id",$2,NULL,$4,NULL); }
-	| struct_or_union '{' struct_declaration_list '}'             { $$ = xml($1,NULL,$3,NULL); }
-	| struct_or_union identifier                                  { $$ = xml($1,"id",$2,NULL,NULL); }
-	| struct_or_union typedeffed_name                             { $$ = xml($1,"id",$2,NULL,NULL); }
-	;
+  : struct_or_union identifier '{' struct_declaration_list '}'       { $$ = xml_attrs(xml($1, $4, 0), "id", $2, 0); }
+  | struct_or_union typedeffed_name '{' struct_declaration_list '}'  { $$ = xml_attrs(xml($1, $4, 0), "id", $2, 0); }
+  | struct_or_union '{' struct_declaration_list '}'                  { $$ = xml($1, $3, 0); }
+  | struct_or_union identifier                                       { $$ = xml_attrs(xml($1, 0), "id", $2, 0); }
+  | struct_or_union typedeffed_name                                  { $$ = xml_attrs(xml($1, 0), "id", $2, 0); }
+  ;
 
 struct_or_union
-	: STRUCT { $$ = "struct"; }
-	| UNION  { $$ = "union"; }
-	;
+  : STRUCT { $$ = "struct"; }
+  | UNION  { $$ = "union"; }
+  ;
 
 struct_declaration_list
-	: struct_declaration                          { $$ = $1; }
-	| struct_declaration_list struct_declaration  { $$=xml_link($1,$2); }
-	;
+  : struct_declaration                                     { $$ = $1; }
+  | struct_declaration_list struct_declaration             { $$ = xml_link($1, $2); }
+  ;
 
 struct_declaration
-	: specifier_qualifier_list ';'			      { $$ = xml("d",NULL,$1,NULL); }
-	| specifier_qualifier_list struct_declarator_list ';' { $$ = xml("d",NULL,$1,$2,NULL); }
-	;
+  : specifier_qualifier_list ';'                           { $$ = xml("d", $1, 0); }
+  | specifier_qualifier_list struct_declarator_list ';'    { $$ = xml("d", $1, $2, 0); }
+  ;
 
 specifier_qualifier_list
-	: type_specifier                           { $$ = $1; }
-	| type_specifier specifier_qualifier_list  { $$ = xml_link($1,$2); }
-	| type_qualifier                           { $$ = $1; }
-	| type_qualifier specifier_qualifier_list  { $$ = xml_link($1,$2); }
-	;
+  : type_specifier                                         { $$ = $1; }
+  | type_specifier specifier_qualifier_list                { $$ = xml_link($1, $2); }
+  | type_qualifier                                         { $$ = $1; }
+  | type_qualifier specifier_qualifier_list                { $$ = xml_link($1, $2); }
+  ;
 
 struct_declarator_list
-	: struct_declarator                             { $$ = $1; }
-	| struct_declarator_list ',' struct_declarator  { $$ = xml_link($1,$3); }
-	;
+  : struct_declarator                                      { $$ = $1; }
+  | struct_declarator_list ',' struct_declarator           { $$ = xml_link($1, $3); }
+  ;
 
 struct_declarator
-	: declarator                    { $$ = $1; }
-	| ':' constant_expr             { $$ = xml("bitfield",NULL,$2,NULL); }
-	| declarator ':' constant_expr  { $$ = xml("bitfield",NULL,$1,$3,NULL); }
-	;
+  : declarator                                             { $$ = $1; }
+  | ':' constant_expr                                      { $$ = xml("bitfield", $2, 0); }
+  | declarator ':' constant_expr                           { $$ = xml("bitfield", $1, $3, 0); }
+  ;
 
 enum_specifier
-	: ENUM '{' enumerator_list '}'             { $$ = xml("enum",NULL,$3,NULL); }
-	| ENUM identifier '{' enumerator_list '}'  { $$ = xml("enum","id",$2,NULL,$4,NULL); }
-	| ENUM '{' enumerator_list ',' '}'             { $$ = xml("enum",NULL,$3,NULL); }
-	| ENUM identifier '{' enumerator_list ',' '}'  { $$ = xml("enum","id",$2,NULL,$4,NULL); }
-	| ENUM identifier                          { $$ = xml("enum","id",$2,NULL,NULL); }
-	;
+  : ENUM '{' enumerator_list '}'                           { $$ = xml("enum", $3, 0); }
+  | ENUM identifier '{' enumerator_list '}'                { $$ = xml_attrs(xml("enum", $4, 0), "id", $2, 0); }
+  | ENUM '{' enumerator_list ',' '}'                       { $$ = xml("enum", $3, 0); }
+  | ENUM identifier '{' enumerator_list ',' '}'            { $$ = xml_attrs(xml("enum", $4, 0), "id", $2, 0); }
+  | ENUM identifier                                        { $$ = xml_attrs(xml("enum", 0), "id", $2, 0); }
+  ;
 
 enumerator_list
-	: enumerator                      { $$ = $1; }
-	| enumerator_list ',' enumerator  { $$ = xml_link($1,$3); }
-	;
+  : enumerator                                             { $$ = $1; }
+  | enumerator_list ',' enumerator                         { $$ = xml_link($1, $3); }
+  ;
 
 enumerator
-	: identifier                    { $$ = xml_text("id",NULL,$1); }
-	| identifier '=' constant_expr  { $$ = xml_link(xml_text("id",NULL,$1),$3); }
-	;
+  : identifier                                             { $$ = xml_text("id", $1); }
+  | identifier '=' constant_expr                           { $$ = xml_link(xml_text("id", $1), $3); }
+  ;
 
 type_qualifier
-	: CONST                       { $$ = xml("const",NULL,NULL); }
-	| VOLATILE                    { $$ = xml("volatile",NULL,NULL); }
-	;
+  : CONST                                                  { $$ = xml("const", 0); }
+  | VOLATILE                                               { $$ = xml("volatile", 0); }
+  ;
 
 callspec
-	: CDECL    { $$ = xml("cdecl",NULL,NULL); }
-	| STDCALL  { $$ = xml("stdcall",NULL,NULL); }
-	;
+  : CDECL                                                  { $$ = xml("cdecl", 0); }
+  | STDCALL                                                { $$ = xml("stdcall", 0); }
+  ;
 
 callspecs
-	: callspec    { $$ = $1; }
-	| callspecs callspec  { $$ = xml_link($1,$2); }
-	;
+  : callspec                                               { $$ = $1; }
+  | callspecs callspec                                     { $$ = xml_link($1, $2); }
+  ;
 
 declarator
-	: direct_declarator          { $$ = $1; }
-	| pointer direct_declarator  { $$ = xml("ptr",NULL,$1,$2,NULL); }
-	| pointer callspecs direct_declarator  { $$ = xml("ptr",NULL,$1,xml_link($2,$3),NULL); }
-	| callspec declarator          { $$ = xml_link($1,$2); }
-	;
+  : direct_declarator                                      { $$ = $1; }
+  | pointer direct_declarator                              { $$ = xml("ptr", $1, $2, 0); }
+  | pointer callspecs direct_declarator                    { $$ = xml("ptr", $1, xml_link($2, $3), 0); }
+  | callspec declarator                                    { $$ = xml_link($1, $2); }
+  ;
 
 direct_declarator
-	: identifier                                           { $$ = xml_text("id",NULL,$1); }
-	| '(' declarator ')'                                   { $$ = xml("p",NULL,$2,NULL); }
-	| direct_declarator '[' ']'                            { $$ = xml("ix",NULL,$1,NULL); }
-	| direct_declarator '[' constant_expr ']'              { $$ = xml("ix",NULL,$1,$3,NULL); }
-	| direct_declarator '(' ')'                            { $$ = xml("fd",NULL,$1,xml("pm",NULL,NULL),NULL); }
-	| direct_declarator '(' parameter_type_list ')'        { $$ = xml("fd",NULL,$1,xml("pm",NULL,$3,NULL),NULL); }
-	| direct_declarator '(' identifier_list ')'            { $$ = xml("fd",NULL,$1,xml("pm",NULL,$3,NULL),NULL); }
-	;
+  : identifier                                             { $$ = xml_text("id", $1); }
+  | '(' declarator ')'                                     { $$ = xml("p", $2, 0); }
+  | direct_declarator '[' ']'                              { $$ = xml("ix", $1, 0); }
+  | direct_declarator '[' constant_expr ']'                { $$ = xml("ix", $1, $3, 0); }
+  | direct_declarator '(' ')'                              { $$ = xml("fd", $1, xml("pm", 0), 0); }
+  | direct_declarator '(' parameter_type_list ')'          { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
+  | direct_declarator '(' identifier_list ')'              { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
+  ;
 
 declarator2
-	: direct_declarator          { $$ = $1; }
-	| pointer direct_declarator2  { $$ = xml("ptr",NULL,$1,$2,NULL); }
-	| pointer callspec direct_declarator2  { $$ = xml("ptr",NULL,$1,xml_link($2,$3),NULL); }
-	| callspec declarator          { $$ = xml_link($1,$2); }
-	;
+  : direct_declarator                                      { $$ = $1; }
+  | pointer direct_declarator2                             { $$ = xml("ptr", $1, $2, 0); }
+  | pointer callspec direct_declarator2                    { $$ = xml("ptr", $1, xml_link($2, $3), 0); }
+  | callspec declarator                                    { $$ = xml_link($1, $2); }
+  ;
 
 direct_declarator2
-	: identifier                                           { $$ = xml_text("id",NULL,$1); }
-	| typedeffed_name                                           { $$ = xml_text("id",NULL,$1); }
-	| '(' declarator2 ')'                                   { $$ = xml("p",NULL,$2,NULL); }
-	| direct_declarator2 '[' ']'                            { $$ = xml("ix",NULL,$1,NULL); }
-	| direct_declarator2 '[' constant_expr ']'              { $$ = xml("ix",NULL,$1,$3,NULL); }
-	| direct_declarator2 '(' ')'                            { $$ = xml("fd",NULL,$1,xml("pm",NULL,NULL),NULL); }
-	| direct_declarator2 '(' parameter_type_list ')'        { $$ = xml("fd",NULL,$1,xml("pm",NULL,$3,NULL),NULL); }
-	| direct_declarator2 '(' identifier_list ')'            { $$ = xml("fd",NULL,$1,xml("pm",NULL,$3,NULL),NULL); }
-	;
+  : identifier                                             { $$ = xml_text("id", $1); }
+  | typedeffed_name                                        { $$ = xml_text("id", $1); }
+  | '(' declarator2 ')'                                    { $$ = xml("p", $2, 0); }
+  | direct_declarator2 '[' ']'                             { $$ = xml("ix", $1, 0); }
+  | direct_declarator2 '[' constant_expr ']'               { $$ = xml("ix", $1, $3, 0); }
+  | direct_declarator2 '(' ')'                             { $$ = xml("fd", $1, xml("pm", 0), 0); }
+  | direct_declarator2 '(' parameter_type_list ')'         { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
+  | direct_declarator2 '(' identifier_list ')'             { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
+  ;
 
 pointer
-	: '*'                              { $$ = xml("a",NULL,NULL); }
-	| '*' type_qualifier_list          { $$ = xml("a",NULL,$2,NULL); }
-	| '*' pointer                      { $$ = xml("a",NULL,$2,NULL); }
-	| '*' type_qualifier_list pointer  { $$ = xml("a",NULL,$2,$3,NULL); }
-	;
+  : '*'                                                    { $$ = xml("a", 0); }
+  | '*' type_qualifier_list                                { $$ = xml("a", $2, 0); }
+  | '*' pointer                                            { $$ = xml("a", $2, 0); }
+  | '*' type_qualifier_list pointer                        { $$ = xml("a", $2, $3, 0); }
+  ;
 
 type_qualifier_list
-	: type_qualifier                      { $$ = $1; }
-	| type_qualifier_list type_qualifier  { $$ = xml_link($1,$2); }
-	;
+  : type_qualifier                                         { $$ = $1; }
+  | type_qualifier_list type_qualifier                     { $$ = xml_link($1, $2); }
+  ;
 
 parameter_type_list
-	: parameter_list              { $$ = $1; }
-	| parameter_list ',' ELIPSIS  { $$ = xml_link($1,xml("elipsis",NULL,NULL)); }
-	;
+  : parameter_list                                         { $$ = $1; }
+  | parameter_list ',' ELIPSIS                             { $$ = xml_link($1, xml("elipsis", 0)); }
+  ;
 
 parameter_list
-	: parameter_declaration                    { $$ = $1; }
-	| parameter_list ',' parameter_declaration { $$ = xml_link($1,$3); }
-	;
+  : parameter_declaration                                  { $$ = $1; }
+  | parameter_list ',' parameter_declaration               { $$ = xml_link($1, $3); }
+  ;
 
 parameter_declaration
-	: declaration_specifiers declarator2           { $$ = xml("d",NULL,$1,$2,NULL); ctoxml_deftype_to_ident($$); }
-	| declaration_specifiers abstract_declarator   { $$ = xml("d",NULL,$1,$2,NULL); ctoxml_deftype_to_ident($$); }
-	| declaration_specifiers                       { $$ = xml("d",NULL,$1,NULL); ctoxml_deftype_to_ident($$); }
-	;
+  : declaration_specifiers declarator2                     { $$ = xml("d", $1, $2, 0); ctoxml_deftype_to_ident($$); }
+  | declaration_specifiers abstract_declarator             { $$ = xml("d", $1, $2, 0); ctoxml_deftype_to_ident($$); }
+  | declaration_specifiers                                 { $$ = xml("d", $1, 0); ctoxml_deftype_to_ident($$); }
+  ;
 
 identifier_list
-	: identifier                      { $$ = xml_text("id",NULL,$1); }
-	| identifier_list ',' identifier  { $$ = xml_link($1,xml_text("id",NULL,$3)); }
-	;
+  : identifier                                             { $$ = xml_text("id", $1); }
+  | identifier_list ',' identifier                         { $$ = xml_link($1, xml_text("id", $3)); }
+  ;
 
 type_name
-	: specifier_qualifier_list                      { $$ = xml("d",NULL,$1,NULL); }
-	| specifier_qualifier_list abstract_declarator  { $$ = xml("d",NULL,xml_link($1,$2),NULL); }
-	;
+  : specifier_qualifier_list                               { $$ = xml("d", $1, 0); }
+  | specifier_qualifier_list abstract_declarator           { $$ = xml("d", xml_link($1, $2), 0); }
+  ;
 
 abstract_declarator
-	: pointer                             { $$ = xml("ptr",NULL,$1,NULL); }
-	| direct_abstract_declarator          { $$ = $1; }
-	| pointer direct_abstract_declarator  { $$ = xml("ptr",NULL,$1,$2,NULL); }
-	;
+  : pointer                                                { $$ = xml("ptr", $1, 0); }
+  | direct_abstract_declarator                             { $$ = $1; }
+  | pointer direct_abstract_declarator                     { $$ = xml("ptr", $1, $2, 0); }
+  ;
 
 direct_abstract_declarator
-	: '(' abstract_declarator ')'                             { $$ = xml("p",NULL,$2,NULL); }
-	| '[' ']'                                                 { $$ = xml("ix",NULL,NULL); }
-	| '[' constant_expr ']'                                   { $$ = xml("ix",NULL,$2,NULL); }
-	| direct_abstract_declarator '[' ']'                      { $$ = xml("ix",NULL,$1,NULL); }
-	| direct_abstract_declarator '[' constant_expr ']'        { $$ = xml("ix",NULL,$1,$3,NULL); }
-	| '(' ')'                                                 { $$ = xml("fd",NULL,NULL); }
-	| '(' parameter_type_list ')'                             { $$ = xml("fd",NULL,$2,NULL); }
-	| direct_abstract_declarator '(' ')'                      { $$ = xml("fd",NULL,$1,NULL); }
-	| direct_abstract_declarator '(' parameter_type_list ')'  { $$ = xml("fd",NULL,$1,$3,NULL); }
-	;
+  : '(' abstract_declarator ')'                            { $$ = xml("p", $2, 0); }
+  | '[' ']'                                                { $$ = xml("ix", 0); }
+  | '[' constant_expr ']'                                  { $$ = xml("ix", $2, 0); }
+  | direct_abstract_declarator '[' ']'                     { $$ = xml("ix", $1, 0); }
+  | direct_abstract_declarator '[' constant_expr ']'       { $$ = xml("ix", $1, $3, 0); }
+  | '(' ')'                                                { $$ = xml("fd", 0); }
+  | '(' parameter_type_list ')'                            { $$ = xml("fd", $2, 0); }
+  | direct_abstract_declarator '(' ')'                     { $$ = xml("fd", $1, 0); }
+  | direct_abstract_declarator '(' parameter_type_list ')' { $$ = xml("fd", $1, $3, 0); }
+  ;
 
 initializer
-	: assignment_expr               { $$ = $1; }
-	| '{' initializer_list '}'      { $$ = xml("p",NULL,$2,NULL); }
-	| '{' initializer_list ',' '}'  { $$ = xml("p",NULL,$2,NULL); }
-	;
+  : assignment_expr                                        { $$ = $1; }
+  | '{' initializer_list '}'                               { $$ = xml("p", $2, 0); }
+  | '{' initializer_list ',' '}'                           { $$ = xml("p", $2, 0); }
+  ;
 
 initializer_list
-	: initializer                        { $$ = $1; }
-	| initializer_list ',' initializer   { $$ = xml_link($1,$3); }
-	;
+  : initializer                                            { $$ = $1; }
+  | initializer_list ',' initializer                       { $$ = xml_link($1, $3); }
+  ;
 
 statement
-	: labeled_statement       { $$ = $1; }
-	| compound_statement      { $$ = $1; }
-	| expression_statement    { $$ = $1; }
-	| selection_statement     { $$ = $1; }
-	| iteration_statement     { $$ = $1; }
-	| jump_statement          { $$ = $1; }
-	| asm_statement		  { $$ = $1; }
-	;
+  : labeled_statement                                      { $$ = $1; }
+  | compound_statement                                     { $$ = $1; }
+  | expression_statement                                   { $$ = $1; }
+  | selection_statement                                    { $$ = $1; }
+  | iteration_statement                                    { $$ = $1; }
+  | jump_statement                                         { $$ = $1; }
+  | asm_statement                                          { $$ = $1; }
+  ;
 
 labeled_statement
-	: identifier ':' statement          { $$ = xml_link(xml_text("label",NULL,$1),$3); }
-	| CASE constant_expr ':' statement  { $$ = xml_link(xml("case",NULL,$2,NULL),$4); }
-	| DEFAULT ':' statement             { $$ = xml_link(xml("default",NULL,NULL),$3); }
-	;
+  : identifier ':' statement                               { $$ = xml_link(xml_text("label", $1), $3); }
+  | CASE constant_expr ':' statement                       { $$ = xml_link(xml("case", $2, 0), $4); }
+  | DEFAULT ':' statement                                  { $$ = xml_link(xml("default", 0), $3); }
+  ;
 
 asm_statement
-	: ASM					    { $$ = xml_text("asm",NULL,ctoxml_cterm); }
-	;
+  : ASM                                                    { $$ = xml_text("asm", ctoxml_cterm); }
+  ;
 
 compound_statement
-	: '{' '}'                                   { $$ = xml("p",NULL,NULL); }
-	| '{' statement_list '}'                    { $$ = xml("p",NULL,$2,NULL); }
-	;
+  : '{' '}'                                                { $$ = xml("p", 0); }
+  | '{' statement_list '}'                                 { $$ = xml("p", $2, 0); }
+  ;
 
 declaration_list
-	: declaration                    { $$ = $1; }
-	| declaration_list declaration   { $$ = xml_link($1, $2); }
-	;
+  : declaration                                            { $$ = $1; }
+  | declaration_list declaration                           { $$ = xml_link($1, $2); }
+  ;
 
 statement_list
-	: declaration                 { $$ = $1; }
-	| statement                   { $$ = $1; }
-	| statement_list statement    { $$ = xml_link($1,$2); }
-	| statement_list declaration  { $$ = xml_link($1,$2); }
-	;
+  : declaration                                            { $$ = $1; }
+  | statement                                              { $$ = $1; }
+  | statement_list statement                               { $$ = xml_link($1, $2); }
+  | statement_list declaration                             { $$ = xml_link($1, $2); }
+  ;
 
 expression_statement
-	: ';'       { $$ = xml("e",NULL,NULL); }
-	| expr ';'  { $$ = $1; }
-	;
+  : ';'                                                    { $$ = xml("e", 0); }
+  | expr ';'                                               { $$ = $1; }
+  ;
 
 selection_statement
-	: IF '(' expr ')' statement                 { $$ = xml("if",NULL,$3,$5,NULL); }
-	| IF '(' expr ')' statement ELSE statement  { $$ = xml("if",NULL,$3,$5,$7,NULL); }
-	| SWITCH '(' expr ')' statement             { $$ = xml("switch",NULL,$3,$5,NULL); }
-	;
+  : IF '(' expr ')' statement                              { $$ = xml("if", $3, $5, 0); }
+  | IF '(' expr ')' statement ELSE statement               { $$ = xml("if", $3, $5, $7, 0); }
+  | SWITCH '(' expr ')' statement                          { $$ = xml("switch", $3, $5, 0); }
+  ;
 
 iteration_statement
-	: WHILE '(' expr ')' statement                 { $$ = xml("while",NULL,$3,$5,NULL); }
-	| DO statement WHILE '(' expr ')' ';'          { $$ = xml("do",NULL,$2,$5,NULL); }
-	| FOR '(' ';' ';' ')' statement                { $$ = xml("for",NULL,xml("e",NULL,NULL),xml("e",NULL,NULL),xml("e",NULL,NULL),$6,NULL); }
-	| FOR '(' ';' ';' expr ')' statement           { $$ = xml("for",NULL,xml("e",NULL,NULL),xml("e",NULL,NULL),$5,$7,NULL); }
-	| FOR '(' ';' expr ';' ')' statement           { $$ = xml("for",NULL,xml("e",NULL,NULL),$4,xml("e",NULL,NULL),$7,NULL); }
-	| FOR '(' ';' expr ';' expr ')' statement      { $$ = xml("for",NULL,xml("e",NULL,NULL),$4,$6,$8,NULL); }
-	| FOR '(' expr ';' ';' ')' statement           { $$ = xml("for",NULL,$3,xml("e",NULL,NULL),xml("e",NULL,NULL),$7,NULL); }
-	| FOR '(' expr ';' ';' expr ')' statement      { $$ = xml("for",NULL,$3,xml("e",NULL,NULL),$6,$8,NULL); }
-	| FOR '(' expr ';' expr ';' ')' statement      { $$ = xml("for",NULL,$3,$5,xml("e",NULL,NULL),$8,NULL); }
-	| FOR '(' expr ';' expr ';' expr ')' statement { $$ = xml("for",NULL,$3,$5,$7,$9,NULL); }
-	;
+  : WHILE '(' expr ')' statement                           { $$ = xml("while", $3, $5, 0); }
+  | DO statement WHILE '(' expr ')' ';'                    { $$ = xml("do", $2, $5, 0); }
+  | FOR '(' ';' ';' ')' statement                          { $$ = xml("for", xml("e", 0), xml("e", 0), xml("e", 0), $6, 0); }
+  | FOR '(' ';' ';' expr ')' statement                     { $$ = xml("for", xml("e", 0), xml("e", 0), $5, $7, 0); }
+  | FOR '(' ';' expr ';' ')' statement                     { $$ = xml("for", xml("e", 0), $4, xml("e", 0), $7, 0); }
+  | FOR '(' ';' expr ';' expr ')' statement                { $$ = xml("for", xml("e", 0), $4, $6, $8, 0); }
+  | FOR '(' expr ';' ';' ')' statement                     { $$ = xml("for", $3, xml("e", 0), xml("e", 0), $7, 0); }
+  | FOR '(' expr ';' ';' expr ')' statement                { $$ = xml("for", $3, xml("e", 0), $6, $8, 0); }
+  | FOR '(' expr ';' expr ';' ')' statement                { $$ = xml("for", $3, $5, xml("e", 0), $8, 0); }
+  | FOR '(' expr ';' expr ';' expr ')' statement           { $$ = xml("for", $3, $5, $7, $9, 0); }
+  ;
 
 jump_statement
-	: GOTO identifier ';'  { $$ = xml_text("goto",NULL,$2); }
-	| CONTINUE ';'         { $$ = xml("continue",NULL,NULL); }
-	| BREAK ';'            { $$ = xml("break",NULL,NULL); }
-	| RETURN ';'           { $$ = xml("return",NULL,NULL); }
-	| RETURN expr ';'      { $$ = xml("return",NULL,$2,NULL); }
-	;
+  : GOTO identifier ';'                                    { $$ = xml_text("goto", $2); }
+  | CONTINUE ';'                                           { $$ = xml("continue", 0); }
+  | BREAK ';'                                              { $$ = xml("break", 0); }
+  | RETURN ';'                                             { $$ = xml("return", 0); }
+  | RETURN expr ';'                                        { $$ = xml("return", $2, 0); }
+  ;
 
 translation_unit
-	: external_definition			{ xml_print($1); xml_free($1); }
-	| translation_unit external_definition	{ xml_print($2); xml_free($2); }
-	;
+  : external_definition                                    { xml_print($1); xml_free($1); }
+  | translation_unit external_definition                   { xml_print($2); xml_free($2); }
+  ;
 
 external_definition
-	: function_definition     	{ $$ = $1; }
-	| declaration             	{ $$ = $1; }
-	;
+  : function_definition                                    { $$ = $1; }
+  | declaration                                            { $$ = $1; }
+  ;
 
 function_definition
-	: declarator compound_statement                                          { $$ = xml("fdef",NULL,$1,$2,NULL); }
-	| declarator declaration_list compound_statement                         { $$ = xml("fdef",NULL,$1,$2,$3,NULL); }
-	| declaration_specifiers declarator compound_statement                   { $$ = xml("fdef",NULL,$1,$2,$3,NULL); }
-	| declaration_specifiers declarator declaration_list compound_statement  { $$ = xml("fdef",NULL,$1,$2,$3,$4,NULL); }
-	;
+  : declarator compound_statement                                          { $$ = xml("fdef", $1, $2, 0); }
+  | declarator declaration_list compound_statement                         { $$ = xml("fdef", $1, $2, $3, 0); }
+  | declaration_specifiers declarator compound_statement                   { $$ = xml("fdef", $1, $2, $3, 0); }
+  | declaration_specifiers declarator declaration_list compound_statement  { $$ = xml("fdef", $1, $2, $3, $4, 0); }
+  ;
 
 typedeffed_name
-	: TYPE_NAME		      { $$ = ctoxml_cterm; }
-	;
+  : TYPE_NAME                                              { $$ = ctoxml_cterm; }
+  ;
 
 identifier
-	: IDENTIFIER	{ $$ = ctoxml_cterm; }
-	;
+  : IDENTIFIER                                             { $$ = ctoxml_cterm; }
+  ;
 
 file
-	: translation_unit	{  }
-	|			{  }
-	;
+  : translation_unit                                       {  }
+  |                                                        {  }
+  ;
 
 %%
 
@@ -585,12 +585,12 @@ void c_unescape(char *in) {
 }
 
 
-struct Xml *parse_constant(void) {
+XmlNode *parse_constant(void) {
   if(ctoxml_cterm[0] == '\'') {
     char txt[20];
     c_unescape(ctoxml_cterm);
     sprintf(txt, "%d", (int) (ctoxml_cterm[0]));
-    struct Xml *rv = xml_text("c", 0, strdup(txt));
+    XmlNode *rv = xml_text("c", txt);
     free(ctoxml_cterm);
     return rv;
   }
@@ -610,6 +610,6 @@ struct Xml *parse_constant(void) {
       ctoxml_cterm[strlen(ctoxml_cterm) - 1] = 0;
     }
   }
-  if(attrib) return xml_text("c", attrib, strdup(value), 0, ctoxml_cterm);
-  return xml_text("c", 0, ctoxml_cterm);
+  if(attrib) return xml_attrs(xml_text("c", ctoxml_cterm), attrib, value, 0);
+  return xml_text("c", ctoxml_cterm);
 }
