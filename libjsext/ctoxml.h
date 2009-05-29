@@ -30,24 +30,18 @@
 
 #include "xml.h"
 #include "stringhash.h"
+#include "strbuf.h"
 
-void ctoxml_deftype_to_ident(XmlNode *e);
-void ctoxml_typedef(XmlNode *e);
 extern stringhash *ctoxml_typedefs;
 extern char *ctoxml_filename;
 extern char ctoxml_filename_errmsg[80];
-
-void ctoxml_init(void);
-void ctoxml_end(void);
+extern struct strbuf *ctoxml_STDOUT;
 
 // C is a 0-terminated string
 // errorpos, if not null, will be used to store string offset of 1st syntax error or -1 if parsing was ok
 // Returns 0-terminated string allocated with malloc.
 char *ctoxml(char *C, int *errorpos);
-
 void ctoxml_free(char *C);
-
-extern struct strbuf *ctoxml_STDOUT;
 
 static inline void PUTS(char* x) {
   strbuf_cat(ctoxml_STDOUT, x);

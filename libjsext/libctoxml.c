@@ -16,7 +16,8 @@ char *ctoxml(char *C, int *errorpos) {
   YY_BUFFER_STATE I=ctoxml_c_scan_string(C); // Input buffer
   
   ctoxml_STDOUT=strbuf_new();
-  ctoxml_init();
+  ctoxml_typedefs = stringhash_new();
+  ctoxml_filename = 0;
 
   PUTS("<C>\n");
   res=ctoxml_cparse();
@@ -32,7 +33,7 @@ char *ctoxml(char *C, int *errorpos) {
   }
 
   ctoxml_c_delete_buffer(I);
-  ctoxml_end();
+  stringhash_destroy(ctoxml_typedefs);
 
   ret=realloc(ctoxml_STDOUT->buf,ctoxml_STDOUT->len+1);
   free(ctoxml_STDOUT);

@@ -58,6 +58,9 @@ extern int ctoxml_clineno;
 extern char *ctoxml_filename;
 void ctoxml_cerror (char const *msg);
 XmlNode *parse_constant(void);
+void ctoxml_deftype_to_ident(XmlNode *e);
+void ctoxml_typedef(XmlNode *e);
+
 %}
 
 %%
@@ -612,4 +615,48 @@ XmlNode *parse_constant(void) {
   }
   if(attrib) return xml_attrs(xml_text("c", ctoxml_cterm), attrib, value, 0);
   return xml_text("c", ctoxml_cterm);
+}
+
+
+static void deftypes(XmlNode *e, XmlNode *td) {
+  // 2. find all ident tags and insert them into typedefs container
+  XmlNode *i = e;
+  do {
+    if(i->text && strcmp(i->tag, "id") == 0) {
+      XmlNode *shallowcopy = malloc(sizeof(XmlNode));
+      memcpy(shallowcopy, td, sizeof(XmlNode));
+      stringhash_remove(ctoxml_typedefs, i->text);
+      stringhash_insert(ctoxml_typedefs, strdup(i->text), shallowcopy);
+    }
+    if(i->inner && (strcmp(i->tag, "ptr") == 0 || strcmp(i->tag, "ix") == 0 || strcmp(i->tag, "p") == 0 || strcmp(i->tag, "fd") == 0)) {
+      deftypes(i->inner, td);
+    }
+    i = i->next;
+  } while(i != e);
+}
+
+
+void ctoxml_deftype_to_ident(XmlNode *e) {
+  XmlNode *ptr = e->inner->last;
+  XmlNode *ptrstop = e->inner;
+
+  while(strcmp(ptrstop->tag, "const") == 0 || strcmp(ptrstop->tag, "typedef") == 0 || strcmp(ptrstop->tag, "volatile") == 0) {
+    ptrstop = ptrstop->next;
+  }
+
+  if(ptrstop==ptr) return; // only one token, must be dt
+
+  while((strcmp(ptr->tag, "id") == 0 || strcmp(ptr->tag, "ptr") == 0 || strcmp(ptr->tag, "ix") == 0) && ptr->last != ptrstop) {
+    ptr = ptr->last;
+  }
+
+  if(strcmp(ptr->tag, "dt") == 0) ptr->tag = "id";
+}
+
+
+void ctoxml_typedef(XmlNode *e) {
+  // check if identifier is replaced with a deftype,
+  //    in which case it is a redefinition
+  ctoxml_deftype_to_ident(e);
+  deftypes(e->inner,e);
 }
