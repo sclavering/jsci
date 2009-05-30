@@ -39,6 +39,7 @@ IS                      (u|U|l|L)*
 #include "strbuf.h"
 #include "c_gram.h"
 #include "ctoxml.h"
+
 static void count(void);
 //extern int echo;
 extern char *ctoxml_cterm;

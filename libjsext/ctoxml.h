@@ -29,7 +29,6 @@
 #define _CTOXML_H
 
 #include "xml.h"
-#include "stringhash.h"
 #include "strbuf.h"
 #include "jsapi.h"
 

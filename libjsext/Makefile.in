@@ -41,7 +41,7 @@ all:	jsext
 
 JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o
 
-CTOXML_OBJS = c_gram.o c_scan.o xml.o stringhash.o hashtable.o libctoxml.o strbuf.o
+CTOXML_OBJS = c_gram.o c_scan.o xml.o libctoxml.o strbuf.o
 
 
 jsext:	$(JSX_OBJS) $(CTOXML_OBJS)
