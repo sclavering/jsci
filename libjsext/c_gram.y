@@ -53,7 +53,6 @@
 #include <string.h>
 #include <stdlib.h>
 extern char *ctoxml_cterm;
-extern char *ctoxml_cterm2;
 extern int ctoxml_clineno;
 extern char *ctoxml_filename;
 void ctoxml_cerror (char const *msg);

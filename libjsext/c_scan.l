@@ -42,7 +42,6 @@ IS                      (u|U|l|L)*
 static void count(void);
 //extern int echo;
 extern char *ctoxml_cterm;
-extern char *ctoxml_cterm2;
 extern int ctoxml_clineno;
 extern char *ctoxml_filename;
 static void preprocessor(void);
@@ -277,7 +276,6 @@ void count(void) {
 char *ctoxml_cterm=0;
 char *ctoxml_filename=0;
 char ctoxml_filename_errmsg[80];
-char *ctoxml_cterm2=0;
 int ctoxml_clineno;
 
 int check_type(void) {
