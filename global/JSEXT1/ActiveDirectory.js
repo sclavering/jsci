@@ -232,8 +232,7 @@ function handle_native(name, extension) {
   var stat_w = JSEXT1.os.stat(path + name + '.jswrapper');
 
   if(!stat_w || stat_h.mtime > stat_w.mtime) {
-    var jscode = JSEXT1.C.jswrapper(JSEXT1.C.fragment(path + name + '.h'));
-    JSEXT1.File.write(path + name + '.jswrapper', jscode);
+    JSEXT1.File.write(path + name + '.jswrapper', JSEXT1.C.jswrapper(path + name + '.h'));
   }
 
   var ret = load.call(this, path + name + '.jswrapper');
