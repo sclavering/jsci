@@ -38,15 +38,16 @@ char *ctoxml(char *C, int *errorpos) {
 
 
 static JSBool jsx_cToXML(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval c_code_str = argv[0];
+  jsval tmp, c_code_str = argv[0];
   if(!JSVAL_IS_STRING(c_code_str)) {
     JSX_ReportException(cx, "cToXML: first argument must be a string containing pre-processed C code");
     return JS_FALSE;
   }
-  // using argv gives us free rooting
-  argv[1] = OBJECT_TO_JSVAL(JS_NewObject(cx, 0, 0, 0));
+  *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, 0, 0, 0));
   if(argv[1] == JSVAL_NULL) return JS_FALSE;
-  cparser_typedefs = argv[1];
+  tmp = cparser_typedefs = OBJECT_TO_JSVAL(JS_NewObject(cx, 0, 0, 0));
+  if(tmp == JSVAL_NULL) return JS_FALSE;
+  if(!JS_SetProperty(cx, JSVAL_TO_OBJECT(*rval), "typedef_set", &tmp)) return JS_FALSE;
   cparser_jscx = cx;
   char *c_code = JS_GetStringBytes(JSVAL_TO_STRING(c_code_str));
   int errpos = 0;
@@ -55,16 +56,17 @@ static JSBool jsx_cToXML(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
     JSX_ReportException(cx, "cToXML: C syntax error at %d", errpos);
     return JS_FALSE;
   }
-  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, xmlstr));
+  tmp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, xmlstr));
+  JSBool res = JS_SetProperty(cx, JSVAL_TO_OBJECT(*rval), "xml", &tmp);
   free(xmlstr);
   cparser_jscx = 0;
   cparser_typedefs = JSVAL_VOID;
-  return JS_TRUE;
+  return res;
 }
 
 
 jsval make_cToXML(JSContext *cx) {
-  JSFunction *jsfun = JS_NewFunction(cx, jsx_cToXML, 2, 0, 0, 0);
+  JSFunction *jsfun = JS_NewFunction(cx, jsx_cToXML, 1, 0, 0, 0);
   if(!jsfun) return JSVAL_VOID;
   return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }

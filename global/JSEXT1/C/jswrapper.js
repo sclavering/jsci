@@ -42,7 +42,8 @@ Since switching to using GCC's cpp, we lack clib.va_list, and have loads of cons
 
 
 function fragment(filename) {
-  var parsed = parse(new XML(jsxcore.cToXML(runcpp(filename))));
+  const obj = jsxcore.cToXML(runcpp(filename));
+  var parsed = parse(new XML(obj.xml));
   var src = {};
 
   for(var i in parsed.structs_and_unions)
