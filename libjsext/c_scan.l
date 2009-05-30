@@ -232,10 +232,7 @@ void preprocessor(void) {
     xml_free(pragma);
   }
   else if(atoi(ctoxml_ctext + 1) || strncmp(directive, "line ", 5) == 0) {
-    char *filenameend;
     char *tmpfilename = strchr(ctoxml_ctext, ' ');
-    char *lineno;
-    XmlNode *linexml;
 
     if(!(tmpfilename && tmpfilename[0])) return;
     ctoxml_clineno = atoi(tmpfilename + 1);
@@ -246,15 +243,8 @@ void preprocessor(void) {
     tmpfilename++;
 
     ctoxml_filename = strdup(tmpfilename);
-    filenameend = strchr(ctoxml_filename + 1, '\"');
-    if(filenameend) *filenameend = 0;
     strncpy(ctoxml_filename_errmsg, ctoxml_filename, 80);
 
-    lineno = malloc(10);
-    sprintf(lineno, "%d", ctoxml_clineno);
-    linexml = xml_attrs(xml("line", 0), "file", ctoxml_filename, "line", lineno, 0);
-    xml_print(linexml);
-    xml_free(linexml);
     ctoxml_clineno--;
   }
 }
