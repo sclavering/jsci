@@ -223,15 +223,17 @@ void preprocessor(void) {
       xml_print(def);
       xml_free(def);
     }
+    return;
   }
-  else if(strncmp(directive, "pragma", 6) == 0) {
+  if(strncmp(directive, "pragma", 6) == 0) {
     XmlNode *pragma;
     ctoxml_cterm = directive[6] ? directive + 7 : "";
     pragma = xml_text("pragma", ctoxml_cterm);
     xml_print(pragma);
     xml_free(pragma);
+    return;
   }
-  else if(atoi(ctoxml_ctext + 1) || strncmp(directive, "line ", 5) == 0) {
+  if(atoi(ctoxml_ctext + 1) || strncmp(directive, "line ", 5) == 0) {
     char *tmpfilename = strchr(ctoxml_ctext, ' ');
 
     if(!(tmpfilename && tmpfilename[0])) return;
