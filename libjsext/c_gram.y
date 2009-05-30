@@ -490,14 +490,8 @@ selection_statement
 iteration_statement
   : WHILE '(' expr ')' statement                           { $$ = xml("while", $3, $5, 0); }
   | DO statement WHILE '(' expr ')' ';'                    { $$ = xml("do", $2, $5, 0); }
-  | FOR '(' ';' ';' ')' statement                          { $$ = xml("for", xml("e", 0), xml("e", 0), xml("e", 0), $6, 0); }
-  | FOR '(' ';' ';' expr ')' statement                     { $$ = xml("for", xml("e", 0), xml("e", 0), $5, $7, 0); }
-  | FOR '(' ';' expr ';' ')' statement                     { $$ = xml("for", xml("e", 0), $4, xml("e", 0), $7, 0); }
-  | FOR '(' ';' expr ';' expr ')' statement                { $$ = xml("for", xml("e", 0), $4, $6, $8, 0); }
-  | FOR '(' expr ';' ';' ')' statement                     { $$ = xml("for", $3, xml("e", 0), xml("e", 0), $7, 0); }
-  | FOR '(' expr ';' ';' expr ')' statement                { $$ = xml("for", $3, xml("e", 0), $6, $8, 0); }
-  | FOR '(' expr ';' expr ';' ')' statement                { $$ = xml("for", $3, $5, xml("e", 0), $8, 0); }
-  | FOR '(' expr ';' expr ';' expr ')' statement           { $$ = xml("for", $3, $5, $7, $9, 0); }
+  | FOR '(' expression_statement expression_statement ')'  { $$ = xml("for", $3, $4, xml("e", 0), 0); }
+  | FOR '(' expression_statement expression_statement expr ')' { $$ = xml("for", $3, $4, $5, 0); }
   ;
 
 jump_statement
