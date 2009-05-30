@@ -7,6 +7,8 @@
 struct strbuf *ctoxml_STDOUT;
 extern int ctoxml_cfilepos;
 
+stringhash *ctoxml_typedefs;
+
 // C is a 0-terminated string
 // errorpos will be used to store string offset of 1st syntax error or -1 if parsing was ok
 // Returns 0-terminated string allocated with malloc.
