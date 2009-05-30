@@ -271,7 +271,7 @@ int ctoxml_clineno;
 
 int check_type(void) {
   JSBool hasprop;
-  if(JS_HasProperty(cparser_jscx, cparser_typedefs, ctoxml_ctext, &hasprop) && hasprop) return TYPE_NAME;
+  if(JS_HasProperty(cparser_jscx, JSVAL_TO_OBJECT(cparser_typedefs), ctoxml_ctext, &hasprop) && hasprop) return TYPE_NAME;
   return IDENTIFIER;
 }
 
