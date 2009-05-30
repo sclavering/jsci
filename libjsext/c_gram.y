@@ -612,10 +612,8 @@ static void deftypes(XmlNode *e, XmlNode *td) {
   XmlNode *i = e;
   do {
     if(i->text && strcmp(i->tag, "id") == 0) {
-      XmlNode *shallowcopy = malloc(sizeof(XmlNode));
-      memcpy(shallowcopy, td, sizeof(XmlNode));
-      stringhash_remove(ctoxml_typedefs, i->text);
-      stringhash_insert(ctoxml_typedefs, strdup(i->text), shallowcopy);
+      jsval tmp = JSVAL_TRUE;
+      JS_SetProperty(cparser_jscx, JSVAL_TO_OBJECT(cparser_typedefs), i->text, &tmp);
     }
     if(i->inner && (strcmp(i->tag, "ptr") == 0 || strcmp(i->tag, "ix") == 0 || strcmp(i->tag, "p") == 0 || strcmp(i->tag, "fd") == 0)) {
       deftypes(i->inner, td);

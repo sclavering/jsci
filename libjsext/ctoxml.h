@@ -31,8 +31,11 @@
 #include "xml.h"
 #include "stringhash.h"
 #include "strbuf.h"
+#include "jsapi.h"
 
-extern stringhash *ctoxml_typedefs;
+extern JSContext *cparser_jscx;
+extern jsval cparser_typedefs;
+
 extern char *ctoxml_filename;
 extern char ctoxml_filename_errmsg[80];
 extern struct strbuf *ctoxml_STDOUT;
