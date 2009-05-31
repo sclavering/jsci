@@ -121,12 +121,6 @@ return function(info) {
           expsym[id] = true;
         }
         break;
-
-      case 'define': // macro definition
-        // Defer processing until later
-        expsym[tu.id] = true;
-        break;
-
       } // swtich
     }
   }
