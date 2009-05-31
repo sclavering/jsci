@@ -182,73 +182,23 @@ void preprocessor(void) {
   directive = ctoxml_ctext+1;
   directive += strspn(directive," \t");
 
-  if(strncmp(directive, "define", 6) == 0) {
-    int spclen = strspn(directive + 6, " \t"); // Find start of identifier
-    if(spclen && directive[6 + spclen]) {
-      char *startparen;
-      char *endparen;
-      char *macrovalue;
-      XmlNode *ident_xml;
-      XmlNode *def;
-      char *macroname = strdup(directive + spclen + 6); // Copy identifier and rest of define
-
-      startparen = strchr(macroname,'(');
-      if(startparen && strcspn(macroname, " \t") > startparen - macroname) {
-        endparen = strchr(macroname, ')');
-        macrovalue = endparen + 1;
-        macrovalue += strspn(macrovalue, " \t");
-        *startparen = 0; // Terminate identifier
-      } else {
-        char *identend = macroname + strcspn(macroname, " \t"); // Find end of identifier
-        startparen = 0;
-        macrovalue = identend + strspn(identend, " \t");
-        *identend = 0; // Terminate identifier;
-      }
-
-      ident_xml = xml_text("id", macroname);
-      def = xml("define", ident_xml, xml_text("v", macrovalue), 0);
-
-      if(startparen) {
-        char *ident = startparen + 1;
-        if(ident >= endparen) xml_link(ident_xml, xml_text("pm", ""));
-        while(ident < endparen) {
-          char *identend = ident + strcspn(ident, " \t,)");
-          *identend = 0;
-          xml_link(ident_xml, xml_text("pm", ident));
-          ident = identend + 1;
-          ident += strspn(ident, " \t,");
-        }
-      }
-
-      xml_print(def);
-      xml_free(def);
-    }
-    return;
-  }
-  if(strncmp(directive, "pragma", 6) == 0) {
-    XmlNode *pragma;
-    ctoxml_cterm = directive[6] ? directive + 7 : "";
-    pragma = xml_text("pragma", ctoxml_cterm);
-    xml_print(pragma);
-    xml_free(pragma);
-    return;
-  }
   if(atoi(ctoxml_ctext + 1) || strncmp(directive, "line ", 5) == 0) {
     char *tmpfilename = strchr(ctoxml_ctext, ' ');
-
     if(!(tmpfilename && tmpfilename[0])) return;
     ctoxml_clineno = atoi(tmpfilename + 1);
-
     tmpfilename = strchr(tmpfilename + 1, '\"');
     if(!(tmpfilename && tmpfilename[0])) return;
-
     tmpfilename++;
-
     ctoxml_filename = strdup(tmpfilename);
     strncpy(ctoxml_filename_errmsg, ctoxml_filename, 80);
-
     ctoxml_clineno--;
+    return;
   }
+
+  jsuint len;
+  if(!JS_GetArrayLength(cparser_jscx, JSVAL_TO_OBJECT(cparser_preprocessor_directives), &len)) return;
+  jsval tmp = STRING_TO_JSVAL(JS_NewStringCopyZ(cparser_jscx, ctoxml_ctext));
+  JS_SetElement(cparser_jscx, JSVAL_TO_OBJECT(cparser_preprocessor_directives), len, &tmp);
 }
 
 

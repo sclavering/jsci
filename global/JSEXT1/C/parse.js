@@ -33,8 +33,8 @@ Returns an object containing the following properties:
 
 (function() {
 
-return function(xml) {
-  var code = xml;
+return function(info) {
+  var code = info.xml;
 
   // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
   var live = {};
@@ -84,8 +84,6 @@ return function(xml) {
       var tmpdep={};
 
       switch(String(tu.name())) {
-      // ignored values: "pragma", "line", maybe others
-
       case 'd': // declaration
       case 'fdef': // function definition
         var decl = multiDeclaration(tu, tmpdep);
@@ -135,8 +133,8 @@ return function(xml) {
 
 
   function loaddls() {
-    for each(var pragma in code.pragma) {
-      var match = pragma.match(/JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
+    for each(var pragma in info.preprocessor_directives) {
+      var match = pragma.match(/^#pragma[ \t]+JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
       if(!match) continue;
       var id = 'dl ' + (ndl++);
       var filename = match[1] || ""
@@ -466,19 +464,24 @@ Tries to coerce a C macro into a JavaScript expression
     }
   }
 
+
   function allmacros() {
-    for each(var def in code.define) {
-      if(expsym[def.id]) macro.call(live,def);
+    for each(var thing in info.preprocessor_directives) {
+      var m = thing.match(/^#define[ \t]+([^ \t]+)[ \t]+(.*)$/);
+      if(!m) continue;
+      var id = m[1], val = m[2];
+      // ignore function-like macros, and macros that are redefining a symbol we already have
+      if(id.indexOf("(") != -1 || sym[id]) continue;
+      parsemacro.call(live, id, val);
+      if(live[id] !== undefined) expsym[id] = true;
     }
   }
 
-  function macro(macro) {
-    if (macro.id in sym)
-      return; // Don't overwrite other syms with macros
 
+  function parsemacro(id, val) {
     // Change 123L into 123
 
-    var v=" "+macro.v+" ";
+    var v = " " + val + " "; // not sure why we're wrapping it, but the old code did
     v=v.replace(/([^a-zA-Z_0-9])([0-9]+)[lLuUfF]/g,"$1$2");
     v=v.replace(/([^a-zA-Z_0-9])(0x[0-9a-fA-F]+)[lLuU]/g,"$1$2");
 
@@ -495,51 +498,36 @@ Tries to coerce a C macro into a JavaScript expression
     // remove L before string like in L"string"
     v=v.replace(/^([^"])*L"/,'$1"');
 
-    if (macro.pm.length()) { // #define x(y) y
+    if(v == "  ") { // #define x
 
-      var params=[];
-      for each (var param in macro.pm) {
-        if(param != "") // Used to mark empty arg list
-          params.push(param);
-      }
-
-      var expr = "with(this){function (" + params + ") {return " + v + "}}";
-
-      try {
-        this[macro.id] = eval(expr);
-        sym[macro.id] = expr;
-      } catch(x) {}
-
-    } else if (v=="  ") { // #define x
-
-      this[macro.id]=null;
-      sym[macro.id]="null";
+      this[id] = null;
+      sym[id] = "null";
 
     } else { // #define x 42
       v = v.replace(/^[ \t]+|[ \t]+$/g, "");
 
       if(this['struct ' + v]) { // #define _io_file _IO_FILE
-        this['struct ' + macro.id] = this['struct ' + v];
-        sym['struct ' + macro.id] = "this['struct " + v + "']";
-        if(expsym['struct ' + v]) expsym['struct ' + macro.id] = true;
+        this['struct ' + id] = this['struct ' + v];
+        sym['struct ' + id] = "this['struct " + v + "']";
+        if(expsym['struct ' + v]) expsym['struct ' + id] = true;
       }
 
       if(this['union ' + v]) { // #define _io_file _IO_FILE
-        this['union ' + macro.id] = this['union ' + v];
-        sym['union ' + macro.id] = "this['union " + v + "']";
-        if(expsym['union ' + v]) expsym['union ' + macro.id] = true;
+        this['union ' + id] = this['union ' + v];
+        sym['union ' + id] = "this['union " + v + "']";
+        if(expsym['union ' + v]) expsym['union ' + id] = true;
       }
 
       // alter references to global variables
       //      v=v.replace(/([^0-9A-Za-z_.'"])([a-zA-Z_][a-zA-Z_0-9]*)/g,"$1this['$2']");
 
       if (this[v]) { // #define stdin stdin
-        this[macro.id] = this[v];
-        sym[macro.id] = sym[v];
+        this[id] = this[v];
+        sym[id] = sym[v];
       } else {
         try {
-          with(this) eval("this['" + macro.id + "']=" + v);
-          sym[macro.id] = v;
+          with(this) eval("this['" + id + "']=" + v);
+          sym[id] = v;
         } catch(x) {}
       }
     }

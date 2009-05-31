@@ -8,7 +8,7 @@ struct strbuf *ctoxml_STDOUT;
 extern int ctoxml_cfilepos;
 
 JSContext *cparser_jscx;
-jsval cparser_typedefs;
+jsval cparser_typedefs, cparser_preprocessor_directives;
 
 
 // C is a 0-terminated string
@@ -48,6 +48,10 @@ static JSBool jsx_cToXML(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
   tmp = cparser_typedefs = OBJECT_TO_JSVAL(JS_NewObject(cx, 0, 0, 0));
   if(tmp == JSVAL_NULL) return JS_FALSE;
   if(!JS_SetProperty(cx, JSVAL_TO_OBJECT(*rval), "typedef_set", &tmp)) return JS_FALSE;
+  tmp = cparser_preprocessor_directives = OBJECT_TO_JSVAL(JS_NewArrayObject(cx, 0, 0));
+  if(tmp == JSVAL_NULL) return JS_FALSE;
+  if(!JS_SetProperty(cx, JSVAL_TO_OBJECT(*rval), "preprocessor_directives", &tmp)) return JS_FALSE;
+
   cparser_jscx = cx;
   char *c_code = JS_GetStringBytes(JSVAL_TO_STRING(c_code_str));
   int errpos = 0;
