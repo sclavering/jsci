@@ -440,28 +440,28 @@ initializer_list
   ;
 
 statement
-  : labeled_statement                                      { $$ = $1; }
-  | compound_statement                                     { $$ = $1; }
-  | expression_statement                                   { $$ = $1; }
-  | selection_statement                                    { $$ = $1; }
-  | iteration_statement                                    { $$ = $1; }
-  | jump_statement                                         { $$ = $1; }
-  | asm_statement                                          { $$ = $1; }
+  : labeled_statement                                      { }
+  | compound_statement                                     { }
+  | expression_statement                                   { }
+  | selection_statement                                    { }
+  | iteration_statement                                    { }
+  | jump_statement                                         { }
+  | asm_statement                                          { }
   ;
 
 labeled_statement
-  : identifier ':' statement                               { $$ = xml_link(xml_text("label", $1), $3); }
-  | CASE constant_expr ':' statement                       { $$ = xml_link(xml("case", $2, 0), $4); }
-  | DEFAULT ':' statement                                  { $$ = xml_link(xml("default", 0), $3); }
+  : identifier ':' statement                               { }
+  | CASE constant_expr ':' statement                       { }
+  | DEFAULT ':' statement                                  { }
   ;
 
 asm_statement
-  : ASM                                                    { $$ = xml_text("asm", ctoxml_cterm); }
+  : ASM                                                    { }
   ;
 
 compound_statement
-  : '{' '}'                                                { $$ = xml("p", 0); }
-  | '{' statement_list '}'                                 { $$ = xml("p", $2, 0); }
+  : '{' '}'                                                { }
+  | '{' statement_list '}'                                 { }
   ;
 
 declaration_list
@@ -470,36 +470,36 @@ declaration_list
   ;
 
 statement_list
-  : declaration                                            { $$ = $1; }
-  | statement                                              { $$ = $1; }
-  | statement_list statement                               { $$ = xml_link($1, $2); }
-  | statement_list declaration                             { $$ = xml_link($1, $2); }
+  : declaration                                            { }
+  | statement                                              { }
+  | statement_list statement                               { }
+  | statement_list declaration                             { }
   ;
 
 expression_statement
-  : ';'                                                    { $$ = xml("e", 0); }
-  | expr ';'                                               { $$ = $1; }
+  : ';'                                                    { }
+  | expr ';'                                               { }
   ;
 
 selection_statement
-  : IF '(' expr ')' statement                              { $$ = xml("if", $3, $5, 0); }
-  | IF '(' expr ')' statement ELSE statement               { $$ = xml("if", $3, $5, $7, 0); }
-  | SWITCH '(' expr ')' statement                          { $$ = xml("switch", $3, $5, 0); }
+  : IF '(' expr ')' statement                              { }
+  | IF '(' expr ')' statement ELSE statement               { }
+  | SWITCH '(' expr ')' statement                          { }
   ;
 
 iteration_statement
-  : WHILE '(' expr ')' statement                           { $$ = xml("while", $3, $5, 0); }
-  | DO statement WHILE '(' expr ')' ';'                    { $$ = xml("do", $2, $5, 0); }
-  | FOR '(' expression_statement expression_statement ')'  { $$ = xml("for", $3, $4, xml("e", 0), 0); }
-  | FOR '(' expression_statement expression_statement expr ')' { $$ = xml("for", $3, $4, $5, 0); }
+  : WHILE '(' expr ')' statement                           { }
+  | DO statement WHILE '(' expr ')' ';'                    { }
+  | FOR '(' expression_statement expression_statement ')'  { }
+  | FOR '(' expression_statement expression_statement expr ')' { }
   ;
 
 jump_statement
-  : GOTO identifier ';'                                    { $$ = xml_text("goto", $2); }
-  | CONTINUE ';'                                           { $$ = xml("continue", 0); }
-  | BREAK ';'                                              { $$ = xml("break", 0); }
-  | RETURN ';'                                             { $$ = xml("return", 0); }
-  | RETURN expr ';'                                        { $$ = xml("return", $2, 0); }
+  : GOTO identifier ';'                                    { }
+  | CONTINUE ';'                                           { }
+  | BREAK ';'                                              { }
+  | RETURN ';'                                             { }
+  | RETURN expr ';'                                        { }
   ;
 
 translation_unit
@@ -513,10 +513,10 @@ external_definition
   ;
 
 function_definition
-  : declarator compound_statement                                          { $$ = xml("fdef", $1, $2, 0); }
-  | declarator declaration_list compound_statement                         { $$ = xml("fdef", $1, $2, $3, 0); }
-  | declaration_specifiers declarator compound_statement                   { $$ = xml("fdef", $1, $2, $3, 0); }
-  | declaration_specifiers declarator declaration_list compound_statement  { $$ = xml("fdef", $1, $2, $3, $4, 0); }
+  : declarator compound_statement                                          { $$ = xml("fdef", $1, 0); }
+  | declarator declaration_list compound_statement                         { $$ = xml("fdef", $1, $2, 0); }
+  | declaration_specifiers declarator compound_statement                   { $$ = xml("fdef", $1, $2, 0); }
+  | declaration_specifiers declarator declaration_list compound_statement  { $$ = xml("fdef", $1, $2, $3, 0); }
   ;
 
 typedeffed_name
