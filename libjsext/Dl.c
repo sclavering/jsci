@@ -102,8 +102,12 @@ static void Dl_finalize(JSContext *cx, JSObject *obj) {
 
 
 static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval) {
-  if(argc < 2 || !JSVAL_IS_STRING(argv[0]) || !JSVAL_IS_OBJECT(argv[1]) || JSVAL_IS_NULL(argv[1]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[1]), JSX_GetTypeClass(), NULL)) {
-    JS_ReportError(cx, "Dl.prototype.pointer(): bad arguments");
+  if(!JSVAL_IS_STRING(argv[0])) {
+    JS_ReportError(cx, "Dl.prototype.pointer(): first argument must be a string");
+    return JS_FALSE;
+  }
+  if(!JSVAL_IS_OBJECT(argv[1]) || JSVAL_IS_NULL(argv[1]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[1]), JSX_GetTypeClass(), NULL)) {
+    JS_ReportError(cx, "Dl.prototype.pointer(): second argument must be a Type instance");
     return JS_FALSE;
   }
 
