@@ -1499,10 +1499,8 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
     *rval = OBJECT_TO_JSVAL(obj);
   }
 
-  if(argc == 0) return JS_TRUE;
-
   if(argc < 1 || !JSVAL_IS_OBJECT(argv[0]) || JSVAL_IS_NULL(argv[0]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
-    JSX_ReportException(cx, "Wrong arguments to Pointer");
+    JSX_ReportException(cx, "Pointer(): first argument must be a Type");
     return JS_FALSE;
   }
 
