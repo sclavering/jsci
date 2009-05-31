@@ -29,7 +29,6 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
 static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSObject *type);
-static JSBool JSX_InitPointerString(JSContext *cx, JSObject *obj, JSString *str);
 
 
 static JSClass JSX_PointerClass={
