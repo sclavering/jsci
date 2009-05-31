@@ -1469,11 +1469,9 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   JSX_Pointer *ptr, *newptr;
-  
 
-  if (argc<1 ||
-      !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
-    JSX_ReportException(cx, "Wrong argument to cast");
+  if(!JSVAL_IS_OBJECT(argv[0]) || JSVAL_IS_NULL(argv[0]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
+    JSX_ReportException(cx, "Pointer.prototype.cast(): argument must be a Type instance");
     return JS_FALSE;
   }
 
