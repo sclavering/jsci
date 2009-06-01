@@ -12,7 +12,7 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
 static int JSX_TypeAlign(JSX_Type *type);
 
 
-static JSObject *sTypeVoid = NULL;
+static JSX_Type *sTypeVoid = NULL;
 // __proto__ for results of Type.function(...) and similar
 static JSObject *s_Type_array_proto = NULL;
 static JSObject *s_Type_bitfield_proto = NULL;
@@ -207,7 +207,7 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
   if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
   if(!JSX_InitParamType(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
   if(memberno == type->nParam - 1) {
-    type->param[type->nParam].type = JS_GetPrivate(cx, JSX_GetVoidType());
+    type->param[type->nParam].type = sTypeVoid;
     type->param[type->nParam].isConst = 0;
   }
   if(type->cif.arg_types) {
@@ -254,7 +254,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
   memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
 
-  type->param[type->nParam].type = JS_GetPrivate(cx, JSX_GetVoidType());
+  type->param[type->nParam].type = sTypeVoid;
   type->param[type->nParam].isConst=0;
   type->cif.arg_types=0;
 
@@ -481,7 +481,7 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
   type = (JSX_TypePointer *) JS_malloc(cx, sizeof(JSX_TypePointer));
   type->type=POINTERTYPE;
   JS_SetPrivate(cx, retobj, type);
-  type->direct = JS_GetPrivate(cx, JSX_GetVoidType());
+  type->direct = sTypeVoid;
   JS_DefineElement(cx, retobj, 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   if(direct != JSVAL_VOID) type->direct = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
 
@@ -541,7 +541,7 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 }
 
 
-JSObject *JSX_GetVoidType(void) {
+JSX_Type *GetVoidType(void) {
   return sTypeVoid;
 }
 
@@ -612,7 +612,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
   type->type = VOIDTYPE;
   JS_SetPrivate(cx, newtype, type);
 
-  sTypeVoid = newtype;
+  sTypeVoid = type;
 }
 
 

@@ -1440,7 +1440,7 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
   if (!ret)
     return JS_FALSE;
   ret->ptr=ret+1;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, JSX_GetVoidType());
+  ret->type = GetVoidType();
   ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
 
