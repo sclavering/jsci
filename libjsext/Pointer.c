@@ -1415,14 +1415,6 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   JSX_Pointer *ret;
 
-  if (!typeobj) {
-    jsval typeval;
-    if (!JS_GetProperty(cx, retobj, "type", &typeval))
-      return JS_FALSE;
-    if (typeval==JSVAL_VOID)
-      return JS_FALSE;
-    typeobj=JSVAL_TO_OBJECT(typeval);
-  }
   if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
