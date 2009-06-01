@@ -33,7 +33,7 @@ libdir=@libdir@
 version=@PACKAGE_VERSION@
 
 YFLAGS	= -dv
-CFLAGS	= -O3 $(JSAPI_FLAGS) -Dsysconfdir=\"$(sysconfdir)\" -I../js/src -Dlibdir=\"$(libdir)\" -fPIC $(XCFLAGS)
+CFLAGS	= -O3 $(JSAPI_FLAGS) -Dsysconfdir=\"$(sysconfdir)\" -I../js/src -Dlibdir=\"$(libdir)\" $(XCFLAGS)
 LFLAGS	= 
 LDFLAGS	= -L../js/src/Linux_All_OPT.OBJ
 
