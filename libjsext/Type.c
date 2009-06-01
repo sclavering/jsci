@@ -510,7 +510,6 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   type->type=ARRAYTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
-  type->member = JS_GetPrivate(cx, JSX_GetVoidType());
   type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
   return JS_TRUE;
 }
@@ -537,7 +536,6 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   type->type=BITFIELDTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
-  type->member = JS_GetPrivate(cx, JSX_GetVoidType());
   type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
   return JS_TRUE;
 }
