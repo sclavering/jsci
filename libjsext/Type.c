@@ -12,7 +12,6 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
 static int JSX_TypeAlign(JSX_Type *type);
 
 
-static JSObject *sTypeChar = NULL;
 static JSObject *sTypeVoid = NULL;
 // __proto__ for results of Type.function(...) and similar
 static JSObject *s_Type_array_proto = NULL;
@@ -544,11 +543,6 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 }
 
 
-JSObject *JSX_GetCharType(void) {
-  return sTypeChar;
-}
-
-
 JSObject *JSX_GetVoidType(void) {
   return sTypeVoid;
 }
@@ -569,8 +563,8 @@ static jsval init_numeric_Type(JSContext *cx, int typeid, int size, ffi_type ffi
 
 
 static void init_int_types(JSContext *cx, JSObject *typeobj) {
-  jsval tmp, uchar;
-  tmp = uchar = init_numeric_Type(cx, UINTTYPE, 0, ffi_type_uchar);
+  jsval tmp;
+  tmp = init_numeric_Type(cx, UINTTYPE, 0, ffi_type_uchar);
   JS_SetProperty(cx, typeobj, "unsigned_char", &tmp);
   tmp = init_numeric_Type(cx, UINTTYPE, 1, ffi_type_ushort);
   JS_SetProperty(cx, typeobj, "unsigned_short", &tmp);
@@ -593,9 +587,6 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
 
   // xxx currently we let 0-ffi.js alias Type.int etc to Type.signed_int, which isn't portable.
   // limits.h has constants we could use to detect this.  char is particularly odd, since for C type checking it'd distinct from both "signed char" and "unsigned char", though always has the same representation as one or other of them.
-
-  // It seems a bit iffy that this is uchar rather than char (which is typically signed), but that's what the old code did
-  sTypeChar = JSVAL_TO_OBJECT(uchar);
 }
 
 
