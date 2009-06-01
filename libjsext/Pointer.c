@@ -28,7 +28,7 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data);
 static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
-static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSObject *type);
+static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSX_Type *type);
 
 
 static JSClass JSX_PointerClass={
@@ -782,7 +782,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       tmpval=OBJECT_TO_JSVAL(newptr);
       JS_DefineProperty(cx, obj, "__ptr__", tmpval, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 
-      if(!JSX_InitPointerCallback(cx, newptr, fun, ((JSX_TypePointer *) type)->direct->typeObject)) {
+      if(!JSX_InitPointerCallback(cx, newptr, fun, ((JSX_TypePointer *) type)->direct)) {
         return 0;
       }
     }
@@ -1372,10 +1372,10 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
 }
 
 
-static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JSObject *typeobj) {
+static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JSX_Type *type) {
   JSX_Callback *retpriv;
   
-  if (!JS_InstanceOf(cx, typeobj, JSX_GetTypeClass(), NULL) || ((JSX_Type *) JS_GetPrivate(cx, typeobj))->type != FUNCTIONTYPE) {
+  if(type->type != FUNCTIONTYPE) {
     JSX_ReportException(cx, "Type is not a C function");
     return JS_FALSE;
   }
@@ -1393,7 +1393,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   retpriv->cx=cx;
   retpriv->fun=fun;
   retpriv->finalize=ffi_closure_free; //This would free the code address, not always identical to writeable address. So it is checked in finalize.
-  retpriv->type = (JSX_Type *) JS_GetPrivate(cx, typeobj);
+  retpriv->type = type;
 
   if(ffi_prep_closure_loc(retpriv->writeable, JSX_GetCIF(cx, (JSX_TypeFunction *) retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
     return JS_FALSE;
@@ -1496,7 +1496,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
       typeObject = ((JSX_TypePointer *) type)->direct->typeObject;
       type = JS_GetPrivate(cx, typeObject);
     }
-    if(JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), typeObject)) return JS_FALSE;
+    if(JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), type)) return JS_FALSE;
     return JS_TRUE;
   }
 
