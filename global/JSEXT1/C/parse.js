@@ -110,11 +110,7 @@ return function(info) {
 
           sym[id] = expr;
 
-          try {
-            with(this) eval("this['" + id + "']=" + expr);
-          } catch(x) {
-            print("Error while evaluating ", id, ":\n", x, "\n");
-          }
+          liveeval("this['" + id + "']=" + expr);
 
           dep[id] = tmpdep;
 
@@ -268,12 +264,7 @@ return function(info) {
         prevsym = sm;
       } else {
         var expr = inner_eval(sm);
-        try {
-          // I'm using .call() because I assume |expr| may explicitly refer to "this"
-          (function() { with(this) val = eval(expr); }).call(live);
-        } catch(x) {
-          print("enumMembers\n", x, "\n");
-        }
+        val = liveeval(expr);
       }
     }
     if (prevsym !== undefined) {
@@ -291,11 +282,7 @@ return function(info) {
     if (!su[id]) {
       var expr="Type."+su_xml.name()+"()";
       su[id]=expr;
-      try {
-        live[id] = eval(expr);
-      } catch(x) {
-        print("suDeclare\n", x, "\n", su_xml, "\n");
-      }
+      live[id] = liveeval(expr);
     }
 
     if (su_xml.*.length()) {
@@ -308,11 +295,7 @@ return function(info) {
 
       sym[id] = "(" + exprs + ",this['" + id + "'])";
 
-      try {
-        (function() { with(this) eval(exprs.join(";")); }).call(live);
-      } catch(x) {
-        print("suDeclare2\n", x, "\n", su_xml, "\n");
-      }
+      liveeval(exprs.join(";"));
 
       dep[id]=tmpdep;
     }
@@ -332,7 +315,7 @@ return function(info) {
       var decl=expr.*[0];
       var declor=decl[0].*[decl[0].*.length()-1];
       var d=declaration(decl, {}, declor);
-      return (function() { with(this) { return Type.sizeof(eval(d.type)) }}).call(live);
+      return Type.sizeof(liveeval(d.type));
     }
 
     if(expr.@op == "sizeof" && expr.@type == "e") {
@@ -519,12 +502,17 @@ Tries to coerce a C macro into a JavaScript expression
         this[id] = this[v];
         sym[id] = sym[v];
       } else {
-        try {
-          with(this) eval("this['" + id + "']=" + v);
-          sym[id] = v;
-        } catch(x) {}
+        if(liveeval("this['" + id + "']=" + v) !== undefined) sym[id] = v;
       }
     }
+  }
+
+
+  function liveeval(expr) {
+    try {
+      return (function() { with(live) return eval(expr); }).call(live);
+    } catch(e) {}
+    return undefined;
   }
 }
 
