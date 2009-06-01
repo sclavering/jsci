@@ -247,7 +247,6 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   if(!JS_GetArrayLength(cx, paramobj, &nParam)) return JS_FALSE;
 
   type->nParam=nParam;
-  type->typeObject=retobj;
   JS_SetPrivate(cx, retobj, type);
 
   JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
@@ -451,7 +450,6 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
   memset(type->member, 0, sizeof(JSX_MemberType) * nMember);
   type->sizeOf=0;
   JS_SetPrivate(cx, retobj, type);
-  type->typeObject=retobj;
   type->ffiType.elements=0;
 
   for (i=0; i<nMember; i++) {
@@ -486,7 +484,6 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
   JS_SetPrivate(cx, retobj, type);
   type->direct = JS_GetPrivate(cx, JSX_GetVoidType());
   JS_DefineElement(cx, retobj, 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  type->typeObject=retobj;
   if(direct != JSVAL_VOID) type->direct = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
 
   return JS_TRUE;
@@ -515,7 +512,6 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
   type->member = JS_GetPrivate(cx, JSX_GetVoidType());
-  type->typeObject=retobj;
   type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
   return JS_TRUE;
 }
@@ -543,7 +539,6 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
   type->member = JS_GetPrivate(cx, JSX_GetVoidType());
-  type->typeObject=retobj;
   type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
   return JS_TRUE;
 }
@@ -568,7 +563,6 @@ static jsval init_numeric_Type(JSContext *cx, int typeid, int size, ffi_type ffi
   type->type = typeid;
   type->size = size;
   type->ffiType = ffit;
-  type->typeObject = newtype;
   JS_SetPrivate(cx, newtype, type);
   return newval;
 }
@@ -627,7 +621,6 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
 
   type = (JSX_Type *) JS_malloc(cx, sizeof(JSX_Type));
   type->type = VOIDTYPE;
-  type->typeObject = newtype;
   JS_SetPrivate(cx, newtype, type);
 
   sTypeVoid = newtype;

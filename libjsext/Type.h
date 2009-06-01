@@ -28,12 +28,10 @@ enum JSX_TypeID {
 
 typedef struct { // Private part of Type objects
   enum JSX_TypeID type; // VOID
-  JSObject *typeObject;
 } JSX_Type;
 
 typedef struct {
   enum JSX_TypeID type; // INTTYPE, UINTTYPE, or FLOATTYPE
-  JSObject *typeObject;
   int size;
   ffi_type ffiType;
 } JSX_TypeNumeric;
@@ -45,7 +43,6 @@ typedef struct {
 
 typedef struct {
   enum JSX_TypeID type; // FUNCTIONTYPE
-  JSObject *typeObject;
   JSX_ParamType *param;
   int nParam;
   JSX_Type *returnType;
@@ -60,7 +57,6 @@ typedef struct {
 
 typedef struct {
   enum JSX_TypeID type; // STRUCTTYPE or UNIONTYPE
-  JSObject *typeObject;
   JSX_MemberType *member;
   int nMember;
   int member_capacity;
@@ -70,20 +66,17 @@ typedef struct {
 
 typedef struct {
   enum JSX_TypeID type; // POINTERTYPE
-  JSObject *typeObject;
   JSX_Type *direct;
 } JSX_TypePointer;
 
 typedef struct {
   enum JSX_TypeID type; // ARRAYTYPE
-  JSObject *typeObject;
   JSX_Type *member;
   int length;
 } JSX_TypeArray;
 
 typedef struct {
   enum JSX_TypeID type; // BITFIELDTYPE
-  JSObject *typeObject;
   JSX_Type *member;
   int length;
 } JSX_TypeBitfield;
