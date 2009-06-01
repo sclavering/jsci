@@ -146,9 +146,11 @@ int main(int argc, char **argv, char **envp) {
 JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
 
+  jsval argsval = JSVAL_VOID;
+  JS_AddRoot(cx, &argsval);
   JSObject *argobj;
   argobj = JS_NewObject(cx, 0, 0, 0);
-  JS_AddRoot(cx, &argobj);
+  argsval = OBJECT_TO_JSVAL(argobj);
 
   jsval tmp = JSVAL_VOID;
   JS_AddRoot(cx, &tmp);
@@ -201,15 +203,12 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
     filename=ifdup;
   }
 
-  exec(cx, obj, filename, rval);
-
-  JSFunction *jsfun;
+  if(!exec(cx, obj, filename, rval)) return JS_FALSE;
 
   JSBool rv = JS_FALSE;
-  jsfun=JS_ValueToFunction(cx, *rval);
-  if(jsfun) {
-    tmp = OBJECT_TO_JSVAL(argobj);
-    rv = JS_CallFunction(cx, obj, jsfun, 1, &tmp, rval);
+  if(JSVAL_IS_OBJECT(*rval) && !JSVAL_IS_NULL(rval) && JS_ObjectIsFunction(cx, *rval)) {
+    jsval jsfun = *rval;
+    rv = JS_CallFunctionValue(cx, obj, jsfun, 1, &argsval, rval);
   } else {
     JSX_ReportException(cx, "Ini file does not evaluate to a function");
   }
