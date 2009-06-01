@@ -158,12 +158,6 @@ Pointer.prototype.toString()
 Returns a string containing the hexadecimal number representing the memory location pointed to by the pointer object.
 
 
-Pointer.prototype.type
-----------------------
-
-Read-only.  Contains a Type object for the pointer.
-
-
 Pointer.prototype.valueOf()
 ---------------------------
 

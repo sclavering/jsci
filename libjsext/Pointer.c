@@ -147,7 +147,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
         ptr->ptr = *(void **)p;
         ptr->type = ((JSX_TypePointer *) type)->direct;
         ptr->finalize = 0;
-        JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(ptr->type->typeObject), 0, 0, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
         JS_SetPrivate(cx, obj, ptr);
       }
     }
@@ -1356,9 +1355,6 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
     JSX_ReportException(cx, "Wrong type argument");
     return JS_FALSE;
   }
-      
-  if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(type), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
 
   size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, type));
   retpriv = JS_malloc(cx, sizeof(JSX_Pointer) + size);
@@ -1383,9 +1379,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
     JSX_ReportException(cx, "Type is not a C function");
     return JS_FALSE;
   }
-      
-  if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
+
   if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
@@ -1410,12 +1404,11 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
 }
 
 
-// If typeobj is null, a type property must have been assigned to retobj before calling initpointer.
-
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   JSX_Pointer *ret;
 
-  if (!JS_DefineProperty(cx, retobj, "type", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
+  // xxx a hack to save typeobj from garbage collection, and thus stop the free()ing of the JSX_Type struct we share 
+  if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
   ret = JS_malloc(cx, sizeof(JSX_Pointer));
@@ -1442,9 +1435,6 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 
   newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
-
-  if(!JS_DefineProperty(cx, obj, "type", OBJECT_TO_JSVAL(JSX_GetVoidType()), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
-
   length=INT_TO_JSVAL(argv[0]);
   ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
@@ -1746,8 +1736,6 @@ static JSBool JSX_Pointer_field(JSContext *cx, JSObject *obj, uintN argc, jsval 
   newptr->type = sutype->member[ix].type;
   newptr->ptr = ptr->ptr + sutype->member[ix].offset / 8;
   newptr->finalize = 0;
-
-  JS_DefineProperty(cx, newobj, "type", OBJECT_TO_JSVAL(newptr->type->typeObject), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
   JS_SetPrivate(cx, newobj, newptr);
 
   return JS_TRUE;
