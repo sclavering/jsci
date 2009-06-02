@@ -43,7 +43,6 @@ jsval make_Dl(JSContext *cx, JSObject *glob) {
 
 static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   char *filename;
-  JSBool res;
 
   if((argc >= 1 && (JSVAL_IS_NULL(argv[0]) || JSVAL_IS_VOID(argv[0]))) || argc == 0) {
     filename = 0;
@@ -110,22 +109,19 @@ static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *a
     return JS_FALSE;
   }
 
-  JSObject *obj;
-  obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-  *rval = OBJECT_TO_JSVAL(obj);
-
-  if(!JSX_InitPointer(cx, obj, JSVAL_TO_OBJECT(argv[1]))) return JS_FALSE;
-
-  JSX_Pointer *ptr;
-  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if(!ptr) return JS_FALSE;
-
-  ptr->ptr = (void *) dlsym(JS_GetPrivate(cx, dl), JS_GetStringBytes(JSVAL_TO_STRING(argv[0])));
-
-  if(!ptr->ptr) {
+  void *sym = dlsym(JS_GetPrivate(cx, dl), JS_GetStringBytes(JSVAL_TO_STRING(argv[0])));
+  if(!sym) {
     JSX_ReportException(cx, "Dl.prototype.pointer(): couldn't resolve symbol");
     return JS_FALSE;
   }
 
+  JSObject *obj;
+  obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
+  *rval = OBJECT_TO_JSVAL(obj);
+  if(!JSX_InitPointer(cx, obj, JSVAL_TO_OBJECT(argv[1]))) return JS_FALSE;
+  JSX_Pointer *ptr;
+  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  if(!ptr) return JS_FALSE;
+  ptr->ptr = sym;
   return JS_TRUE;
 }
