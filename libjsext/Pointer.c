@@ -1522,28 +1522,22 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
 
 
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  char *argbuf;
-  void **argptr=0;
-  char *retbuf=0;
-  size_t arg_size=0;
-  ffi_type **arg_types=0;
-  ffi_cif *cif;
-  JSX_Type *type;
   JSX_Pointer *ptr = JS_GetPrivate(cx, obj);
+  JSX_Type *type = ptr->type;
 
-  type=ptr->type;
-
-  if (type->type!=FUNCTIONTYPE) {
+  if(type->type != FUNCTIONTYPE) {
     JSX_ReportException(cx, "call: Wrong pointer type");
-    goto failure;
+    return JS_FALSE;
   }
 
+  ffi_type **arg_types = 0;
   arg_types=JS_malloc(cx, sizeof(ffi_cif)+sizeof(ffi_type *)*(argc+1));
+  ffi_cif *cif;
   cif=(ffi_cif *)(arg_types+(argc+1));
 
-  int real_argc;
-  arg_size = JSX_TypeSize_multi(cx, argc, ((JSX_TypeFunction *) type)->param, argv, arg_types);
+  size_t arg_size = JSX_TypeSize_multi(cx, argc, ((JSX_TypeFunction *) type)->param, argv, arg_types);
 
+  int real_argc;
   for (real_argc=0; arg_types[real_argc]; real_argc++)
     ;
 
@@ -1558,9 +1552,12 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
   int retsize = JSX_TypeSize(((JSX_TypeFunction *) type)->returnType);
 
+  void **argptr = 0;
   argptr=(void **)JS_malloc(cx, arg_size + argc*sizeof(void *) + retsize + 8);
 
+  char *retbuf = 0;
   retbuf=(char *)(argptr + argc);
+  char *argbuf;
   argbuf=retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
   if (arg_size) {
