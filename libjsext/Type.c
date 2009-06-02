@@ -10,6 +10,7 @@ static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
 static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member);
 static int JSX_TypeAlign(JSX_Type *type);
+static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype);
 
 
 static JSX_Type *sTypeVoid = NULL;
@@ -275,7 +276,7 @@ JSClass *JSX_GetTypeClass(void) {
 }
 
 
-JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype) {
+static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype) {
   jsval tmp;
   JS_GetProperty(cx, membertype, "type", &tmp);
   if(!JSVAL_IS_OBJECT(tmp) || tmp == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(tmp), &JSX_TypeClass, NULL)) {
