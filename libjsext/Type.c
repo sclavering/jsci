@@ -433,7 +433,7 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 
   type = (JSX_TypeStructUnion *) JS_malloc(cx, sizeof(JSX_TypeStructUnion));
 
-  type->type = typeid;;
+  type->type = typeid;
   type->nMember=nMember;
   type->member_capacity=nMember;
   type->member = nMember ? (JSX_MemberType *) JS_malloc(cx, sizeof(JSX_MemberType) * nMember) : 0;
