@@ -743,7 +743,6 @@ int JSX_CType(JSX_Type *type) {
     if(atype->member->type == INTTYPE || atype->member->type == UINTTYPE) {
       int size = ((JSX_TypeNumeric *) atype->member)->size;
       if(size == 0) return ACHARTYPE;
-      if(size == 1) return ASHORTTYPE;
     }
   }
   if(type->type == POINTERTYPE) {
