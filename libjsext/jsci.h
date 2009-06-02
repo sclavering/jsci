@@ -56,7 +56,7 @@ typedef struct {
 } JSX_TypeFunction;
 
 typedef struct {
-  JSX_Type *type;
+  JSX_Type *membertype;
   char *name;
   int offset; // in bits
 } JSX_MemberType;

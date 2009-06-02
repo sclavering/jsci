@@ -562,14 +562,14 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       for (i=0; i<size; i++) {
         JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
         JS_GetProperty(cx, obj, mtype.name, &tmp);
-        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.type, &tmp);
+        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
         if(!thissize) {
           goto structfailure;
           JS_RemoveRoot(cx, &tmp);
         }
         if(do_clean != 2) {
-          if(mtype.type->type == BITFIELDTYPE) {
-            int length = ((JSX_TypeBitfield *) mtype.type)->length;
+          if(mtype.membertype->type == BITFIELDTYPE) {
+            int length = ((JSX_TypeBitfield *) mtype.membertype)->length;
             int offset = mtype.offset % 8;
             int mask = ~(-1 << length);
             tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);
@@ -589,7 +589,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
         jsval tmp;
         JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
         JS_GetProperty(cx, obj, mtype.name, &tmp);
-        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.type, &tmp);
+        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.membertype, &tmp);
       }
     }
     goto failure;
@@ -608,7 +608,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       for (i=0; i<size; i++) {
         JS_GetElement(cx, obj, i, &tmp);
         JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
-        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.type, &tmp);
+        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
         if(!thissize) {
           JS_RemoveRoot(cx, &tmp);
           goto structfailure2;
@@ -627,7 +627,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
         JSX_MemberType mtype = ((JSX_TypeStructUnion *) type)->member[i];
-        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.type, &tmp);
+        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.membertype, &tmp);
       }
     }
     goto failure;
@@ -1153,19 +1153,19 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
       JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
 
-      if(((JSX_TypeStructUnion *) type)->member[i].type->type == BITFIELDTYPE) {
-        int length = ((JSX_TypeBitfield *) ((JSX_TypeStructUnion *) type)->member[i].type)->length;
+      if(((JSX_TypeStructUnion *) type)->member[i].membertype->type == BITFIELDTYPE) {
+        int length = ((JSX_TypeBitfield *) ((JSX_TypeStructUnion *) type)->member[i].membertype)->length;
         int offset = ((JSX_TypeStructUnion *) type)->member[i].offset % 8;
         int mask = ~(-1 << length);
         int imask = ~(imask << offset);
         int tmpint;
         int tmpint2;
-        thissize = JSX_Set(cx, (char *) &tmpint, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
+        thissize = JSX_Set(cx, (char *) &tmpint, will_clean, ((JSX_TypeStructUnion *) type)->member[i].membertype, tmp);
         memcpy((char *) &tmpint2, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, thissize);
         tmpint = (tmpint2 & imask) | ((tmpint & mask) << offset);
         memcpy(p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, (char *) &tmpint, thissize);
       } else {
-        thissize = JSX_Set(cx, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
+        thissize = JSX_Set(cx, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, will_clean, ((JSX_TypeStructUnion *) type)->member[i].membertype, tmp);
       }
       if(!thissize) goto structfailure;
     }
@@ -1178,7 +1178,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       for (;i--;) {
         jsval tmp;
         JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
-        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].type, &tmp);
+        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].membertype, &tmp);
       }
     }
 
@@ -1194,7 +1194,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
     for (i=0; i<size; i++) {
       jsval tmp;
       JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Set(cx, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, will_clean, ((JSX_TypeStructUnion *) type)->member[i].type, tmp);
+      int thissize = JSX_Set(cx, p + ((JSX_TypeStructUnion *) type)->member[i].offset / 8, will_clean, ((JSX_TypeStructUnion *) type)->member[i].membertype, tmp);
       if(!thissize) goto structfailure2;
     }
 
@@ -1206,7 +1206,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       for (;i--;) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].type, &tmp);
+        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].membertype, &tmp);
       }
     }
 
@@ -1714,7 +1714,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   if(ix == sutype->nMember)
     return JSX_ReportException(cx, "Pointer.prototype.field(): unknown struct/union member: %s", myname);
-  if(sutype->member[ix].type->type == BITFIELDTYPE)
+  if(sutype->member[ix].membertype->type == BITFIELDTYPE)
     return JSX_ReportException(cx, "Pointer.prototype.field(): requested member is a bitfield: %s", myname);
 
   JSObject *newobj;
@@ -1723,7 +1723,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   JSX_Pointer *newptr;
   newptr = (JSX_Pointer *) malloc(sizeof(JSX_Pointer));
-  newptr->type = sutype->member[ix].type;
+  newptr->type = sutype->member[ix].membertype;
   newptr->ptr = ptr->ptr + sutype->member[ix].offset / 8;
   newptr->finalize = 0;
   JS_SetPrivate(cx, newobj, newptr);

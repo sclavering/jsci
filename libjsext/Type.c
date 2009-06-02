@@ -80,7 +80,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
 
     for(i = 0; i < ((JSX_TypeStructUnion *) type)->nMember; i++) {
       int al=1;
-      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].type;
+      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].membertype;
       while (memb->type==ARRAYTYPE) {
         al *= ((JSX_TypeArray *) memb)->length;
         memb = ((JSX_TypeArray *) memb)->member;
@@ -113,7 +113,7 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
       int al=1;
       int j;
       ffi_type *t;
-      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].type;
+      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].membertype;
       while (memb->type==ARRAYTYPE) {
         al *= ((JSX_TypeArray *) memb)->length;
         memb = ((JSX_TypeArray *) memb)->member;
@@ -168,7 +168,7 @@ static JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *
     // name is freed later
     return JS_FALSE;
   }
-  dest->type = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+  dest->membertype = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
 
   return JS_TRUE;
 }
@@ -315,7 +315,7 @@ static int JSX_TypeAlign(JSX_Type *type) {
   case UNIONTYPE: {
     int i, ret = 0, len = ((JSX_TypeStructUnion *) type)->nMember;
     for (i=0; i<len; i++) {
-      int thisalign = JSX_TypeAlign(((JSX_TypeStructUnion *) type)->member[i].type);
+      int thisalign = JSX_TypeAlign(((JSX_TypeStructUnion *) type)->member[i].membertype);
       if (thisalign>ret) ret=thisalign;
     }
     return ret;
@@ -387,7 +387,7 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
     if(!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
 
     type->member[memberno].offset=0;
-    thissize=JSX_TypeSizeBits(type->member[memberno].type);
+    thissize = JSX_TypeSizeBits(type->member[memberno].membertype);
     if (thissize > type->sizeOf)
       type->sizeOf=thissize;
 
@@ -400,12 +400,12 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
       ((JSX_TypeStructUnion *) type)->ffiType.elements = 0;
     }
 
-    if (memberno!=type->nMember-1 && memberno>0 && type->member[memberno-1].type) {
-      type->sizeOf=type->member[memberno-1].offset + JSX_TypeSizeBits(type->member[memberno-1].type);
+    if(memberno != type->nMember - 1 && memberno > 0 && type->member[memberno - 1].membertype) {
+      type->sizeOf = type->member[memberno - 1].offset + JSX_TypeSizeBits(type->member[memberno - 1].membertype);
     }
       
-    for (i=memberno; i<type->nMember && type->member[i].type; i++) {
-      thisalign=JSX_TypeAlignBits(type->member[i].type);
+    for(i = memberno; i < type->nMember && type->member[i].membertype; i++) {
+      thisalign = JSX_TypeAlignBits(type->member[i].membertype);
 
       if (thisalign==0) {
         JSX_ReportException(cx, "Division by zero");
@@ -414,7 +414,7 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
 
       type->sizeOf+=(thisalign - type->sizeOf % thisalign) % thisalign;
       type->member[i].offset=type->sizeOf;
-      type->sizeOf+=JSX_TypeSizeBits(type->member[i].type);
+      type->sizeOf += JSX_TypeSizeBits(type->member[i].membertype);
     }
   }
 
@@ -764,7 +764,7 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type) {
       int i;
       JSX_TypeStructUnion *sutype = (JSX_TypeStructUnion *) type;
       for(i = 0; i < sutype->nMember; i++)
-        if(JSX_TypeContainsPointer(sutype->member[i].type))
+        if(JSX_TypeContainsPointer(sutype->member[i].membertype))
           return JS_TRUE;
       return JS_FALSE;
     default:
