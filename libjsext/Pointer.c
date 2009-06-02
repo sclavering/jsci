@@ -21,8 +21,6 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
 static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, void **argptr);
-static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data);
@@ -1423,7 +1421,7 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
 }
 
 
-static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   int length;
   JSX_Pointer *ret;
@@ -1448,7 +1446,7 @@ static JSBool JSX_Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
-static JSBool JSX_Pointer_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *newobj;
   JSX_Pointer *ptr, *newptr;
 
@@ -1673,7 +1671,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
 }
 
 
-static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   int length;
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
@@ -1688,7 +1686,7 @@ static JSBool JSX_Pointer_pr_string(JSContext *cx, JSObject *obj, uintN argc, js
 }
 
 
-static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   jsdouble val = (jsdouble) (long) ptr->ptr;
   JS_NewNumberValue(cx, val, rval);
@@ -1697,7 +1695,7 @@ static JSBool JSX_Pointer_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsva
 
 
 // Read a field from a struct/union that this pointer points to (without converting the entire struct into a javascript ibject)
-static JSBool JSX_Pointer_field(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   if(argc != 1 || !JSVAL_IS_STRING(argv[0]))
     return JSX_ReportException(cx, "Pointer.prototype.field(): must be passed a single argument, of type string");
 
@@ -1844,15 +1842,15 @@ jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   JSObject *classobj;
 
   static struct JSFunctionSpec staticfunc[]={
-    {"malloc",JSX_Pointer_malloc,1,0,0},
+    {"malloc", Pointer_malloc, 1, 0, 0},
     {0,0,0,0,0}
   };
 
   static struct JSFunctionSpec memberfunc[]={
-    {"cast",JSX_Pointer_cast,1,0,0},
-    {"field",JSX_Pointer_field,1,0,0},
-    {"string",JSX_Pointer_pr_string,1,0,0},
-    {"valueOf",JSX_Pointer_valueOf,0,0,0},
+    {"cast", Pointer_proto_cast, 1, 0, 0},
+    {"field", Pointer_proto_field, 1, 0, 0},
+    {"string", Pointer_proto_string, 1, 0, 0},
+    {"valueOf", Pointer_proto_valueOf, 0, 0, 0},
     {0,0,0,0,0}
   };
 
