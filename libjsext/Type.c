@@ -47,7 +47,6 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
     return &type->cif;
 
   type->cif.arg_types=JS_malloc(cx, sizeof(ffi_type)*(type->nParam));
-  int callconv=FFI_DEFAULT_ABI;
   int i;
   for (i=0; i<type->nParam; i++) {
     if (type->param[i].type->type==ARRAYTYPE)
@@ -55,7 +54,7 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
     else
       type->cif.arg_types[i]=JSX_GetFFIType(cx, type->param[i].type);
   }
-  ffi_prep_cif(&type->cif, callconv, type->nParam, JSX_GetFFIType(cx, type->returnType), type->cif.arg_types);
+  ffi_prep_cif(&type->cif, FFI_DEFAULT_ABI, type->nParam, JSX_GetFFIType(cx, type->returnType), type->cif.arg_types);
   return &type->cif;
 }
 
