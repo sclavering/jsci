@@ -245,7 +245,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   *rval=OBJECT_TO_JSVAL(retobj);
 
   JSObject *paramobj;
-  int nParam;
+  jsuint nParam;
   paramobj = JSVAL_TO_OBJECT(params);
   if(!JS_GetArrayLength(cx, paramobj, &nParam)) return JS_FALSE;
 
