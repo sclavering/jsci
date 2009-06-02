@@ -1763,14 +1763,9 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
-
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-
-  int ret;
-  ret = JSX_Set(cx, (char *) ptr->ptr + JSX_TypeSize(ptr->type) * JSVAL_TO_INT(id), 0, ptr->type, *vp);
-  if(ret == 0) return JS_FALSE;
-
-  return JS_TRUE;
+  int ret = JSX_Set(cx, (char *) ptr->ptr + JSX_TypeSize(ptr->type) * JSVAL_TO_INT(id), 0, ptr->type, *vp);
+  return ret == 0 ? JS_FALSE : JS_TRUE;
 }
 
 
