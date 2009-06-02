@@ -1,9 +1,8 @@
-#include "Type.h"
 #include <string.h>
-#include "Pointer.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include "util.h"
+#include "jsci.h"
 
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);

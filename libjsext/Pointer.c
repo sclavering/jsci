@@ -1,11 +1,10 @@
-#include "Pointer.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <dlfcn.h>
+#include <alloca.h>
+#include "jsci.h"
 
-# include <dlfcn.h>
-# include <alloca.h>
-#include "util.h"
 
 typedef struct {
   void *ptr; // Points to executable code
