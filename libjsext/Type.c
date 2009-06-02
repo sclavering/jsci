@@ -751,7 +751,6 @@ int JSX_CType(JSX_Type *type) {
     if(ptype->direct->type == INTTYPE || ptype->direct->type == UINTTYPE) {
       int size = ((JSX_TypeNumeric *) ptype->direct)->size;
       if(size == 0) return PCHARTYPE;
-      if(size == 1) return PSHORTTYPE;
     }
   }
   return type->type;

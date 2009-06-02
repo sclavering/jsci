@@ -112,7 +112,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     // Fall through
 
   case TYPEPAIR(JSPOINTER,PCHARTYPE):
-  case TYPEPAIR(JSPOINTER,PSHORTTYPE):
   case TYPEPAIR(JSPOINTER,POINTERTYPE):
 
     // Update pointer object from a type * or int
@@ -128,10 +127,8 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     return sizeof(void *);
 
   case TYPEPAIR(JSVOID,PCHARTYPE):
-  case TYPEPAIR(JSVOID,PSHORTTYPE):
   case TYPEPAIR(JSVOID,POINTERTYPE):
   case TYPEPAIR(JSNULL,PCHARTYPE):
-  case TYPEPAIR(JSNULL,PSHORTTYPE):
   case TYPEPAIR(JSNULL,POINTERTYPE):
 
     // Return a pointer object from a type *
@@ -182,14 +179,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, *(char **)p));
     return sizeof(char *);
 
-  case TYPEPAIR(JSVAL_STRING,PSHORTTYPE):
-
-    // Return a string from a short *
-
-    if (do_clean!=2)
-      *rval=STRING_TO_JSVAL(JS_NewUCStringCopyZ(cx, *(jschar **)p));
-    return sizeof(jschar *);
-
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
   case TYPEPAIR(JSVAL_STRING,UINTTYPE):
 
@@ -229,7 +218,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_INT,UNDEFTYPE):
   case TYPEPAIR(JSVAL_INT,POINTERTYPE):
   case TYPEPAIR(JSVAL_INT,PCHARTYPE):
-  case TYPEPAIR(JSVAL_INT,PSHORTTYPE):
 
     // Return a number from an undefined type
     // assume int
@@ -413,7 +401,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   case TYPEPAIR(JSARRAY,PCHARTYPE):
-  case TYPEPAIR(JSARRAY,PSHORTTYPE):
 
     // Update array elements from a variable array
 
@@ -796,7 +783,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
     // fall through
 
   case TYPEPAIR(JSPOINTER,PCHARTYPE):
-  case TYPEPAIR(JSPOINTER,PSHORTTYPE):
   case TYPEPAIR(JSPOINTER,POINTERTYPE):
 
     // Copy a pointer object to a type *
@@ -808,7 +794,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
     return sizeof(void *);
 
   case TYPEPAIR(JSNULL,PCHARTYPE):
-  case TYPEPAIR(JSNULL,PSHORTTYPE):
   case TYPEPAIR(JSNULL,POINTERTYPE):
 
     // Copy a null to a type *
@@ -818,7 +803,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
     // fall through
 
   case TYPEPAIR(JSVOID,PCHARTYPE):
-  case TYPEPAIR(JSVOID,PSHORTTYPE):
   case TYPEPAIR(JSVOID,POINTERTYPE):
   case TYPEPAIR(JSVOID,FUNCTIONTYPE):
 
@@ -847,13 +831,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     *(char **)p=JS_GetStringBytes(JSVAL_TO_STRING(v));
     return sizeof(char *);
-
-  case TYPEPAIR(JSVAL_STRING,PSHORTTYPE):
-
-    // Copy a string to a short *
-
-    *(jschar **)p=JS_GetStringChars(JSVAL_TO_STRING(v));
-    return sizeof(jschar *);
 
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
   case TYPEPAIR(JSVAL_STRING,UINTTYPE):
@@ -906,7 +883,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   case TYPEPAIR(JSVAL_INT,UNDEFTYPE):
   case TYPEPAIR(JSVAL_INT,POINTERTYPE):
   case TYPEPAIR(JSVAL_INT,PCHARTYPE):
-  case TYPEPAIR(JSVAL_INT,PSHORTTYPE):
 
     // Copy a number to an undefined type or type *
     // assume int
@@ -1055,7 +1031,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   case TYPEPAIR(JSARRAY,PCHARTYPE):
-  case TYPEPAIR(JSARRAY,PSHORTTYPE):
     {
 
     // Copy array elements to a variable array
