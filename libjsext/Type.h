@@ -37,7 +37,7 @@ typedef struct {
 } JSX_TypeNumeric;
 
 typedef struct {
-  JSX_Type *type;
+  JSX_Type *paramtype;
   int isConst;
 } JSX_ParamType;
 

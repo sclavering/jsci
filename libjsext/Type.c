@@ -49,10 +49,10 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
   type->cif.arg_types=JS_malloc(cx, sizeof(ffi_type)*(type->nParam));
   int i;
   for (i=0; i<type->nParam; i++) {
-    if (type->param[i].type->type==ARRAYTYPE)
+    if(type->param[i].paramtype->type == ARRAYTYPE)
       type->cif.arg_types[i]=&ffi_type_pointer;
     else
-      type->cif.arg_types[i]=JSX_GetFFIType(cx, type->param[i].type);
+      type->cif.arg_types[i] = JSX_GetFFIType(cx, type->param[i].paramtype);
   }
   ffi_prep_cif(&type->cif, FFI_DEFAULT_ABI, type->nParam, JSX_GetFFIType(cx, type->returnType), type->cif.arg_types);
   return &type->cif;
@@ -212,7 +212,7 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
   if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
   if(!JSX_InitParamType(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
   if(memberno == type->nParam - 1) {
-    type->param[type->nParam].type = sTypeVoid;
+    type->param[type->nParam].paramtype = sTypeVoid;
     type->param[type->nParam].isConst = 0;
   }
   if(type->cif.arg_types) {
@@ -259,7 +259,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
   memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
 
-  type->param[type->nParam].type = sTypeVoid;
+  type->param[type->nParam].paramtype = sTypeVoid;
   type->param[type->nParam].isConst=0;
   type->cif.arg_types=0;
 
@@ -287,7 +287,7 @@ static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *me
     JSX_ReportException(cx, "Type.function(): one of the argument descriptors has a bad or missing .type property");
     return JS_FALSE;
   }
-  dest->type = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+  dest->paramtype = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
   JS_GetProperty(cx, membertype, "const", &tmp);
   dest->isConst = tmp == JSVAL_TRUE ? 1 : 0;
   return JS_TRUE;
@@ -664,9 +664,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *v
   JSX_Type *thistype;
 
   for (i=0; i<nargs; i++) {
-    if (type && type->type->type==VOIDTYPE) {// End of param list
-      type=0;
-    }
+    if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list
 
     if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
       thistype=JS_GetPrivate(cx,JSVAL_TO_OBJECT(*vp));
@@ -674,10 +672,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *v
       i++;
       if (i==nargs) break;
     } else {
-      if (type)
-        thistype=type->type;
-      else
-        thistype=0;
+      thistype = type ? type->paramtype : 0;
     }
 
     if (!thistype) {

@@ -676,13 +676,12 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
 
   for (i=0; i<nargs; i++) {
     // xxx this either is, or should become, obsolete.  we ought to fix up |sometype foo(void)| sooner than this
-    if (type && type->type->type==VOIDTYPE) // End of param list
-      type=0;
+    if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list
 
     if(JSVAL_IS_OBJECT(*rval) && *rval != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*rval), JSX_GetTypeClass(), NULL)) {
       // Paramlist-specified type
       thistype=&tmptype;
-      tmptype.type=JS_GetPrivate(cx,JSVAL_TO_OBJECT(*rval));
+      tmptype.paramtype = JS_GetPrivate(cx,JSVAL_TO_OBJECT(*rval));
       rval++;
       i++;
       if (i==nargs) break;
@@ -692,29 +691,29 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
 
     if (!convconst && thistype && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval==JSVAL_NULL)) { // Const or immutable
       if(do_clean) {
-        siz = JSX_Get(cx, *argptr, 0, 2, thistype ? thistype->type : 0, rval);
+        siz = JSX_Get(cx, *argptr, 0, 2, thistype ? thistype->paramtype : 0, rval);
       } else {
         if(!thistype) {
           siz = JSX_Get(cx, 0, 0, 0, 0, rval); // Get size of C type guessed from js type
         } else {
-          siz = JSX_TypeSize(thistype->type);
+          siz = JSX_TypeSize(thistype->paramtype);
         }
         rval++;
       }
     } else {
-      if(thistype && thistype->type->type == ARRAYTYPE) {
+      if(thistype && thistype->paramtype->type == ARRAYTYPE) {
         if(!do_clean) goto failure;
         // In function calls, arrays are passed by pointer
-        siz = JSX_Get(cx, *(void **)*argptr, 0, do_clean, thistype->type, rval);
+        siz = JSX_Get(cx, *(void **)*argptr, 0, do_clean, thistype->paramtype, rval);
         if(siz) siz = sizeof(void *);
       } else {
-        siz = JSX_Get(cx, *argptr, 0, do_clean, thistype ? thistype->type : 0, rval);
+        siz = JSX_Get(cx, *argptr, 0, do_clean, thistype ? thistype->paramtype : 0, rval);
       }
     }
 
     // In function calls, arrays are passed by pointer
 
-    if (do_clean && thistype && thistype->type->type == ARRAYTYPE) {
+    if(do_clean && thistype && thistype->paramtype->type == ARRAYTYPE) {
       JS_free(cx, *(void **)*argptr);
       siz=sizeof(void *);
     }
@@ -735,9 +734,8 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType
      return 0;
 
   for (;++i<nargs;) {
-    JSX_Get(cx, NULL, 0, 2, type ? type->type : 0, rval);
-    if (type && type->type->type == ARRAYTYPE)
-      JS_free(cx, *(void **)*argptr);
+    JSX_Get(cx, NULL, 0, 2, type ? type->paramtype : 0, rval);
+    if(type && type->paramtype->type == ARRAYTYPE) JS_free(cx, *(void **)*argptr);
     rval++;
     if (type)
       type++;
@@ -1276,13 +1274,12 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
   JSX_ParamType *thistype;
 
   for (i=0; i<nargs; i++) {
-    if (type && type->type->type==VOIDTYPE) // End of param list
-      type=0;
+    if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list
 
     if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
       // Paramlist-specified type
       thistype=&tmptype;
-      tmptype.type=JS_GetPrivate(cx,JSVAL_TO_OBJECT(*vp));
+      tmptype.paramtype = JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
       vp++;
       i++;
       if (i==nargs) break;
@@ -1290,11 +1287,11 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
       thistype = type ? type : 0;
     }
 
-    if (thistype && thistype->type->type==ARRAYTYPE) {
+    if(thistype && thistype->paramtype->type == ARRAYTYPE) {
       if(!will_clean) goto failure;
       // In function calls, arrays are passed by pointer
-      *(void **)ptr = JS_malloc(cx, JSX_TypeSize(thistype->type));
-      cursiz = JSX_Set(cx, *(void **)ptr, will_clean, thistype->type, *vp);
+      *(void **)ptr = JS_malloc(cx, JSX_TypeSize(thistype->paramtype));
+      cursiz = JSX_Set(cx, *(void **)ptr, will_clean, thistype->paramtype, *vp);
       if(cursiz) {
         cursiz = sizeof(void *);
       } else {
@@ -1302,7 +1299,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
         goto failure;
       }
     } else {
-      cursiz=JSX_Set(cx, ptr?ptr:*argptr, will_clean, thistype ? thistype->type : 0, *vp);
+      cursiz = JSX_Set(cx, ptr ? ptr : *argptr, will_clean, thistype ? thistype->paramtype : 0, *vp);
     }
     if (!cursiz)
       goto failure;
@@ -1334,7 +1331,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
     } else {
       --argptr;
     }
-    siz=JSX_Get(cx, ptr?ptr:*argptr, 0, 2, type ? type->type : 0, --vp);
+    siz = JSX_Get(cx, ptr ? ptr : *argptr, 0, 2, type ? type->paramtype : 0, --vp);
   }
 
   return 0;
@@ -1657,7 +1654,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
   type=finptr->type;
   JSX_TypeFunction *functype = (JSX_TypeFunction *) type;
 
-  if(type->type != FUNCTIONTYPE || functype->nParam != 1 || functype->param[0].type->type != POINTERTYPE || functype->param[0].isConst) {
+  if(type->type != FUNCTIONTYPE || functype->nParam != 1 || functype->param[0].paramtype->type != POINTERTYPE || functype->param[0].isConst) {
     JSX_ReportException(cx, "Wrong function type for finalize property");
     return JS_FALSE;
   }
