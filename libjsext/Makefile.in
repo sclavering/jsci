@@ -39,10 +39,13 @@ LDFLAGS	= -L../js/src/Linux_All_OPT.OBJ
 
 all:	jsext
 
+Type.o: jsci.h
+Pointer.o: jsci.h
+Dl.o: jsci.h
+
 JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o
 
 CTOXML_OBJS = c_gram.o c_scan.o xml.o libctoxml.o strbuf.o
-
 
 jsext:	$(JSX_OBJS) $(CTOXML_OBJS)
 	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSX_OBJS) $(CTOXML_OBJS) -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi
