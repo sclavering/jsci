@@ -37,6 +37,11 @@ static JSClass JSX_TypeClass={
 };
 
 
+static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
+  return JSVAL_IS_OBJECT(v) && !JSVAL_IS_NULL(v) && JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), &JSX_TypeClass, NULL);
+}
+
+
 ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
   if (type->cif.arg_types)
     return &type->cif;
@@ -160,7 +165,7 @@ static JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *
   dest->name = strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
 
   JS_GetProperty(cx, membertype, "type", &tmp);
-  if(!JSVAL_IS_OBJECT(tmp) || tmp == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(tmp), &JSX_TypeClass, NULL)) {
+  if(!jsval_is_Type(cx, tmp)) {
     JSX_ReportException(cx, "Wrong or missing 'type' property in member type object");
     // name is freed later
     return JS_FALSE;
@@ -223,7 +228,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   jsval returnType = argv[0];
   jsval params = argv[1];
 
-  if(!JSVAL_IS_OBJECT(returnType) || returnType == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(returnType), &JSX_TypeClass, NULL)) {
+  if(!jsval_is_Type(cx, returnType)) {
     JSX_ReportException(cx, "Type.function: the returnType arg must be a Type instance");
     return JS_FALSE;
   }
@@ -279,7 +284,7 @@ JSClass *JSX_GetTypeClass(void) {
 static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype) {
   jsval tmp;
   JS_GetProperty(cx, membertype, "type", &tmp);
-  if(!JSVAL_IS_OBJECT(tmp) || tmp == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(tmp), &JSX_TypeClass, NULL)) {
+  if(!jsval_is_Type(cx, tmp)) {
     JSX_ReportException(cx, "Type.function(): one of the argument descriptors has a bad or missing .type property");
     return JS_FALSE;
   }
@@ -469,7 +474,7 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval direct = argv[0];
 
-  if(direct != JSVAL_VOID && (!JSVAL_IS_OBJECT(direct) || JSVAL_IS_NULL(direct) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(direct), &JSX_TypeClass, NULL))) {
+  if(direct != JSVAL_VOID && !jsval_is_Type(cx, direct)) {
     JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
     return JS_FALSE;
   }
@@ -494,7 +499,7 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   jsval member = argv[0];
   jsval len = argv[1];
 
-  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(member), &JSX_TypeClass, NULL)) {
+  if(!jsval_is_Type(cx, member)) {
     JSX_ReportException(cx, "Type.array(): first argument must be a Type instance");
     return JS_FALSE;
   }
@@ -520,7 +525,7 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   jsval member = argv[0];
   jsval len = argv[1];
 
-  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(member), &JSX_TypeClass, NULL)) {
+  if(!jsval_is_Type(cx, member)) {
     JSX_ReportException(cx, "Type.bitfield(): first argument must be a Type instance");
     return JS_FALSE;
   }
@@ -656,7 +661,7 @@ static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *a
 static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval arg = argv[0];
   *rval = JSVAL_VOID;
-  if(!JSVAL_IS_OBJECT(arg) || arg == JSVAL_NULL || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(arg), &JSX_TypeClass, NULL)) {
+  if(!jsval_is_Type(cx, arg)) {
     JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
     return JS_FALSE;
   }
