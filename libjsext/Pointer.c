@@ -1595,22 +1595,14 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
 
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  JSX_Pointer *ptr;
-  int ret;
-
-  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-
   *vp=JSVAL_VOID;
-  ret=JSX_Get(cx, ptr->ptr, 0, 0, ptr->type, vp);
-
-  if (!ret)
-    return JS_FALSE;
-
-  if (ret==-1) {
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  int ret = JSX_Get(cx, ptr->ptr, 0, 0, ptr->type, vp);
+  if(!ret) return JS_FALSE;
+  if(ret == -1) {
     // Created new function
     JS_DefineProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", OBJECT_TO_JSVAL(obj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
   }
-
   return JS_TRUE;
 }
 
