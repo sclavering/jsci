@@ -1739,12 +1739,8 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
     JS_RemoveRoot(cb->cx, tmp_argv+i);
   }
   JS_free(cb->cx, tmp_argv);
-  
-  // dont convert return value if void
 
-  if (type->returnType->type != VOIDTYPE) {
-    JSX_Set(cb->cx, ret, 0, type->returnType, rval);
-  }
+  if(type->returnType->type != VOIDTYPE) JSX_Set(cb->cx, ret, 0, type->returnType, rval);
 }
 
 
