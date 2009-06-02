@@ -296,20 +296,12 @@ static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *me
 
 
 int JSX_TypeAlignBits(JSX_Type *type) {
-  switch(type->type) {
-  case BITFIELDTYPE:
-    return 1;
-  default:
-    return JSX_TypeAlign(type)*8;
-  }
+  if(type->type == BITFIELDTYPE) return 1;
+  return JSX_TypeAlign(type) * 8;
 }
 
 
 static int JSX_TypeAlign(JSX_Type *type) {
-  int len;
-  int ret;
-  int i;
-
   switch(type->type) {
   case POINTERTYPE:
     return ffi_type_pointer.alignment;
@@ -322,14 +314,14 @@ static int JSX_TypeAlign(JSX_Type *type) {
   case FLOATTYPE:
     return ((JSX_TypeNumeric *) type)->ffiType.alignment;
   case STRUCTTYPE:
-  case UNIONTYPE:
-    len = ((JSX_TypeStructUnion *) type)->nMember;
-    ret=0;
+  case UNIONTYPE: {
+    int i, ret = 0, len = ((JSX_TypeStructUnion *) type)->nMember;
     for (i=0; i<len; i++) {
       int thisalign = JSX_TypeAlign(((JSX_TypeStructUnion *) type)->member[i].type);
       if (thisalign>ret) ret=thisalign;
     }
     return ret;
+  }
   default: // VOIDTYPE, FUNCTIONTYPE
     return 0; // Error
   }
@@ -337,18 +329,12 @@ static int JSX_TypeAlign(JSX_Type *type) {
 
 
 int JSX_TypeSizeBits(JSX_Type *type) {
-  switch(type->type) {
-  case BITFIELDTYPE:
-    return ((JSX_TypeBitfield *) type)->length;
-  default:
-    return JSX_TypeSize(type)*8;
-  }
+  if(type->type == BITFIELDTYPE) return ((JSX_TypeBitfield *) type)->length;
+  return JSX_TypeSize(type) * 8;
 }
 
 
 int JSX_TypeSize(JSX_Type *type) {
-  int align;
-
   switch(type->type) {
   case POINTERTYPE:
     return ffi_type_pointer.size;
@@ -359,9 +345,10 @@ int JSX_TypeSize(JSX_Type *type) {
   case FLOATTYPE:
     return ((JSX_TypeNumeric *) type)->ffiType.size;
   case STRUCTTYPE:
-  case UNIONTYPE:
-    align=JSX_TypeAlign(type);
+  case UNIONTYPE: {
+    int align = JSX_TypeAlign(type);
     return (((((JSX_TypeStructUnion *) type)->sizeOf + 7) / 8 + align - 1) / align) * align;
+  }
   default: // VOIDTYPE, FUNCTIONTYPE
     return 0; // Error
   }
