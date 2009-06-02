@@ -10,7 +10,7 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member);
 static int JSX_TypeAlign(JSX_Type *type);
 static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype);
-
+static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructUnion *typesu);
 
 static JSX_Type *sTypeVoid = NULL;
 // __proto__ for results of Type.function(...) and similar
@@ -59,28 +59,35 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
 
 
 ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
-  int nmember;
-  int i;
-  int bitsused=0;
-
   switch(type->type) {
-  case POINTERTYPE:
-    return &ffi_type_pointer;
-  case VOIDTYPE:
-    return &ffi_type_void;
-  case INTTYPE:
-  case UINTTYPE:
-  case FLOATTYPE:
-    return &((JSX_TypeNumeric *) type)->ffiType;
-  case STRUCTTYPE:
-    if(((JSX_TypeStructUnion *) type)->ffiType.elements)
-      return &((JSX_TypeStructUnion *) type)->ffiType;
+    case POINTERTYPE:
+      return &ffi_type_pointer;
+    case VOIDTYPE:
+      return &ffi_type_void;
+    case INTTYPE:
+    case UINTTYPE:
+    case FLOATTYPE:
+      return &((JSX_TypeNumeric *) type)->ffiType;
+    case STRUCTTYPE: {
+      JSX_TypeStructUnion *typesu = (JSX_TypeStructUnion *) type;
+      if(!typesu->ffiType.elements) TypeStructUnion_init_ffiType_elements(cx, typesu);
+      return &typesu->ffiType;
+    }
+    default:
+      return NULL;
+  }
+}
 
-    nmember=0;
 
-    for(i = 0; i < ((JSX_TypeStructUnion *) type)->nMember; i++) {
+static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructUnion *typesu) {
+    JSX_Type *type = (JSX_Type *) typesu;
+
+    int nmember = 0;
+    int bitsused = 0;
+    int i;
+    for(i = 0; i < typesu->nMember; i++) {
       int al=1;
-      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].membertype;
+      JSX_Type *memb = typesu->member[i].membertype;
       while (memb->type==ARRAYTYPE) {
         al *= ((JSX_TypeArray *) memb)->length;
         memb = ((JSX_TypeArray *) memb)->member;
@@ -99,21 +106,21 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
       nmember+=al;
     }
 
-    ((JSX_TypeStructUnion *) type)->ffiType.elements = JS_malloc(cx, sizeof(ffi_type *) * (nmember + 1));
+    typesu->ffiType.elements = JS_malloc(cx, sizeof(ffi_type *) * (nmember + 1));
     // must specify size and alignment because
     // bitfields introduce alignment requirements
     // which are not reflected by the ffi members.
-    ((JSX_TypeStructUnion *) type)->ffiType.size = JSX_TypeSize(type);
-    ((JSX_TypeStructUnion *) type)->ffiType.alignment = JSX_TypeAlign(type);
-    ((JSX_TypeStructUnion *) type)->ffiType.type = FFI_TYPE_STRUCT;
+    typesu->ffiType.size = JSX_TypeSize(type);
+    typesu->ffiType.alignment = JSX_TypeAlign(type);
+    typesu->ffiType.type = FFI_TYPE_STRUCT;
 
     bitsused=0;
     nmember=0;
-    for(i = 0; i < ((JSX_TypeStructUnion *) type)->nMember; i++) {
+    for(i = 0; i < typesu->nMember; i++) {
       int al=1;
       int j;
       ffi_type *t;
-      JSX_Type *memb = ((JSX_TypeStructUnion *) type)->member[i].membertype;
+      JSX_Type *memb = typesu->member[i].membertype;
       while (memb->type==ARRAYTYPE) {
         al *= ((JSX_TypeArray *) memb)->length;
         memb = ((JSX_TypeArray *) memb)->member;
@@ -131,11 +138,9 @@ ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
         bitsused = 0;
         t = JSX_GetFFIType(cx, memb);
       }
-      for(j = 0; j < al; j++) ((JSX_TypeStructUnion *) type)->ffiType.elements[nmember++] = t;
+      for(j = 0; j < al; j++) typesu->ffiType.elements[nmember++] = t;
     }
-    ((JSX_TypeStructUnion *) type)->ffiType.elements[nmember] = NULL;
-    return &((JSX_TypeStructUnion *) type)->ffiType;
-  }
+    typesu->ffiType.elements[nmember] = NULL;
 }
 
 
