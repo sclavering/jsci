@@ -1666,16 +1666,14 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
 
 
 static JSBool Pointer_proto_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  int length;
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-
-  if (argc<1 || !JSVAL_IS_INT(argv[0]))
-    *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, (char *)ptr->ptr));
-  else {
-    length=JSVAL_TO_INT(argv[0]);
-    *rval=STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *)ptr->ptr, length));
+  JSString* str;
+  if(JSVAL_IS_INT(argv[0])) {
+    str = JS_NewStringCopyN(cx, (char *) ptr->ptr, JSVAL_TO_INT(argv[0]));
+  } else {
+    str = JS_NewStringCopyZ(cx, (char *) ptr->ptr);
   }
-
+  *rval = STRING_TO_JSVAL(str);
   return JS_TRUE;
 }
 
