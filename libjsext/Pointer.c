@@ -1636,17 +1636,13 @@ static JSBool JSX_Pointer_getfinalize(JSContext *cx, JSObject *obj, jsval id, js
 
 static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JSX_Pointer *ptr;
-  JSX_Pointer *finptr;
-  JSX_Type *type;
-  jsval ptrobj;
-
   ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-
   if (*vp==JSVAL_NULL || *vp==JSVAL_VOID) {
     ptr->finalize=0;
     return JS_TRUE;
   }
 
+  jsval ptrobj;
   if (!JSVAL_IS_OBJECT(*vp) ||
       !JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(*vp)) ||
       !JS_LookupProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", &ptrobj) ||
@@ -1655,12 +1651,13 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
     return JS_FALSE;
   }
 
+  JSX_Pointer *finptr;
   finptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrobj));
+  JSX_Type *type;
   type=finptr->type;
-  if (type->type!=FUNCTIONTYPE ||
-      ((JSX_TypeFunction *) type)->nParam != 1 ||
-      ((JSX_TypeFunction *) type)->param[0].type->type != POINTERTYPE ||
-      ((JSX_TypeFunction *) type)->param[0].isConst) {
+  JSX_TypeFunction *functype = (JSX_TypeFunction *) type;
+
+  if(type->type != FUNCTIONTYPE || functype->nParam != 1 || functype->param[0].type->type != POINTERTYPE || functype->param[0].isConst) {
     JSX_ReportException(cx, "Wrong function type for finalize property");
     return JS_FALSE;
   }
