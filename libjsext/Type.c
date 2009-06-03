@@ -157,7 +157,7 @@ static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval
 }
 
 
-static JSBool JSX_InitMemberType(JSContext *cx, JSX_MemberType *dest, JSObject *membertype) {
+static JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype) {
   jsval tmp;
 
   JS_GetProperty(cx, membertype, "name", &tmp);
@@ -375,11 +375,11 @@ static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type
       type->member_capacity = memberno + 1;
 
     if (type->member) {
-      type->member = JS_realloc(cx, type->member, sizeof(JSX_MemberType) * type->member_capacity); // membertype same size as paramtype
-      memset(type->member + old_capacity, 0, sizeof(JSX_MemberType) * (type->member_capacity - old_capacity));
+      type->member = JS_realloc(cx, type->member, sizeof(JSX_SuMember) * type->member_capacity); // membertype same size as paramtype
+      memset(type->member + old_capacity, 0, sizeof(JSX_SuMember) * (type->member_capacity - old_capacity));
     } else {
-      type->member = JS_malloc(cx, sizeof(JSX_MemberType) * type->member_capacity); // membertype same size as paramtype
-      memset(type->member, 0, sizeof(JSX_MemberType) * type->member_capacity);
+      type->member = JS_malloc(cx, sizeof(JSX_SuMember) * type->member_capacity); // membertype same size as paramtype
+      memset(type->member, 0, sizeof(JSX_SuMember) * type->member_capacity);
     }
   }
 
@@ -441,8 +441,8 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
   type->type = typeid;
   type->nMember=nMember;
   type->member_capacity=nMember;
-  type->member = nMember ? (JSX_MemberType *) JS_malloc(cx, sizeof(JSX_MemberType) * nMember) : 0;
-  memset(type->member, 0, sizeof(JSX_MemberType) * nMember);
+  type->member = nMember ? (JSX_SuMember *) JS_malloc(cx, sizeof(JSX_SuMember) * nMember) : 0;
+  memset(type->member, 0, sizeof(JSX_SuMember) * nMember);
   type->sizeOf=0;
   JS_SetPrivate(cx, retobj, type);
   type->ffiType.elements=0;

@@ -57,11 +57,11 @@ typedef struct {
   JSX_Type *membertype;
   char *name;
   int offset; // in bits
-} JSX_MemberType;
+} JSX_SuMember;
 
 typedef struct {
   enum JSX_TypeID type; // STRUCTTYPE or UNIONTYPE
-  JSX_MemberType *member;
+  JSX_SuMember *member;
   int nMember;
   int member_capacity;
   int sizeOf; // in bits
