@@ -118,7 +118,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       if(*(void **)p == NULL) {
         *rval = JSVAL_NULL;
       } else {
-        ptr = JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
+        ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
         ptr->ptr = *(void **)p;
       }
     }
@@ -609,7 +609,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     if (!p)
       return size;
 
-    ptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
+    ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
     memcpy(ptr->ptr, p, size);
 
     return size;
@@ -645,7 +645,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam
     if(JSVAL_IS_OBJECT(*rval) && *rval != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*rval), JSX_GetTypeClass(), NULL)) {
       // Paramlist-specified type
       thistype=&tmptype;
-      tmptype.paramtype = JS_GetPrivate(cx,JSVAL_TO_OBJECT(*rval));
+      tmptype.paramtype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
       rval++;
       i++;
       if (i==nargs) break;
@@ -765,7 +765,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
   pointercommon:
 
-    ptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
+    ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
     *(void **)p=ptr->ptr;
     return sizeof(void *);
 
@@ -1173,7 +1173,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     // Copy contents pointed to into array
     size=JSX_TypeSize(type);
-    ptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
+    ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
     memcpy(p, ptr->ptr, size);
     return size;
 
@@ -1267,16 +1267,13 @@ JSClass * JSX_GetPointerClass(void) {
 
 
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *type) {
-  JSX_Pointer *retpriv;
-  int size;
-  
   if (!JS_InstanceOf(cx, type, JSX_GetTypeClass(), NULL)) {
     JSX_ReportException(cx, "Wrong type argument");
     return JS_FALSE;
   }
 
-  size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, type));
-  retpriv = JS_malloc(cx, sizeof(JSX_Pointer) + size);
+  int size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, type));
+  JSX_Pointer *retpriv = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer) + size);
 
   if (!retpriv)
     return JS_FALSE;
@@ -1292,8 +1289,6 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
 
 
 static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JSX_Type *type) {
-  JSX_Callback *retpriv;
-  
   if(type->type != FUNCTIONTYPE) {
     JSX_ReportException(cx, "Type is not a C function");
     return JS_FALSE;
@@ -1302,7 +1297,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  retpriv = JS_malloc(cx, sizeof(JSX_Callback));
+  JSX_Callback *retpriv = (JSX_Callback *) JS_malloc(cx, sizeof(JSX_Callback));
   if (!retpriv)
     return JS_FALSE;
 
@@ -1324,13 +1319,11 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
 
 
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
-  JSX_Pointer *ret;
-
   // xxx a hack to save typeobj from garbage collection, and thus stop the free()ing of the JSX_Type struct we share 
   if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  ret = JS_malloc(cx, sizeof(JSX_Pointer));
+  JSX_Pointer *ret = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer));
   if (!ret)
     return JS_FALSE;
   ret->ptr=0;
@@ -1343,19 +1336,15 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
 
 
 static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *newobj;
-  int length;
-  JSX_Pointer *ret;
-
   if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
     JSX_ReportException(cx, "Wrong argument type to malloc");
     return JS_FALSE;
   }
 
-  newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+  JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
-  length=INT_TO_JSVAL(argv[0]);
-  ret = JS_malloc(cx, sizeof(JSX_Pointer) + length);
+  int length = INT_TO_JSVAL(argv[0]);
+  JSX_Pointer *ret = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer) + length);
   if (!ret)
     return JS_FALSE;
   ret->ptr=ret+1;
@@ -1368,25 +1357,20 @@ static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *ar
 
 
 static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *newobj;
-  JSX_Pointer *ptr, *newptr;
-
   if(!JSVAL_IS_OBJECT(argv[0]) || JSVAL_IS_NULL(argv[0]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
     JSX_ReportException(cx, "Pointer.prototype.cast(): argument must be a Type instance");
     return JS_FALSE;
   }
 
-  ptr=JS_GetPrivate(cx, obj);
-
-  newobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
   if (!JSX_InitPointer(cx, newobj, JSVAL_TO_OBJECT(argv[0]))) {
     return JS_FALSE;
   }
 
-  newptr=JS_GetPrivate(cx, newobj);
+  JSX_Pointer *newptr = (JSX_Pointer *) JS_GetPrivate(cx, newobj);
   newptr->ptr=ptr->ptr;
-
   return JS_TRUE;
 }
 
@@ -1409,7 +1393,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
 
   // Are we creating a C wrapper for a JS function so it can be used as a callback?
   if(argc >= 2 && JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
-    JSX_Pointer *ptr = JS_GetPrivate(cx, typeObject);
+    JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, typeObject);
     JSX_Type *type = ptr->type;
     // Accept both function type and pointer-to-function type
     if(type->type == POINTERTYPE) type = ((JSX_TypePointer *) type)->direct;
@@ -1421,7 +1405,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
   if(!JSX_InitPointerAlloc(cx, obj, JSVAL_TO_OBJECT(argv[0]))) return JS_FALSE;
   // Set initial value, if provided
   if(argc >= 2 && argv[1] != JSVAL_VOID) {
-    JSX_Pointer *ptr = JS_GetPrivate(cx,obj);
+    JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx,obj);
     if(!JSX_Set(cx, ptr->ptr, 0, ptr->type, argv[1])) return JS_FALSE;
   }
 
@@ -1446,7 +1430,7 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
 
 
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSX_Pointer *ptr = JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   JSX_Type *type = ptr->type;
 
   if(type->type != FUNCTIONTYPE) {
@@ -1561,8 +1545,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
     return JS_FALSE;
   }
 
-  JSX_Pointer *finptr;
-  finptr=JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrobj));
+  JSX_Pointer *finptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrobj));
   JSX_Type *type;
   type=finptr->type;
   JSX_TypeFunction *functype = (JSX_TypeFunction *) type;
@@ -1604,8 +1587,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(argc != 1 || !JSVAL_IS_STRING(argv[0]))
     return JSX_ReportException(cx, "Pointer.prototype.field(): must be passed a single argument, of type string");
 
-  JSX_Pointer *ptr;
-  ptr = JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
   if(!ptr->type->type == POINTERTYPE) return JS_FALSE; // should be impossible
 
@@ -1685,7 +1667,7 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
  */
 
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
-  JSX_Callback *cb = user_data;
+  JSX_Callback *cb = (JSX_Callback *) user_data;
   jsval *tmp_argv;
   int i;
   jsval rval=JSVAL_VOID;
