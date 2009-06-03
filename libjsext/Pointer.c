@@ -19,8 +19,8 @@ typedef struct {
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr);
-static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, void **argptr);
+static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam *type, jsval *rval, int convconst, void **argptr);
+static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_FuncParam *type, jsval *vp, void **argptr);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data);
@@ -645,12 +645,12 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 }
 
 
-static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_ParamType *type, jsval *rval, int convconst, void **argptr) {
+static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam *type, jsval *rval, int convconst, void **argptr) {
   int ret=0;
   int siz;
   uintN i;
-  JSX_ParamType tmptype = { 0, 0 };
-  JSX_ParamType *thistype;
+  JSX_FuncParam tmptype = { 0, 0 };
+  JSX_FuncParam *thistype;
 
   for (i=0; i<nargs; i++) {
     // xxx this either is, or should become, obsolete.  we ought to fix up |sometype foo(void)| sooner than this
@@ -1215,12 +1215,12 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 }
 
 
-static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_ParamType *type, jsval *vp, void **argptr) {
+static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_FuncParam *type, jsval *vp, void **argptr) {
   int ret=0;
   int siz, cursiz;
   uintN i;
-  JSX_ParamType tmptype = { 0, 0 };
-  JSX_ParamType *thistype;
+  JSX_FuncParam tmptype = { 0, 0 };
+  JSX_FuncParam *thistype;
 
   for (i=0; i<nargs; i++) {
     if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list

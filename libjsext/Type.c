@@ -9,7 +9,7 @@ static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
 static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member);
 static int JSX_TypeAlign(JSX_Type *type);
-static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype);
+static JSBool JSX_InitParamType(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype);
 static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructUnion *typesu);
 
 static JSX_Type *sTypeVoid = NULL;
@@ -260,8 +260,8 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   type->returnType=JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
 
-  type->param = (JSX_ParamType *) JS_malloc(cx, sizeof(JSX_ParamType) * (type->nParam + 1));
-  memset(type->param, 0, sizeof(JSX_ParamType) * type->nParam);
+  type->param = (JSX_FuncParam *) JS_malloc(cx, sizeof(JSX_FuncParam) * (type->nParam + 1));
+  memset(type->param, 0, sizeof(JSX_FuncParam) * type->nParam);
 
   type->param[type->nParam].paramtype = sTypeVoid;
   type->param[type->nParam].isConst=0;
@@ -284,7 +284,7 @@ JSClass *JSX_GetTypeClass(void) {
 }
 
 
-static JSBool JSX_InitParamType(JSContext *cx, JSX_ParamType *dest, JSObject *membertype) {
+static JSBool JSX_InitParamType(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype) {
   jsval tmp;
   JS_GetProperty(cx, membertype, "type", &tmp);
   if(!jsval_is_Type(cx, tmp)) {
@@ -661,7 +661,7 @@ static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *vp, ffi_type **arg_types) {
+int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *vp, ffi_type **arg_types) {
   int ret=0;
   int siz;
   uintN i;

@@ -43,11 +43,11 @@ typedef struct {
 typedef struct {
   JSX_Type *paramtype;
   int isConst;
-} JSX_ParamType;
+} JSX_FuncParam;
 
 typedef struct {
   enum JSX_TypeID type; // FUNCTIONTYPE
-  JSX_ParamType *param;
+  JSX_FuncParam *param;
   int nParam;
   JSX_Type *returnType;
   ffi_cif cif;
@@ -88,7 +88,7 @@ typedef struct {
 
 
 int JSX_TypeSize(JSX_Type *type);
-int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_ParamType *type, jsval *vp, ffi_type **arg_types);
+int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *vp, ffi_type **arg_types);
 JSClass *JSX_GetTypeClass(void);
 
 int JSX_CType(JSX_Type *type);
