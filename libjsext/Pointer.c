@@ -86,13 +86,12 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   JSObject *obj, *funobj;
   JSFunction *fun;
   JSX_Pointer *ptr;
-  int typepair;
   int size=-1;
   int i;
   int elemsize;
   int totsize;
 
-  typepair=TYPEPAIR(JSX_JSType(cx, *rval), JSX_CType(type));
+  int typepair = TYPEPAIR(JSX_JSType(cx, *rval), type ? type->type : UNDEFTYPE);
   
   // Determine the appropriate conversion
 
@@ -725,7 +724,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   int elemsize;
   JSFunction *fun;
 
-  int typepair=TYPEPAIR(JSX_JSType(cx, v), JSX_CType(type));
+  int typepair = TYPEPAIR(JSX_JSType(cx, v), type ? type->type : UNDEFTYPE);
 
   // Determine the appropriate conversion
 
