@@ -206,7 +206,7 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   if(!exec(cx, obj, filename, rval)) return JS_FALSE;
 
   JSBool rv = JS_FALSE;
-  if(JSVAL_IS_OBJECT(*rval) && !JSVAL_IS_NULL(rval) && JS_ObjectIsFunction(cx, *rval)) {
+  if(JSVAL_IS_OBJECT(*rval) && !JSVAL_IS_NULL(*rval) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(*rval))) {
     jsval jsfun = *rval;
     rv = JS_CallFunctionValue(cx, obj, jsfun, 1, &argsval, rval);
   } else {
