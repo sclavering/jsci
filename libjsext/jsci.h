@@ -117,10 +117,13 @@ typedef struct {
 } JSX_Pointer;
 
 
+static inline int type_is_char(JSX_Type *t) {
+  return (t->type == INTTYPE || t->type == UINTTYPE) && 0 == ((JSX_TypeNumeric *) t)->size;
+}
+
+
 static inline int is_void_or_char(JSX_Type *t) {
-  if(t->type == VOIDTYPE) return 1;
-  if(t->type != INTTYPE && t->type != UINTTYPE) return 0;
-  return 0 == ((JSX_TypeNumeric *) t)->size;
+  return t->type == VOIDTYPE || type_is_char(t);
 }
 
 #endif

@@ -736,14 +736,6 @@ int JSX_JSType(JSContext *cx, jsval v) {
 // Determine the C type to an appropriate level of detail for the big 2D switch
 int JSX_CType(JSX_Type *type) {
   if(type == NULL) return UNDEFTYPE;
-
-  if(type->type == ARRAYTYPE) {
-    JSX_TypeArray *atype = (JSX_TypeArray *) type;
-    if(atype->member->type == INTTYPE || atype->member->type == UINTTYPE) {
-      int size = ((JSX_TypeNumeric *) atype->member)->size;
-      if(size == 0) return ACHARTYPE;
-    }
-  }
   return type->type;
 }
 

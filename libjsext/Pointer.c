@@ -191,9 +191,9 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       goto failure;
     }
 
-  case TYPEPAIR(JSVOID,ACHARTYPE):
-  case TYPEPAIR(JSNULL,ACHARTYPE):
-  case TYPEPAIR(JSVAL_STRING,ACHARTYPE):
+  case TYPEPAIR(JSVAL_STRING,ARRAYTYPE):
+    if(!type_is_char(((JSX_TypeArray *) type)->member)) goto failure;
+  fromchararray:
     // Return a string from a char array
     *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *) p, ((JSX_TypeArray *) type)->length));
     return sizeof(char) * ((JSX_TypeArray *) type)->length;
@@ -459,6 +459,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
   case TYPEPAIR(JSVOID,ARRAYTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):
+    if(type_is_char(((JSX_TypeArray *) type)->member)) goto fromchararray;
 
     // Create new array and populate with values
 
@@ -467,7 +468,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     // fall through
 
   case TYPEPAIR(JSARRAY,ARRAYTYPE):
-  case TYPEPAIR(JSARRAY,ACHARTYPE):
 
     // Update array elements from a fixed size array
     
@@ -600,7 +600,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     goto failure;
     // error already thrown
 
-  case TYPEPAIR(JSPOINTER,ACHARTYPE):
   case TYPEPAIR(JSPOINTER,ARRAYTYPE):
 
     // Copy contents of array into memory pointed to
@@ -827,7 +826,8 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       goto failure;
     }
 
-  case TYPEPAIR(JSVAL_STRING,ACHARTYPE):
+  case TYPEPAIR(JSVAL_STRING,ARRAYTYPE):
+    if(!type_is_char(((JSX_TypeArray *) type)->member)) goto failure;
 
     // Copy a string to a char array
 
@@ -1040,7 +1040,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
     
 
   case TYPEPAIR(JSARRAY,ARRAYTYPE):
-  case TYPEPAIR(JSARRAY,ACHARTYPE):
 
     // Copy array elements to a fixed size array
     
@@ -1148,7 +1147,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   case TYPEPAIR(JSNULL,STRUCTTYPE):
   case TYPEPAIR(JSNULL,UNIONTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):
-  case TYPEPAIR(JSNULL,ACHARTYPE):
   case TYPEPAIR(JSNULL,INTTYPE):
   case TYPEPAIR(JSNULL,UINTTYPE):
   case TYPEPAIR(JSNULL,FLOATTYPE):
@@ -1164,7 +1162,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   case TYPEPAIR(JSVOID,STRUCTTYPE):
   case TYPEPAIR(JSVOID,UNIONTYPE):
   case TYPEPAIR(JSVOID,ARRAYTYPE):
-  case TYPEPAIR(JSVOID,ACHARTYPE):
   case TYPEPAIR(JSVOID,INTTYPE):
   case TYPEPAIR(JSVOID,UINTTYPE):
   case TYPEPAIR(JSVOID,FLOATTYPE):
@@ -1173,7 +1170,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
     return JSX_TypeSize(type);
 
-  case TYPEPAIR(JSPOINTER,ACHARTYPE):
   case TYPEPAIR(JSPOINTER,ARRAYTYPE):
 
     // Copy contents pointed to into array
