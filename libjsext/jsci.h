@@ -26,7 +26,6 @@ enum JSX_TypeID {
 };
 
 #define PCHARTYPE (TYPECOUNT+0)
-#define PSHORTTYPE (TYPECOUNT+1) // unused
 #define ACHARTYPE (TYPECOUNT+2)
 #define UNDEFTYPE (TYPECOUNT+4)
 #define TYPECOUNT2 (TYPECOUNT+5)
