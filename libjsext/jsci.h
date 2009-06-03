@@ -25,7 +25,6 @@ enum JSX_TypeID {
   TYPECOUNT
 };
 
-#define PCHARTYPE (TYPECOUNT+0)
 #define ACHARTYPE (TYPECOUNT+2)
 #define UNDEFTYPE (TYPECOUNT+4)
 #define TYPECOUNT2 (TYPECOUNT+5)
@@ -116,5 +115,12 @@ typedef struct {
   JSX_Type *type;
   void (*finalize) (void *);
 } JSX_Pointer;
+
+
+static inline int is_void_or_char(JSX_Type *t) {
+  if(t->type == VOIDTYPE) return 1;
+  if(t->type != INTTYPE && t->type != UINTTYPE) return 0;
+  return 0 == ((JSX_TypeNumeric *) t)->size;
+}
 
 #endif

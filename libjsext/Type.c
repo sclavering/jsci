@@ -744,13 +744,6 @@ int JSX_CType(JSX_Type *type) {
       if(size == 0) return ACHARTYPE;
     }
   }
-  if(type->type == POINTERTYPE) {
-    JSX_TypePointer *ptype = (JSX_TypePointer *) type;
-    if(ptype->direct->type == INTTYPE || ptype->direct->type == UINTTYPE) {
-      int size = ((JSX_TypeNumeric *) ptype->direct)->size;
-      if(size == 0) return PCHARTYPE;
-    }
-  }
   return type->type;
 }
 
