@@ -6,8 +6,7 @@
 
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
-static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
-static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member);
+static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_TypeStructUnion *type, int nMember, jsval *members);
 static int JSX_TypeAlign(JSX_Type *type);
 static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype);
 static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructUnion *typesu);
@@ -28,7 +27,7 @@ static JSClass JSX_TypeClass={
     JS_PropertyStub,
     JS_PropertyStub,
     JS_PropertyStub,
-    JSX_Type_SetProperty,
+    JS_PropertyStub,
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
@@ -141,19 +140,6 @@ static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructU
       for(j = 0; j < al; j++) typesu->ffiType.elements[nmember++] = t;
     }
     typesu->ffiType.elements[nmember] = NULL;
-}
-
-
-static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  JSX_Type *type = (JSX_Type *) JS_GetPrivate(cx, obj);
-
-  if(JSVAL_IS_INT(id)) {
-    int index = JSVAL_TO_INT(id);
-    if(type->type == STRUCTTYPE || type->type == UNIONTYPE)
-      return TypeStructUnion_SetMember(cx, (JSX_TypeStructUnion *) type, index, *vp);
-  }
-
-  return JS_TRUE;
 }
 
 
@@ -318,9 +304,9 @@ static int JSX_TypeAlign(JSX_Type *type) {
   case STRUCTTYPE:
   case UNIONTYPE: {
     int i, ret = 0, len = ((JSX_TypeStructUnion *) type)->nMember;
-    for (i=0; i<len; i++) {
+    for(i = 0; i != len; ++i) {
       int thisalign = JSX_TypeAlign(((JSX_TypeStructUnion *) type)->member[i].membertype);
-      if (thisalign>ret) ret=thisalign;
+      if(thisalign > ret) ret = thisalign;
     }
     return ret;
   }
@@ -357,106 +343,82 @@ int JSX_TypeSize(JSX_Type *type) {
 }
 
 
-static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member) {
+static JSBool TypeStructUnion_SetSizeAndAligments(JSContext *cx, JSX_TypeStructUnion *tsu) {
   int i;
-  int thisalign;
-  int thissize;
-  
-  if (type->member_capacity <= memberno) {
-    int old_capacity=type->member_capacity;
-
-    if (type->member_capacity==0)
-      type->member_capacity=8;
-    else
-      type->member_capacity*=2;
-
-    if (type->member_capacity < memberno + 1)
-      type->member_capacity = memberno + 1;
-
-    if (type->member) {
-      type->member = JS_realloc(cx, type->member, sizeof(JSX_SuMember) * type->member_capacity); // membertype same size as paramtype
-      memset(type->member + old_capacity, 0, sizeof(JSX_SuMember) * (type->member_capacity - old_capacity));
-    } else {
-      type->member = JS_malloc(cx, sizeof(JSX_SuMember) * type->member_capacity); // membertype same size as paramtype
-      memset(type->member, 0, sizeof(JSX_SuMember) * type->member_capacity);
+  if(tsu->type == STRUCTTYPE) {
+    for(i = 0; i != tsu->nMember; ++i) {
+      int thisalign = JSX_TypeAlignBits(tsu->member[i].membertype);
+      if(thisalign == 0) return JSX_ReportException(cx, "Division by zero");
+      tsu->sizeOf += (thisalign - tsu->sizeOf % thisalign) % thisalign;
+      tsu->member[i].offset = tsu->sizeOf;
+      tsu->sizeOf += JSX_TypeSizeBits(tsu->member[i].membertype);
     }
+    return JS_TRUE;
   }
-
-  if (memberno>=type->nMember)
-    type->nMember=memberno+1;
-
-  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
-  
-  if(type->type == UNIONTYPE) {
-    if(!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
-
-    type->member[memberno].offset=0;
-    thissize = JSX_TypeSizeBits(type->member[memberno].membertype);
-    if (thissize > type->sizeOf)
-      type->sizeOf=thissize;
-
-  } else { // STRUCTTYPE
-    if (!JSX_InitMemberType(cx, type->member+memberno, JSVAL_TO_OBJECT(member)))
-      return JS_FALSE;
-
-    if(((JSX_TypeStructUnion *) type)->ffiType.elements) {
-      JS_free(cx, ((JSX_TypeStructUnion *) type)->ffiType.elements);
-      ((JSX_TypeStructUnion *) type)->ffiType.elements = 0;
+  if(tsu->type == UNIONTYPE) {
+    for(i = 0; i != tsu->nMember; ++i) {
+      tsu->member[i].offset = 0;
+      int sz = JSX_TypeSizeBits(tsu->member[i].membertype);
+      if(sz > tsu->sizeOf) tsu->sizeOf = sz;
     }
-
-    if(memberno != type->nMember - 1 && memberno > 0 && type->member[memberno - 1].membertype) {
-      type->sizeOf = type->member[memberno - 1].offset + JSX_TypeSizeBits(type->member[memberno - 1].membertype);
-    }
-      
-    for(i = memberno; i < type->nMember && type->member[i].membertype; i++) {
-      thisalign = JSX_TypeAlignBits(type->member[i].membertype);
-
-      if (thisalign==0) {
-        JSX_ReportException(cx, "Division by zero");
-        return JS_FALSE;
-      }
-
-      type->sizeOf+=(thisalign - type->sizeOf % thisalign) % thisalign;
-      type->member[i].offset=type->sizeOf;
-      type->sizeOf += JSX_TypeSizeBits(type->member[i].membertype);
-    }
+    return JS_TRUE;
   }
-
-  return JS_TRUE;
+  return JS_FALSE;
 }
 
 
 // typeid must obviously be STRUCTTYPE or UNIONTYPE
 static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, int typeid, JSObject* proto) {
-  JSObject *retobj;
-  JSX_TypeStructUnion *type;
-  int i;
-  
-  retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
-  *rval=OBJECT_TO_JSVAL(retobj);
-
-  type = (JSX_TypeStructUnion *) JS_malloc(cx, sizeof(JSX_TypeStructUnion));
-
+  JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
+  *rval = OBJECT_TO_JSVAL(retobj);
+  JSX_TypeStructUnion *type = (JSX_TypeStructUnion *) JS_malloc(cx, sizeof(JSX_TypeStructUnion));
   type->type = typeid;
-  type->nMember=nMember;
-  type->member_capacity=nMember;
-  type->member = nMember ? (JSX_SuMember *) JS_malloc(cx, sizeof(JSX_SuMember) * nMember) : 0;
-  memset(type->member, 0, sizeof(JSX_SuMember) * nMember);
-  type->sizeOf=0;
+  type->member = 0;
+  type->nMember = 0;
+  type->sizeOf = 0;
+  type->ffiType.elements = 0;
   JS_SetPrivate(cx, retobj, type);
-  type->ffiType.elements=0;
+  JSBool rv = JS_TRUE;
+  if(nMember) rv = TypeStructUnion_replace_members(cx, retobj, type, nMember, member);
+  return rv;
+}
 
-  for (i=0; i<nMember; i++) {
-    if(!TypeStructUnion_SetMember(cx, type, i, member[i]))
-      goto failure;
-    JS_DefineElement(cx, retobj, i, member[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+
+static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_TypeStructUnion *tsu, int nMember, jsval *members) {
+  tsu->nMember = nMember;
+  tsu->member = (JSX_SuMember *) JS_malloc(cx, sizeof(JSX_SuMember) * nMember);
+  memset(tsu->member, 0, sizeof(JSX_SuMember) * nMember);
+
+  int i;
+  for(i = 0; i != nMember; ++i) {
+    if(!JSVAL_IS_OBJECT(members[i]) || JSVAL_IS_NULL(members[i])) goto failure;
+    if(!JSX_InitMemberType(cx, tsu->member + i, JSVAL_TO_OBJECT(members[i]))) goto failure;
+    // this is probably just to save the Type instances from GC, and thus the JSX_Type's from being free()'d
+    JS_DefineElement(cx, obj, i, members[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
-  
+  if(!TypeStructUnion_SetSizeAndAligments(cx, tsu)) goto failure;
   return JS_TRUE;
 
  failure:
-  JSX_DestroyTypeStructUnion(cx, type);
+  JS_free(cx, tsu->member);
+  tsu->member = 0;
+  tsu->nMember = 0;
   return JS_FALSE;
+}
+
+
+static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  jsval suv = argv[0];
+  if(!jsval_is_Type(cx, suv))
+    return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
+  JSX_Type *t = JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
+  if(t->type != STRUCTTYPE && t->type != UNIONTYPE)
+    return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
+  JSX_TypeStructUnion *tsu = (JSX_TypeStructUnion *) t;
+  if(tsu->nMember)
+    return JSX_ReportException(cx, "Type.replace_members(): the struct/union already has members");
+
+  return TypeStructUnion_replace_members(cx, JSVAL_TO_OBJECT(argv[0]), tsu, argc - 1, &argv[1]);
 }
 
 
@@ -742,7 +704,7 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type) {
     case STRUCTTYPE: {
       int i;
       JSX_TypeStructUnion *sutype = (JSX_TypeStructUnion *) type;
-      for(i = 0; i < sutype->nMember; i++)
+      for(i = 0; i != sutype->nMember; ++i)
         if(JSX_TypeContainsPointer(sutype->member[i].membertype))
           return JS_TRUE;
       return JS_FALSE;
@@ -765,6 +727,7 @@ jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
     {"struct",JSX_Type_struct,1,0,0},
     {"union",JSX_Type_union,1,0,0},
     {"sizeof", Type_sizeof, 1, 0, 0},
+    {"replace_members", Type_replace_members, 1, 0, 0},
     {0,0,0,0,0}
   };
 

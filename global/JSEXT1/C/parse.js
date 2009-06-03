@@ -276,29 +276,25 @@ return function(info) {
 
 
   function suDeclare(su_xml) {
-    const id = su_xml.name() + " " + su_xml.@id;
+    const struct_or_union = su_xml.name();
+    const id = struct_or_union + " " + su_xml.@id;
     expsym[id] = true;
 
     if (!su[id]) {
-      var expr="Type."+su_xml.name()+"()";
-      su[id]=expr;
+      const expr = su[id] = "Type." + struct_or_union + "()";
       live[id] = liveeval(expr);
     }
 
-    if (su_xml.*.length()) {
-      var tmpdep={};
+    if(!su_xml.*.length()) return;
 
-      var members=suMembers(su_xml, tmpdep);
-      var exprs=[];
+    // structs can be have members of the same struct type, so our getter creates a stub, then replace its innards
 
-      for(var i = 0; i < members.length; i++) exprs.push("this['" + id + "'][" + i + "]=" + members[i]);
-
-      sym[id] = "(" + exprs + ",this['" + id + "'])";
-
-      liveeval(exprs.join(";"));
-
-      dep[id]=tmpdep;
-    }
+    var tmpdep={};
+    var members = suMembers(su_xml, tmpdep);
+    const suref = "this['" + id + "']";
+    sym[id] = "Type.replace_members(" + suref + "," + members.join(',') + ")," + suref;
+    liveeval(sym[id]);
+    dep[id] = tmpdep;
   }
 
 

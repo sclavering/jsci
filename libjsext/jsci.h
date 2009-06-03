@@ -61,7 +61,6 @@ typedef struct {
   enum JSX_TypeID type; // STRUCTTYPE or UNIONTYPE
   JSX_SuMember *member;
   int nMember;
-  int member_capacity;
   int sizeOf; // in bits
   ffi_type ffiType;
 } JSX_TypeStructUnion;
