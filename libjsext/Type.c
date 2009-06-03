@@ -145,7 +145,7 @@ static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructU
 
 
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  JSX_Type *type = JS_GetPrivate(cx, obj);
+  JSX_Type *type = (JSX_Type *) JS_GetPrivate(cx, obj);
 
   if(JSVAL_IS_INT(id)) {
     int index = JSVAL_TO_INT(id);
@@ -173,7 +173,7 @@ static JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *me
     // name is freed later
     return JS_FALSE;
   }
-  dest->membertype = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+  dest->membertype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
 
   return JS_TRUE;
 }
@@ -210,8 +210,7 @@ static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
 
 
 static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member) {
-  JSX_TypeFunction *type;
-  type = JS_GetPrivate(cx, obj);
+  JSX_TypeFunction *type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
   if(memberno >= type->nParam) type->nParam = memberno + 1;
   if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
   if(!FuncParam_Init(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
@@ -258,7 +257,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   JS_SetPrivate(cx, retobj, type);
 
   JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  type->returnType=JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
+  type->returnType = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
 
   type->param = (JSX_FuncParam *) JS_malloc(cx, sizeof(JSX_FuncParam) * (type->nParam + 1));
   memset(type->param, 0, sizeof(JSX_FuncParam) * type->nParam);
@@ -291,7 +290,7 @@ static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membe
     JSX_ReportException(cx, "Type.function(): one of the argument descriptors has a bad or missing .type property");
     return JS_FALSE;
   }
-  dest->paramtype = JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+  dest->paramtype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
   JS_GetProperty(cx, membertype, "const", &tmp);
   dest->isConst = tmp == JSVAL_TRUE ? 1 : 0;
   return JS_TRUE;
@@ -671,7 +670,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *v
     if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list
 
     if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
-      thistype=JS_GetPrivate(cx,JSVAL_TO_OBJECT(*vp));
+      thistype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
       vp++;
       i++;
       if (i==nargs) break;
