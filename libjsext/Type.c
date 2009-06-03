@@ -9,7 +9,7 @@ static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Type_SetProperty(JSContext *cx, JSObject *obj, jsval id, jsval *rval);
 static JSBool TypeStructUnion_SetMember(JSContext *cx, JSX_TypeStructUnion *type, int memberno, jsval member);
 static int JSX_TypeAlign(JSX_Type *type);
-static JSBool JSX_InitParamType(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype);
+static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype);
 static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructUnion *typesu);
 
 static JSX_Type *sTypeVoid = NULL;
@@ -214,7 +214,7 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
   type = JS_GetPrivate(cx, obj);
   if(memberno >= type->nParam) type->nParam = memberno + 1;
   if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
-  if(!JSX_InitParamType(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
+  if(!FuncParam_Init(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
   if(memberno == type->nParam - 1) {
     type->param[type->nParam].paramtype = sTypeVoid;
     type->param[type->nParam].isConst = 0;
@@ -284,7 +284,7 @@ JSClass *JSX_GetTypeClass(void) {
 }
 
 
-static JSBool JSX_InitParamType(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype) {
+static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype) {
   jsval tmp;
   JS_GetProperty(cx, membertype, "type", &tmp);
   if(!jsval_is_Type(cx, tmp)) {
