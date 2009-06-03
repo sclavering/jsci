@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include "util.h"
 
 struct JSON {
   JSContext *cx;
@@ -17,27 +18,6 @@ struct JSON {
 };
 
 #define swap(a,b) ((a)^=(b), (b)^=(a), (a)^=(b))
-
-static JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
-  int len;
-  char *msg;
-  JSString *Str;
-  va_list va;
-  jsval str;
-
-  va_start(va, format);
-  msg=JS_malloc(cx, 81);
-  va_start(va, format);
-  len=vsnprintf(msg,80,format,va);
-  msg[80]=0;
-
-  va_end(va);
-  Str=JS_NewString(cx, msg, len);
-  str=STRING_TO_JSVAL(Str);
-  JS_SetPendingException(cx, str);
-
-  return JS_FALSE;
-}
 
 static inline void expand_buf(struct JSON *s, int n) {
   int len=s->p-s->buf;
