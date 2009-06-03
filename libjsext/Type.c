@@ -747,9 +747,9 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type) {
         if(JSX_TypeContainsPointer(sutype->member[i].membertype))
           return JS_TRUE;
       return JS_FALSE;
+    }
     default:
       return JS_FALSE;
-    }
   }
 }
 
