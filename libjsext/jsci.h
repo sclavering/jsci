@@ -102,7 +102,6 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type);
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)
 #define JSPOINTER (JSVAL_TAGMASK+3)
-#define JSTYPE (JSVAL_TAGMASK+4)
 #define JSARRAY (JSVAL_TAGMASK+5)
 #define JSFUNC (JSVAL_TAGMASK+6)
 

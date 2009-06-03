@@ -720,7 +720,6 @@ int JSX_JSType(JSContext *cx, jsval v) {
       if(v == JSVAL_NULL) return JSNULL;
       if(JS_IsArrayObject(cx, JSVAL_TO_OBJECT(v))) return JSARRAY;
       if(JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetPointerClass(), NULL)) return JSPOINTER;
-      if(JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetTypeClass(), NULL)) return JSTYPE;
       if(JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(v))) return JSFUNC;
       break;
     case 1:
