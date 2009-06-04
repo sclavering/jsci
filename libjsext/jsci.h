@@ -32,9 +32,7 @@ enum JSX_TypeID {
 struct JSX_Type {
   enum JSX_TypeID type;
 
-  virtual ffi_type *GetFFIType(JSContext *cx) {
-    return 0;
-  }
+  virtual ffi_type *GetFFIType(JSContext *cx);
 };
 
 struct JSX_TypeVoid : JSX_Type {
