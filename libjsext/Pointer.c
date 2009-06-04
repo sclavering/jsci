@@ -1451,9 +1451,8 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
 
   if(real_argc > ((JSX_TypeFunction *) type)->nParam) {
-    int callconv=FFI_DEFAULT_ABI;
     memcpy(arg_types, JSX_GetCIF(cx, ((JSX_TypeFunction *) type))->arg_types, sizeof(ffi_type *) * ((JSX_TypeFunction *) type)->nParam);
-    ffi_prep_cif(cif, callconv, real_argc, JSX_GetFFIType(cx, ((JSX_TypeFunction *) type)->returnType), arg_types);
+    ffi_prep_cif(cif, FFI_DEFAULT_ABI, real_argc, JSX_GetFFIType(cx, ((JSX_TypeFunction *) type)->returnType), arg_types);
   } else {
     cif = JSX_GetCIF(cx, (JSX_TypeFunction *) type);
   }
