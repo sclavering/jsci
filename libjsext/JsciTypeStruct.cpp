@@ -1,9 +1,7 @@
 #include "jsci.h"
 
 
-ffi_type *JSX_TypeStructUnion::GetFFIType(JSContext *cx) {
-  if(this->type == UNIONTYPE) return 0;
-
+ffi_type *JSX_TypeStruct::GetFFIType(JSContext *cx) {
   if(!this->ffiType.elements) {
     int nmember = 0;
     int bitsused = 0;

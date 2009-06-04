@@ -75,8 +75,13 @@ struct JSX_TypeStructUnion : JSX_Type {
   int nMember;
   int sizeOf; // in bits
   ffi_type ffiType;
+};
 
+struct JSX_TypeStruct : JSX_TypeStructUnion {
   virtual ffi_type *GetFFIType(JSContext *cx);
+};
+
+struct JSX_TypeUnion : JSX_TypeStructUnion {
 };
 
 struct JSX_TypePointer : JSX_Type {
