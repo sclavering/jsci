@@ -28,28 +28,29 @@ enum JSX_TypeID {
 #define UNDEFTYPE (TYPECOUNT+4)
 #define TYPECOUNT2 (TYPECOUNT+5)
 
-typedef struct { // Private part of Type objects
+// We store an instance of this, or a subclass, inside each js Type object
+struct JSX_Type {
   enum JSX_TypeID type; // VOID
-} JSX_Type;
+};
 
-typedef struct {
-  enum JSX_TypeID type; // INTTYPE, UINTTYPE, or FLOATTYPE
+struct JSX_TypeNumeric : JSX_Type {
+  // INTTYPE, UINTTYPE, or FLOATTYPE
   int size;
   ffi_type ffiType;
-} JSX_TypeNumeric;
+};
 
 typedef struct {
   JSX_Type *paramtype;
   int isConst;
 } JSX_FuncParam;
 
-typedef struct {
-  enum JSX_TypeID type; // FUNCTIONTYPE
+struct JSX_TypeFunction : JSX_Type {
+  // FUNCTIONTYPE
   JSX_FuncParam *param;
   int nParam;
   JSX_Type *returnType;
   ffi_cif cif;
-} JSX_TypeFunction;
+};
 
 typedef struct {
   JSX_Type *membertype;
@@ -57,30 +58,30 @@ typedef struct {
   int offset; // in bits
 } JSX_SuMember;
 
-typedef struct {
-  enum JSX_TypeID type; // STRUCTTYPE or UNIONTYPE
+struct JSX_TypeStructUnion : JSX_Type {
+  // STRUCTTYPE or UNIONTYPE
   JSX_SuMember *member;
   int nMember;
   int sizeOf; // in bits
   ffi_type ffiType;
-} JSX_TypeStructUnion;
+};
 
-typedef struct {
-  enum JSX_TypeID type; // POINTERTYPE
+struct JSX_TypePointer : JSX_Type {
+  // POINTERTYPE
   JSX_Type *direct;
-} JSX_TypePointer;
+};
 
-typedef struct {
-  enum JSX_TypeID type; // ARRAYTYPE
+struct JSX_TypeArray : JSX_Type {
+  // ARRAYTYPE
   JSX_Type *member;
   int length;
-} JSX_TypeArray;
+};
 
-typedef struct {
-  enum JSX_TypeID type; // BITFIELDTYPE
+struct JSX_TypeBitfield : JSX_Type {
+  // BITFIELDTYPE
   JSX_Type *member;
   int length;
-} JSX_TypeBitfield;
+};
 
 
 
