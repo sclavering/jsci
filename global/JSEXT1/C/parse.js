@@ -370,14 +370,11 @@ return function(info) {
 
     case 'fd':
       var params=[];
-      var param;
       var isvoid=false;
 
-      for each (param in declor.pm.d) {
+      for each(var param in declor.pm.d) {
         var param_type = declaration(param, dep, param.*[param.*.length() - 1]);
-
         params.push("{'const':" + (param["const"].length() > 0) + "," + "type:" + param_type.type + "}");
-
         if (param_type.type == "Type['void']") isvoid = true;
       }
 
