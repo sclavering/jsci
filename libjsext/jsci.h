@@ -30,13 +30,24 @@ enum JSX_TypeID {
 
 // We store an instance of this, or a subclass, inside each js Type object
 struct JSX_Type {
-  enum JSX_TypeID type; // VOID
+  enum JSX_TypeID type;
+
+  virtual ffi_type *GetFFIType(JSContext *cx) {
+    return 0;
+  }
+};
+
+struct JSX_TypeVoid : JSX_Type {
+  // VOIDTYPE
+  virtual ffi_type *GetFFIType(JSContext *cx);
 };
 
 struct JSX_TypeNumeric : JSX_Type {
   // INTTYPE, UINTTYPE, or FLOATTYPE
   int size;
   ffi_type ffiType;
+
+  virtual ffi_type *GetFFIType(JSContext *cx);
 };
 
 typedef struct {
@@ -64,11 +75,15 @@ struct JSX_TypeStructUnion : JSX_Type {
   int nMember;
   int sizeOf; // in bits
   ffi_type ffiType;
+
+  virtual ffi_type *GetFFIType(JSContext *cx);
 };
 
 struct JSX_TypePointer : JSX_Type {
   // POINTERTYPE
   JSX_Type *direct;
+
+  virtual ffi_type *GetFFIType(JSContext *cx);
 };
 
 struct JSX_TypeArray : JSX_Type {
@@ -93,8 +108,8 @@ int JSX_CType(JSX_Type *type);
 int JSX_JSType(JSContext *cx, jsval rval);
 JSBool JSX_TypeContainsPointer(JSX_Type *type);
 JSX_Type *GetVoidType(void); // the C "void" type
-ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type);
 ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type);
+int JSX_TypeAlign(JSX_Type *type);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)

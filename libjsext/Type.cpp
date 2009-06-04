@@ -6,9 +6,7 @@
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_TypeStructUnion *type, int nMember, jsval *members);
-static int JSX_TypeAlign(JSX_Type *type);
 static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype);
-static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructUnion *typesu);
 
 static JSX_Type *sTypeVoid = NULL;
 // __proto__ for results of Type.function(...) and similar
@@ -50,97 +48,10 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
     if(type->param[i].paramtype->type == ARRAYTYPE)
       type->cif.arg_types[i]=&ffi_type_pointer;
     else
-      type->cif.arg_types[i] = JSX_GetFFIType(cx, type->param[i].paramtype);
+      type->cif.arg_types[i] = type->param[i].paramtype->GetFFIType(cx);
   }
-  ffi_prep_cif(&type->cif, FFI_DEFAULT_ABI, type->nParam, JSX_GetFFIType(cx, type->returnType), type->cif.arg_types);
+  ffi_prep_cif(&type->cif, FFI_DEFAULT_ABI, type->nParam, type->returnType->GetFFIType(cx), type->cif.arg_types);
   return &type->cif;
-}
-
-
-ffi_type *JSX_GetFFIType(JSContext *cx, JSX_Type *type) {
-  switch(type->type) {
-    case POINTERTYPE:
-      return &ffi_type_pointer;
-    case VOIDTYPE:
-      return &ffi_type_void;
-    case INTTYPE:
-    case UINTTYPE:
-    case FLOATTYPE:
-      return &((JSX_TypeNumeric *) type)->ffiType;
-    case STRUCTTYPE: {
-      JSX_TypeStructUnion *typesu = (JSX_TypeStructUnion *) type;
-      if(!typesu->ffiType.elements) TypeStructUnion_init_ffiType_elements(cx, typesu);
-      return &typesu->ffiType;
-    }
-    default:
-      return NULL;
-  }
-}
-
-
-static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructUnion *typesu) {
-    JSX_Type *type = (JSX_Type *) typesu;
-
-    int nmember = 0;
-    int bitsused = 0;
-    int i;
-    for(i = 0; i < typesu->nMember; i++) {
-      int al=1;
-      JSX_Type *memb = typesu->member[i].membertype;
-      while (memb->type==ARRAYTYPE) {
-        al *= ((JSX_TypeArray *) memb)->length;
-        memb = ((JSX_TypeArray *) memb)->member;
-      }
-      if (memb->type==BITFIELDTYPE) {
-        int length = ((JSX_TypeBitfield *) memb)->length;
-        if(bitsused && bitsused + length < 8) {
-          al = 0;
-        } else {
-          al = (bitsused + length) / 8;
-          bitsused = (bitsused + length) % 8;
-        }
-      } else {
-        bitsused = 0;
-      }
-      nmember+=al;
-    }
-
-    typesu->ffiType.elements = new _ffi_type*[nmember + 1];
-
-    // must specify size and alignment because
-    // bitfields introduce alignment requirements
-    // which are not reflected by the ffi members.
-    typesu->ffiType.size = JSX_TypeSize(type);
-    typesu->ffiType.alignment = JSX_TypeAlign(type);
-    typesu->ffiType.type = FFI_TYPE_STRUCT;
-
-    bitsused=0;
-    nmember=0;
-    for(i = 0; i < typesu->nMember; i++) {
-      int al=1;
-      int j;
-      ffi_type *t;
-      JSX_Type *memb = typesu->member[i].membertype;
-      while (memb->type==ARRAYTYPE) {
-        al *= ((JSX_TypeArray *) memb)->length;
-        memb = ((JSX_TypeArray *) memb)->member;
-      }
-      if (memb->type==BITFIELDTYPE) {
-        int length = ((JSX_TypeBitfield *) memb)->length;
-        if(bitsused && bitsused + length < 8) {
-          al = 0;
-        } else {
-          al = (bitsused + length) / 8;
-          bitsused = (bitsused + length) % 8;
-        }
-        t = &ffi_type_uchar;
-      } else {
-        bitsused = 0;
-        t = JSX_GetFFIType(cx, memb);
-      }
-      for(j = 0; j < al; j++) typesu->ffiType.elements[nmember++] = t;
-    }
-    typesu->ffiType.elements[nmember] = NULL;
 }
 
 
@@ -280,7 +191,7 @@ int JSX_TypeAlignBits(JSX_Type *type) {
 }
 
 
-static int JSX_TypeAlign(JSX_Type *type) {
+int JSX_TypeAlign(JSX_Type *type) {
   switch(type->type) {
   case POINTERTYPE:
     return ffi_type_pointer.alignment;
@@ -552,7 +463,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
   newval = OBJECT_TO_JSVAL(newtype);
   JS_SetProperty(cx, typeobj, "void", &newval);
 
-  type = new JSX_Type;
+  type = new JSX_TypeVoid;
   type->type = VOIDTYPE;
   JS_SetPrivate(cx, newtype, type);
 
@@ -644,7 +555,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *v
       }
     } else {
       siz=JSX_TypeSize(thistype);
-      if(arg_types) *(arg_types++) = JSX_GetFFIType(cx, thistype);
+      if(arg_types) *(arg_types++) = thistype->GetFFIType(cx);
     }
     if (!siz) return 0; // error
     ret+=siz;
