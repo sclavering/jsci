@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include "util.h"
 
-JSBool JSX_ReportException(JSContext *cx, char *format, ...) {
+JSBool JSX_ReportException(JSContext *cx, const char *format, ...) {
   char *msg;
   JSString *Str;
   va_list va;
