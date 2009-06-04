@@ -33,6 +33,7 @@ struct JSX_Type {
   enum JSX_TypeID type;
 
   virtual ffi_type *GetFFIType(JSContext *cx);
+  virtual int SizeInBits();
 };
 
 struct JSX_TypeVoid : JSX_Type {
@@ -99,6 +100,8 @@ struct JSX_TypeBitfield : JSX_Type {
   // BITFIELDTYPE
   JSX_Type *member;
   int length;
+
+  virtual int SizeInBits();
 };
 
 

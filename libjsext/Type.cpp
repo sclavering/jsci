@@ -218,12 +218,6 @@ int JSX_TypeAlign(JSX_Type *type) {
 }
 
 
-int JSX_TypeSizeBits(JSX_Type *type) {
-  if(type->type == BITFIELDTYPE) return ((JSX_TypeBitfield *) type)->length;
-  return JSX_TypeSize(type) * 8;
-}
-
-
 int JSX_TypeSize(JSX_Type *type) {
   switch(type->type) {
   case POINTERTYPE:
@@ -253,14 +247,14 @@ static JSBool TypeStructUnion_SetSizeAndAligments(JSContext *cx, JSX_TypeStructU
       if(thisalign == 0) return JSX_ReportException(cx, "Division by zero");
       tsu->sizeOf += (thisalign - tsu->sizeOf % thisalign) % thisalign;
       tsu->member[i].offset = tsu->sizeOf;
-      tsu->sizeOf += JSX_TypeSizeBits(tsu->member[i].membertype);
+      tsu->sizeOf += tsu->member[i].membertype->SizeInBits();
     }
     return JS_TRUE;
   }
   if(tsu->type == UNIONTYPE) {
     for(i = 0; i != tsu->nMember; ++i) {
       tsu->member[i].offset = 0;
-      int sz = JSX_TypeSizeBits(tsu->member[i].membertype);
+      int sz = tsu->member[i].membertype->SizeInBits();
       if(sz > tsu->sizeOf) tsu->sizeOf = sz;
     }
     return JS_TRUE;
