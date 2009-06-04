@@ -32,8 +32,11 @@ bindir=@bindir@
 libdir=@libdir@
 version=@PACKAGE_VERSION@
 
+JSX_SHARED_FLAGS = $(JSAPI_FLAGS) -Dsysconfdir=\"$(sysconfdir)\" -I../js/src -Dlibdir=\"$(libdir)\"
+
 YFLAGS	= -dv
-CFLAGS	= -O3 $(JSAPI_FLAGS) -Dsysconfdir=\"$(sysconfdir)\" -I../js/src -Dlibdir=\"$(libdir)\" $(XCFLAGS)
+CFLAGS	= -Wall -O3 $(JSX_SHARED_FLAGS) $(XCFLAGS)
+CXXFLAGS = -Wall -O3 $(JSX_SHARED_FLAGS) -fno-exceptions -fno-rtti
 LFLAGS	= 
 LDFLAGS	= -L../js/src/Linux_All_OPT.OBJ
 
@@ -48,7 +51,7 @@ JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decod
 CTOXML_OBJS = c_gram.o c_scan.o xml.o libctoxml.o strbuf.o
 
 jsext:	$(JSX_OBJS) $(CTOXML_OBJS)
-	$(CC) $(JSAPI_FLAGS) $(LDFLAGS) $(JSX_OBJS) $(CTOXML_OBJS) -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi
+	g++ $(JSAPI_FLAGS) $(LDFLAGS) $(JSX_OBJS) $(CTOXML_OBJS) -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi
 
 
 # c-to-xml stuff

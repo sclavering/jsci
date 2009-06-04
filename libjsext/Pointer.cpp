@@ -41,7 +41,7 @@ static JSClass JSX_PointerClass={
     JSX_Pointer_finalize
 };
 
-static char *JSX_typenames[]={
+static const char *JSX_typenames[] = {
   "signed integer",
   "unsigned integer",
   "floating point",
@@ -58,7 +58,7 @@ static char *JSX_typenames[]={
   "undefined type"
 };
 
-static char *JSX_jstypenames[]={
+static const char *JSX_jstypenames[] = {
   "Object",
   "int",
   "Number",
@@ -133,7 +133,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       } else {
         obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
         *rval = OBJECT_TO_JSVAL(obj);
-        ptr = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer));
+        ptr = new JSX_Pointer;
         ptr->ptr = *(void **)p;
         ptr->type = ((JSX_TypePointer *) type)->direct;
         ptr->finalize = 0;
@@ -384,7 +384,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     // Update array elements from a variable array
 
     obj=JSVAL_TO_OBJECT(*rval);
-    JS_GetArrayLength(cx, obj, &size);
+    JS_GetArrayLength(cx, obj, (jsuint*) &size);
     elemsize = JSX_TypeSize(((JSX_TypeArray *) type)->member);
 
     if (do_clean) {
@@ -654,7 +654,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam
 
     if (!convconst && thistype && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval==JSVAL_NULL)) { // Const or immutable
       if(do_clean) {
-        siz = JSX_Get(cx, *argptr, 0, 2, thistype ? thistype->paramtype : 0, rval);
+        siz = JSX_Get(cx, (char*) *argptr, 0, 2, thistype ? thistype->paramtype : 0, rval);
       } else {
         if(!thistype) {
           siz = JSX_Get(cx, 0, 0, 0, 0, rval); // Get size of C type guessed from js type
@@ -667,10 +667,10 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam
       if(thistype && thistype->paramtype->type == ARRAYTYPE) {
         if(!do_clean) goto failure;
         // In function calls, arrays are passed by pointer
-        siz = JSX_Get(cx, *(void **)*argptr, 0, do_clean, thistype->paramtype, rval);
+        siz = JSX_Get(cx, (char*) *(void **)*argptr, 0, do_clean, thistype->paramtype, rval);
         if(siz) siz = sizeof(void *);
       } else {
-        siz = JSX_Get(cx, *argptr, 0, do_clean, thistype ? thistype->paramtype : 0, rval);
+        siz = JSX_Get(cx, (char*) *argptr, 0, do_clean, thistype ? thistype->paramtype : 0, rval);
       }
     }
 
@@ -993,7 +993,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       
       int containsPointers=0;
       obj=JSVAL_TO_OBJECT(v);
-      JS_GetArrayLength(cx, obj, &size);
+      JS_GetArrayLength(cx, obj, (jsuint*) &size);
       elemsize = JSX_TypeSize(((JSX_TypeArray *) type)->member);
 
       if (will_clean) {
@@ -1202,7 +1202,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
     if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
       // Paramlist-specified type
       thistype=&tmptype;
-      tmptype.paramtype = JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
+      tmptype.paramtype = (JSX_Type*) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
       vp++;
       i++;
       if (i==nargs) break;
@@ -1214,7 +1214,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
       if(!will_clean) goto failure;
       // In function calls, arrays are passed by pointer
       *(void **)ptr = JS_malloc(cx, JSX_TypeSize(thistype->paramtype));
-      cursiz = JSX_Set(cx, *(void **)ptr, will_clean, thistype->paramtype, *vp);
+      cursiz = JSX_Set(cx, (char*) *(void **)ptr, will_clean, thistype->paramtype, *vp);
       if(cursiz) {
         cursiz = sizeof(void *);
       } else {
@@ -1222,7 +1222,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
         goto failure;
       }
     } else {
-      cursiz = JSX_Set(cx, ptr ? ptr : *argptr, will_clean, thistype ? thistype->paramtype : 0, *vp);
+      cursiz = JSX_Set(cx, (char*) (ptr ? ptr : *argptr), will_clean, thistype ? thistype->paramtype : 0, *vp);
     }
     if (!cursiz)
       goto failure;
@@ -1254,7 +1254,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
     } else {
       --argptr;
     }
-    siz = JSX_Get(cx, ptr ? ptr : *argptr, 0, 2, type ? type->paramtype : 0, --vp);
+    siz = JSX_Get(cx, (char*) (ptr ? ptr : *argptr), 0, 2, type ? type->paramtype : 0, --vp);
   }
 
   return 0;
@@ -1296,7 +1296,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  JSX_Callback *retpriv = (JSX_Callback *) JS_malloc(cx, sizeof(JSX_Callback));
+  JSX_Callback *retpriv = new JSX_Callback;
   if (!retpriv)
     return JS_FALSE;
 
@@ -1308,7 +1308,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   retpriv->finalize=ffi_closure_free; //This would free the code address, not always identical to writeable address. So it is checked in finalize.
   retpriv->type = type;
 
-  if(ffi_prep_closure_loc(retpriv->writeable, JSX_GetCIF(cx, (JSX_TypeFunction *) retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
+  if(ffi_prep_closure_loc((ffi_closure*) retpriv->writeable, JSX_GetCIF(cx, (JSX_TypeFunction *) retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
     return JS_FALSE;
 
   JS_SetPrivate(cx, retobj, retpriv);
@@ -1322,7 +1322,7 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  JSX_Pointer *ret = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer));
+  JSX_Pointer *ret = new JSX_Pointer;
   if (!ret)
     return JS_FALSE;
   ret->ptr=0;
@@ -1405,7 +1405,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
   // Set initial value, if provided
   if(argc >= 2 && argv[1] != JSVAL_VOID) {
     JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx,obj);
-    if(!JSX_Set(cx, ptr->ptr, 0, ptr->type, argv[1])) return JS_FALSE;
+    if(!JSX_Set(cx, (char*) ptr->ptr, 0, ptr->type, argv[1])) return JS_FALSE;
   }
 
   return JS_TRUE;
@@ -1437,10 +1437,8 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
     return JS_FALSE;
   }
 
-  ffi_type **arg_types = 0;
-  arg_types=JS_malloc(cx, sizeof(ffi_cif)+sizeof(ffi_type *)*(argc+1));
-  ffi_cif *cif;
-  cif=(ffi_cif *)(arg_types+(argc+1));
+  ffi_type **arg_types = (ffi_type**) JS_malloc(cx, sizeof(ffi_type *) * (argc + 1));
+  ffi_cif *cif = (ffi_cif *) JS_malloc(cx, sizeof(ffi_cif));
 
   size_t arg_size = JSX_TypeSize_multi(cx, argc, ((JSX_TypeFunction *) type)->param, argv, arg_types);
 
@@ -1471,7 +1469,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
       goto failure;
   }
 
-  ffi_call(cif, ptr->ptr, (void *)retbuf, argptr);
+  ffi_call(cif, (void (*)()) ptr->ptr, (void *)retbuf, argptr);
 
   JS_free(cx,arg_types);
   arg_types=0;
@@ -1503,7 +1501,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   *vp=JSVAL_VOID;
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  int ret = JSX_Get(cx, ptr->ptr, 0, 0, ptr->type, vp);
+  int ret = JSX_Get(cx, (char*) ptr->ptr, 0, 0, ptr->type, vp);
   if(!ret) return JS_FALSE;
   if(ret == -1) {
     // Created new function
@@ -1515,7 +1513,7 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-  if(!JSX_Set(cx, ptr->ptr, 0, ptr->type, *vp)) return JS_FALSE;
+  if(!JSX_Set(cx, (char*) ptr->ptr, 0, ptr->type, *vp)) return JS_FALSE;
   return JS_TRUE;
 }
 
@@ -1553,7 +1551,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
     return JS_FALSE;
   }
 
-  ptr->finalize=finptr->ptr;
+  ptr->finalize = (void (*)(void *)) finptr->ptr;
 
   return JS_TRUE;
 }
@@ -1615,7 +1613,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   JSX_Pointer *newptr;
   newptr = (JSX_Pointer *) malloc(sizeof(JSX_Pointer));
   newptr->type = sutype->member[ix].membertype;
-  newptr->ptr = ptr->ptr + sutype->member[ix].offset / 8;
+  newptr->ptr = (char*) ptr->ptr + sutype->member[ix].offset / 8;
   newptr->finalize = 0;
   JS_SetPrivate(cx, newobj, newptr);
 
@@ -1666,12 +1664,11 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
 
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
   JSX_Callback *cb = (JSX_Callback *) user_data;
-  jsval *tmp_argv;
   int i;
   jsval rval=JSVAL_VOID;
   JSX_TypeFunction *type = (JSX_TypeFunction *) cb->type;
 
-  tmp_argv=(jsval *)JS_malloc(cb->cx, sizeof(jsval)*type->nParam);
+  jsval *tmp_argv = new jsval[type->nParam];
   if(!tmp_argv) return;
   
   for (i=0; i<type->nParam; i++) {
@@ -1695,7 +1692,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   }
   JS_free(cb->cx, tmp_argv);
 
-  if(type->returnType->type != VOIDTYPE) JSX_Set(cb->cx, ret, 0, type->returnType, rval);
+  if(type->returnType->type != VOIDTYPE) JSX_Set(cb->cx, (char*) ret, 0, type->returnType, rval);
 }
 
 
@@ -1713,7 +1710,7 @@ static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
-jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
+extern "C" jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   JSObject *protoobj;
   JSObject *classobj;
 

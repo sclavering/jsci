@@ -43,7 +43,8 @@ ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
   if (type->cif.arg_types)
     return &type->cif;
 
-  type->cif.arg_types=JS_malloc(cx, sizeof(ffi_type)*(type->nParam));
+  type->cif.arg_types = new ffi_type*[type->nParam];
+
   int i;
   for (i=0; i<type->nParam; i++) {
     if(type->param[i].paramtype->type == ARRAYTYPE)
@@ -104,7 +105,8 @@ static void TypeStructUnion_init_ffiType_elements(JSContext *cx, JSX_TypeStructU
       nmember+=al;
     }
 
-    typesu->ffiType.elements = JS_malloc(cx, sizeof(ffi_type *) * (nmember + 1));
+    typesu->ffiType.elements = new _ffi_type*[nmember + 1];
+
     // must specify size and alignment because
     // bitfields introduce alignment requirements
     // which are not reflected by the ffi members.
@@ -165,32 +167,23 @@ static JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *me
 
 
 static void JSX_DestroyTypeStructUnion(JSContext *cx, JSX_TypeStructUnion *type) {
-  int i;
-  if (type) {
-    if (type->member) {
-      for (i=0; i<type->nMember; i++) {
-        if(type->member[i].name)
-          free(type->member[i].name); // strdup'd earlier
-      }
-      JS_free(cx,type->member);
+  if(!type) return;
+  if(type->member) {
+    for(int i = 0; i != type->nMember; ++i) {
+      if(type->member[i].name) free(type->member[i].name); // strdup'd earlier
     }
-    if (type->ffiType.elements) {
-      JS_free(cx, type->ffiType.elements);
-    }
-    JS_free(cx, type);
+    delete type->member;
   }
+  if(type->ffiType.elements) delete type->ffiType.elements;
+  delete type;
 }
 
 
 static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
-  if (type) {
-    if (type->param)
-      JS_free(cx,type->param);
-    if (type->cif.arg_types) {
-      JS_free(cx, type->cif.arg_types);
-    }
-    JS_free(cx, type);
-  }
+  if(type) return;
+  if(type->param) delete type->param;
+  if(type->cif.arg_types) delete type->cif.arg_types;
+  delete type;
 }
 
 
@@ -204,7 +197,7 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
     type->param[type->nParam].isConst = 0;
   }
   if(type->cif.arg_types) {
-    JS_free(cx, type->cif.arg_types);
+    delete type->cif.arg_types;
     type->cif.arg_types = 0;
   }
   return JS_TRUE;
@@ -225,8 +218,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
     return JS_FALSE;
   }
 
-  JSX_TypeFunction *type;
-  type = (JSX_TypeFunction *) JS_malloc(cx, sizeof(JSX_TypeFunction));
+  JSX_TypeFunction *type = new JSX_TypeFunction;
   type->type=FUNCTIONTYPE;
 
   JSObject *retobj;
@@ -244,7 +236,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   type->returnType = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
 
-  type->param = (JSX_FuncParam *) JS_malloc(cx, sizeof(JSX_FuncParam) * (type->nParam + 1));
+  type->param = new JSX_FuncParam[type->nParam + 1];
   memset(type->param, 0, sizeof(JSX_FuncParam) * type->nParam);
 
   type->param[type->nParam].paramtype = sTypeVoid;
@@ -367,11 +359,11 @@ static JSBool TypeStructUnion_SetSizeAndAligments(JSContext *cx, JSX_TypeStructU
 
 
 // typeid must obviously be STRUCTTYPE or UNIONTYPE
-static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, int typeid, JSObject* proto) {
+static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JSX_TypeID type_id, JSObject* proto) {
   JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
   *rval = OBJECT_TO_JSVAL(retobj);
-  JSX_TypeStructUnion *type = (JSX_TypeStructUnion *) JS_malloc(cx, sizeof(JSX_TypeStructUnion));
-  type->type = typeid;
+  JSX_TypeStructUnion *type = new JSX_TypeStructUnion;
+  type->type = type_id;
   type->member = 0;
   type->nMember = 0;
   type->sizeOf = 0;
@@ -385,7 +377,7 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 
 static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_TypeStructUnion *tsu, int nMember, jsval *members) {
   tsu->nMember = nMember;
-  tsu->member = (JSX_SuMember *) JS_malloc(cx, sizeof(JSX_SuMember) * nMember);
+  tsu->member = new JSX_SuMember[nMember];
   memset(tsu->member, 0, sizeof(JSX_SuMember) * nMember);
 
   int i;
@@ -399,7 +391,7 @@ static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_
   return JS_TRUE;
 
  failure:
-  JS_free(cx, tsu->member);
+  delete tsu->member;
   tsu->member = 0;
   tsu->nMember = 0;
   return JS_FALSE;
@@ -410,7 +402,7 @@ static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsv
   jsval suv = argv[0];
   if(!jsval_is_Type(cx, suv))
     return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
-  JSX_Type *t = JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
+  JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
   if(t->type != STRUCTTYPE && t->type != UNIONTYPE)
     return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   JSX_TypeStructUnion *tsu = (JSX_TypeStructUnion *) t;
@@ -433,8 +425,7 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_pointer_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
-  JSX_TypePointer *type;
-  type = (JSX_TypePointer *) JS_malloc(cx, sizeof(JSX_TypePointer));
+  JSX_TypePointer *type = new JSX_TypePointer;
   type->type=POINTERTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->direct = sTypeVoid;
@@ -459,10 +450,9 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   }
 
   JSObject *retobj;
-  JSX_TypeArray *type;
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_array_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
-  type = (JSX_TypeArray *) JS_malloc(cx, sizeof(JSX_TypeArray));
+  JSX_TypeArray *type = new JSX_TypeArray;
   type->type=ARRAYTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
@@ -487,8 +477,7 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   JSObject *retobj;
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_bitfield_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
-  JSX_TypeBitfield *type;
-  type = (JSX_TypeBitfield *) JS_malloc(cx, sizeof(JSX_TypeBitfield));
+  JSX_TypeBitfield *type = new JSX_TypeBitfield;
   type->type=BITFIELDTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
@@ -502,13 +491,12 @@ JSX_Type *GetVoidType(void) {
 }
 
 
-static jsval init_numeric_Type(JSContext *cx, int typeid, int size, ffi_type ffit) {
+static jsval init_numeric_Type(JSContext *cx, JSX_TypeID type_id, int size, ffi_type ffit) {
   JSObject *newtype;
   newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
-  JSX_TypeNumeric *type;
-  type = (JSX_TypeNumeric *) JS_malloc(cx, sizeof(JSX_TypeNumeric));
-  type->type = typeid;
+  JSX_TypeNumeric *type = new JSX_TypeNumeric;
+  type->type = type_id;
   type->size = size;
   type->ffiType = ffit;
   JS_SetPrivate(cx, newtype, type);
@@ -564,7 +552,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
   newval = OBJECT_TO_JSVAL(newtype);
   JS_SetProperty(cx, typeobj, "void", &newval);
 
-  type = (JSX_Type *) JS_malloc(cx, sizeof(JSX_Type));
+  type = new JSX_Type;
   type->type = VOIDTYPE;
   JS_SetPrivate(cx, newtype, type);
 
@@ -581,8 +569,7 @@ static JSBool JSX_Type_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 
 static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
   JSX_Type *type = (JSX_Type *) JS_GetPrivate(cx, obj);
-  if (type==0)
-    return;
+  if(!type) return;
 
   switch(type->type) {
   case FUNCTIONTYPE:
@@ -593,7 +580,7 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
     JSX_DestroyTypeStructUnion(cx, (JSX_TypeStructUnion *) type);
     break;
   default:
-    JS_free(cx, type);
+    delete type;
   }
 }
 
@@ -714,7 +701,7 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type) {
 }
 
 
-jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
+extern "C" jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeobj;
   JSObject *typeproto;
 

@@ -23,7 +23,7 @@ static JSClass JSEXT_dl_class = {
 };
 
 
-jsval make_Dl(JSContext *cx, JSObject *glob) {
+extern "C" jsval make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
     {"symbolExists", Dl_proto_symbolExists, 1, 0, 0},
@@ -31,7 +31,7 @@ jsval make_Dl(JSContext *cx, JSObject *glob) {
     {0,0,0,0,0}
   };
 
-  JSEXT_dl_proto = JS_InitClass(cx, glob, NULL, &JSEXT_dl_class, Dl_new, 1, NULL, memberfunc, NULL, NULL);
+  JSEXT_dl_proto = JS_InitClass(cx, glob, NULL, &JSEXT_dl_class, &Dl_new, 1, NULL, memberfunc, NULL, NULL);
   if(JSEXT_dl_proto == 0) return JSVAL_VOID;
   JS_SetPrivate(cx, JSEXT_dl_proto, NULL);
 
