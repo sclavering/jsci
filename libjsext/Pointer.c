@@ -1468,7 +1468,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   argbuf=retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
   if (arg_size) {
-    if(!JSX_Set_multi(cx, (void *) argbuf, 1, argc, ((JSX_TypeFunction *) type)->param, argv, argptr))
+    if(!JSX_Set_multi(cx, argbuf, 1, argc, ((JSX_TypeFunction *) type)->param, argv, argptr))
       goto failure;
   }
 
