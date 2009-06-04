@@ -7,8 +7,8 @@ Our JavaScript <-> C interface, using libffi.
 #ifndef __jsci_h
 #define __jsci_h
 
-#include <jsapi.h>
 #include <ffi.h>
+#include "util.h"
 
 
 enum JSX_TypeID {

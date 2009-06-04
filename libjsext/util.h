@@ -5,7 +5,7 @@
 
 JS_BEGIN_EXTERN_C
 
-extern JSBool JSX_ReportException(JSContext *cx, const char *format, ...);
+JSBool JSX_ReportException(JSContext *cx, const char *format, ...);
 
 JS_END_EXTERN_C
 

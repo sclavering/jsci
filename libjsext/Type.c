@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include "util.h"
 #include "jsci.h"
 
 

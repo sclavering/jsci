@@ -1,8 +1,6 @@
-#include <jsapi.h>
 #include <stdarg.h>
 #include <dlfcn.h>
 #include <string.h>
-#include "util.h"
 #include "jsci.h"
 
 

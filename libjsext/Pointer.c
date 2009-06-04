@@ -3,7 +3,6 @@
 #include <stdarg.h>
 #include <dlfcn.h>
 #include <alloca.h>
-#include "util.h"
 #include "jsci.h"
 
 
