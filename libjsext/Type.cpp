@@ -246,7 +246,7 @@ static JSBool TypeStructUnion_SetSizeAndAligments(JSContext *cx, JSX_TypeStructU
 static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JSX_TypeID type_id, JSObject* proto) {
   JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
   *rval = OBJECT_TO_JSVAL(retobj);
-  JSX_TypeStructUnion *type = new JSX_TypeStructUnion;
+  JSX_TypeStructUnion *type = type_id == STRUCTTYPE ? (JSX_TypeStructUnion*) new JSX_TypeStruct : (JSX_TypeStructUnion*) new JSX_TypeUnion;
   type->type = type_id;
   type->member = 0;
   type->nMember = 0;
