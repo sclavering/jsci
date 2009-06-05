@@ -14,3 +14,8 @@ int JSX_Type::SizeInBits() {
 int JSX_Type::SizeInBytes() {
   return 0; // a nonsensical value
 }
+
+
+int JSX_Type::AlignmentInBits() {
+  return JSX_TypeAlign(this) * 8;
+}

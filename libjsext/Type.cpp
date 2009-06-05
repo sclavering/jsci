@@ -165,12 +165,6 @@ static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membe
 }
 
 
-int JSX_TypeAlignBits(JSX_Type *type) {
-  if(type->type == BITFIELDTYPE) return 1;
-  return JSX_TypeAlign(type) * 8;
-}
-
-
 int JSX_TypeAlign(JSX_Type *type) {
   switch(type->type) {
   case POINTERTYPE:
