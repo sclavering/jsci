@@ -1436,7 +1436,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
     return JS_FALSE;
   }
 
-  ffi_type **arg_types = (ffi_type**) JS_malloc(cx, sizeof(ffi_type *) * (argc + 1));
+  ffi_type **arg_types = new ffi_type*[argc + 1];
   ffi_cif *cif = (ffi_cif *) JS_malloc(cx, sizeof(ffi_cif));
 
   size_t arg_size = JSX_TypeSize_multi(cx, argc, ((JSX_TypeFunction *) type)->param, argv, arg_types);
@@ -1470,7 +1470,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
   ffi_call(cif, (void (*)()) ptr->ptr, (void *)retbuf, argptr);
 
-  JS_free(cx,arg_types);
+  delete arg_types;
   arg_types=0;
 
   *rval=JSVAL_VOID;
@@ -1490,8 +1490,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
  failure:
   if (argptr) 
     JS_free(cx, argptr);
-  if (arg_types) 
-    JS_free(cx, arg_types);
+  if(arg_types) delete arg_types;
 
   return JS_FALSE;
 }
