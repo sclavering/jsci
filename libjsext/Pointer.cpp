@@ -1541,8 +1541,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
   }
 
   JSX_Pointer *finptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrobj));
-  JSX_Type *type;
-  type=finptr->type;
+  JSX_Type *type = finptr->type;
   JSX_TypeFunction *functype = (JSX_TypeFunction *) type;
 
   if(type->type != FUNCTIONTYPE || functype->nParam != 1 || functype->param[0].paramtype->type != POINTERTYPE || functype->param[0].isConst) {
@@ -1605,8 +1604,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(sutype->member[ix].membertype->type == BITFIELDTYPE)
     return JSX_ReportException(cx, "Pointer.prototype.field(): requested member is a bitfield: %s", myname);
 
-  JSObject *newobj;
-  newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+  JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval = OBJECT_TO_JSVAL(newobj);
 
   JSX_Pointer *newptr;
