@@ -80,13 +80,16 @@ struct JSX_TypeStructUnion : JSX_Type {
   ffi_type ffiType;
 
   int SizeInBytes();
+  virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
 };
 
 struct JSX_TypeStruct : JSX_TypeStructUnion {
   ffi_type *GetFFIType();
+  JSBool SetSizeAndAligments(JSContext *cx);
 };
 
 struct JSX_TypeUnion : JSX_TypeStructUnion {
+  JSBool SetSizeAndAligments(JSContext *cx);
 };
 
 struct JSX_TypePointer : JSX_Type {
@@ -123,6 +126,7 @@ int JSX_JSType(JSContext *cx, jsval rval);
 JSBool JSX_TypeContainsPointer(JSX_Type *type);
 JSX_Type *GetVoidType(void); // the C "void" type
 int JSX_TypeAlign(JSX_Type *type);
+int JSX_TypeAlignBits(JSX_Type *type);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)

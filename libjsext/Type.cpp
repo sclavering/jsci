@@ -200,30 +200,6 @@ int JSX_TypeAlign(JSX_Type *type) {
 }
 
 
-static JSBool TypeStructUnion_SetSizeAndAligments(JSContext *cx, JSX_TypeStructUnion *tsu) {
-  int i;
-  if(tsu->type == STRUCTTYPE) {
-    for(i = 0; i != tsu->nMember; ++i) {
-      int thisalign = JSX_TypeAlignBits(tsu->member[i].membertype);
-      if(thisalign == 0) return JSX_ReportException(cx, "Division by zero");
-      tsu->sizeOf += (thisalign - tsu->sizeOf % thisalign) % thisalign;
-      tsu->member[i].offset = tsu->sizeOf;
-      tsu->sizeOf += tsu->member[i].membertype->SizeInBits();
-    }
-    return JS_TRUE;
-  }
-  if(tsu->type == UNIONTYPE) {
-    for(i = 0; i != tsu->nMember; ++i) {
-      tsu->member[i].offset = 0;
-      int sz = tsu->member[i].membertype->SizeInBits();
-      if(sz > tsu->sizeOf) tsu->sizeOf = sz;
-    }
-    return JS_TRUE;
-  }
-  return JS_FALSE;
-}
-
-
 // typeid must obviously be STRUCTTYPE or UNIONTYPE
 static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JSX_TypeID type_id, JSObject* proto) {
   JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
@@ -253,7 +229,7 @@ static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_
     // this is probably just to save the Type instances from GC, and thus the JSX_Type's from being free()'d
     JS_DefineElement(cx, obj, i, members[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
-  if(!TypeStructUnion_SetSizeAndAligments(cx, tsu)) goto failure;
+  if(!tsu->SetSizeAndAligments(cx)) goto failure;
   return JS_TRUE;
 
  failure:

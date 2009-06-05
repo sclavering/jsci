@@ -63,3 +63,15 @@ ffi_type *JSX_TypeStruct::GetFFIType() {
 
   return &this->ffiType;
 }
+
+
+JSBool JSX_TypeStruct::SetSizeAndAligments(JSContext *cx) {
+  for(int i = 0; i != this->nMember; ++i) {
+    int thisalign = JSX_TypeAlignBits(this->member[i].membertype);
+    if(thisalign == 0) return JSX_ReportException(cx, "Division by zero");
+    this->sizeOf += (thisalign - this->sizeOf % thisalign) % thisalign;
+    this->member[i].offset = this->sizeOf;
+    this->sizeOf += this->member[i].membertype->SizeInBits();
+  }
+  return JS_TRUE;
+}
