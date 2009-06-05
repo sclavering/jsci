@@ -81,6 +81,7 @@ struct JSX_TypeStructUnion : JSX_Type {
 
   int SizeInBytes();
   virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
+  JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
 };
 
 struct JSX_TypeStruct : JSX_TypeStructUnion {
@@ -127,6 +128,7 @@ JSBool JSX_TypeContainsPointer(JSX_Type *type);
 JSX_Type *GetVoidType(void); // the C "void" type
 int JSX_TypeAlign(JSX_Type *type);
 int JSX_TypeAlignBits(JSX_Type *type);
+JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)

@@ -5,7 +5,6 @@
 
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
-static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_TypeStructUnion *type, int nMember, jsval *members);
 static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype);
 
 static JSX_Type *sTypeVoid = NULL;
@@ -37,7 +36,7 @@ static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
 }
 
 
-static JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype) {
+JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype) {
   jsval tmp;
 
   JS_GetProperty(cx, membertype, "name", &tmp);
@@ -212,31 +211,8 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
   type->ffiType.elements = 0;
   JS_SetPrivate(cx, retobj, type);
   JSBool rv = JS_TRUE;
-  if(nMember) rv = TypeStructUnion_replace_members(cx, retobj, type, nMember, member);
+  if(nMember) rv = type->ReplaceMembers(cx, retobj, nMember, member);
   return rv;
-}
-
-
-static JSBool TypeStructUnion_replace_members(JSContext *cx, JSObject *obj, JSX_TypeStructUnion *tsu, int nMember, jsval *members) {
-  tsu->nMember = nMember;
-  tsu->member = new JSX_SuMember[nMember];
-  memset(tsu->member, 0, sizeof(JSX_SuMember) * nMember);
-
-  int i;
-  for(i = 0; i != nMember; ++i) {
-    if(!JSVAL_IS_OBJECT(members[i]) || JSVAL_IS_NULL(members[i])) goto failure;
-    if(!JSX_InitMemberType(cx, tsu->member + i, JSVAL_TO_OBJECT(members[i]))) goto failure;
-    // this is probably just to save the Type instances from GC, and thus the JSX_Type's from being free()'d
-    JS_DefineElement(cx, obj, i, members[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  }
-  if(!tsu->SetSizeAndAligments(cx)) goto failure;
-  return JS_TRUE;
-
- failure:
-  delete tsu->member;
-  tsu->member = 0;
-  tsu->nMember = 0;
-  return JS_FALSE;
 }
 
 
@@ -251,7 +227,7 @@ static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsv
   if(tsu->nMember)
     return JSX_ReportException(cx, "Type.replace_members(): the struct/union already has members");
 
-  return TypeStructUnion_replace_members(cx, JSVAL_TO_OBJECT(argv[0]), tsu, argc - 1, &argv[1]);
+  return tsu->ReplaceMembers(cx, JSVAL_TO_OBJECT(argv[0]), argc - 1, &argv[1]);
 }
 
 
