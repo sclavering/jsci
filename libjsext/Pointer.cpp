@@ -1439,7 +1439,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   JSX_TypeFunction *ft = (JSX_TypeFunction *) type;
 
   ffi_type **arg_types = new ffi_type*[argc + 1];
-  ffi_cif *cif = (ffi_cif *) JS_malloc(cx, sizeof(ffi_cif));
+  ffi_cif *cif = new ffi_cif; // xxx we don't seem to free this
 
   size_t arg_size = JSX_TypeSize_multi(cx, argc, ft->param, argv, arg_types);
 
