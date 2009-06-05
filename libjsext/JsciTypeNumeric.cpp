@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-ffi_type *JSX_TypeNumeric::GetFFIType(JSContext *cx) {
+ffi_type *JSX_TypeNumeric::GetFFIType() {
   return &this->ffiType;
 }
 

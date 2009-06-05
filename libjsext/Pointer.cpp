@@ -1307,7 +1307,7 @@ static JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunctio
   retpriv->finalize=ffi_closure_free; //This would free the code address, not always identical to writeable address. So it is checked in finalize.
   retpriv->type = type;
 
-  if(ffi_prep_closure_loc((ffi_closure*) retpriv->writeable, JSX_GetCIF(cx, (JSX_TypeFunction *) retpriv->type), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
+  if(ffi_prep_closure_loc((ffi_closure*) retpriv->writeable, ((JSX_TypeFunction *) retpriv->type)->GetCIF(), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
     return JS_FALSE;
 
   JS_SetPrivate(cx, retobj, retpriv);
@@ -1436,24 +1436,25 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
     return JS_FALSE;
   }
 
+  JSX_TypeFunction *ft = (JSX_TypeFunction *) type;
+
   ffi_type **arg_types = new ffi_type*[argc + 1];
   ffi_cif *cif = (ffi_cif *) JS_malloc(cx, sizeof(ffi_cif));
 
-  size_t arg_size = JSX_TypeSize_multi(cx, argc, ((JSX_TypeFunction *) type)->param, argv, arg_types);
+  size_t arg_size = JSX_TypeSize_multi(cx, argc, ft->param, argv, arg_types);
 
   int real_argc;
   for (real_argc=0; arg_types[real_argc]; real_argc++)
     ;
 
-
-  if(real_argc > ((JSX_TypeFunction *) type)->nParam) {
-    memcpy(arg_types, JSX_GetCIF(cx, ((JSX_TypeFunction *) type))->arg_types, sizeof(ffi_type *) * ((JSX_TypeFunction *) type)->nParam);
-    ffi_prep_cif(cif, FFI_DEFAULT_ABI, real_argc, ((JSX_TypeFunction *) type)->returnType->GetFFIType(cx), arg_types);
+  if(real_argc > ft->nParam) {
+    memcpy(arg_types, ft->GetCIF()->arg_types, sizeof(ffi_type *) * ft->nParam);
+    ffi_prep_cif(cif, FFI_DEFAULT_ABI, real_argc, ft->returnType->GetFFIType(), arg_types);
   } else {
-    cif = JSX_GetCIF(cx, (JSX_TypeFunction *) type);
+    cif = ft->GetCIF();
   }
 
-  int retsize = ((JSX_TypeFunction *) type)->returnType->SizeInBytes();
+  int retsize = ft->returnType->SizeInBytes();
 
   void **argptr = 0;
   argptr=(void **)JS_malloc(cx, arg_size + argc*sizeof(void *) + retsize + 8);
@@ -1464,7 +1465,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   argbuf=retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
   if (arg_size) {
-    if(!JSX_Set_multi(cx, argbuf, 1, argc, ((JSX_TypeFunction *) type)->param, argv, argptr))
+    if(!JSX_Set_multi(cx, argbuf, 1, argc, ft->param, argv, argptr))
       goto failure;
   }
 
@@ -1475,12 +1476,12 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
   *rval=JSVAL_VOID;
 
-  if(((JSX_TypeFunction *) type)->returnType->type != VOIDTYPE) {
-    JSX_Get(cx, retbuf, 0, 0, ((JSX_TypeFunction *) type)->returnType, rval);
+  if(ft->returnType->type != VOIDTYPE) {
+    JSX_Get(cx, retbuf, 0, 0, ft->returnType, rval);
   }
 
   if (arg_size) {
-    if(!JSX_Get_multi(cx, 1, argc, ((JSX_TypeFunction *) type)->param, argv, 0, argptr))
+    if(!JSX_Get_multi(cx, 1, argc, ft->param, argv, 0, argptr))
       goto failure;
   }
   JS_free(cx, argptr);

@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-ffi_type *JSX_TypeStruct::GetFFIType(JSContext *cx) {
+ffi_type *JSX_TypeStruct::GetFFIType() {
   if(!this->ffiType.elements) {
     int nmember = 0;
     int bitsused = 0;
@@ -54,7 +54,7 @@ ffi_type *JSX_TypeStruct::GetFFIType(JSContext *cx) {
         t = &ffi_type_uchar;
       } else {
         bitsused = 0;
-        t = memb->GetFFIType(cx);
+        t = memb->GetFFIType();
       }
       for(int j = 0; j < al; ++j) this->ffiType.elements[nmember++] = t;
     }

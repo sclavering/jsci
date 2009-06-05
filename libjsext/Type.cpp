@@ -37,24 +37,6 @@ static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
 }
 
 
-ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type) {
-  if (type->cif.arg_types)
-    return &type->cif;
-
-  type->cif.arg_types = new ffi_type*[type->nParam];
-
-  int i;
-  for (i=0; i<type->nParam; i++) {
-    if(type->param[i].paramtype->type == ARRAYTYPE)
-      type->cif.arg_types[i]=&ffi_type_pointer;
-    else
-      type->cif.arg_types[i] = type->param[i].paramtype->GetFFIType(cx);
-  }
-  ffi_prep_cif(&type->cif, FFI_DEFAULT_ABI, type->nParam, type->returnType->GetFFIType(cx), type->cif.arg_types);
-  return &type->cif;
-}
-
-
 static JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype) {
   jsval tmp;
 
@@ -529,7 +511,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *v
       }
     } else {
       siz = thistype->SizeInBytes();
-      if(arg_types) *(arg_types++) = thistype->GetFFIType(cx);
+      if(arg_types) *(arg_types++) = thistype->GetFFIType();
     }
     if (!siz) return 0; // error
     ret+=siz;

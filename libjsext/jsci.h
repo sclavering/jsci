@@ -32,14 +32,14 @@ enum JSX_TypeID {
 struct JSX_Type {
   enum JSX_TypeID type;
 
-  virtual ffi_type *GetFFIType(JSContext *cx);
+  virtual ffi_type *GetFFIType();
   virtual int SizeInBits();
   virtual int SizeInBytes();
 };
 
 struct JSX_TypeVoid : JSX_Type {
   // VOIDTYPE
-  ffi_type *GetFFIType(JSContext *cx);
+  ffi_type *GetFFIType();
 };
 
 struct JSX_TypeNumeric : JSX_Type {
@@ -47,7 +47,7 @@ struct JSX_TypeNumeric : JSX_Type {
   int size;
   ffi_type ffiType;
 
-  ffi_type *GetFFIType(JSContext *cx);
+  ffi_type *GetFFIType();
   int SizeInBytes();
 };
 
@@ -62,6 +62,8 @@ struct JSX_TypeFunction : JSX_Type {
   int nParam;
   JSX_Type *returnType;
   ffi_cif cif;
+
+  ffi_cif *GetCIF();
 };
 
 typedef struct {
@@ -81,7 +83,7 @@ struct JSX_TypeStructUnion : JSX_Type {
 };
 
 struct JSX_TypeStruct : JSX_TypeStructUnion {
-  ffi_type *GetFFIType(JSContext *cx);
+  ffi_type *GetFFIType();
 };
 
 struct JSX_TypeUnion : JSX_TypeStructUnion {
@@ -91,7 +93,7 @@ struct JSX_TypePointer : JSX_Type {
   // POINTERTYPE
   JSX_Type *direct;
 
-  ffi_type *GetFFIType(JSContext *cx);
+  ffi_type *GetFFIType();
   int SizeInBytes();
 };
 
@@ -120,7 +122,6 @@ int JSX_CType(JSX_Type *type);
 int JSX_JSType(JSContext *cx, jsval rval);
 JSBool JSX_TypeContainsPointer(JSX_Type *type);
 JSX_Type *GetVoidType(void); // the C "void" type
-ffi_cif *JSX_GetCIF(JSContext *cx, JSX_TypeFunction *type);
 int JSX_TypeAlign(JSX_Type *type);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
