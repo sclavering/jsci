@@ -8,15 +8,12 @@ function(args) {
   this.isCompilableUnit = args.isCompilableUnit;
   this.jsxcore = args;
 
-  // avoid unwanted closures
-  var xload = new Function("filename", "return load(filename);");
-
-  xload("0-ffi.js");
+  load("0-ffi.js");
 
   $path=".";
   $curdir=this;
 
-  clib = xload("clib.jswrapper");
+  clib = load("clib.jswrapper");
   for(var i = 0; clib['dl ' + i]; i++) ;
 
   const path = args.environment.JSX_HOME + '/global/';
@@ -34,7 +31,7 @@ function(args) {
   };
   JSEXT1.$curdir = JSEXT1;
 
-  const ActiveDirectory = JSEXT1.ActiveDirectory = xload('JSEXT1/ActiveDirectory.js');
+  const ActiveDirectory = JSEXT1.ActiveDirectory = load('JSEXT1/ActiveDirectory.js');
   JSEXT1.os = ActiveDirectory.handlers.js.call(JSEXT1, 'os', ".js"); // ActiveDirectory needs its .stat()
   ActiveDirectory.call(this, path);
   ActiveDirectory.call(JSEXT1, JSEXT1.$path);
