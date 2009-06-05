@@ -79,11 +79,7 @@ static const char *JSX_jstypenames[] = {
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.
 
 int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval) {
-  jsdouble tmpdouble;
-  int tmpint;
-  int tmpuint;
-  JSObject *obj, *funobj;
-  JSFunction *fun;
+  JSObject *obj;
   JSX_Pointer *ptr;
   int size=-1;
   int i;
@@ -213,7 +209,8 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
   case TYPEPAIR(JSVAL_INT,INTTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
-
+  {
+    int tmpint;
     // Return a number from an int (of various sizes)
     switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
 
@@ -257,7 +254,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     }
 
     return size;
-
+  }
   case TYPEPAIR(JSNULL,BITFIELDTYPE):
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_BOOLEAN,BITFIELDTYPE):
@@ -273,7 +270,8 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_BOOLEAN,UINTTYPE):
   case TYPEPAIR(JSVAL_INT,UINTTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,UINTTYPE):
-
+  {
+    int tmpuint;
     // Return a number from an unsigned int (of various sizes)
     switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
 
@@ -320,7 +318,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     }
 
     return size;
-
+  }
   case TYPEPAIR(JSVAL_DOUBLE,UNDEFTYPE):
 
     // Return a number from an undefined type
@@ -338,6 +336,8 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   case TYPEPAIR(JSVAL_BOOLEAN,FLOATTYPE):
   case TYPEPAIR(JSVAL_INT,FLOATTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,FLOATTYPE):
+  {
+    jsdouble tmpdouble;
 
     // Return a number from a float (of various sizes)
 
@@ -365,18 +365,20 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     JS_NewDoubleValue(cx, tmpdouble, rval);
 
     return size;
+  }
 
   case TYPEPAIR(JSVOID,FUNCTIONTYPE):
+  {
     // Create a new JS function which calls a C function
-    fun = JS_NewFunction(cx, JSX_NativeFunction, ((JSX_TypeFunction *) type)->nParam, 0, 0, "JSEXT_NATIVE");
-    funobj=JS_GetFunctionObject(fun);
+    JSFunction *fun = JS_NewFunction(cx, JSX_NativeFunction, ((JSX_TypeFunction *) type)->nParam, 0, 0, "JSEXT_NATIVE");
+    JSObject *funobj = JS_GetFunctionObject(fun);
     *rval=OBJECT_TO_JSVAL(funobj);
-
     return -1;
     // who knows the size of a function, really?
     // anyway, functions will only ever be returned
     // from a get() operation, so the size doesn't matter
     // as long as it is non-null.
+  }
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
 
@@ -719,7 +721,6 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
   JSX_Pointer *ptr;
   jsdouble tmpdbl;
   jsval tmpval;
-  int elemsize;
   JSFunction *fun;
 
   int typepair = TYPEPAIR(JSX_JSType(cx, v), type ? type->type : UNDEFTYPE);
@@ -985,14 +986,13 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
     return size;
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
-    {
-
+  {
     // Copy array elements to a variable array
       
       int containsPointers=0;
       obj=JSVAL_TO_OBJECT(v);
       JS_GetArrayLength(cx, obj, (jsuint*) &size);
-      elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
+      int elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
 
       if (will_clean) {
         // The variable array needs to be allocated
@@ -1031,7 +1031,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
       }
     
       return 0;
-    }
+  }
     // error already thrown
     
 
@@ -1588,8 +1588,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(ptr->type->type != STRUCTTYPE && ptr->type->type != UNIONTYPE)
     return JSX_ReportException(cx, "Pointer.prototype.field(): must only be called on pointers to struct or union types");
 
-  JSX_TypeStructUnion *sutype;
-  sutype = (JSX_TypeStructUnion *) ptr->type;
+  JSX_TypeStructUnion *sutype = (JSX_TypeStructUnion *) ptr->type;
 
   char *myname = JS_GetStringBytes(JSVAL_TO_STRING(argv[0]));
 
@@ -1619,15 +1618,12 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 
 
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  JSX_Pointer *ptr;
-  int ret;
-
   if (!JSVAL_IS_INT(id))
     return JS_TRUE; // Only handle numerical properties
 
-  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
 
-  ret = JSX_Get(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), 0, 0, ptr->type, vp);
+  int ret = JSX_Get(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), 0, 0, ptr->type, vp);
   if(ret == 0) return JS_FALSE;
 
   if (ret==-1 && id==JSVAL_ZERO) {
@@ -1661,14 +1657,13 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
 
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
   JSX_Callback *cb = (JSX_Callback *) user_data;
-  int i;
   jsval rval=JSVAL_VOID;
   JSX_TypeFunction *type = (JSX_TypeFunction *) cb->type;
 
   jsval *tmp_argv = new jsval[type->nParam];
   if(!tmp_argv) return;
   
-  for (i=0; i<type->nParam; i++) {
+  for(int i = 0; i != type->nParam; ++i) {
     tmp_argv[i]=JSVAL_VOID;
     JS_AddRoot(cb->cx, tmp_argv+i);
   }
@@ -1684,7 +1679,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   JSX_Set_multi(cb->cx, 0, 0, type->nParam, type->param, tmp_argv, args);
 
   JS_RemoveRoot(cb->cx, &rval);
-  for (i=0; i<type->nParam; i++) {
+  for(int i = 0; i != type->nParam; ++i) {
     JS_RemoveRoot(cb->cx, tmp_argv+i);
   }
   JS_free(cb->cx, tmp_argv);
@@ -1694,16 +1689,10 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
 
 
 static JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *funcobj;
+  JSObject *funcobj = JSVAL_TO_OBJECT(argv[-2]);
   jsval ptr;
-  JSBool ok;
-
-  funcobj=JSVAL_TO_OBJECT(argv[-2]);
   JS_LookupProperty(cx, funcobj, "__ptr__", &ptr);
-
-  ok=JSX_Pointer_call(cx, JSVAL_TO_OBJECT(ptr), argc, argv, rval);
-
-  return ok;
+  return JSX_Pointer_call(cx, JSVAL_TO_OBJECT(ptr), argc, argv, rval);
 }
 
 
