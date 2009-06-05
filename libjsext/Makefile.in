@@ -46,7 +46,7 @@ Type.o: jsci.h
 Pointer.o: jsci.h
 Dl.o: jsci.h
 
-JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o JsciType.o JsciTypeVoid.o JsciTypeNumeric.o JsciTypePointer.o JsciTypeStruct.o JsciTypeBitfield.o
+JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o JsciType.o JsciTypeVoid.o JsciTypeNumeric.o JsciTypePointer.o JsciTypeStructUnion.o JsciTypeStruct.o JsciTypeBitfield.o JsciTypeArray.o
 
 CTOXML_OBJS = c_gram.o c_scan.o xml.o libctoxml.o strbuf.o
 

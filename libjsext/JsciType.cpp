@@ -7,5 +7,10 @@ ffi_type *JSX_Type::GetFFIType(JSContext *cx) {
 
 
 int JSX_Type::SizeInBits() {
-  return JSX_TypeSize(this) * 8;
+  return this->SizeInBytes() * 8;
+}
+
+
+int JSX_Type::SizeInBytes() {
+  return 0; // a nonsensical value
 }

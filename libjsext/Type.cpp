@@ -218,27 +218,6 @@ int JSX_TypeAlign(JSX_Type *type) {
 }
 
 
-int JSX_TypeSize(JSX_Type *type) {
-  switch(type->type) {
-  case POINTERTYPE:
-    return ffi_type_pointer.size;
-  case ARRAYTYPE:
-    return ((JSX_TypeArray *) type)->length * JSX_TypeSize(((JSX_TypeArray *) type)->member);
-  case UINTTYPE:
-  case INTTYPE:
-  case FLOATTYPE:
-    return ((JSX_TypeNumeric *) type)->ffiType.size;
-  case STRUCTTYPE:
-  case UNIONTYPE: {
-    int align = JSX_TypeAlign(type);
-    return (((((JSX_TypeStructUnion *) type)->sizeOf + 7) / 8 + align - 1) / align) * align;
-  }
-  default: // VOIDTYPE, FUNCTIONTYPE
-    return 0; // Error
-  }
-}
-
-
 static JSBool TypeStructUnion_SetSizeAndAligments(JSContext *cx, JSX_TypeStructUnion *tsu) {
   int i;
   if(tsu->type == STRUCTTYPE) {
@@ -507,7 +486,8 @@ static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
     JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
     return JS_FALSE;
   }
-  int size = JSX_TypeSize((JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(arg)));
+  JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(arg));
+  int size = t->SizeInBytes();
   if(size) *rval = INT_TO_JSVAL(size);
   return JS_TRUE;
 }
@@ -548,7 +528,7 @@ int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *v
         }
       }
     } else {
-      siz=JSX_TypeSize(thistype);
+      siz = thistype->SizeInBytes();
       if(arg_types) *(arg_types++) = thistype->GetFFIType(cx);
     }
     if (!siz) return 0; // error

@@ -34,6 +34,7 @@ struct JSX_Type {
 
   virtual ffi_type *GetFFIType(JSContext *cx);
   virtual int SizeInBits();
+  virtual int SizeInBytes();
 };
 
 struct JSX_TypeVoid : JSX_Type {
@@ -47,6 +48,7 @@ struct JSX_TypeNumeric : JSX_Type {
   ffi_type ffiType;
 
   virtual ffi_type *GetFFIType(JSContext *cx);
+  virtual int SizeInBytes();
 };
 
 typedef struct {
@@ -74,6 +76,8 @@ struct JSX_TypeStructUnion : JSX_Type {
   int nMember;
   int sizeOf; // in bits
   ffi_type ffiType;
+
+  virtual int SizeInBytes();
 };
 
 struct JSX_TypeStruct : JSX_TypeStructUnion {
@@ -88,12 +92,15 @@ struct JSX_TypePointer : JSX_Type {
   JSX_Type *direct;
 
   virtual ffi_type *GetFFIType(JSContext *cx);
+  virtual int SizeInBytes();
 };
 
 struct JSX_TypeArray : JSX_Type {
   // ARRAYTYPE
   JSX_Type *member;
   int length;
+
+  virtual int SizeInBytes();
 };
 
 struct JSX_TypeBitfield : JSX_Type {
@@ -106,7 +113,6 @@ struct JSX_TypeBitfield : JSX_Type {
 
 
 
-int JSX_TypeSize(JSX_Type *type);
 int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *vp, ffi_type **arg_types);
 JSClass *JSX_GetTypeClass(void);
 
