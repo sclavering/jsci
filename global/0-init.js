@@ -19,7 +19,7 @@ function(args) {
   clib = xload("clib.jswrapper");
   for(var i = 0; clib['dl ' + i]; i++) ;
 
-  const path = args.cwd + '/global/';
+  const path = args.environment.JSX_HOME + '/global/';
   this.JSEXT1 = {
     $parent: this,
     $name: "JSEXT1",
