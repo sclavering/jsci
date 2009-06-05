@@ -30,7 +30,7 @@ ffi_type *JSX_TypeStruct::GetFFIType() {
 
     // must specify size and alignment because bitfields introduce alignment requirements which are not reflected by the ffi members.
     this->ffiType.size = this->SizeInBytes();
-    this->ffiType.alignment = JSX_TypeAlign(this);
+    this->ffiType.alignment = this->AlignmentInBytes();
     this->ffiType.type = FFI_TYPE_STRUCT;
 
     bitsused = 0;

@@ -17,5 +17,10 @@ int JSX_Type::SizeInBytes() {
 
 
 int JSX_Type::AlignmentInBits() {
-  return JSX_TypeAlign(this) * 8;
+  return this->AlignmentInBytes() * 8;
+}
+
+
+int JSX_Type::AlignmentInBytes() {
+  return 0; // nonsensical default
 }

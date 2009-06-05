@@ -165,33 +165,6 @@ static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membe
 }
 
 
-int JSX_TypeAlign(JSX_Type *type) {
-  switch(type->type) {
-  case POINTERTYPE:
-    return ffi_type_pointer.alignment;
-  case BITFIELDTYPE: // when calculating struct alignment, this is it.
-    return JSX_TypeAlign(((JSX_TypeBitfield *) type)->member);
-  case ARRAYTYPE:
-    return JSX_TypeAlign(((JSX_TypeArray *) type)->member);
-  case UINTTYPE:
-  case INTTYPE:
-  case FLOATTYPE:
-    return ((JSX_TypeNumeric *) type)->ffiType.alignment;
-  case STRUCTTYPE:
-  case UNIONTYPE: {
-    int i, ret = 0, len = ((JSX_TypeStructUnion *) type)->nMember;
-    for(i = 0; i != len; ++i) {
-      int thisalign = JSX_TypeAlign(((JSX_TypeStructUnion *) type)->member[i].membertype);
-      if(thisalign > ret) ret = thisalign;
-    }
-    return ret;
-  }
-  default: // VOIDTYPE, FUNCTIONTYPE
-    return 0; // Error
-  }
-}
-
-
 // typeid must obviously be STRUCTTYPE or UNIONTYPE
 static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JSX_TypeID type_id, JSObject* proto) {
   JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);

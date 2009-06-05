@@ -9,3 +9,8 @@ ffi_type *JSX_TypeNumeric::GetFFIType() {
 int JSX_TypeNumeric::SizeInBytes() {
   return this->ffiType.size;
 }
+
+
+int JSX_TypeNumeric::AlignmentInBytes() {
+  return this->ffiType.alignment;
+}

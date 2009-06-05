@@ -2,8 +2,18 @@
 
 
 int JSX_TypeStructUnion::SizeInBytes() {
-  int align = JSX_TypeAlign(this);
+  int align = this->AlignmentInBytes();
   return (((this->sizeOf + 7) / 8 + align - 1) / align) * align;
+}
+
+
+int JSX_TypeStructUnion::AlignmentInBytes() {
+  int ret = 0;
+  for(int i = 0; i != this->nMember; ++i) {
+    int thisalign = this->member[i].membertype->AlignmentInBytes();
+    if(thisalign > ret) ret = thisalign;
+  }
+  return ret;
 }
 
 

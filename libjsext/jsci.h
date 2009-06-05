@@ -36,6 +36,7 @@ struct JSX_Type {
   virtual int SizeInBits();
   virtual int SizeInBytes();
   virtual int AlignmentInBits();
+  virtual int AlignmentInBytes();
 };
 
 struct JSX_TypeVoid : JSX_Type {
@@ -50,6 +51,7 @@ struct JSX_TypeNumeric : JSX_Type {
 
   ffi_type *GetFFIType();
   int SizeInBytes();
+  int AlignmentInBytes();
 };
 
 struct JSX_FuncParam {
@@ -85,6 +87,8 @@ struct JSX_TypeStructUnion : JSX_Type {
   ffi_type ffiType;
 
   int SizeInBytes();
+  int AlignmentInBytes();
+
   virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
   JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
 };
@@ -104,6 +108,7 @@ struct JSX_TypePointer : JSX_Type {
 
   ffi_type *GetFFIType();
   int SizeInBytes();
+  int AlignmentInBytes();
 };
 
 struct JSX_TypeArray : JSX_Type {
@@ -112,6 +117,7 @@ struct JSX_TypeArray : JSX_Type {
   int length;
 
   int SizeInBytes();
+  int AlignmentInBytes();
 };
 
 struct JSX_TypeBitfield : JSX_Type {
@@ -121,6 +127,7 @@ struct JSX_TypeBitfield : JSX_Type {
 
   int SizeInBits();
   int AlignmentInBits() { return 1; }
+  int AlignmentInBytes();
 };
 
 
@@ -132,7 +139,6 @@ int JSX_CType(JSX_Type *type);
 int JSX_JSType(JSContext *cx, jsval rval);
 JSBool JSX_TypeContainsPointer(JSX_Type *type);
 JSX_Type *GetVoidType(void); // the C "void" type
-int JSX_TypeAlign(JSX_Type *type);
 JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT

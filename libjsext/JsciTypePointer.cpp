@@ -9,3 +9,8 @@ ffi_type *JSX_TypePointer::GetFFIType() {
 int JSX_TypePointer::SizeInBytes() {
   return ffi_type_pointer.size;
 }
+
+
+int JSX_TypePointer::AlignmentInBytes() {
+  return ffi_type_pointer.alignment;
+}
