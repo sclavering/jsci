@@ -1,4 +1,3 @@
-#include <string.h>
 #include "jsci.h"
 
 
@@ -11,7 +10,6 @@ int JSX_TypeStructUnion::SizeInBytes() {
 JSBool JSX_TypeStructUnion::ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members) {
   this->nMember = nMember;
   this->member = new JSX_SuMember[nMember];
-  memset(this->member, 0, sizeof(JSX_SuMember) * nMember);
 
   for(int i = 0; i != nMember; ++i) {
     if(!JSVAL_IS_OBJECT(members[i]) || JSVAL_IS_NULL(members[i])) goto failure;

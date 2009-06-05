@@ -51,10 +51,12 @@ struct JSX_TypeNumeric : JSX_Type {
   int SizeInBytes();
 };
 
-typedef struct {
+struct JSX_FuncParam {
   JSX_Type *paramtype;
   int isConst;
-} JSX_FuncParam;
+
+  JSX_FuncParam() : paramtype(0), isConst(0) {}
+};
 
 struct JSX_TypeFunction : JSX_Type {
   // FUNCTIONTYPE
@@ -66,11 +68,13 @@ struct JSX_TypeFunction : JSX_Type {
   ffi_cif *GetCIF();
 };
 
-typedef struct {
+struct JSX_SuMember {
   JSX_Type *membertype;
   char *name;
   int offset; // in bits
-} JSX_SuMember;
+
+  JSX_SuMember() : membertype(0), name(0), offset(0) {}
+};
 
 struct JSX_TypeStructUnion : JSX_Type {
   // STRUCTTYPE or UNIONTYPE

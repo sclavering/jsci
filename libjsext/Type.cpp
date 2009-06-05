@@ -129,7 +129,6 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   type->returnType = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
 
   type->param = new JSX_FuncParam[type->nParam + 1];
-  memset(type->param, 0, sizeof(JSX_FuncParam) * type->nParam);
 
   type->param[type->nParam].paramtype = sTypeVoid;
   type->param[type->nParam].isConst=0;

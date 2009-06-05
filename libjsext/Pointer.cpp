@@ -633,7 +633,7 @@ static int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam
   int ret=0;
   int siz;
   uintN i;
-  JSX_FuncParam tmptype = { 0, 0 };
+  JSX_FuncParam tmptype;
   JSX_FuncParam *thistype;
 
   for (i=0; i<nargs; i++) {
@@ -1191,7 +1191,7 @@ static int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, 
   int ret=0;
   int siz, cursiz;
   uintN i;
-  JSX_FuncParam tmptype = { 0, 0 };
+  JSX_FuncParam tmptype;
   JSX_FuncParam *thistype;
 
   for (i=0; i<nargs; i++) {
