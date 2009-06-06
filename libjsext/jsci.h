@@ -178,6 +178,8 @@ struct JSX_Pointer {
   void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
   JSX_Type *type;
   void (*finalize) (void *);
+
+  ~JSX_Pointer();
 };
 
 struct JSX_Callback : JSX_Pointer {

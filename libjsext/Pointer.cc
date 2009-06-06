@@ -219,17 +219,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
 
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
-
-  if (ptr) {
-    if (ptr->finalize) {
-      if (ptr->finalize==ffi_closure_free) {
-        ffi_closure_free(((JSX_Callback *) ptr)->writeable);
-      } else {
-        (*ptr->finalize)(ptr->ptr);
-      }
-    }
-    delete ptr;
-  }
+  delete ptr;
 }
 
 
