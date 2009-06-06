@@ -354,57 +354,6 @@ static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *vp, ffi_type **arg_types) {
-  int ret=0;
-  int siz;
-  uintN i;
-  JSX_Type *thistype;
-
-  for (i=0; i<nargs; i++) {
-    if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list
-
-    if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
-      thistype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
-      vp++;
-      i++;
-      if (i==nargs) break;
-    } else {
-      thistype = type ? type->paramtype : 0;
-    }
-
-    if (!thistype) {
-      siz=JSX_Get(cx, 0, 0, 0, 0, vp); // Get size of C type guessed from js type
-      if (arg_types) {
-        int jstype = JSX_JSType(cx, *vp);
-        switch(jstype) {
-          case JSVAL_STRING:
-            *(arg_types++) = &ffi_type_pointer;
-            break;
-          case JSVAL_INT:
-            *(arg_types++) = &ffi_type_sint;
-            break;
-          case JSVAL_DOUBLE:
-            *(arg_types++) = &ffi_type_double;
-            break;
-        }
-      }
-    } else {
-      siz = thistype->SizeInBytes();
-      if(arg_types) *(arg_types++) = thistype->GetFFIType();
-    }
-    if (!siz) return 0; // error
-    ret+=siz;
-    vp++;
-    if (type)
-      type++;
-  }
-
-  if (arg_types)
-    *arg_types=0;
-  return ret;
-}
-
-
 // Determine the JS type to an appropriate level of detail for the big 2D switch
 int JSX_JSType(JSContext *cx, jsval v) {
   int jstype = JSVAL_TAG(v);
