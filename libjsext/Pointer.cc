@@ -85,7 +85,7 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
 
   JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, type);
   int size = t->SizeInBytes();
-  JSX_Pointer *retpriv = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer) + size);
+  JSX_Pointer *retpriv = (JSX_Pointer *) new char[sizeof(JSX_Pointer) + size];
 
   if (!retpriv)
     return JS_FALSE;
@@ -156,7 +156,7 @@ static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *ar
   JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
   int length = INT_TO_JSVAL(argv[0]);
-  JSX_Pointer *ret = (JSX_Pointer *) JS_malloc(cx, sizeof(JSX_Pointer) + length);
+  JSX_Pointer *ret = (JSX_Pointer *) new char[sizeof(JSX_Pointer) + length];
   if (!ret)
     return JS_FALSE;
   ret->ptr=ret+1;
@@ -236,7 +236,7 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
         (*ptr->finalize)(ptr->ptr);
       }
     }
-    JS_free(cx, ptr);
+    delete ptr;
   }
 }
 
