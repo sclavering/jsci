@@ -141,6 +141,18 @@ struct JSX_TypeBitfield : JSX_Type {
 };
 
 
+extern const char *JSX_typenames[];
+extern const char *JSX_jstypenames[];
+
+int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam *type, jsval *rval, int convconst, void **argptr);
+int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval);
+
+int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v);
+int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_FuncParam *type, jsval *vp, void **argptr);
+
+JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
+JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSX_Type *type);
+
 
 int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *vp, ffi_type **arg_types);
 JSClass *JSX_GetTypeClass(void);
