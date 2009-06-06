@@ -45,6 +45,17 @@ all:	jsext
 Type.o: jsci.h
 Pointer.o: jsci.h
 Dl.o: jsci.h
+JsciType.o: jsci.h
+JsciTypeBitfield.o: jsci.h
+JsciTypeNumeric.o: jsci.h
+JsciTypeStruct.o: jsci.h
+JsciTypeUnion.o: jsci.h
+JsciTypeArray.o: jsci.h
+JsciTypeFunction.o: jsci.h
+JsciTypePointer.o: jsci.h
+JsciTypeStructUnion.o: jsci.h
+JsciTypeVoid.o: jsci.h
+
 
 JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o JsciType.o JsciTypeVoid.o JsciTypeNumeric.o JsciTypePointer.o JsciTypeStructUnion.o JsciTypeStruct.o JsciTypeUnion.o JsciTypeBitfield.o JsciTypeArray.o JsciTypeFunction.o
 
