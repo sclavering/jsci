@@ -74,7 +74,7 @@ struct JSX_TypeFunction : JSX_Type {
   ~JSX_TypeFunction();
 
   ffi_cif *GetCIF();
-  int ParamSizes(JSContext *cx, uintN nargs, jsval *vp, ffi_type **arg_types);
+  int GetParamSizesAndFFITypes(JSContext *cx, ffi_type **arg_types);
 };
 
 struct JSX_SuMember {

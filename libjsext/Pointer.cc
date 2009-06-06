@@ -239,7 +239,7 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
   ffi_type **arg_types = new ffi_type*[argc + 1];
   ffi_cif *cif = new ffi_cif; // xxx we don't seem to free this
 
-  size_t arg_size = ft->ParamSizes(cx, argc, argv, arg_types);
+  size_t arg_size = ft->GetParamSizesAndFFITypes(cx, arg_types);
 
   int real_argc;
   for (real_argc=0; arg_types[real_argc]; real_argc++)
