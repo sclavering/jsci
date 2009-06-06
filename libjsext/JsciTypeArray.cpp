@@ -9,3 +9,8 @@ int JSX_TypeArray::SizeInBytes() {
 int JSX_TypeArray::AlignmentInBytes() {
   return this->member->AlignmentInBytes();
 }
+
+
+JSBool JSX_TypeArray::ContainsPointer() {
+  return this->member->ContainsPointer();
+}

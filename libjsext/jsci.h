@@ -37,6 +37,7 @@ struct JSX_Type {
   virtual int SizeInBytes();
   virtual int AlignmentInBits();
   virtual int AlignmentInBytes();
+  virtual JSBool ContainsPointer();
 };
 
 struct JSX_TypeVoid : JSX_Type {
@@ -88,6 +89,7 @@ struct JSX_TypeStructUnion : JSX_Type {
 
   int SizeInBytes();
   int AlignmentInBytes();
+  JSBool ContainsPointer();
 
   virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
   JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
@@ -109,6 +111,7 @@ struct JSX_TypePointer : JSX_Type {
   ffi_type *GetFFIType();
   int SizeInBytes();
   int AlignmentInBytes();
+  JSBool ContainsPointer();
 };
 
 struct JSX_TypeArray : JSX_Type {
@@ -118,6 +121,7 @@ struct JSX_TypeArray : JSX_Type {
 
   int SizeInBytes();
   int AlignmentInBytes();
+  JSBool ContainsPointer();
 };
 
 struct JSX_TypeBitfield : JSX_Type {
@@ -137,7 +141,6 @@ JSClass *JSX_GetTypeClass(void);
 
 int JSX_CType(JSX_Type *type);
 int JSX_JSType(JSContext *cx, jsval rval);
-JSBool JSX_TypeContainsPointer(JSX_Type *type);
 JSX_Type *GetVoidType(void); // the C "void" type
 JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype);
 

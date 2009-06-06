@@ -465,27 +465,6 @@ int JSX_JSType(JSContext *cx, jsval v) {
 }
 
 
-JSBool JSX_TypeContainsPointer(JSX_Type *type) {
-  switch(type->type) {
-    case POINTERTYPE:
-      return JS_TRUE;
-    case ARRAYTYPE:
-      return JSX_TypeContainsPointer(((JSX_TypeArray *) type)->member);
-    case UNIONTYPE:
-    case STRUCTTYPE: {
-      int i;
-      JSX_TypeStructUnion *sutype = (JSX_TypeStructUnion *) type;
-      for(i = 0; i != sutype->nMember; ++i)
-        if(JSX_TypeContainsPointer(sutype->member[i].membertype))
-          return JS_TRUE;
-      return JS_FALSE;
-    }
-    default:
-      return JS_FALSE;
-  }
-}
-
-
 extern "C" jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeobj;
   JSObject *typeproto;

@@ -410,7 +410,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
         return sizeof(void *);
       }
 
-      if(JSX_TypeContainsPointer(((JSX_TypeArray *) type)->member)) {
+      if(((JSX_TypeArray *) type)->member->ContainsPointer()) {
         oldptr = *(char **)p + elemsize * size;
       } else {
         oldptr = 0;
@@ -996,7 +996,7 @@ static int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval
 
       if (will_clean) {
         // The variable array needs to be allocated
-        containsPointers = JSX_TypeContainsPointer(((JSX_TypeArray *) type)->member);
+        containsPointers = ((JSX_TypeArray *) type)->member->ContainsPointer();
         if(containsPointers) {
           // Allocate twice the space in order to store old pointers
           *(void **)p = JS_malloc(cx, elemsize * size * 2);

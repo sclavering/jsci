@@ -14,3 +14,8 @@ int JSX_TypePointer::SizeInBytes() {
 int JSX_TypePointer::AlignmentInBytes() {
   return ffi_type_pointer.alignment;
 }
+
+
+JSBool JSX_TypePointer::ContainsPointer() {
+  return JS_TRUE;
+}

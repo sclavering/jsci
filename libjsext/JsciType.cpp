@@ -24,3 +24,8 @@ int JSX_Type::AlignmentInBits() {
 int JSX_Type::AlignmentInBytes() {
   return 0; // nonsensical default
 }
+
+
+JSBool JSX_Type::ContainsPointer() {
+  return JS_FALSE;
+}
