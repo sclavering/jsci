@@ -6,13 +6,7 @@
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.
 
 int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval) {
-  JSObject *obj;
-  JSX_Pointer *ptr;
   int size=-1;
-  int i;
-  int elemsize;
-  int totsize;
-
   int typepair = TYPEPAIR(JSX_JSType(cx, *rval), type ? type->type : UNDEFTYPE);
   
   // Determine the appropriate conversion
@@ -39,7 +33,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       if(*(void **)p == NULL) {
         *rval = JSVAL_NULL;
       } else {
-        ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
+        JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
         ptr->ptr = *(void **)p;
       }
     }
@@ -53,9 +47,9 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       if(*(void **)p == NULL) {
         *rval = JSVAL_NULL;
       } else {
-        obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
+        JSObject *obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
         *rval = OBJECT_TO_JSVAL(obj);
-        ptr = new JSX_Pointer;
+        JSX_Pointer *ptr = new JSX_Pointer;
         ptr->ptr = *(void **)p;
         ptr->type = ((JSX_TypePointer *) type)->direct;
         ptr->finalize = 0;
@@ -308,12 +302,16 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
   }
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
+  {
+    int totsize;
+    int i;
+    jsval tmp = JSVAL_VOID;
 
     // Update array elements from a variable array
 
-    obj=JSVAL_TO_OBJECT(*rval);
+    JSObject *obj = JSVAL_TO_OBJECT(*rval);
     JS_GetArrayLength(cx, obj, (jsuint*) &size);
-    elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
+    int elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
 
     if (do_clean) {
       if (oldptr && (do_clean==2 || *(void **)oldptr!=*(void **)p)) {
@@ -346,25 +344,20 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
     totsize=0;
 
-    {
-      jsval tmp=JSVAL_VOID;
-      JS_AddRoot(cx, &tmp);
-      for (i=0; i<size; i++) {
-        JS_GetElement(cx, obj, i, &tmp);
-        int thissize = JSX_Get(cx, *(char **)p + totsize, oldptr ? *(char **)oldptr + totsize : 0, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
-        if(!thissize) {
-          JS_RemoveRoot(cx, &tmp);
-          goto vararrayfailure1;
-        }
-        if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
-        totsize += thissize;
+    JS_AddRoot(cx, &tmp);
+    for (i=0; i<size; i++) {
+      JS_GetElement(cx, obj, i, &tmp);
+      int thissize = JSX_Get(cx, *(char **)p + totsize, oldptr ? *(char **)oldptr + totsize : 0, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
+      if(!thissize) {
+        JS_RemoveRoot(cx, &tmp);
+        goto vararrayfailure1;
       }
-      JS_RemoveRoot(cx, &tmp);
+      if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
+      totsize += thissize;
     }
+    JS_RemoveRoot(cx, &tmp);
 
-    if (do_clean) {
-      JS_free(cx, *(char **)p);
-    }
+    if(do_clean) JS_free(cx, *(char **)p);
 
     return sizeof(void *);
 
@@ -382,6 +375,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
     goto failure;
     // error already thrown
+  }
 
   case TYPEPAIR(JSVOID,ARRAYTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):
@@ -394,28 +388,26 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     // fall through
 
   case TYPEPAIR(JSARRAY,ARRAYTYPE):
-
+  {
+    int i;
     // Update array elements from a fixed size array
-    
-    totsize=0;
+    int totsize = 0;
     size = ((JSX_TypeArray *) type)->length;
-    obj=JSVAL_TO_OBJECT(*rval);
+    JSObject *obj = JSVAL_TO_OBJECT(*rval);
 
-    {
-      jsval tmp=JSVAL_VOID;
-      JS_AddRoot(cx, &tmp);
-      for (i=0; i<size; i++) {
-        JS_GetElement(cx, obj, i, &tmp);
-        int thissize = JSX_Get(cx, p + totsize, oldptr ? oldptr + totsize : 0, do_clean, ((JSX_TypeArray *) type)->member, &tmp);
-        if(!thissize) {
-          JS_RemoveRoot(cx, &tmp);
-          goto fixedarrayfailure;
-        }
-        if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
-        totsize += thissize;
+    jsval tmp=JSVAL_VOID;
+    JS_AddRoot(cx, &tmp);
+    for (i=0; i<size; i++) {
+      JS_GetElement(cx, obj, i, &tmp);
+      int thissize = JSX_Get(cx, p + totsize, oldptr ? oldptr + totsize : 0, do_clean, ((JSX_TypeArray *) type)->member, &tmp);
+      if(!thissize) {
+        JS_RemoveRoot(cx, &tmp);
+        goto fixedarrayfailure;
       }
-      JS_RemoveRoot(cx, &tmp);
+      if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
+      totsize += thissize;
     }
+    JS_RemoveRoot(cx, &tmp);
 
     return totsize;
 
@@ -430,6 +422,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     }
     goto failure;
     // Error already thrown
+  }
 
   case TYPEPAIR(JSVOID,STRUCTTYPE):
   case TYPEPAIR(JSVOID,UNIONTYPE):
@@ -444,35 +437,35 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
   case TYPEPAIR(JSVAL_OBJECT,STRUCTTYPE):
   case TYPEPAIR(JSVAL_OBJECT,UNIONTYPE):
+  {
+    int i;
     // Update object elements from a struct or union
     size = ((JSX_TypeStructUnion *) type)->nMember;
-    obj=JSVAL_TO_OBJECT(*rval);
+    JSObject *obj = JSVAL_TO_OBJECT(*rval);
 
-    {
-      jsval tmp=JSVAL_VOID;
-      JS_AddRoot(cx, &tmp);
+    jsval tmp=JSVAL_VOID;
+    JS_AddRoot(cx, &tmp);
 
-      for (i=0; i<size; i++) {
-        JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
-        JS_GetProperty(cx, obj, mtype.name, &tmp);
-        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
-        if(!thissize) {
-          goto structfailure;
-          JS_RemoveRoot(cx, &tmp);
-        }
-        if(do_clean != 2) {
-          if(mtype.membertype->type == BITFIELDTYPE) {
-            int length = ((JSX_TypeBitfield *) mtype.membertype)->length;
-            int offset = mtype.offset % 8;
-            int mask = ~(-1 << length);
-            tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);
-          }
-          JS_SetProperty(cx, obj, mtype.name, &tmp);
-        }
+    for (i=0; i<size; i++) {
+      JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
+      JS_GetProperty(cx, obj, mtype.name, &tmp);
+      int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
+      if(!thissize) {
+        goto structfailure;
+        JS_RemoveRoot(cx, &tmp);
       }
-
-      JS_RemoveRoot(cx, &tmp);
+      if(do_clean != 2) {
+        if(mtype.membertype->type == BITFIELDTYPE) {
+          int length = ((JSX_TypeBitfield *) mtype.membertype)->length;
+          int offset = mtype.offset % 8;
+          int mask = ~(-1 << length);
+          tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);
+        }
+        JS_SetProperty(cx, obj, mtype.name, &tmp);
+      }
     }
+
+    JS_RemoveRoot(cx, &tmp);
 
     return type->SizeInBytes();
     
@@ -487,30 +480,31 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     }
     goto failure;
     // Error already thrown
+  }
 
   case TYPEPAIR(JSARRAY,STRUCTTYPE):
   case TYPEPAIR(JSARRAY,UNIONTYPE):
+  {
+    int i;
     // Update array elements from struct or union
     size = ((JSX_TypeStructUnion *) type)->nMember;
-    obj=JSVAL_TO_OBJECT(*rval);
+    JSObject *obj = JSVAL_TO_OBJECT(*rval);
 
-    {
-      jsval tmp=JSVAL_VOID;
-      JS_AddRoot(cx, &tmp);
+    jsval tmp=JSVAL_VOID;
+    JS_AddRoot(cx, &tmp);
 
-      for (i=0; i<size; i++) {
-        JS_GetElement(cx, obj, i, &tmp);
-        JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
-        int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
-        if(!thissize) {
-          JS_RemoveRoot(cx, &tmp);
-          goto structfailure2;
-        }
-        if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
+    for (i=0; i<size; i++) {
+      JS_GetElement(cx, obj, i, &tmp);
+      JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
+      int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
+      if(!thissize) {
+        JS_RemoveRoot(cx, &tmp);
+        goto structfailure2;
       }
-
-      JS_RemoveRoot(cx, &tmp);
+      if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
     }
+
+    JS_RemoveRoot(cx, &tmp);
       
     return type->SizeInBytes();
 
@@ -525,9 +519,10 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     }
     goto failure;
     // error already thrown
+  }
 
   case TYPEPAIR(JSPOINTER,ARRAYTYPE):
-
+  {
     // Copy contents of array into memory pointed to
     // Leave pointer unchanged
 
@@ -536,10 +531,11 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     if (!p)
       return size;
 
-    ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
+    JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
     memcpy(ptr->ptr, p, size);
 
     return size;
+  }
 
   default:
 
