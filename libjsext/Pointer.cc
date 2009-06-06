@@ -486,9 +486,6 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 
 
 extern "C" jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
-  JSObject *protoobj;
-  JSObject *classobj;
-
   static struct JSFunctionSpec staticfunc[]={
     {"malloc", Pointer_malloc, 1, 0, 0},
     {0,0,0,0,0}
@@ -508,9 +505,8 @@ extern "C" jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
     {0,0,0,0,0}
   };
 
-
-  protoobj=JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  classobj=JS_InitClass(cx, obj, protoobj, &JSX_PointerClass, JSX_Pointer_new, 0, memberprop, memberfunc, 0, staticfunc);
+  JSObject *protoobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+  JSObject *classobj = JS_InitClass(cx, obj, protoobj, &JSX_PointerClass, JSX_Pointer_new, 0, memberprop, memberfunc, 0, staticfunc);
   if(!classobj) return JSVAL_VOID;
 
   return OBJECT_TO_JSVAL(JS_GetConstructor(cx, classobj));
