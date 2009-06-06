@@ -6,14 +6,6 @@
 #include "jsci.h"
 
 
-typedef struct {
-  void *ptr; // Points to executable code
-  JSX_Type *type;
-  void (*finalize) (void *);
-  JSContext *cx;
-  JSFunction *fun;
-  void *writeable; // Points to writeable code
-} JSX_Callback;
 
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);

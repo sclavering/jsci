@@ -180,6 +180,12 @@ struct JSX_Pointer {
   void (*finalize) (void *);
 };
 
+struct JSX_Callback : JSX_Pointer {
+  JSContext *cx;
+  JSFunction *fun;
+  void *writeable; // Points to writeable code
+};
+
 
 static inline int type_is_char(JSX_Type *t) {
   return (t->type == INTTYPE || t->type == UINTTYPE) && 0 == ((JSX_TypeNumeric *) t)->size;
