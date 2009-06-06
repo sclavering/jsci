@@ -9,7 +9,6 @@
 
 static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
-static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data);
@@ -223,7 +222,13 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
 }
 
 
-static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+
+JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *argv, jsval *rval) {
+  JSObject *funcobj = JSVAL_TO_OBJECT(argv[-2]);
+  jsval ptrval;
+  JS_LookupProperty(cx, funcobj, "__ptr__", &ptrval);
+  JSObject *obj = JSVAL_TO_OBJECT(ptrval);
+
   JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
   JSX_Type *type = ptr->type;
 
@@ -476,14 +481,6 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   JS_free(cb->cx, tmp_argv);
 
   if(type->returnType->type != VOIDTYPE) JSX_Set(cb->cx, (char*) ret, 0, type->returnType, rval);
-}
-
-
-JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *funcobj = JSVAL_TO_OBJECT(argv[-2]);
-  jsval ptr;
-  JS_LookupProperty(cx, funcobj, "__ptr__", &ptr);
-  return JSX_Pointer_call(cx, JSVAL_TO_OBJECT(ptr), argc, argv, rval);
 }
 
 
