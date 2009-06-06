@@ -157,11 +157,11 @@ JSClass * JSX_GetPointerClass(void);
 int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval);
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 
-typedef struct {
+struct JSX_Pointer {
   void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
   JSX_Type *type;
   void (*finalize) (void *);
-} JSX_Pointer;
+};
 
 
 static inline int type_is_char(JSX_Type *t) {
