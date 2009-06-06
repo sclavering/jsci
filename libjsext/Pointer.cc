@@ -234,6 +234,8 @@ static JSBool JSX_Pointer_call(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
   JSX_TypeFunction *ft = (JSX_TypeFunction *) type;
 
+  if(ft->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", ft->nParam, argc);
+
   ffi_type **arg_types = new ffi_type*[argc + 1];
   ffi_cif *cif = new ffi_cif; // xxx we don't seem to free this
 
