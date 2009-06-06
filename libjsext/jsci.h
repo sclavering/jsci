@@ -32,6 +32,8 @@ enum JSX_TypeID {
 struct JSX_Type {
   enum JSX_TypeID type;
 
+  virtual ~JSX_Type();
+
   virtual ffi_type *GetFFIType();
   virtual int SizeInBits();
   virtual int SizeInBytes();
@@ -69,6 +71,8 @@ struct JSX_TypeFunction : JSX_Type {
   JSX_Type *returnType;
   ffi_cif cif;
 
+  ~JSX_TypeFunction();
+
   ffi_cif *GetCIF();
 };
 
@@ -86,6 +90,8 @@ struct JSX_TypeStructUnion : JSX_Type {
   int nMember;
   int sizeOf; // in bits
   ffi_type ffiType;
+
+  ~JSX_TypeStructUnion();
 
   int SizeInBytes();
   int AlignmentInBytes();

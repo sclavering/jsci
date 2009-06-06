@@ -1,6 +1,10 @@
 #include "jsci.h"
 
 
+JSX_Type::~JSX_Type() {
+}
+
+
 ffi_type *JSX_Type::GetFFIType() {
   return 0;
 }

@@ -58,27 +58,6 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
 }
 
 
-static void JSX_DestroyTypeStructUnion(JSContext *cx, JSX_TypeStructUnion *type) {
-  if(!type) return;
-  if(type->member) {
-    for(int i = 0; i != type->nMember; ++i) {
-      if(type->member[i].name) free(type->member[i].name); // strdup'd earlier
-    }
-    delete type->member;
-  }
-  if(type->ffiType.elements) delete type->ffiType.elements;
-  delete type;
-}
-
-
-static void JSX_DestroyTypeFunction(JSContext *cx, JSX_TypeFunction *type) {
-  if(type) return;
-  if(type->param) delete type->param;
-  if(type->cif.arg_types) delete type->cif.arg_types;
-  delete type;
-}
-
-
 static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member) {
   JSX_TypeFunction *type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
   if(memberno >= type->nParam) type->nParam = memberno + 1;
@@ -353,19 +332,7 @@ static JSBool JSX_Type_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 
 static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
   JSX_Type *type = (JSX_Type *) JS_GetPrivate(cx, obj);
-  if(!type) return;
-
-  switch(type->type) {
-  case FUNCTIONTYPE:
-    JSX_DestroyTypeFunction(cx, (JSX_TypeFunction *) type);
-    break;
-  case UNIONTYPE:
-  case STRUCTTYPE:
-    JSX_DestroyTypeStructUnion(cx, (JSX_TypeStructUnion *) type);
-    break;
-  default:
-    delete type;
-  }
+  if(type) delete type;
 }
 
 

@@ -1,6 +1,12 @@
 #include "jsci.h"
 
 
+JSX_TypeFunction::~JSX_TypeFunction() {
+  if(this->param) delete this->param;
+  if(this->cif.arg_types) delete this->cif.arg_types;
+}
+
+
 ffi_cif *JSX_TypeFunction::GetCIF() {
   if(this->cif.arg_types) return &this->cif;
 

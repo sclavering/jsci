@@ -1,4 +1,15 @@
+#include <stdlib.h>
 #include "jsci.h"
+
+
+JSX_TypeStructUnion::~JSX_TypeStructUnion() {
+  if(this->member) {
+    // member names were strdup()'d earlier
+    for(int i = 0; i != this->nMember; ++i) if(this->member[i].name) free(this->member[i].name);
+    delete this->member;
+  }
+  if(this->ffiType.elements) delete this->ffiType.elements;
+}
 
 
 int JSX_TypeStructUnion::SizeInBytes() {
