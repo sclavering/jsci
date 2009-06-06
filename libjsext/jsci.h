@@ -144,8 +144,8 @@ struct JSX_TypeBitfield : JSX_Type {
 extern const char *JSX_typenames[];
 extern const char *JSX_jstypenames[];
 
-int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam *type, jsval *rval, int convconst, void **argptr);
 int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval);
+int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam *type, jsval *rval, int convconst, void **argptr);
 
 int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v);
 int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_FuncParam *type, jsval *vp, void **argptr);
@@ -172,7 +172,6 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
 
 
 JSClass * JSX_GetPointerClass(void);
-int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval);
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 
 struct JSX_Pointer {
