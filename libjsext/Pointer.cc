@@ -100,7 +100,7 @@ JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun,
   if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  JSX_Callback *retpriv = new JSX_Callback;
+  JsciCallback *retpriv = new JsciCallback;
   if (!retpriv)
     return JS_FALSE;
 
@@ -445,7 +445,7 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
  */
 
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
-  JSX_Callback *cb = (JSX_Callback *) user_data;
+  JsciCallback *cb = (JsciCallback *) user_data;
   jsval rval=JSVAL_VOID;
   JSX_TypeFunction *type = (JSX_TypeFunction *) cb->type;
 

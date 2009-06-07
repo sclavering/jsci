@@ -180,7 +180,7 @@ struct JsciPointer {
   ~JsciPointer();
 };
 
-struct JSX_Callback : JsciPointer {
+struct JsciCallback : JsciPointer {
   JSContext *cx;
   JSFunction *fun;
   void *writeable; // Points to writeable code
