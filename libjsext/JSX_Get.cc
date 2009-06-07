@@ -6,8 +6,10 @@
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.
 
 int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval) {
+  if(!type) return JSX_ReportException(cx, "Cannot convert C value to JS value, because the C type is not known");
+
   int size=-1;
-  int typepair = TYPEPAIR(JSX_JSType(cx, *rval), type ? type->type : UNDEFTYPE);
+  int typepair = TYPEPAIR(JSX_JSType(cx, *rval), type->type);
   
   // Determine the appropriate conversion
 
@@ -58,27 +60,11 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     }
     return sizeof(void *);
 
-  case TYPEPAIR(JSVAL_STRING,UNDEFTYPE):
-
-    // Return a string from an undefined type
-    // assume void *
-
-    if (!p)
-      return sizeof(void *);
-
-    goto stringcommon;
-
-    // fall through
-
   case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
     if(!is_void_or_char(((JSX_TypePointer *) type)->direct)) goto failure;
 
-    // Return a string from a void *
-    // same as char * in this context
+    // Return a string from a void* or char* (equivalent in this context)
 
-    // Return a string from a char *
-
-  stringcommon:
     if (do_clean!=2)
       *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, *(char **)p));
     return sizeof(char *);
@@ -112,7 +98,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *) p, ((JSX_TypeArray *) type)->length));
     return sizeof(char) * ((JSX_TypeArray *) type)->length;
 
-  case TYPEPAIR(JSVAL_INT,UNDEFTYPE):
   case TYPEPAIR(JSVAL_INT,POINTERTYPE):
 
     // Return a number from an undefined type
@@ -240,17 +225,6 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 
     return size;
   }
-  case TYPEPAIR(JSVAL_DOUBLE,UNDEFTYPE):
-
-    // Return a number from an undefined type
-    // assume double
-
-    if (!p)
-      return sizeof(double);
-
-    size=1;
-
-    // fall through
 
   case TYPEPAIR(JSVOID,FLOATTYPE):
   case TYPEPAIR(JSNULL,FLOATTYPE):
