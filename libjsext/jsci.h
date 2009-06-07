@@ -25,7 +25,6 @@ enum JSX_TypeID {
   TYPECOUNT
 };
 
-#define UNDEFTYPE (TYPECOUNT+4)
 #define TYPECOUNT2 (TYPECOUNT+5)
 
 // We store an instance of this, or a subclass, inside each js Type object
