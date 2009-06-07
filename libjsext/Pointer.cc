@@ -279,7 +279,6 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
     JSX_Get(cx, retbuf, 0, ft->returnType, rval);
   }
 
-  if(arg_size && !JSX_Get_multi(cx, 1, ft, argv, 0, argptr)) goto failure;
   delete argptr_mem;
 
   return JS_TRUE;
