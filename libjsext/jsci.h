@@ -84,14 +84,14 @@ struct JSX_SuMember {
   JSX_SuMember() : membertype(0), name(0), offset(0) {}
 };
 
-struct JSX_TypeStructUnion : JSX_Type {
+struct JsciTypeStructUnion : JSX_Type {
   // STRUCTTYPE or UNIONTYPE
   JSX_SuMember *member;
   int nMember;
   int sizeOf; // in bits
   ffi_type ffiType;
 
-  ~JSX_TypeStructUnion();
+  ~JsciTypeStructUnion();
 
   int SizeInBytes();
   int AlignmentInBytes();
@@ -101,12 +101,12 @@ struct JSX_TypeStructUnion : JSX_Type {
   JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
 };
 
-struct JSX_TypeStruct : JSX_TypeStructUnion {
+struct JsciTypeStruct : JsciTypeStructUnion {
   ffi_type *GetFFIType();
   JSBool SetSizeAndAligments(JSContext *cx);
 };
 
-struct JSX_TypeUnion : JSX_TypeStructUnion {
+struct JsciTypeUnion : JsciTypeStructUnion {
   JSBool SetSizeAndAligments(JSContext *cx);
 };
 

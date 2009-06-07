@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-ffi_type *JSX_TypeStruct::GetFFIType() {
+ffi_type *JsciTypeStruct::GetFFIType() {
   if(!this->ffiType.elements) {
     int nmember = 0;
     int bitsused = 0;
@@ -65,7 +65,7 @@ ffi_type *JSX_TypeStruct::GetFFIType() {
 }
 
 
-JSBool JSX_TypeStruct::SetSizeAndAligments(JSContext *cx) {
+JSBool JsciTypeStruct::SetSizeAndAligments(JSContext *cx) {
   for(int i = 0; i != this->nMember; ++i) {
     int thisalign = this->member[i].membertype->AlignmentInBits();
     if(thisalign == 0) return JSX_ReportException(cx, "Division by zero");

@@ -148,7 +148,7 @@ static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membe
 static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JSX_TypeID type_id, JSObject* proto) {
   JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
   *rval = OBJECT_TO_JSVAL(retobj);
-  JSX_TypeStructUnion *type = type_id == STRUCTTYPE ? (JSX_TypeStructUnion*) new JSX_TypeStruct : (JSX_TypeStructUnion*) new JSX_TypeUnion;
+  JsciTypeStructUnion *type = type_id == STRUCTTYPE ? (JsciTypeStructUnion*) new JsciTypeStruct : (JsciTypeStructUnion*) new JsciTypeUnion;
   type->type = type_id;
   type->member = 0;
   type->nMember = 0;
@@ -168,7 +168,7 @@ static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsv
   JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
   if(t->type != STRUCTTYPE && t->type != UNIONTYPE)
     return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
-  JSX_TypeStructUnion *tsu = (JSX_TypeStructUnion *) t;
+  JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) t;
   if(tsu->nMember)
     return JSX_ReportException(cx, "Type.replace_members(): the struct/union already has members");
 

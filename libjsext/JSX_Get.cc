@@ -383,16 +383,17 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
   case TYPEPAIR(JSVAL_OBJECT,STRUCTTYPE):
   case TYPEPAIR(JSVAL_OBJECT,UNIONTYPE):
   {
+    JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
     int i;
     // Update object elements from a struct or union
-    size = ((JSX_TypeStructUnion *) type)->nMember;
+    size = tsu->nMember;
     JSObject *obj = JSVAL_TO_OBJECT(*rval);
 
     jsval tmp=JSVAL_VOID;
     JS_AddRoot(cx, &tmp);
 
     for (i=0; i<size; i++) {
-      JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
+      JSX_SuMember mtype = tsu->member[i];
       JS_GetProperty(cx, obj, mtype.name, &tmp);
       int thissize = JSX_Get(cx, p + mtype.offset / 8, do_clean, mtype.membertype, &tmp);
       if(!thissize) {
@@ -418,7 +419,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     if (do_clean) {
       for (;++i<size;) {
         jsval tmp;
-        JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
+        JSX_SuMember mtype = tsu->member[i];
         JS_GetProperty(cx, obj, mtype.name, &tmp);
         JSX_Get(cx, p + mtype.offset / 8, 2, mtype.membertype, &tmp);
       }
@@ -430,9 +431,10 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
   case TYPEPAIR(JSARRAY,STRUCTTYPE):
   case TYPEPAIR(JSARRAY,UNIONTYPE):
   {
+    JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
     int i;
     // Update array elements from struct or union
-    size = ((JSX_TypeStructUnion *) type)->nMember;
+    size = tsu->nMember;
     JSObject *obj = JSVAL_TO_OBJECT(*rval);
 
     jsval tmp=JSVAL_VOID;
@@ -440,7 +442,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
 
     for (i=0; i<size; i++) {
       JS_GetElement(cx, obj, i, &tmp);
-      JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
+      JSX_SuMember mtype = tsu->member[i];
       int thissize = JSX_Get(cx, p + mtype.offset / 8, do_clean, mtype.membertype, &tmp);
       if(!thissize) {
         JS_RemoveRoot(cx, &tmp);
@@ -458,7 +460,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
       for (;++i<size;) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
+        JSX_SuMember mtype = tsu->member[i];
         JSX_Get(cx, p + mtype.offset / 8, 2, mtype.membertype, &tmp);
       }
     }

@@ -378,7 +378,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(ptr->type->type != STRUCTTYPE && ptr->type->type != UNIONTYPE)
     return JSX_ReportException(cx, "Pointer.prototype.field(): must only be called on pointers to struct or union types");
 
-  JSX_TypeStructUnion *sutype = (JSX_TypeStructUnion *) ptr->type;
+  JsciTypeStructUnion *sutype = (JsciTypeStructUnion *) ptr->type;
 
   char *myname = JS_GetStringBytes(JSVAL_TO_STRING(argv[0]));
 

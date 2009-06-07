@@ -2,7 +2,7 @@
 #include "jsci.h"
 
 
-JSX_TypeStructUnion::~JSX_TypeStructUnion() {
+JsciTypeStructUnion::~JsciTypeStructUnion() {
   if(this->member) {
     // member names were strdup()'d earlier
     for(int i = 0; i != this->nMember; ++i) if(this->member[i].name) free(this->member[i].name);
@@ -12,13 +12,13 @@ JSX_TypeStructUnion::~JSX_TypeStructUnion() {
 }
 
 
-int JSX_TypeStructUnion::SizeInBytes() {
+int JsciTypeStructUnion::SizeInBytes() {
   int align = this->AlignmentInBytes();
   return (((this->sizeOf + 7) / 8 + align - 1) / align) * align;
 }
 
 
-int JSX_TypeStructUnion::AlignmentInBytes() {
+int JsciTypeStructUnion::AlignmentInBytes() {
   int ret = 0;
   for(int i = 0; i != this->nMember; ++i) {
     int thisalign = this->member[i].membertype->AlignmentInBytes();
@@ -28,7 +28,7 @@ int JSX_TypeStructUnion::AlignmentInBytes() {
 }
 
 
-JSBool JSX_TypeStructUnion::ContainsPointer() {
+JSBool JsciTypeStructUnion::ContainsPointer() {
   for(int i = 0; i != this->nMember; ++i)
     if(this->member[i].membertype->ContainsPointer())
       return JS_TRUE;
@@ -36,7 +36,7 @@ JSBool JSX_TypeStructUnion::ContainsPointer() {
 }
 
 
-JSBool JSX_TypeStructUnion::ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members) {
+JSBool JsciTypeStructUnion::ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members) {
   this->nMember = nMember;
   this->member = new JSX_SuMember[nMember];
 
