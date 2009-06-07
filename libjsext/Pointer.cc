@@ -275,9 +275,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
 
   *rval=JSVAL_VOID;
 
-  if(ft->returnType->type != VOIDTYPE) {
-    JSX_Get(cx, retbuf, 0, ft->returnType, rval);
-  }
+  if(ft->returnType->type != VOIDTYPE) JSX_Get(cx, retbuf, ft->returnType, rval);
 
   delete argptr_mem;
 
@@ -294,7 +292,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   *vp=JSVAL_VOID;
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  int ret = JSX_Get(cx, (char*) ptr->ptr, 0, ptr->type, vp);
+  int ret = JSX_Get(cx, (char*) ptr->ptr, ptr->type, vp);
   if(!ret) return JS_FALSE;
   if(ret == -1) {
     // Created new function
@@ -409,7 +407,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
 
-  int ret = JSX_Get(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), 0, ptr->type, vp);
+  int ret = JSX_Get(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), ptr->type, vp);
   if(ret == 0) return JS_FALSE;
 
   if (ret==-1 && id==JSVAL_ZERO) {

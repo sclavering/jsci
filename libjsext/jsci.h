@@ -144,7 +144,7 @@ struct JSX_TypeBitfield : JSX_Type {
 extern const char *JSX_typenames[];
 extern const char *JSX_jstypenames[];
 
-int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval);
+int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval);
 int JSX_Get_multi(JSContext *cx, JSX_TypeFunction *funct, jsval *rval, void **argptr);
 
 int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v);

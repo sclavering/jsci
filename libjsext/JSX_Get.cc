@@ -5,7 +5,7 @@
 // rval should be rooted
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.
 
-int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
+int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
   if(!type) return JSX_ReportException(cx, "Cannot convert C value to JS value, because the C type is not known");
 
   int size=-1;
@@ -17,7 +17,6 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
   case POINTERTYPE:
   {
     // Return a pointer object from a type *
-    if (do_clean!=2) {
       if(*(void **)p == NULL) {
         *rval = JSVAL_NULL;
       } else {
@@ -29,7 +28,6 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
         ptr->finalize = 0;
         JS_SetPrivate(cx, obj, ptr);
       }
-    }
     return sizeof(void *);
   }
 
@@ -205,29 +203,17 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     JS_AddRoot(cx, &tmp);
     for (i=0; i<size; i++) {
       JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Get(cx, p + totsize, do_clean, ((JSX_TypeArray *) type)->member, &tmp);
+      int thissize = JSX_Get(cx, p + totsize, ((JSX_TypeArray *) type)->member, &tmp);
       if(!thissize) {
         JS_RemoveRoot(cx, &tmp);
-        goto fixedarrayfailure;
+        goto failure;
       }
-      if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
+      JS_SetElement(cx, obj, i, &tmp);
       totsize += thissize;
     }
     JS_RemoveRoot(cx, &tmp);
 
     return totsize;
-
-  fixedarrayfailure:
-    if (do_clean) {
-      int elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
-      for (;++i<size;) {
-        jsval tmp;
-        JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, p + i * elemsize, 2, ((JSX_TypeArray *) type)->member, &tmp);
-      }
-    }
-    goto failure;
-    // Error already thrown
   }
 
   case STRUCTTYPE:
@@ -249,48 +235,27 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     for (i=0; i<size; i++) {
       JSX_SuMember mtype = tsu->member[i];
       JS_GetProperty(cx, obj, mtype.name, &tmp);
-      int thissize = JSX_Get(cx, p + mtype.offset / 8, do_clean, mtype.membertype, &tmp);
+      int thissize = JSX_Get(cx, p + mtype.offset / 8, mtype.membertype, &tmp);
       if(!thissize) {
-        goto structfailure;
         JS_RemoveRoot(cx, &tmp);
+        goto failure;
       }
-      if(do_clean != 2) {
-        if(mtype.membertype->type == BITFIELDTYPE) {
-          int length = ((JSX_TypeBitfield *) mtype.membertype)->length;
-          int offset = mtype.offset % 8;
-          int mask = ~(-1 << length);
-          tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);
-        }
-        JS_SetProperty(cx, obj, mtype.name, &tmp);
+      if(mtype.membertype->type == BITFIELDTYPE) {
+        int length = ((JSX_TypeBitfield *) mtype.membertype)->length;
+        int offset = mtype.offset % 8;
+        int mask = ~(-1 << length);
+        tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);
       }
+      JS_SetProperty(cx, obj, mtype.name, &tmp);
     }
 
     JS_RemoveRoot(cx, &tmp);
 
     return type->SizeInBytes();
-    
-  structfailure:
-    if (do_clean) {
-      for (;++i<size;) {
-        jsval tmp;
-        JSX_SuMember mtype = tsu->member[i];
-        JS_GetProperty(cx, obj, mtype.name, &tmp);
-        JSX_Get(cx, p + mtype.offset / 8, 2, mtype.membertype, &tmp);
-      }
-    }
-    goto failure;
-    // Error already thrown
   }
 
   default:
-
-    // Could not find appropriate conversion
-
-    if (do_clean==2) // Okay if we are not going to use the value
-      return type->SizeInBytes();
-
     goto failure;
-
   }
 
  failure:
@@ -304,7 +269,7 @@ int JSX_Get_multi(JSContext *cx, JSX_TypeFunction *funct, jsval *rval, void **ar
   for(int i = 0; i < funct->nParam; i++) {
     JSX_FuncParam *thistype = &funct->param[i];
     if(thistype->paramtype->type == ARRAYTYPE) return 0; // xxx why don't we just treat it as a pointer type?
-    int siz = JSX_Get(cx, (char*) *argptr, 0, thistype->paramtype, rval);
+    int siz = JSX_Get(cx, (char*) *argptr, thistype->paramtype, rval);
     if(!siz) return 0;
     ret += siz;
   }
