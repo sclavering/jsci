@@ -455,8 +455,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   }
   JS_AddRoot(cb->cx, &rval);
   
-  // pretty sure this has side-effects
-  JSX_Get_multi(cb->cx, 0, type, tmp_argv, 1, args);
+  JSX_Get_multi(cb->cx, type, tmp_argv, args);
 
   if (!JS_CallFunction(cb->cx, JS_GetGlobalObject(cb->cx), cb->fun, type->nParam, tmp_argv, &rval)) {
     //    printf("FAILCALL\n");

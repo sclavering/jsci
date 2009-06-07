@@ -145,7 +145,7 @@ extern const char *JSX_typenames[];
 extern const char *JSX_jstypenames[];
 
 int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval);
-int JSX_Get_multi(JSContext *cx, int do_clean, JSX_TypeFunction *funct, jsval *rval, int convconst, void **argptr);
+int JSX_Get_multi(JSContext *cx, JSX_TypeFunction *funct, jsval *rval, void **argptr);
 
 int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v);
 int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JSX_TypeFunction *funct, jsval *vp, void **argptr);

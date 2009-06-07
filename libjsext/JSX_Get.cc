@@ -501,64 +501,14 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
 }
 
 
-int JSX_Get_multi(JSContext *cx, int do_clean, JSX_TypeFunction *funct, jsval *rval, int convconst, void **argptr) {
-  JSX_FuncParam *type = funct->param;
-
-  int ret=0;
-  int siz;
-  int i;
-
-  for(i = 0; i < funct->nParam; i++) {
+int JSX_Get_multi(JSContext *cx, JSX_TypeFunction *funct, jsval *rval, void **argptr) {
+  int ret = 0;
+  for(int i = 0; i < funct->nParam; i++) {
     JSX_FuncParam *thistype = &funct->param[i];
-
-    if(!convconst && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval == JSVAL_NULL)) { // Const or immutable
-      if(do_clean) {
-        siz = JSX_Get(cx, (char*) *argptr, 2, thistype->paramtype, rval);
-      } else {
-        siz = thistype->paramtype->SizeInBytes();
-        rval++;
-      }
-    } else {
-      if(thistype->paramtype->type == ARRAYTYPE) {
-        if(!do_clean) goto failure;
-        // In function calls, arrays are passed by pointer
-        siz = JSX_Get(cx, (char*) *(void **)*argptr, do_clean, thistype->paramtype, rval);
-        if(siz) siz = sizeof(void *);
-      } else {
-        siz = JSX_Get(cx, (char*) *argptr, do_clean, thistype->paramtype, rval);
-      }
-    }
-
-    // In function calls, arrays are passed by pointer
-
-    if(do_clean && thistype->paramtype->type == ARRAYTYPE) {
-      JS_free(cx, *(void **)*argptr);
-      siz=sizeof(void *);
-    }
-
-    if (type)
-      type++;
-    rval++;
-    if (!siz)
-      goto failure;
-    argptr++;
-    ret+=siz;
+    if(thistype->paramtype->type == ARRAYTYPE) return 0; // xxx why don't we just treat it as a pointer type?
+    int siz = JSX_Get(cx, (char*) *argptr, 0, thistype->paramtype, rval);
+    if(!siz) return 0;
+    ret += siz;
   }
-
   return ret;
-
- failure:
-  if (!do_clean)
-     return 0;
-
-  for(; ++i < funct->nParam; ) {
-    JSX_Get(cx, NULL, 2, type ? type->paramtype : 0, rval);
-    if(type && type->paramtype->type == ARRAYTYPE) JS_free(cx, *(void **)*argptr);
-    rval++;
-    if (type)
-      type++;
-    argptr++;
-  }
-
-  return 0;
 }
