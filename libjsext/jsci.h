@@ -172,15 +172,15 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
 #define TYPEPAIR(a,b) ((TYPECOUNT2 * (a)) + (b))
 
 
-struct JSX_Pointer {
+struct JsciPointer {
   void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
   JSX_Type *type;
   void (*finalize) (void *);
 
-  ~JSX_Pointer();
+  ~JsciPointer();
 };
 
-struct JSX_Callback : JSX_Pointer {
+struct JSX_Callback : JsciPointer {
   JSContext *cx;
   JSFunction *fun;
   void *writeable; // Points to writeable code

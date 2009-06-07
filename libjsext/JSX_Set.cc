@@ -13,7 +13,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   int totsize;
   int i;
   JSObject *obj;
-  JSX_Pointer *ptr;
+  JsciPointer *ptr;
   jsdouble tmpdbl;
   jsval tmpval;
   JSFunction *fun;
@@ -58,7 +58,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 
   pointercommon:
 
-    ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
+    ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
     *(void **)p=ptr->ptr;
     return sizeof(void *);
 
@@ -449,7 +449,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 
     // Copy contents pointed to into array
     size = type->SizeInBytes();
-    ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
+    ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
     memcpy(p, ptr->ptr, size);
     return size;
 

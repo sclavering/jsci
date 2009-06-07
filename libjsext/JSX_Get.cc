@@ -35,7 +35,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
       if(*(void **)p == NULL) {
         *rval = JSVAL_NULL;
       } else {
-        JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
+        JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
         ptr->ptr = *(void **)p;
       }
     }
@@ -51,7 +51,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
       } else {
         JSObject *obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
         *rval = OBJECT_TO_JSVAL(obj);
-        JSX_Pointer *ptr = new JSX_Pointer;
+        JsciPointer *ptr = new JsciPointer;
         ptr->ptr = *(void **)p;
         ptr->type = ((JSX_TypePointer *) type)->direct;
         ptr->finalize = 0;
@@ -476,7 +476,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     if (!p)
       return size;
 
-    JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
+    JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
     memcpy(ptr->ptr, p, size);
 
     return size;

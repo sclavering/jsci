@@ -76,7 +76,7 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
 
   JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, type);
   int size = t->SizeInBytes();
-  JSX_Pointer *retpriv = (JSX_Pointer *) new char[sizeof(JSX_Pointer) + size];
+  JsciPointer *retpriv = (JsciPointer *) new char[sizeof(JsciPointer) + size];
 
   if (!retpriv)
     return JS_FALSE;
@@ -126,7 +126,7 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  JSX_Pointer *ret = new JSX_Pointer;
+  JsciPointer *ret = new JsciPointer;
   if (!ret)
     return JS_FALSE;
   ret->ptr=0;
@@ -147,7 +147,7 @@ static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *ar
   JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
   int length = INT_TO_JSVAL(argv[0]);
-  JSX_Pointer *ret = (JSX_Pointer *) new char[sizeof(JSX_Pointer) + length];
+  JsciPointer *ret = (JsciPointer *) new char[sizeof(JsciPointer) + length];
   if (!ret)
     return JS_FALSE;
   ret->ptr=ret+1;
@@ -165,14 +165,14 @@ static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval
     return JS_FALSE;
   }
 
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
   if (!JSX_InitPointer(cx, newobj, JSVAL_TO_OBJECT(argv[0]))) {
     return JS_FALSE;
   }
 
-  JSX_Pointer *newptr = (JSX_Pointer *) JS_GetPrivate(cx, newobj);
+  JsciPointer *newptr = (JsciPointer *) JS_GetPrivate(cx, newobj);
   newptr->ptr=ptr->ptr;
   return JS_TRUE;
 }
@@ -196,7 +196,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
 
   // Are we creating a C wrapper for a JS function so it can be used as a callback?
   if(argc >= 2 && JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
-    JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, typeObject);
+    JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, typeObject);
     JSX_Type *type = ptr->type;
     // Accept both function type and pointer-to-function type
     if(type->type == POINTERTYPE) type = ((JSX_TypePointer *) type)->direct;
@@ -208,7 +208,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
   if(!JSX_InitPointerAlloc(cx, obj, JSVAL_TO_OBJECT(argv[0]))) return JS_FALSE;
   // Set initial value, if provided
   if(argc >= 2 && argv[1] != JSVAL_VOID) {
-    JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx,obj);
+    JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx,obj);
     if(!JSX_Set(cx, (char*) ptr->ptr, 0, ptr->type, argv[1])) return JS_FALSE;
   }
 
@@ -217,7 +217,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
 
 
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   delete ptr;
 }
 
@@ -229,7 +229,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   JS_LookupProperty(cx, funcobj, "__ptr__", &ptrval);
   JSObject *obj = JSVAL_TO_OBJECT(ptrval);
 
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   JSX_Type *type = ptr->type;
 
   if(type->type != FUNCTIONTYPE) {
@@ -296,7 +296,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
 
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   *vp=JSVAL_VOID;
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   int ret = JSX_Get(cx, (char*) ptr->ptr, 0, ptr->type, vp);
   if(!ret) return JS_FALSE;
   if(ret == -1) {
@@ -308,7 +308,7 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 
 static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   if(!JSX_Set(cx, (char*) ptr->ptr, 0, ptr->type, *vp)) return JS_FALSE;
   return JS_TRUE;
 }
@@ -321,7 +321,7 @@ static JSBool JSX_Pointer_getfinalize(JSContext *cx, JSObject *obj, jsval id, js
 
 
 static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   if (*vp==JSVAL_NULL || *vp==JSVAL_VOID) {
     ptr->finalize=0;
     return JS_TRUE;
@@ -332,7 +332,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
     return JSX_ReportException(cx, "Wrong value type for finalize property");
   }
 
-  JSX_Pointer *finptr = (JSX_Pointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrv));
+  JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrv));
   JSX_TypeFunction *ft = (JSX_TypeFunction *) finptr->type;
 
   if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0].paramtype->type != POINTERTYPE || ft->param[0].isConst) {
@@ -346,7 +346,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
 
 
 static JSBool Pointer_proto_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   JSString* str;
   if(JSVAL_IS_INT(argv[0])) {
     str = JS_NewStringCopyN(cx, (char *) ptr->ptr, JSVAL_TO_INT(argv[0]));
@@ -359,7 +359,7 @@ static JSBool Pointer_proto_string(JSContext *cx, JSObject *obj, uintN argc, jsv
 
 
 static JSBool Pointer_proto_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   jsdouble val = (jsdouble) (long) ptr->ptr;
   JS_NewNumberValue(cx, val, rval);
   return JS_TRUE;
@@ -371,7 +371,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(argc != 1 || !JSVAL_IS_STRING(argv[0]))
     return JSX_ReportException(cx, "Pointer.prototype.field(): must be passed a single argument, of type string");
 
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
 
   if(!ptr->type->type == POINTERTYPE) return JS_FALSE; // should be impossible
 
@@ -396,8 +396,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval = OBJECT_TO_JSVAL(newobj);
 
-  JSX_Pointer *newptr;
-  newptr = (JSX_Pointer *) malloc(sizeof(JSX_Pointer));
+  JsciPointer *newptr = (JsciPointer *) malloc(sizeof(JsciPointer));
   newptr->type = sutype->member[ix].membertype;
   newptr->ptr = (char*) ptr->ptr + sutype->member[ix].offset / 8;
   newptr->finalize = 0;
@@ -411,7 +410,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
   if (!JSVAL_IS_INT(id))
     return JS_TRUE; // Only handle numerical properties
 
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
 
   int ret = JSX_Get(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), 0, ptr->type, vp);
   if(ret == 0) return JS_FALSE;
@@ -435,7 +434,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
-  JSX_Pointer *ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   int ret = JSX_Set(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), 0, ptr->type, *vp);
   return ret == 0 ? JS_FALSE : JS_TRUE;
 }

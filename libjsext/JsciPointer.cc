@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JSX_Pointer::~JSX_Pointer() {
+JsciPointer::~JsciPointer() {
   if(this->finalize) {
     if(this->finalize == ffi_closure_free) {
       ffi_closure_free(((JSX_Callback *) this)->writeable);

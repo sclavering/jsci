@@ -117,8 +117,7 @@ static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *a
   obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
   *rval = OBJECT_TO_JSVAL(obj);
   if(!JSX_InitPointer(cx, obj, JSVAL_TO_OBJECT(argv[1]))) return JS_FALSE;
-  JSX_Pointer *ptr;
-  ptr = (JSX_Pointer *) JS_GetPrivate(cx, obj);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   if(!ptr) return JS_FALSE;
   ptr->ptr = sym;
   return JS_TRUE;
