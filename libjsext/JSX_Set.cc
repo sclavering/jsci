@@ -480,32 +480,19 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 }
 
 
-int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_FuncParam *type, jsval *vp, void **argptr) {
+int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JSX_TypeFunction *funct, jsval *vp, void **argptr) {
   int ret=0;
   int siz, cursiz;
-  uintN i;
-  JSX_FuncParam tmptype;
-  JSX_FuncParam *thistype;
+  int i;
 
-  for (i=0; i<nargs; i++) {
-    if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list
+  for(i = 0; i < funct->nParam; ++i) {
+    JSX_Type *t = funct->param[i].paramtype;
 
-    if(JSVAL_IS_OBJECT(*vp) && *vp != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*vp), JSX_GetTypeClass(), NULL)) {
-      // Paramlist-specified type
-      thistype=&tmptype;
-      tmptype.paramtype = (JSX_Type*) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*vp));
-      vp++;
-      i++;
-      if (i==nargs) break;
-    } else {
-      thistype = type ? type : 0;
-    }
-
-    if(thistype && thistype->paramtype->type == ARRAYTYPE) {
+    if(t->type == ARRAYTYPE) {
       if(!will_clean) goto failure;
       // In function calls, arrays are passed by pointer
-      *(void **)ptr = JS_malloc(cx, thistype->paramtype->SizeInBytes());
-      cursiz = JSX_Set(cx, (char*) *(void **)ptr, will_clean, thistype->paramtype, *vp);
+      *(void **)ptr = JS_malloc(cx, t->SizeInBytes());
+      cursiz = JSX_Set(cx, (char*) *(void **)ptr, will_clean, t, *vp);
       if(cursiz) {
         cursiz = sizeof(void *);
       } else {
@@ -513,7 +500,7 @@ int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_Fun
         goto failure;
       }
     } else {
-      cursiz = JSX_Set(cx, (char*) (ptr ? ptr : *argptr), will_clean, thistype ? thistype->paramtype : 0, *vp);
+      cursiz = JSX_Set(cx, (char*) (ptr ? ptr : *argptr), will_clean, t, *vp);
     }
     if (!cursiz)
       goto failure;
@@ -526,8 +513,6 @@ int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_Fun
       argptr++;
     }
     ret+=siz;
-    if (type)
-      type++;
     vp++;
   }
 
@@ -537,15 +522,11 @@ int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, uintN nargs, JSX_Fun
   if (!will_clean)
      return 0;
 
-  for (;i--;) {
-    if (type)
-      --type;
-    if (ptr) {
-      ptr-=siz;
-    } else {
-      --argptr;
-    }
-    siz = JSX_Get(cx, (char*) (ptr ? ptr : *argptr), 0, 2, type ? type->paramtype : 0, --vp);
+  while(i >= 0) {
+    JSX_Type *t = funct->param[i].paramtype;
+    siz = JSX_Get(cx, (char*) (ptr ? ptr : *argptr), 0, 2, t, --vp);
+    if(ptr) ptr-=siz;
+    else --argptr;
   }
 
   return 0;
