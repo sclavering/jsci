@@ -259,11 +259,10 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
 
   int retsize = ft->returnType->SizeInBytes();
 
-  void **argptr = 0;
-  argptr=(void **)JS_malloc(cx, arg_size + argc*sizeof(void *) + retsize + 8);
+  char *argptr_mem = new char[arg_size + argc * sizeof(void*) + retsize + 8];
+  void **argptr = (void **) argptr_mem;
 
-  char *retbuf = 0;
-  retbuf=(char *)(argptr + argc);
+  char *retbuf = (char *) (argptr + argc);
   char *argbuf;
   argbuf=retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
@@ -281,13 +280,12 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   }
 
   if(arg_size && !JSX_Get_multi(cx, 1, ft, argv, 0, argptr)) goto failure;
-  JS_free(cx, argptr);
+  delete argptr_mem;
 
   return JS_TRUE;
 
  failure:
-  if (argptr) 
-    JS_free(cx, argptr);
+  delete argptr_mem;
   if(arg_types) delete arg_types;
 
   return JS_FALSE;

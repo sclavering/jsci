@@ -434,7 +434,7 @@ int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JSX_TypeFunction *fu
     JSX_Type *t = funct->param[i].paramtype;
 
     if(t->type == ARRAYTYPE) {
-      if(!will_clean) goto failure;
+      if(!will_clean) return 0;
       // In function calls, arrays are passed by pointer
       *(void **)ptr = JS_malloc(cx, t->SizeInBytes());
       cursiz = JSX_Set(cx, (char*) *(void **)ptr, will_clean, t, *vp);
@@ -442,13 +442,12 @@ int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JSX_TypeFunction *fu
         cursiz = sizeof(void *);
       } else {
         JS_free(cx, *(void **)ptr);
-        goto failure;
+        return 0;
       }
     } else {
       cursiz = JSX_Set(cx, (char*) (ptr ? ptr : *argptr), will_clean, t, *vp);
     }
-    if (!cursiz)
-      goto failure;
+    if(!cursiz) return 0;
 
     siz=cursiz;
     if (ptr) {
@@ -462,17 +461,4 @@ int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JSX_TypeFunction *fu
   }
 
   return ret;
-
- failure:
-  if (!will_clean)
-     return 0;
-
-  while(i >= 0) {
-    JSX_Type *t = funct->param[i].paramtype;
-    siz = JSX_Get(cx, (char*) (ptr ? ptr : *argptr), 2, t, --vp);
-    if(ptr) ptr-=siz;
-    else --argptr;
-  }
-
-  return 0;
 }
