@@ -304,7 +304,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
         for (;i--;) {
           jsval tmp;
           JS_GetElement(cx, obj, i, &tmp);
-          JSX_Get(cx, NULL, 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
+          JSX_Get(cx, NULL, 2, ((JSX_TypePointer *) type)->direct, &tmp);
         }
         JS_free(cx, *(void **)p);
       }
@@ -338,7 +338,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       for (;i--;) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeArray *) type)->member, &tmp);
+        JSX_Get(cx, NULL, 2, ((JSX_TypeArray *) type)->member, &tmp);
       }
     }
     
@@ -384,7 +384,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       for (;i--;) {
         jsval tmp;
         JS_GetProperty(cx, obj, ((JSX_TypeStructUnion *) type)->member[i].name, &tmp);
-        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].membertype, &tmp);
+        JSX_Get(cx, NULL, 2, ((JSX_TypeStructUnion *) type)->member[i].membertype, &tmp);
       }
     }
 
@@ -412,7 +412,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       for (;i--;) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, NULL, 0, 2, ((JSX_TypeStructUnion *) type)->member[i].membertype, &tmp);
+        JSX_Get(cx, NULL, 2, ((JSX_TypeStructUnion *) type)->member[i].membertype, &tmp);
       }
     }
 
@@ -510,7 +510,7 @@ int JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JSX_TypeFunction *fu
 
   while(i >= 0) {
     JSX_Type *t = funct->param[i].paramtype;
-    siz = JSX_Get(cx, (char*) (ptr ? ptr : *argptr), 0, 2, t, --vp);
+    siz = JSX_Get(cx, (char*) (ptr ? ptr : *argptr), 2, t, --vp);
     if(ptr) ptr-=siz;
     else --argptr;
   }

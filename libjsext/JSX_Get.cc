@@ -5,7 +5,7 @@
 // rval should be rooted
 // if p is NULL, type must also be NULL. Nothing is done, only size is returned.
 
-int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, jsval *rval) {
+int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
   if(!type) return JSX_ReportException(cx, "Cannot convert C value to JS value, because the C type is not known");
 
   int size=-1;
@@ -287,41 +287,12 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     JS_GetArrayLength(cx, obj, (jsuint*) &size);
     int elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
 
-    if (do_clean) {
-      if (oldptr && (do_clean==2 || *(void **)oldptr!=*(void **)p)) {
-        // Pointer has changed, don't update array, just return pointer and clean up
-        if(do_clean != 2) {
-          *rval = JSVAL_VOID;
-          JSX_Get(cx, p, 0, 0, type, rval);
-        }
-
-        totsize = 0;
-
-        for (i=0; i<size; i++) {
-          jsval tmp;
-          JS_GetElement(cx, obj, i, &tmp);
-          int thissize = JSX_Get(cx, 0, *(char **)oldptr + totsize, 2, ((JSX_TypePointer *) type)->direct, &tmp);
-          if(!thissize) goto vararrayfailure1;
-          totsize+=thissize;
-        }
-
-        JS_free(cx, *(char **)p);
-        return sizeof(void *);
-      }
-
-      if(((JSX_TypeArray *) type)->member->ContainsPointer()) {
-        oldptr = *(char **)p + elemsize * size;
-      } else {
-        oldptr = 0;
-      }
-    }
-
     totsize=0;
 
     JS_AddRoot(cx, &tmp);
     for (i=0; i<size; i++) {
       JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Get(cx, *(char **)p + totsize, oldptr ? *(char **)oldptr + totsize : 0, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
+      int thissize = JSX_Get(cx, *(char **)p + totsize, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
       if(!thissize) {
         JS_RemoveRoot(cx, &tmp);
         goto vararrayfailure1;
@@ -341,7 +312,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       for (;++i<size;) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, *(char **)p + i * elemsize, oldptr ? *(char **)oldptr + i * elemsize : 0, 2, ((JSX_TypePointer *) type)->direct, &tmp);
+        JSX_Get(cx, *(char **)p + i * elemsize, 2, ((JSX_TypePointer *) type)->direct, &tmp);
       }
 
       JS_free(cx, *(char **)p);
@@ -373,7 +344,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     JS_AddRoot(cx, &tmp);
     for (i=0; i<size; i++) {
       JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Get(cx, p + totsize, oldptr ? oldptr + totsize : 0, do_clean, ((JSX_TypeArray *) type)->member, &tmp);
+      int thissize = JSX_Get(cx, p + totsize, do_clean, ((JSX_TypeArray *) type)->member, &tmp);
       if(!thissize) {
         JS_RemoveRoot(cx, &tmp);
         goto fixedarrayfailure;
@@ -391,7 +362,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
       for (;++i<size;) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, p + i * elemsize, oldptr ? oldptr + i * elemsize : 0, 2, ((JSX_TypeArray *) type)->member, &tmp);
+        JSX_Get(cx, p + i * elemsize, 2, ((JSX_TypeArray *) type)->member, &tmp);
       }
     }
     goto failure;
@@ -423,7 +394,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     for (i=0; i<size; i++) {
       JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
       JS_GetProperty(cx, obj, mtype.name, &tmp);
-      int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
+      int thissize = JSX_Get(cx, p + mtype.offset / 8, do_clean, mtype.membertype, &tmp);
       if(!thissize) {
         goto structfailure;
         JS_RemoveRoot(cx, &tmp);
@@ -449,7 +420,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
         jsval tmp;
         JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
         JS_GetProperty(cx, obj, mtype.name, &tmp);
-        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.membertype, &tmp);
+        JSX_Get(cx, p + mtype.offset / 8, 2, mtype.membertype, &tmp);
       }
     }
     goto failure;
@@ -470,7 +441,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
     for (i=0; i<size; i++) {
       JS_GetElement(cx, obj, i, &tmp);
       JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
-      int thissize = JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, do_clean, mtype.membertype, &tmp);
+      int thissize = JSX_Get(cx, p + mtype.offset / 8, do_clean, mtype.membertype, &tmp);
       if(!thissize) {
         JS_RemoveRoot(cx, &tmp);
         goto structfailure2;
@@ -488,7 +459,7 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
         JSX_SuMember mtype = ((JSX_TypeStructUnion *) type)->member[i];
-        JSX_Get(cx, p + mtype.offset / 8, oldptr ? oldptr + mtype.offset / 8 : 0, 2, mtype.membertype, &tmp);
+        JSX_Get(cx, p + mtype.offset / 8, 2, mtype.membertype, &tmp);
       }
     }
     goto failure;
@@ -540,7 +511,7 @@ int JSX_Get_multi(JSContext *cx, int do_clean, JSX_TypeFunction *funct, jsval *r
 
     if(!convconst && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval == JSVAL_NULL)) { // Const or immutable
       if(do_clean) {
-        siz = JSX_Get(cx, (char*) *argptr, 0, 2, thistype->paramtype, rval);
+        siz = JSX_Get(cx, (char*) *argptr, 2, thistype->paramtype, rval);
       } else {
         siz = thistype->paramtype->SizeInBytes();
         rval++;
@@ -549,10 +520,10 @@ int JSX_Get_multi(JSContext *cx, int do_clean, JSX_TypeFunction *funct, jsval *r
       if(thistype->paramtype->type == ARRAYTYPE) {
         if(!do_clean) goto failure;
         // In function calls, arrays are passed by pointer
-        siz = JSX_Get(cx, (char*) *(void **)*argptr, 0, do_clean, thistype->paramtype, rval);
+        siz = JSX_Get(cx, (char*) *(void **)*argptr, do_clean, thistype->paramtype, rval);
         if(siz) siz = sizeof(void *);
       } else {
-        siz = JSX_Get(cx, (char*) *argptr, 0, do_clean, thistype->paramtype, rval);
+        siz = JSX_Get(cx, (char*) *argptr, do_clean, thistype->paramtype, rval);
       }
     }
 
@@ -579,7 +550,7 @@ int JSX_Get_multi(JSContext *cx, int do_clean, JSX_TypeFunction *funct, jsval *r
      return 0;
 
   for(; ++i < funct->nParam; ) {
-    JSX_Get(cx, NULL, 0, 2, type ? type->paramtype : 0, rval);
+    JSX_Get(cx, NULL, 2, type ? type->paramtype : 0, rval);
     if(type && type->paramtype->type == ARRAYTYPE) JS_free(cx, *(void **)*argptr);
     rval++;
     if (type)
