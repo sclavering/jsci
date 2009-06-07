@@ -9,41 +9,13 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
   if(!type) return JSX_ReportException(cx, "Cannot convert C value to JS value, because the C type is not known");
 
   int size=-1;
-  int typepair = TYPEPAIR(JSX_JSType(cx, *rval), type->type);
   
   // Determine the appropriate conversion
 
-  switch(typepair) {
-  case TYPEPAIR(JSFUNC,POINTERTYPE):
-    if(((JSX_TypePointer *) type)->direct->type != FUNCTIONTYPE)
-      goto failure;
-    return sizeof(void *);
+  switch(type->type) {
 
-  case TYPEPAIR(JSPOINTER,INTTYPE):
-  case TYPEPAIR(JSPOINTER,UINTTYPE):
-    if(type->SizeInBytes() != sizeof(void*)) goto failure;
-
-    // Update pointer object from an int
-
-    // Fall through
-
-  case TYPEPAIR(JSPOINTER,POINTERTYPE):
-
-    // Update pointer object from a type * or int
-
-    if (do_clean!=2) {
-      if(*(void **)p == NULL) {
-        *rval = JSVAL_NULL;
-      } else {
-        JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
-        ptr->ptr = *(void **)p;
-      }
-    }
-    return sizeof(void *);
-
-  case TYPEPAIR(JSVOID,POINTERTYPE):
-  case TYPEPAIR(JSNULL,POINTERTYPE):
-
+  case POINTERTYPE:
+  {
     // Return a pointer object from a type *
     if (do_clean!=2) {
       if(*(void **)p == NULL) {
@@ -59,62 +31,9 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
       }
     }
     return sizeof(void *);
+  }
 
-  case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
-    if(!is_void_or_char(((JSX_TypePointer *) type)->direct)) goto failure;
-
-    // Return a string from a void* or char* (equivalent in this context)
-
-    if (do_clean!=2)
-      *rval=STRING_TO_JSVAL(JS_NewStringCopyZ(cx, *(char **)p));
-    return sizeof(char *);
-
-  case TYPEPAIR(JSVAL_STRING,INTTYPE):
-  case TYPEPAIR(JSVAL_STRING,UINTTYPE):
-
-    switch(((JSX_TypeNumeric *) type)->size) {
-    case 0:
-
-      // Return a string from a char
-
-      *rval=STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *)p, 1));
-      return sizeof(char);
-
-    case 1:
-
-      // Return a string from a short
-
-      *rval=STRING_TO_JSVAL(JS_NewUCStringCopyN(cx, (jschar *)p, 1));
-      return sizeof(jschar);
-
-    default:
-      goto failure;
-    }
-
-  case TYPEPAIR(JSVAL_STRING,ARRAYTYPE):
-    if(!type_is_char(((JSX_TypeArray *) type)->member)) goto failure;
-  fromchararray:
-    // Return a string from a char array
-    *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *) p, ((JSX_TypeArray *) type)->length));
-    return sizeof(char) * ((JSX_TypeArray *) type)->length;
-
-  case TYPEPAIR(JSVAL_INT,POINTERTYPE):
-
-    // Return a number from an undefined type
-    // assume int
-
-    if (!p)
-      return sizeof(int);
-
-    size=2;
-
-    // fall through
-
-  case TYPEPAIR(JSNULL,INTTYPE):
-  case TYPEPAIR(JSVOID,INTTYPE):
-  case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
-  case TYPEPAIR(JSVAL_INT,INTTYPE):
-  case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
+  case INTTYPE:
   {
     int tmpint;
     // Return a number from an int (of various sizes)
@@ -161,21 +80,14 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
 
     return size;
   }
-  case TYPEPAIR(JSNULL,BITFIELDTYPE):
-  case TYPEPAIR(JSVOID,BITFIELDTYPE):
-  case TYPEPAIR(JSVAL_BOOLEAN,BITFIELDTYPE):
-  case TYPEPAIR(JSVAL_INT,BITFIELDTYPE):
-  case TYPEPAIR(JSVAL_DOUBLE,BITFIELDTYPE):
+
+  case BITFIELDTYPE:
 
     size = ((JSX_TypeNumeric *) ((JSX_TypeBitfield *) type)->member)->size;
 
     // fall through
 
-  case TYPEPAIR(JSNULL,UINTTYPE):
-  case TYPEPAIR(JSVOID,UINTTYPE):
-  case TYPEPAIR(JSVAL_BOOLEAN,UINTTYPE):
-  case TYPEPAIR(JSVAL_INT,UINTTYPE):
-  case TYPEPAIR(JSVAL_DOUBLE,UINTTYPE):
+  case UINTTYPE:
   {
     int tmpuint;
     // Return a number from an unsigned int (of various sizes)
@@ -226,11 +138,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     return size;
   }
 
-  case TYPEPAIR(JSVOID,FLOATTYPE):
-  case TYPEPAIR(JSNULL,FLOATTYPE):
-  case TYPEPAIR(JSVAL_BOOLEAN,FLOATTYPE):
-  case TYPEPAIR(JSVAL_INT,FLOATTYPE):
-  case TYPEPAIR(JSVAL_DOUBLE,FLOATTYPE):
+  case FLOATTYPE:
   {
     jsdouble tmpdouble;
 
@@ -262,7 +170,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     return size;
   }
 
-  case TYPEPAIR(JSVOID,FUNCTIONTYPE):
+  case FUNCTIONTYPE:
   {
     // Create a new JS function which calls a C function
     JSFunction *fun = JS_NewFunction(cx, JSX_NativeFunction, ((JSX_TypeFunction *) type)->nParam, 0, 0, "JSEXT_NATIVE");
@@ -275,65 +183,18 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     // as long as it is non-null.
   }
 
-  case TYPEPAIR(JSARRAY,POINTERTYPE):
+  case ARRAYTYPE:
   {
-    int totsize;
-    int i;
-    jsval tmp = JSVAL_VOID;
-
-    // Update array elements from a variable array
-
-    JSObject *obj = JSVAL_TO_OBJECT(*rval);
-    JS_GetArrayLength(cx, obj, (jsuint*) &size);
-    int elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
-
-    totsize=0;
-
-    JS_AddRoot(cx, &tmp);
-    for (i=0; i<size; i++) {
-      JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Get(cx, *(char **)p + totsize, do_clean, ((JSX_TypePointer *) type)->direct, &tmp);
-      if(!thissize) {
-        JS_RemoveRoot(cx, &tmp);
-        goto vararrayfailure1;
-      }
-      if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
-      totsize += thissize;
+    if(type_is_char(((JSX_TypeArray *) type)->member)) {
+      // Return a string from a char array
+      *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *) p, ((JSX_TypeArray *) type)->length));
+      return sizeof(char) * ((JSX_TypeArray *) type)->length;
     }
-    JS_RemoveRoot(cx, &tmp);
-
-    if(do_clean) JS_free(cx, *(char **)p);
-
-    return sizeof(void *);
-
-  vararrayfailure1:
-    if (do_clean) {
-      int elemsize = ((JSX_TypePointer *) type)->direct->SizeInBytes();
-      for (;++i<size;) {
-        jsval tmp;
-        JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, *(char **)p + i * elemsize, 2, ((JSX_TypePointer *) type)->direct, &tmp);
-      }
-
-      JS_free(cx, *(char **)p);
-    }
-
-    goto failure;
-    // error already thrown
-  }
-
-  case TYPEPAIR(JSVOID,ARRAYTYPE):
-  case TYPEPAIR(JSNULL,ARRAYTYPE):
-    if(type_is_char(((JSX_TypeArray *) type)->member)) goto fromchararray;
 
     // Create new array and populate with values
 
     *rval=OBJECT_TO_JSVAL(JS_NewArrayObject(cx, 0, 0));
     
-    // fall through
-
-  case TYPEPAIR(JSARRAY,ARRAYTYPE):
-  {
     int i;
     // Update array elements from a fixed size array
     int totsize = 0;
@@ -369,20 +230,13 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     // Error already thrown
   }
 
-  case TYPEPAIR(JSVOID,STRUCTTYPE):
-  case TYPEPAIR(JSVOID,UNIONTYPE):
-  case TYPEPAIR(JSNULL,STRUCTTYPE):
-  case TYPEPAIR(JSNULL,UNIONTYPE):
-
+  case STRUCTTYPE:
+  case UNIONTYPE:
+  {
     // Create new object and populate with values
 
     *rval=OBJECT_TO_JSVAL(JS_NewObject(cx, 0, 0, 0));
 
-    // fall trough
-
-  case TYPEPAIR(JSVAL_OBJECT,STRUCTTYPE):
-  case TYPEPAIR(JSVAL_OBJECT,UNIONTYPE):
-  {
     JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
     int i;
     // Update object elements from a struct or union
@@ -428,62 +282,6 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
     // Error already thrown
   }
 
-  case TYPEPAIR(JSARRAY,STRUCTTYPE):
-  case TYPEPAIR(JSARRAY,UNIONTYPE):
-  {
-    JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
-    int i;
-    // Update array elements from struct or union
-    size = tsu->nMember;
-    JSObject *obj = JSVAL_TO_OBJECT(*rval);
-
-    jsval tmp=JSVAL_VOID;
-    JS_AddRoot(cx, &tmp);
-
-    for (i=0; i<size; i++) {
-      JS_GetElement(cx, obj, i, &tmp);
-      JSX_SuMember mtype = tsu->member[i];
-      int thissize = JSX_Get(cx, p + mtype.offset / 8, do_clean, mtype.membertype, &tmp);
-      if(!thissize) {
-        JS_RemoveRoot(cx, &tmp);
-        goto structfailure2;
-      }
-      if(do_clean != 2) JS_SetElement(cx, obj, i, &tmp);
-    }
-
-    JS_RemoveRoot(cx, &tmp);
-      
-    return type->SizeInBytes();
-
-  structfailure2:
-    if (do_clean) {
-      for (;++i<size;) {
-        jsval tmp;
-        JS_GetElement(cx, obj, i, &tmp);
-        JSX_SuMember mtype = tsu->member[i];
-        JSX_Get(cx, p + mtype.offset / 8, 2, mtype.membertype, &tmp);
-      }
-    }
-    goto failure;
-    // error already thrown
-  }
-
-  case TYPEPAIR(JSPOINTER,ARRAYTYPE):
-  {
-    // Copy contents of array into memory pointed to
-    // Leave pointer unchanged
-
-    size = type->SizeInBytes();
-
-    if (!p)
-      return size;
-
-    JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
-    memcpy(ptr->ptr, p, size);
-
-    return size;
-  }
-
   default:
 
     // Could not find appropriate conversion
@@ -496,7 +294,7 @@ int JSX_Get(JSContext *cx, char *p, int do_clean, JSX_Type *type, jsval *rval) {
   }
 
  failure:
-  JSX_ReportException(cx, "Get: Could not convert value from C %s to JS %s",JSX_typenames[typepair%TYPECOUNT2], JSX_jstypenames[typepair/TYPECOUNT2]);
+  JSX_ReportException(cx, "Get: Could not convert C value of type %s to JS", JSX_typenames[type->type]);
   return 0;
 }
 
