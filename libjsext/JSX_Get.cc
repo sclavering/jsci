@@ -554,53 +554,37 @@ int JSX_Get(JSContext *cx, char *p, char *oldptr, int do_clean, JSX_Type *type, 
 }
 
 
-int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam *type, jsval *rval, int convconst, void **argptr) {
+int JSX_Get_multi(JSContext *cx, int do_clean, JSX_TypeFunction *funct, jsval *rval, int convconst, void **argptr) {
+  JSX_FuncParam *type = funct->param;
+
   int ret=0;
   int siz;
-  uintN i;
-  JSX_FuncParam tmptype;
-  JSX_FuncParam *thistype;
+  int i;
 
-  for (i=0; i<nargs; i++) {
-    // xxx this either is, or should become, obsolete.  we ought to fix up |sometype foo(void)| sooner than this
-    if(type && type->paramtype->type == VOIDTYPE) type = 0; // End of param list
+  for(i = 0; i < funct->nParam; i++) {
+    JSX_FuncParam *thistype = &funct->param[i];
 
-    if(JSVAL_IS_OBJECT(*rval) && *rval != JSVAL_NULL && JS_InstanceOf(cx, JSVAL_TO_OBJECT(*rval), JSX_GetTypeClass(), NULL)) {
-      // Paramlist-specified type
-      thistype=&tmptype;
-      tmptype.paramtype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(*rval));
-      rval++;
-      i++;
-      if (i==nargs) break;
-    } else {
-      thistype = type ? type : 0;
-    }
-
-    if (!convconst && thistype && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval==JSVAL_NULL)) { // Const or immutable
+    if(!convconst && (thistype->isConst || !JSVAL_IS_OBJECT(*rval) || *rval == JSVAL_NULL)) { // Const or immutable
       if(do_clean) {
-        siz = JSX_Get(cx, (char*) *argptr, 0, 2, thistype ? thistype->paramtype : 0, rval);
+        siz = JSX_Get(cx, (char*) *argptr, 0, 2, thistype->paramtype, rval);
       } else {
-        if(!thistype) {
-          siz = JSX_Get(cx, 0, 0, 0, 0, rval); // Get size of C type guessed from js type
-        } else {
-          siz = thistype->paramtype->SizeInBytes();
-        }
+        siz = thistype->paramtype->SizeInBytes();
         rval++;
       }
     } else {
-      if(thistype && thistype->paramtype->type == ARRAYTYPE) {
+      if(thistype->paramtype->type == ARRAYTYPE) {
         if(!do_clean) goto failure;
         // In function calls, arrays are passed by pointer
         siz = JSX_Get(cx, (char*) *(void **)*argptr, 0, do_clean, thistype->paramtype, rval);
         if(siz) siz = sizeof(void *);
       } else {
-        siz = JSX_Get(cx, (char*) *argptr, 0, do_clean, thistype ? thistype->paramtype : 0, rval);
+        siz = JSX_Get(cx, (char*) *argptr, 0, do_clean, thistype->paramtype, rval);
       }
     }
 
     // In function calls, arrays are passed by pointer
 
-    if(do_clean && thistype && thistype->paramtype->type == ARRAYTYPE) {
+    if(do_clean && thistype->paramtype->type == ARRAYTYPE) {
       JS_free(cx, *(void **)*argptr);
       siz=sizeof(void *);
     }
@@ -620,7 +604,7 @@ int JSX_Get_multi(JSContext *cx, int do_clean, uintN nargs, JSX_FuncParam *type,
   if (!do_clean)
      return 0;
 
-  for (;++i<nargs;) {
+  for(; ++i < funct->nParam; ) {
     JSX_Get(cx, NULL, 0, 2, type ? type->paramtype : 0, rval);
     if(type && type->paramtype->type == ARRAYTYPE) JS_free(cx, *(void **)*argptr);
     rval++;

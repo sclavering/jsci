@@ -280,10 +280,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
     JSX_Get(cx, retbuf, 0, 0, ft->returnType, rval);
   }
 
-  if (arg_size) {
-    if(!JSX_Get_multi(cx, 1, argc, ft->param, argv, 0, argptr))
-      goto failure;
-  }
+  if(arg_size && !JSX_Get_multi(cx, 1, ft, argv, 0, argptr)) goto failure;
   JS_free(cx, argptr);
 
   return JS_TRUE;
@@ -463,7 +460,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   JS_AddRoot(cb->cx, &rval);
   
   // pretty sure this has side-effects
-  JSX_Get_multi(cb->cx, 0, type->nParam, type->param, tmp_argv, 1, args);
+  JSX_Get_multi(cb->cx, 0, type, tmp_argv, 1, args);
 
   if (!JS_CallFunction(cb->cx, JS_GetGlobalObject(cb->cx), cb->fun, type->nParam, tmp_argv, &rval)) {
     //    printf("FAILCALL\n");
