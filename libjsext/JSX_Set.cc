@@ -6,6 +6,8 @@
 // Setting to null zeroes memory.
 
 int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
+  if(!type) return JSX_ReportException(cx, "Cannot convert JS value to C value, because the C type is not known");
+
   int size=-1;
   int tmpint;
   int totsize;
@@ -16,7 +18,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   jsval tmpval;
   JSFunction *fun;
 
-  int typepair = TYPEPAIR(JSX_JSType(cx, v), type ? type->type : UNDEFTYPE);
+  int typepair = TYPEPAIR(JSX_JSType(cx, v), type->type);
 
   // Determine the appropriate conversion
 
@@ -82,12 +84,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
     // Copy a string to a void *
     // same as char * in this context
 
-    // fall through
-
-  case TYPEPAIR(JSVAL_STRING,UNDEFTYPE):
-
-    // Copy a string to a char *
-
     if (!will_clean)
       goto failure;
 
@@ -130,7 +126,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
     }
     return sizeof(char) * ((JSX_TypeArray *) type)->length;
 
-  case TYPEPAIR(JSVAL_INT,UNDEFTYPE):
   case TYPEPAIR(JSVAL_INT,POINTERTYPE):
 
     // Copy a number to an undefined type or type *
@@ -227,15 +222,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
     }
 
     return size;
-
-  case TYPEPAIR(JSVAL_DOUBLE,UNDEFTYPE):
-
-    // Copy a number to an undefined type
-    // assume double
-
-    size=1;
-
-    // fall through
 
   case TYPEPAIR(JSVAL_DOUBLE,FLOATTYPE):
 
