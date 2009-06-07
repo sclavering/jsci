@@ -301,21 +301,14 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 
     vararrayfailure2:
       if (will_clean) {
-        for (;i--;) {
-          jsval tmp;
-          JS_GetElement(cx, obj, i, &tmp);
-          JSX_Get(cx, NULL, 2, ((JSX_TypePointer *) type)->direct, &tmp);
-        }
         JS_free(cx, *(void **)p);
       }
     
       return 0;
   }
-    // error already thrown
-    
 
   case TYPEPAIR(JSARRAY,ARRAYTYPE):
-
+  {
     // Copy array elements to a fixed size array
     
     totsize=0;
@@ -326,24 +319,12 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       jsval tmp;
       JS_GetElement(cx, obj, i, &tmp);
       int thissize = JSX_Set(cx, p + totsize, will_clean, ((JSX_TypeArray *) type)->member, tmp);
-      if(!thissize) goto fixedarrayfailure;
+      if(!thissize) return 0;
       totsize+=thissize;
     }
 
     return totsize;
-
-  fixedarrayfailure:
-
-    if (will_clean) {
-      for (;i--;) {
-        jsval tmp;
-        JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, NULL, 2, ((JSX_TypeArray *) type)->member, &tmp);
-      }
-    }
-    
-    return 0;
-    // error already thrown
+  }
 
   case TYPEPAIR(JSVAL_OBJECT,STRUCTTYPE):
   case TYPEPAIR(JSVAL_OBJECT,UNIONTYPE):
@@ -373,23 +354,10 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       } else {
         thissize = JSX_Set(cx, p + tsu->member[i].offset / 8, will_clean, tsu->member[i].membertype, tmp);
       }
-      if(!thissize) goto structfailure;
+      if(!thissize) return 0;
     }
 
     return type->SizeInBytes();
-    
-  structfailure:
-
-    if (will_clean) {
-      for (;i--;) {
-        jsval tmp;
-        JS_GetProperty(cx, obj, tsu->member[i].name, &tmp);
-        JSX_Get(cx, NULL, 2, tsu->member[i].membertype, &tmp);
-      }
-    }
-
-    return 0;
-    // error already thrown
   }
 
   case TYPEPAIR(JSARRAY,STRUCTTYPE):
@@ -404,23 +372,10 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       jsval tmp;
       JS_GetElement(cx, obj, i, &tmp);
       int thissize = JSX_Set(cx, p + tsu->member[i].offset / 8, will_clean, tsu->member[i].membertype, tmp);
-      if(!thissize) goto structfailure2;
+      if(!thissize) return 0;
     }
 
     return type->SizeInBytes();
-
-  structfailure2:
-
-    if (will_clean) {
-      for (;i--;) {
-        jsval tmp;
-        JS_GetElement(cx, obj, i, &tmp);
-        JSX_Get(cx, NULL, 2, tsu->member[i].membertype, &tmp);
-      }
-    }
-
-    return 0;
-    // error already thrown
   }
 
   case TYPEPAIR(JSNULL,STRUCTTYPE):
