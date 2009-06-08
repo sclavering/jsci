@@ -74,7 +74,7 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
     return JS_FALSE;
   }
 
-  JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, type);
+  JsciType *t = (JsciType *) JS_GetPrivate(cx, type);
   int size = t->SizeInBytes();
   JsciPointer *retpriv = (JsciPointer *) new char[sizeof(JsciPointer) + size];
 
@@ -84,14 +84,14 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
   JS_SetPrivate(cx, retobj, retpriv);
 
   retpriv->ptr=retpriv+1;
-  retpriv->type = (JSX_Type *) JS_GetPrivate(cx, type);
+  retpriv->type = (JsciType *) JS_GetPrivate(cx, type);
   retpriv->finalize=0;
 
   return JS_TRUE;
 }
 
 
-JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JSX_Type *type) {
+JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JsciType *type) {
   if(type->type != FUNCTIONTYPE) {
     JSX_ReportException(cx, "Type is not a C function");
     return JS_FALSE;
@@ -122,7 +122,7 @@ JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun,
 
 
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
-  // xxx a hack to save typeobj from garbage collection, and thus stop the free()ing of the JSX_Type struct we share 
+  // xxx a hack to save typeobj from garbage collection, and thus stop the free()ing of the JsciType struct we share 
   if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
@@ -130,7 +130,7 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   if (!ret)
     return JS_FALSE;
   ret->ptr=0;
-  ret->type = (JSX_Type *) JS_GetPrivate(cx, typeobj);
+  ret->type = (JsciType *) JS_GetPrivate(cx, typeobj);
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
 
@@ -197,7 +197,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
   // Are we creating a C wrapper for a JS function so it can be used as a callback?
   if(argc >= 2 && JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
     JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, typeObject);
-    JSX_Type *type = ptr->type;
+    JsciType *type = ptr->type;
     // Accept both function type and pointer-to-function type
     if(type->type == POINTERTYPE) type = ((JsciTypePointer *) type)->direct;
     if(JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), type)) return JS_FALSE;
@@ -230,7 +230,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   JSObject *obj = JSVAL_TO_OBJECT(ptrval);
 
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  JSX_Type *type = ptr->type;
+  JsciType *type = ptr->type;
 
   if(type->type != FUNCTIONTYPE) {
     JSX_ReportException(cx, "call: Wrong pointer type");
@@ -447,7 +447,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   JS_AddRoot(cb->cx, &rval);
 
   for(int i = 0; i < type->nParam; i++) {
-    JSX_Type *t = type->param[i];
+    JsciType *t = type->param[i];
     if(t->type == ARRAYTYPE) return; // xxx why don't we just treat it as a pointer type?
     JSX_Get(cb->cx, (char*) *args, t, tmp_argv);
   }

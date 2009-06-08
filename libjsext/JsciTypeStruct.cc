@@ -7,7 +7,7 @@ ffi_type *JsciTypeStruct::GetFFIType() {
     int bitsused = 0;
     for(int i = 0; i != this->nMember; ++i) {
       int al = 1;
-      JSX_Type *memb = this->member[i].membertype;
+      JsciType *memb = this->member[i].membertype;
       while(memb->type == ARRAYTYPE) {
         al *= ((JsciTypeArray *) memb)->length;
         memb = ((JsciTypeArray *) memb)->member;
@@ -38,7 +38,7 @@ ffi_type *JsciTypeStruct::GetFFIType() {
     for(int i = 0; i != this->nMember; ++i) {
       int al = 1;
       ffi_type *t;
-      JSX_Type *memb = this->member[i].membertype;
+      JsciType *memb = this->member[i].membertype;
       while(memb->type == ARRAYTYPE) {
         al *= ((JsciTypeArray *) memb)->length;
         memb = ((JsciTypeArray *) memb)->member;

@@ -26,7 +26,7 @@ ffi_cif *JsciTypeFunction::GetCIF() {
 int JsciTypeFunction::GetParamSizesAndFFITypes(JSContext *cx, ffi_type **arg_types) {
   int totalsize = 0;
   for(uintN i = 0; i != this->nParam; ++i) {
-    JSX_Type *t = this->param[i];
+    JsciType *t = this->param[i];
     int siz = t->SizeInBytes();
     if(!siz) return 0; // error
     *(arg_types++) = t->GetFFIType();

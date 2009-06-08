@@ -5,7 +5,7 @@
 // rval should be rooted
 // if p is NULL, type must also be NULL.
 // Returns 1 for success, 0 for failure, and occasionally -1 for success where a JS function was created
-int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
+int JSX_Get(JSContext *cx, char *p, JsciType *type, jsval *rval) {
   if(!type) return JSX_ReportException(cx, "Cannot convert C value to JS value, because the C type is not known");
 
   // Determine the appropriate conversion

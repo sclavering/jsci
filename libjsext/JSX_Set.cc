@@ -5,7 +5,7 @@
 // Setting to undefined does nothing, only returns sizeof.
 // Setting to null zeroes memory.
 
-int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
+int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   if(!type) return JSX_ReportException(cx, "Cannot convert JS value to C value, because the C type is not known");
 
   int size=-1;
@@ -432,7 +432,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 JSBool JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JsciTypeFunction *funct, jsval *vp, void **argptr) {
   int cursiz;
   for(int i = 0; i < funct->nParam; ++i) {
-    JSX_Type *t = funct->param[i];
+    JsciType *t = funct->param[i];
 
     if(t->type == ARRAYTYPE) {
       if(!will_clean) return JS_FALSE;

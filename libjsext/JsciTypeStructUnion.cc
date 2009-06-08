@@ -43,7 +43,7 @@ JSBool JsciTypeStructUnion::ReplaceMembers(JSContext *cx, JSObject *obj, int nMe
   for(int i = 0; i != nMember; ++i) {
     if(!JSVAL_IS_OBJECT(members[i]) || JSVAL_IS_NULL(members[i])) goto failure;
     if(!JSX_InitMemberType(cx, this->member + i, JSVAL_TO_OBJECT(members[i]))) goto failure;
-    // this is probably just to save the Type instances from GC, and thus the JSX_Type's from being free()'d
+    // this is probably just to save the Type instances from GC, and thus the JsciType's from being free()'d
     JS_DefineElement(cx, obj, i, members[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
   if(!this->SetSizeAndAligments(cx)) goto failure;

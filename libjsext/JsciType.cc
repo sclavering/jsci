@@ -1,35 +1,35 @@
 #include "jsci.h"
 
 
-JSX_Type::~JSX_Type() {
+JsciType::~JsciType() {
 }
 
 
-ffi_type *JSX_Type::GetFFIType() {
+ffi_type *JsciType::GetFFIType() {
   return 0;
 }
 
 
-int JSX_Type::SizeInBits() {
+int JsciType::SizeInBits() {
   return this->SizeInBytes() * 8;
 }
 
 
-int JSX_Type::SizeInBytes() {
+int JsciType::SizeInBytes() {
   return 0; // a nonsensical value
 }
 
 
-int JSX_Type::AlignmentInBits() {
+int JsciType::AlignmentInBits() {
   return this->AlignmentInBytes() * 8;
 }
 
 
-int JSX_Type::AlignmentInBytes() {
+int JsciType::AlignmentInBytes() {
   return 0; // nonsensical default
 }
 
 
-JSBool JSX_Type::ContainsPointer() {
+JSBool JsciType::ContainsPointer() {
   return JS_FALSE;
 }

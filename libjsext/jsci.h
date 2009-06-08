@@ -28,10 +28,10 @@ enum JSX_TypeID {
 #define TYPECOUNT2 (TYPECOUNT+5)
 
 // We store an instance of this, or a subclass, inside each js Type object
-struct JSX_Type {
+struct JsciType {
   enum JSX_TypeID type;
 
-  virtual ~JSX_Type();
+  virtual ~JsciType();
 
   virtual ffi_type *GetFFIType();
   virtual int SizeInBits();
@@ -41,12 +41,12 @@ struct JSX_Type {
   virtual JSBool ContainsPointer();
 };
 
-struct JsciTypeVoid : JSX_Type {
+struct JsciTypeVoid : JsciType {
   // VOIDTYPE
   ffi_type *GetFFIType();
 };
 
-struct JsciTypeNumeric : JSX_Type {
+struct JsciTypeNumeric : JsciType {
   // INTTYPE, UINTTYPE, or FLOATTYPE
   int size;
   ffi_type ffiType;
@@ -56,11 +56,11 @@ struct JsciTypeNumeric : JSX_Type {
   int AlignmentInBytes();
 };
 
-struct JsciTypeFunction : JSX_Type {
+struct JsciTypeFunction : JsciType {
   // FUNCTIONTYPE
-  JSX_Type **param;
+  JsciType **param;
   int nParam;
-  JSX_Type *returnType;
+  JsciType *returnType;
   ffi_cif cif;
 
   ~JsciTypeFunction();
@@ -70,14 +70,14 @@ struct JsciTypeFunction : JSX_Type {
 };
 
 struct JSX_SuMember {
-  JSX_Type *membertype;
+  JsciType *membertype;
   char *name;
   int offset; // in bits
 
   JSX_SuMember() : membertype(0), name(0), offset(0) {}
 };
 
-struct JsciTypeStructUnion : JSX_Type {
+struct JsciTypeStructUnion : JsciType {
   // STRUCTTYPE or UNIONTYPE
   JSX_SuMember *member;
   int nMember;
@@ -103,9 +103,9 @@ struct JsciTypeUnion : JsciTypeStructUnion {
   JSBool SetSizeAndAligments(JSContext *cx);
 };
 
-struct JsciTypePointer : JSX_Type {
+struct JsciTypePointer : JsciType {
   // POINTERTYPE
-  JSX_Type *direct;
+  JsciType *direct;
 
   ffi_type *GetFFIType();
   int SizeInBytes();
@@ -113,9 +113,9 @@ struct JsciTypePointer : JSX_Type {
   JSBool ContainsPointer();
 };
 
-struct JsciTypeArray : JSX_Type {
+struct JsciTypeArray : JsciType {
   // ARRAYTYPE
-  JSX_Type *member;
+  JsciType *member;
   int length;
 
   int SizeInBytes();
@@ -123,9 +123,9 @@ struct JsciTypeArray : JSX_Type {
   JSBool ContainsPointer();
 };
 
-struct JsciTypeBitfield : JSX_Type {
+struct JsciTypeBitfield : JsciType {
   // BITFIELDTYPE
-  JSX_Type *member;
+  JsciType *member;
   int length;
 
   int SizeInBits();
@@ -137,20 +137,20 @@ struct JsciTypeBitfield : JSX_Type {
 extern const char *JSX_typenames[];
 extern const char *JSX_jstypenames[];
 
-int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval);
-int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v);
+int JSX_Get(JSContext *cx, char *p, JsciType *type, jsval *rval);
+int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v);
 JSBool JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JsciTypeFunction *tf, jsval *vp, void **argptr);
 
 JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSX_Type *type);
+JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JsciType *type);
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 
 JSClass *JSX_GetTypeClass(void);
 JSClass *JSX_GetPointerClass(void);
 
-int JSX_CType(JSX_Type *type);
+int JSX_CType(JsciType *type);
 int JSX_JSType(JSContext *cx, jsval rval);
-JSX_Type *GetVoidType(void); // the C "void" type
+JsciType *GetVoidType(void); // the C "void" type
 JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
@@ -164,7 +164,7 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
 
 struct JsciPointer {
   void *ptr; // 0 means unresolved. NULL pointer is repr by null value.
-  JSX_Type *type;
+  JsciType *type;
   void (*finalize) (void *);
 
   ~JsciPointer();
@@ -177,12 +177,12 @@ struct JsciCallback : JsciPointer {
 };
 
 
-static inline int type_is_char(JSX_Type *t) {
+static inline int type_is_char(JsciType *t) {
   return (t->type == INTTYPE || t->type == UINTTYPE) && 0 == ((JsciTypeNumeric *) t)->size;
 }
 
 
-static inline int is_void_or_char(JSX_Type *t) {
+static inline int is_void_or_char(JsciType *t) {
   return t->type == VOIDTYPE || type_is_char(t);
 }
 

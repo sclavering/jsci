@@ -6,7 +6,7 @@
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
 
-static JSX_Type *sTypeVoid = NULL;
+static JsciType *sTypeVoid = NULL;
 // __proto__ for results of Type.function(...) and similar
 static JSObject *s_Type_array_proto = NULL;
 static JSObject *s_Type_bitfield_proto = NULL;
@@ -51,7 +51,7 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
     // name is freed later
     return JS_FALSE;
   }
-  dest->membertype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+  dest->membertype = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
 
   return JS_TRUE;
 }
@@ -87,9 +87,9 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   JS_SetPrivate(cx, retobj, type);
 
   JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  type->returnType = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
+  type->returnType = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
 
-  type->param = new JSX_Type*[type->nParam + 1];
+  type->param = new JsciType*[type->nParam + 1];
 
   type->cif.arg_types=0;
 
@@ -97,7 +97,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
     jsval tmp;
     JS_GetElement(cx, paramobj, i, &tmp);
     if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Type.function(): parameter %i is not a Type instance", i);
-    type->param[i] = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+    type->param[i] = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
     JS_DefineElement(cx, retobj, i, tmp, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
   type->param[type->nParam] = sTypeVoid;
@@ -132,7 +132,7 @@ static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsv
   jsval suv = argv[0];
   if(!jsval_is_Type(cx, suv))
     return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
-  JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
+  JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
   if(t->type != STRUCTTYPE && t->type != UNIONTYPE)
     return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) t;
@@ -160,7 +160,7 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
   JS_SetPrivate(cx, retobj, type);
   type->direct = sTypeVoid;
   JS_DefineElement(cx, retobj, 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  if(direct != JSVAL_VOID) type->direct = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
+  if(direct != JSVAL_VOID) type->direct = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
 
   return JS_TRUE;
 }
@@ -186,7 +186,7 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   type->type=ARRAYTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
-  type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
+  type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
   return JS_TRUE;
 }
 
@@ -211,12 +211,12 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   type->type=BITFIELDTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
-  type->member = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
+  type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
   return JS_TRUE;
 }
 
 
-JSX_Type *GetVoidType(void) {
+JsciType *GetVoidType(void) {
   return sTypeVoid;
 }
 
@@ -277,7 +277,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
   JSObject *newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
   JS_SetProperty(cx, typeobj, "void", &newval);
-  JSX_Type *type = new JsciTypeVoid;
+  JsciType *type = new JsciTypeVoid;
   type->type = VOIDTYPE;
   JS_SetPrivate(cx, newtype, type);
   sTypeVoid = type;
@@ -292,7 +292,7 @@ static JSBool JSX_Type_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 
 
 static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
-  JSX_Type *type = (JSX_Type *) JS_GetPrivate(cx, obj);
+  JsciType *type = (JsciType *) JS_GetPrivate(cx, obj);
   if(type) delete type;
 }
 
@@ -314,7 +314,7 @@ static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
     JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
     return JS_FALSE;
   }
-  JSX_Type *t = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(arg));
+  JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(arg));
   int size = t->SizeInBytes();
   if(size) *rval = INT_TO_JSVAL(size);
   return JS_TRUE;
