@@ -23,7 +23,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
     *rval = OBJECT_TO_JSVAL(obj);
     JsciPointer *ptr = new JsciPointer;
     ptr->ptr = *(void **)p;
-    ptr->type = ((JSX_TypePointer *) type)->direct;
+    ptr->type = ((JsciTypePointer *) type)->direct;
     ptr->finalize = 0;
     JS_SetPrivate(cx, obj, ptr);
     return 1;

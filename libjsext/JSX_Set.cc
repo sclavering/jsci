@@ -24,7 +24,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 
   switch(typepair) {
   case TYPEPAIR(JSFUNC,POINTERTYPE):
-    if(((JSX_TypePointer *) type)->direct->type != FUNCTIONTYPE)
+    if(((JsciTypePointer *) type)->direct->type != FUNCTIONTYPE)
       goto failure;
 
     fun=JS_ValueToFunction(cx,v);
@@ -36,7 +36,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       tmpval=OBJECT_TO_JSVAL(newptr);
       JS_DefineProperty(cx, obj, "__ptr__", tmpval, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 
-      if(!JSX_InitPointerCallback(cx, newptr, fun, ((JSX_TypePointer *) type)->direct)) {
+      if(!JSX_InitPointerCallback(cx, newptr, fun, ((JsciTypePointer *) type)->direct)) {
         return 0;
       }
     }
@@ -79,7 +79,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 
   case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
     
-    if(!is_void_or_char(((JSX_TypePointer *) type)->direct)) goto failure;
+    if(!is_void_or_char(((JsciTypePointer *) type)->direct)) goto failure;
 
     // Copy a string to a void *
     // same as char * in this context
@@ -270,7 +270,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   {
     // Copy array elements to a variable array
-      JSX_TypePointer *tp = (JSX_TypePointer *) type;
+      JsciTypePointer *tp = (JsciTypePointer *) type;
       int containsPointers=0;
       obj=JSVAL_TO_OBJECT(v);
       JS_GetArrayLength(cx, obj, (jsuint*) &size);

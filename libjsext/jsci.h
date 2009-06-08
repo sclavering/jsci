@@ -103,7 +103,7 @@ struct JsciTypeUnion : JsciTypeStructUnion {
   JSBool SetSizeAndAligments(JSContext *cx);
 };
 
-struct JSX_TypePointer : JSX_Type {
+struct JsciTypePointer : JSX_Type {
   // POINTERTYPE
   JSX_Type *direct;
 

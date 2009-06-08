@@ -199,7 +199,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
     JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, typeObject);
     JSX_Type *type = ptr->type;
     // Accept both function type and pointer-to-function type
-    if(type->type == POINTERTYPE) type = ((JSX_TypePointer *) type)->direct;
+    if(type->type == POINTERTYPE) type = ((JsciTypePointer *) type)->direct;
     if(JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), type)) return JS_FALSE;
     return JS_TRUE;
   }

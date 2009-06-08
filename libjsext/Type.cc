@@ -155,7 +155,7 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_pointer_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
 
-  JSX_TypePointer *type = new JSX_TypePointer;
+  JsciTypePointer *type = new JsciTypePointer;
   type->type=POINTERTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->direct = sTypeVoid;

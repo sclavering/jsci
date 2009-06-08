@@ -1,21 +1,21 @@
 #include "jsci.h"
 
 
-ffi_type *JSX_TypePointer::GetFFIType() {
+ffi_type *JsciTypePointer::GetFFIType() {
   return &ffi_type_pointer;
 }
 
 
-int JSX_TypePointer::SizeInBytes() {
+int JsciTypePointer::SizeInBytes() {
   return ffi_type_pointer.size;
 }
 
 
-int JSX_TypePointer::AlignmentInBytes() {
+int JsciTypePointer::AlignmentInBytes() {
   return ffi_type_pointer.alignment;
 }
 
 
-JSBool JSX_TypePointer::ContainsPointer() {
+JSBool JsciTypePointer::ContainsPointer() {
   return JS_TRUE;
 }
