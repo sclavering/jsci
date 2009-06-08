@@ -242,20 +242,14 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   if(ft->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", ft->nParam, argc);
 
   ffi_type **arg_types = new ffi_type*[argc + 1];
-  ffi_cif *cif = new ffi_cif; // xxx we don't seem to free this
 
   size_t arg_size = ft->GetParamSizesAndFFITypes(cx, arg_types);
 
-  int real_argc;
+  int real_argc; // kill this obsolete var
   for (real_argc=0; arg_types[real_argc]; real_argc++)
     ;
 
-  if(real_argc > ft->nParam) {
-    memcpy(arg_types, ft->GetCIF()->arg_types, sizeof(ffi_type *) * ft->nParam);
-    ffi_prep_cif(cif, FFI_DEFAULT_ABI, real_argc, ft->returnType->GetFFIType(), arg_types);
-  } else {
-    cif = ft->GetCIF();
-  }
+  ffi_cif *cif = ft->GetCIF();
 
   int retsize = ft->returnType->SizeInBytes();
 
@@ -263,8 +257,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   void **argptr = (void **) argptr_mem;
 
   char *retbuf = (char *) (argptr + argc);
-  char *argbuf;
-  argbuf=retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
+  char *argbuf = retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
   if(arg_size && !JSX_Set_multi(cx, argbuf, 1, ft, argv, argptr)) goto failure;
 
