@@ -1,7 +1,8 @@
 #include "jsci.h"
 
 
-JsciTypeNumeric::JsciTypeNumeric(JSX_TypeID t_id) : JsciType(t_id) {
+JsciTypeNumeric::JsciTypeNumeric(JSX_TypeID t_id, int size, ffi_type ffit)
+  : JsciType(t_id), size(size), ffiType(ffit) {
 }
 
 
@@ -18,3 +19,11 @@ int JsciTypeNumeric::SizeInBytes() {
 int JsciTypeNumeric::AlignmentInBytes() {
   return this->ffiType.alignment;
 }
+
+
+
+// subclasses
+
+JsciTypeInt::JsciTypeInt(int size, ffi_type ffit) : JsciTypeNumeric(INTTYPE, size, ffit) {}
+JsciTypeUint::JsciTypeUint(int size, ffi_type ffit) : JsciTypeNumeric(UINTTYPE, size, ffit) {}
+JsciTypeFloat::JsciTypeFloat(int size, ffi_type ffit) : JsciTypeNumeric(FLOATTYPE, size, ffit) {}

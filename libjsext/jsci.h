@@ -53,11 +53,24 @@ struct JsciTypeNumeric : JsciType {
   int size;
   ffi_type ffiType;
 
-  JsciTypeNumeric(JSX_TypeID);
-
   ffi_type *GetFFIType();
   int SizeInBytes();
   int AlignmentInBytes();
+
+ protected:
+  JsciTypeNumeric(JSX_TypeID, int size, ffi_type ffit);
+};
+
+struct JsciTypeInt : JsciTypeNumeric {
+  JsciTypeInt(int size, ffi_type);
+};
+
+struct JsciTypeUint : JsciTypeNumeric {
+  JsciTypeUint(int size, ffi_type);
+};
+
+struct JsciTypeFloat : JsciTypeNumeric {
+  JsciTypeFloat(int size, ffi_type);
 };
 
 struct JsciTypeFunction : JsciType {

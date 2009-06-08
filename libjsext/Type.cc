@@ -212,39 +212,35 @@ JsciType *GetVoidType(void) {
 }
 
 
-static jsval init_numeric_Type(JSContext *cx, JSX_TypeID type_id, int size, ffi_type ffit) {
-  JSObject *newtype;
-  newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
+static jsval TypeWrapper(JSContext *cx, JsciType *t) {
+  JSObject *newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
-  JsciTypeNumeric *type = new JsciTypeNumeric(type_id);
-  type->size = size;
-  type->ffiType = ffit;
-  JS_SetPrivate(cx, newtype, type);
+  JS_SetPrivate(cx, newtype, t);
   return newval;
 }
 
 
 static void init_int_types(JSContext *cx, JSObject *typeobj) {
   jsval tmp;
-  tmp = init_numeric_Type(cx, UINTTYPE, 0, ffi_type_uchar);
+  tmp = TypeWrapper(cx, new JsciTypeUint(0, ffi_type_uchar));
   JS_SetProperty(cx, typeobj, "unsigned_char", &tmp);
-  tmp = init_numeric_Type(cx, UINTTYPE, 1, ffi_type_ushort);
+  tmp = TypeWrapper(cx, new JsciTypeUint(1, ffi_type_ushort));
   JS_SetProperty(cx, typeobj, "unsigned_short", &tmp);
-  tmp = init_numeric_Type(cx, UINTTYPE, 2, ffi_type_uint);
+  tmp = TypeWrapper(cx, new JsciTypeUint(2, ffi_type_uint));
   JS_SetProperty(cx, typeobj, "unsigned_int", &tmp);
-  tmp = init_numeric_Type(cx, UINTTYPE, 3, ffi_type_ulong);
+  tmp = TypeWrapper(cx, new JsciTypeUint(3, ffi_type_ulong));
   JS_SetProperty(cx, typeobj, "unsigned_long", &tmp);
-  tmp = init_numeric_Type(cx, UINTTYPE, 4, ffi_type_uint64);
+  tmp = TypeWrapper(cx, new JsciTypeUint(4, ffi_type_uint64));
   JS_SetProperty(cx, typeobj, "unsigned_long_long", &tmp);
-  tmp = init_numeric_Type(cx, INTTYPE, 0, ffi_type_schar);
+  tmp = TypeWrapper(cx, new JsciTypeInt(0, ffi_type_schar));
   JS_SetProperty(cx, typeobj, "signed_char", &tmp);
-  tmp = init_numeric_Type(cx, INTTYPE, 1, ffi_type_sshort);
+  tmp = TypeWrapper(cx, new JsciTypeInt(1, ffi_type_sshort));
   JS_SetProperty(cx, typeobj, "signed_short", &tmp);
-  tmp = init_numeric_Type(cx, INTTYPE, 2, ffi_type_sint);
+  tmp = TypeWrapper(cx, new JsciTypeInt(2, ffi_type_sint));
   JS_SetProperty(cx, typeobj, "signed_int", &tmp);
-  tmp = init_numeric_Type(cx, INTTYPE, 3, ffi_type_slong);
+  tmp = TypeWrapper(cx, new JsciTypeInt(3, ffi_type_slong));
   JS_SetProperty(cx, typeobj, "signed_long", &tmp);
-  tmp = init_numeric_Type(cx, INTTYPE, 4, ffi_type_sint64);
+  tmp = TypeWrapper(cx, new JsciTypeInt(4, ffi_type_sint64));
   JS_SetProperty(cx, typeobj, "signed_long_long", &tmp);
 
   // xxx currently we let 0-ffi.js alias Type.int etc to Type.signed_int, which isn't portable.
@@ -254,11 +250,11 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
 
 static void init_float_types(JSContext *cx, JSObject *typeobj) {
   jsval tmp;
-  tmp = init_numeric_Type(cx, FLOATTYPE, 0, ffi_type_float);
+  tmp = TypeWrapper(cx, new JsciTypeFloat(0, ffi_type_float));
   JS_SetProperty(cx, typeobj, "float", &tmp);
-  tmp = init_numeric_Type(cx, FLOATTYPE, 1, ffi_type_double);
+  tmp = TypeWrapper(cx, new JsciTypeFloat(1, ffi_type_double));
   JS_SetProperty(cx, typeobj, "double", &tmp);
-  tmp = init_numeric_Type(cx, FLOATTYPE, 2, ffi_type_longdouble);
+  tmp = TypeWrapper(cx, new JsciTypeFloat(2, ffi_type_longdouble));
   JS_SetProperty(cx, typeobj, "long_double", &tmp);
 }
 
