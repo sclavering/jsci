@@ -17,8 +17,6 @@ yes = new File("yes |");
 Filenames that begin with | are interpreted as commands that are to be executed. The standard input of these commands can be witten through the newly created File object.
 
 letter = new File("| mail");
-
-To read and write to a process, use [[$curdir.pipe2]].
 */
 function File(filename, mode) {
 
@@ -200,7 +198,6 @@ File.prototype = {
   file.seek (offset)
 
   Moves file pointer to the given position.
-  See also [[$curdir.seekEnd]] and [[$curdir.seekRel]].
   */
   seek: function(offset) {
     clib.clearerr(this.fp);
@@ -212,8 +209,6 @@ File.prototype = {
   file.seekEnd (offset)
     
   Moves file pointer to the given position, relative to the end of the file. _offset_ will generally be zero or a negative number.
-
-  See also [[$curdir.seek]] and [[$curdir.seekRel]].
   */
   seekEnd: function(offset) {
     clib.clearerr(this.fp);
@@ -225,8 +220,6 @@ File.prototype = {
   file.seekRel (offset)
     
   Moves file pointer to the given position, relative to the current position.
-
-  See also [[seek]] and [[seekEnd]].
   */
   seekRel: function(offset) {
     clib.clearerr(this.fp);

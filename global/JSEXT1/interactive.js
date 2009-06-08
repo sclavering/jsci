@@ -1,9 +1,7 @@
 /*
 interactive()
 
-Opens a [[$curdir.Console]] to read commands into jsext. This function is usually invoked automatically by [[$curdir.shell]] if no file when no file is specified on the command-line to jsext.
-
-Statements are evaluated as they are entered. The value of statements that are not terminated by ; (semicolon) is printed on the console.
+A REPL for js.  Statements are evaluated as they are entered. The value of statements that are not terminated by a semicolon are printed on the console.
 */
 (function() {
 

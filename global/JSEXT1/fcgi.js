@@ -1,10 +1,7 @@
 /*
 fcgi([path] [, backlog])
 
-Initializes the fcgi library and awaits incoming requests.
-This function never returns. This function is
-called by [[$curdir.shell]] when the environment variable
-JSEXT_FCGI is set.
+Initializes the fcgi library and awaits incoming requests.  Called on startup if the environment variable JSEXT_FCGI is set.  This function never returns.
 
 Only one request can be handled at once (since we don't use threads).
 

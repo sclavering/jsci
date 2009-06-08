@@ -1,14 +1,10 @@
 /*
-      [stdin, stdout] = popen2(command)
+[stdin, stdout] = popen2(command)
 
-  Opens a command and connects one file-like object to stdin
-  and another to stdout.
+Opens a command and connects one file-like object to stdin and another to stdout.
 
-  Hint: If you are looking for _popen_, its functionality
-  is available through the [[$curdir.File]] constructor.
-
- */
-
+Note: popen()'s functionality is available the File constructor.
+*/
 function(command) {
     
     var stdout=[0,0];
