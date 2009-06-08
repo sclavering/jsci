@@ -57,24 +57,6 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
 }
 
 
-static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno, jsval member) {
-  JSX_TypeFunction *type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
-  if(memberno >= type->nParam) type->nParam = memberno + 1;
-  if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
-
-  jsval tmp;
-  JS_GetProperty(cx, JSVAL_TO_OBJECT(member), "type", &tmp);
-  if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Type.function(): one of the argument descriptors has a bad or missing .type property");
-  type->param[memberno] = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
-
-  if(type->cif.arg_types) {
-    delete type->cif.arg_types;
-    type->cif.arg_types = 0;
-  }
-  return JS_TRUE;
-}
-
-
 static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval returnType = argv[0];
   jsval params = argv[1];
@@ -112,10 +94,11 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   type->cif.arg_types=0;
 
   for(int i = 0; i < nParam; i++) {
-    jsval thisparam;
-    JS_GetElement(cx, paramobj, i, &thisparam);
-    TypeFunction_SetMember(cx, retobj, i, thisparam);
-    JS_DefineElement(cx, retobj, i, thisparam, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    jsval tmp;
+    JS_GetElement(cx, paramobj, i, &tmp);
+    if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Type.function(): parameter %i is not a Type instance", i);
+    type->param[i] = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+    JS_DefineElement(cx, retobj, i, tmp, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
   type->param[type->nParam] = sTypeVoid;
 

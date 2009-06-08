@@ -55,7 +55,7 @@ Type.function(returnType, params [, elipsis] [, callConv])
 Creates a new Type object representing a function.
 
 * returnType: A Type object
-* params: Array of Objects containing a Type .type property, an optional String .name property identifying the name of the parameter, and an optional boolean .const (default false)
+* params: an rray of Type objects
 * elipsis: ignored (formerly: boolean, default false, indicating a C function with a variable number of arguments)
 * callConv: unused (formerly 'cdecl' (default), 'stdcall' or undefined)
 

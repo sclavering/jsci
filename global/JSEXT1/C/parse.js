@@ -374,7 +374,8 @@ return function(info) {
 
       for each(var param in declor.pm.d) {
         var param_type = declaration(param, dep, param.*[param.*.length() - 1]);
-        params.push("{'const':" + (param["const"].length() > 0) + "," + "type:" + param_type.type + "}");
+        // if we ever care about const types again: param["const"].length() > 0
+        params.push(param_type.type);
         if (param_type.type == "Type['void']") isvoid = true;
       }
 
