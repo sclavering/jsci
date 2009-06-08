@@ -3,68 +3,60 @@
 
 
 // rval should be rooted
-// if p is NULL, type must also be NULL. Nothing is done, only size is returned.
-
+// if p is NULL, type must also be NULL.
+// Returns 1 for success, 0 for failure, and occasionally -1 for success where a JS function was created
 int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
   if(!type) return JSX_ReportException(cx, "Cannot convert C value to JS value, because the C type is not known");
 
-  int size=-1;
-  
   // Determine the appropriate conversion
 
   switch(type->type) {
 
   case POINTERTYPE:
   {
-    // Return a pointer object from a type *
-      if(*(void **)p == NULL) {
-        *rval = JSVAL_NULL;
-      } else {
-        JSObject *obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-        *rval = OBJECT_TO_JSVAL(obj);
-        JsciPointer *ptr = new JsciPointer;
-        ptr->ptr = *(void **)p;
-        ptr->type = ((JSX_TypePointer *) type)->direct;
-        ptr->finalize = 0;
-        JS_SetPrivate(cx, obj, ptr);
-      }
-    return sizeof(void *);
+    if(*(void **)p == NULL) {
+      *rval = JSVAL_NULL;
+      return 1;
+    }
+
+    JSObject *obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
+    *rval = OBJECT_TO_JSVAL(obj);
+    JsciPointer *ptr = new JsciPointer;
+    ptr->ptr = *(void **)p;
+    ptr->type = ((JSX_TypePointer *) type)->direct;
+    ptr->finalize = 0;
+    JS_SetPrivate(cx, obj, ptr);
+    return 1;
   }
 
   case INTTYPE:
   {
     int tmpint;
     // Return a number from an int (of various sizes)
-    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
+    switch(((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       tmpint=*(char *)p;
-      size=sizeof(char);
       break;
 
     case 1:
       tmpint=*(short *)p;
-      size=sizeof(short);
       break;
 
     case 2:
       tmpint=*(int *)p;
-      size=sizeof(int);
       break;
 
     case 3:
       tmpint=*(long *)p;
-      size=sizeof(long);
       break;
 
     case 4:
       tmpint=*(long long *)p;
-      size=sizeof(long long);
       break;
 
     case 5:
       tmpint=*(int64 *)p;
-      size=sizeof(int64);
       break;
 
     }
@@ -76,49 +68,41 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
       JS_NewDoubleValue(cx, d, rval);
     }
 
-    return size;
+    return 1;
   }
 
   case BITFIELDTYPE:
 
-    size = ((JSX_TypeNumeric *) ((JSX_TypeBitfield *) type)->member)->size;
-
-    // fall through
+    return JSX_Get(cx, p, ((JSX_TypeBitfield *) type)->member, rval);
 
   case UINTTYPE:
   {
     int tmpuint;
     // Return a number from an unsigned int (of various sizes)
-    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
+    switch(((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       tmpuint=*(unsigned char *)p;
-      size=sizeof(unsigned char);
       break;
 
     case 1:
       tmpuint=*(unsigned short *)p;
-      size=sizeof(unsigned short);
       break;
 
     case 2:
       tmpuint=*(unsigned int *)p;
-      size=sizeof(unsigned int);
       break;
 
     case 3:
       tmpuint=*(unsigned long *)p;
-      size=sizeof(unsigned long);
       break;
 
     case 4:
       tmpuint=*(unsigned long long *)p;
-      size=sizeof(unsigned long long);
       break;
 
     case 5:
       tmpuint=*(int64 *)p;
-      size=sizeof(int64);
       break;
 
     default:
@@ -133,7 +117,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
       JS_NewDoubleValue(cx, d, rval);
     }
 
-    return size;
+    return 1;
   }
 
   case FLOATTYPE:
@@ -142,22 +126,19 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
 
     // Return a number from a float (of various sizes)
 
-    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
+    switch(((JSX_TypeNumeric *) type)->size) {
 
     case 0:
       tmpdouble=*(float *)p;
-      size=sizeof(float);
       break;
 
     case 1:
       tmpdouble=*(double *)p;
-      size=sizeof(double);
       break;
 
       /*
     case 2:
       tmpdouble=*(long double *)p;
-      size=sizeof(long double);
       break;
       */
 
@@ -165,7 +146,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
 
     JS_NewDoubleValue(cx, tmpdouble, rval);
 
-    return size;
+    return 1;
   }
 
   case FUNCTIONTYPE:
@@ -175,68 +156,50 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
     JSObject *funobj = JS_GetFunctionObject(fun);
     *rval=OBJECT_TO_JSVAL(funobj);
     return -1;
-    // who knows the size of a function, really?
-    // anyway, functions will only ever be returned
-    // from a get() operation, so the size doesn't matter
-    // as long as it is non-null.
   }
 
   case ARRAYTYPE:
   {
-    if(type_is_char(((JSX_TypeArray *) type)->member)) {
+    JSX_TypeArray *ta = (JSX_TypeArray *) type;
+
+    if(type_is_char(ta->member)) {
       // Return a string from a char array
-      *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *) p, ((JSX_TypeArray *) type)->length));
-      return sizeof(char) * ((JSX_TypeArray *) type)->length;
+      *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, (char *) p, ta->length));
+      return 1;
     }
 
-    // Create new array and populate with values
-
     *rval=OBJECT_TO_JSVAL(JS_NewArrayObject(cx, 0, 0));
-    
-    int i;
-    // Update array elements from a fixed size array
-    int totsize = 0;
-    size = ((JSX_TypeArray *) type)->length;
+    int fieldsize = ta->SizeInBytes();
     JSObject *obj = JSVAL_TO_OBJECT(*rval);
-
     jsval tmp=JSVAL_VOID;
     JS_AddRoot(cx, &tmp);
-    for (i=0; i<size; i++) {
-      JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Get(cx, p + totsize, ((JSX_TypeArray *) type)->member, &tmp);
-      if(!thissize) {
+    for(int i = 0; i != ta->length; i++) {
+      int ok = JSX_Get(cx, p + i * fieldsize, ta->member, &tmp);
+      if(!ok) {
         JS_RemoveRoot(cx, &tmp);
         goto failure;
       }
       JS_SetElement(cx, obj, i, &tmp);
-      totsize += thissize;
     }
     JS_RemoveRoot(cx, &tmp);
-
-    return totsize;
+    return 1;
   }
 
   case STRUCTTYPE:
   case UNIONTYPE:
   {
-    // Create new object and populate with values
-
     *rval=OBJECT_TO_JSVAL(JS_NewObject(cx, 0, 0, 0));
-
-    JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
-    int i;
-    // Update object elements from a struct or union
-    size = tsu->nMember;
     JSObject *obj = JSVAL_TO_OBJECT(*rval);
 
+    JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
     jsval tmp=JSVAL_VOID;
     JS_AddRoot(cx, &tmp);
 
-    for (i=0; i<size; i++) {
+    for(int i = 0; i != tsu->nMember; ++i) {
       JSX_SuMember mtype = tsu->member[i];
       JS_GetProperty(cx, obj, mtype.name, &tmp);
-      int thissize = JSX_Get(cx, p + mtype.offset / 8, mtype.membertype, &tmp);
-      if(!thissize) {
+      int ok = JSX_Get(cx, p + mtype.offset / 8, mtype.membertype, &tmp);
+      if(!ok) {
         JS_RemoveRoot(cx, &tmp);
         goto failure;
       }
@@ -251,7 +214,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
 
     JS_RemoveRoot(cx, &tmp);
 
-    return type->SizeInBytes();
+    return 1;
   }
 
   default:
