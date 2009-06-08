@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciTypeStruct::JsciTypeStruct() : JsciTypeStructUnion(STRUCTTYPE) {
+JsciTypeStruct::JsciTypeStruct() : JsciTypeStructUnion() {
 }
 
 

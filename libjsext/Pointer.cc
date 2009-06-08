@@ -363,8 +363,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   if(!ptr->type->type == POINTERTYPE) return JS_FALSE; // should be impossible
 
-  if(ptr->type->type != STRUCTTYPE && ptr->type->type != UNIONTYPE)
-    return JSX_ReportException(cx, "Pointer.prototype.field(): must only be called on pointers to struct or union types");
+  if(ptr->type->type != SUTYPE) return JSX_ReportException(cx, "Pointer.prototype.field(): must only be called on pointers to struct or union types");
 
   JsciTypeStructUnion *sutype = (JsciTypeStructUnion *) ptr->type;
 

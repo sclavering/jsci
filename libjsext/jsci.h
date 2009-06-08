@@ -16,8 +16,7 @@ enum JSX_TypeID {
   UINTTYPE,
   FLOATTYPE,
   FUNCTIONTYPE,
-  STRUCTTYPE,
-  UNIONTYPE,
+  SUTYPE,
   VOIDTYPE,
   POINTERTYPE,
   ARRAYTYPE,
@@ -25,7 +24,7 @@ enum JSX_TypeID {
   TYPECOUNT
 };
 
-#define TYPECOUNT2 (TYPECOUNT+5)
+#define TYPECOUNT2 (TYPECOUNT + 6)
 
 // We store an instance of this, or a subclass, inside each js Type object
 struct JsciType {
@@ -106,13 +105,12 @@ struct JSX_SuMember {
 };
 
 struct JsciTypeStructUnion : JsciType {
-  // STRUCTTYPE or UNIONTYPE
   JSX_SuMember *member;
   int nMember;
   int sizeOf; // in bits
   ffi_type ffiType;
 
-  JsciTypeStructUnion(JSX_TypeID);
+  JsciTypeStructUnion();
   ~JsciTypeStructUnion();
 
   int SizeInBytes();

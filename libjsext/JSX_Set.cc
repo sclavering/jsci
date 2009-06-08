@@ -330,8 +330,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     return totsize;
   }
 
-  case TYPEPAIR(JSVAL_OBJECT,STRUCTTYPE):
-  case TYPEPAIR(JSVAL_OBJECT,UNIONTYPE):
+  case TYPEPAIR(JSVAL_OBJECT,SUTYPE):
   {
     // Copy object elements to a struct or union
     JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
@@ -364,8 +363,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     return type->SizeInBytes();
   }
 
-  case TYPEPAIR(JSARRAY,STRUCTTYPE):
-  case TYPEPAIR(JSARRAY,UNIONTYPE):
+  case TYPEPAIR(JSARRAY,SUTYPE):
   {
     JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
     // Copy array elements to struct or union
@@ -382,8 +380,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     return type->SizeInBytes();
   }
 
-  case TYPEPAIR(JSNULL,STRUCTTYPE):
-  case TYPEPAIR(JSNULL,UNIONTYPE):
+  case TYPEPAIR(JSNULL,SUTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):
   case TYPEPAIR(JSNULL,INTTYPE):
   case TYPEPAIR(JSNULL,UINTTYPE):
@@ -397,8 +394,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
 
     break;
 
-  case TYPEPAIR(JSVOID,STRUCTTYPE):
-  case TYPEPAIR(JSVOID,UNIONTYPE):
+  case TYPEPAIR(JSVOID,SUTYPE):
   case TYPEPAIR(JSVOID,ARRAYTYPE):
   case TYPEPAIR(JSVOID,INTTYPE):
   case TYPEPAIR(JSVOID,UINTTYPE):

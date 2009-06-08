@@ -2,7 +2,7 @@
 #include "jsci.h"
 
 
-JsciTypeStructUnion::JsciTypeStructUnion(JSX_TypeID t_id) : JsciType(t_id), member(0), nMember(0), sizeOf(0) {
+JsciTypeStructUnion::JsciTypeStructUnion() : JsciType(SUTYPE), member(0), nMember(0), sizeOf(0) {
 }
 
 
