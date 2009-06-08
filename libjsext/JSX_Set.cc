@@ -267,15 +267,15 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   {
     // Copy array elements to a variable array
-      
+      JSX_TypePointer *tp = (JSX_TypePointer *) type;
       int containsPointers=0;
       obj=JSVAL_TO_OBJECT(v);
       JS_GetArrayLength(cx, obj, (jsuint*) &size);
-      int elemsize = ((JSX_TypeArray *) type)->member->SizeInBytes();
+      int elemsize = tp->direct->SizeInBytes();
 
       if (will_clean) {
         // The variable array needs to be allocated
-        containsPointers = ((JSX_TypeArray *) type)->member->ContainsPointer();
+        containsPointers = tp->direct->ContainsPointer();
         if(containsPointers) {
           // Allocate twice the space in order to store old pointers
           *(void **)p = JS_malloc(cx, elemsize * size * 2);
@@ -289,7 +289,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       for (i=0; i<size; i++) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        int thissize = JSX_Set(cx, *(char **)p + totsize, will_clean, ((JSX_TypePointer *) type)->direct, tmp);
+        int thissize = JSX_Set(cx, *(char **)p + totsize, will_clean, tp->direct, tmp);
         if(!thissize) goto vararrayfailure2;
         totsize += thissize;
       }
