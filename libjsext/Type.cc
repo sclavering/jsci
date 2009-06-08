@@ -207,7 +207,7 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   JSObject *retobj;
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_bitfield_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
-  JSX_TypeBitfield *type = new JSX_TypeBitfield;
+  JsciTypeBitfield *type = new JsciTypeBitfield;
   type->type=BITFIELDTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);

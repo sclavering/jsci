@@ -73,7 +73,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
 
   case BITFIELDTYPE:
 
-    return JSX_Get(cx, p, ((JSX_TypeBitfield *) type)->member, rval);
+    return JSX_Get(cx, p, ((JsciTypeBitfield *) type)->member, rval);
 
   case UINTTYPE:
   {
@@ -204,7 +204,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
         goto failure;
       }
       if(mtype.membertype->type == BITFIELDTYPE) {
-        int length = ((JSX_TypeBitfield *) mtype.membertype)->length;
+        int length = ((JsciTypeBitfield *) mtype.membertype)->length;
         int offset = mtype.offset % 8;
         int mask = ~(-1 << length);
         tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);

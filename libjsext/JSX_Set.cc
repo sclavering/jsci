@@ -161,7 +161,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
 
   bitfieldcommon:
-    size = ((JSX_TypeNumeric *) ((JSX_TypeBitfield *) type)->member)->size;
+    size = ((JSX_TypeNumeric *) ((JsciTypeBitfield *) type)->member)->size;
     goto intcommon;
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
@@ -341,7 +341,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
       JS_GetProperty(cx, obj, tsu->member[i].name, &tmp);
 
       if(tsu->member[i].membertype->type == BITFIELDTYPE) {
-        int length = ((JSX_TypeBitfield *) tsu->member[i].membertype)->length;
+        int length = ((JsciTypeBitfield *) tsu->member[i].membertype)->length;
         int offset = tsu->member[i].offset % 8;
         int mask = ~(-1 << length);
         int imask = ~(imask << offset);

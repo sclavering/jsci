@@ -123,7 +123,7 @@ struct JSX_TypeArray : JSX_Type {
   JSBool ContainsPointer();
 };
 
-struct JSX_TypeBitfield : JSX_Type {
+struct JsciTypeBitfield : JSX_Type {
   // BITFIELDTYPE
   JSX_Type *member;
   int length;
