@@ -245,10 +245,6 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
 
   size_t arg_size = ft->GetParamSizesAndFFITypes(cx, arg_types);
 
-  int real_argc; // kill this obsolete var
-  for (real_argc=0; arg_types[real_argc]; real_argc++)
-    ;
-
   ffi_cif *cif = ft->GetCIF();
 
   int retsize = ft->returnType->SizeInBytes();
