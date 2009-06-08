@@ -1,13 +1,13 @@
 #include "jsci.h"
 
 
-JSX_TypeFunction::~JSX_TypeFunction() {
+JsciTypeFunction::~JsciTypeFunction() {
   if(this->param) delete this->param;
   if(this->cif.arg_types) delete this->cif.arg_types;
 }
 
 
-ffi_cif *JSX_TypeFunction::GetCIF() {
+ffi_cif *JsciTypeFunction::GetCIF() {
   if(this->cif.arg_types) return &this->cif;
 
   this->cif.arg_types = new ffi_type*[this->nParam];
@@ -23,7 +23,7 @@ ffi_cif *JSX_TypeFunction::GetCIF() {
 }
 
 
-int JSX_TypeFunction::GetParamSizesAndFFITypes(JSContext *cx, ffi_type **arg_types) {
+int JsciTypeFunction::GetParamSizesAndFFITypes(JSContext *cx, ffi_type **arg_types) {
   int totalsize = 0;
   for(uintN i = 0; i != this->nParam; ++i) {
     JSX_Type *t = this->param[i];

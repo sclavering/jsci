@@ -112,7 +112,7 @@ JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun,
   retpriv->finalize=ffi_closure_free; //This would free the code address, not always identical to writeable address. So it is checked in finalize.
   retpriv->type = type;
 
-  if(ffi_prep_closure_loc((ffi_closure*) retpriv->writeable, ((JSX_TypeFunction *) retpriv->type)->GetCIF(), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
+  if(ffi_prep_closure_loc((ffi_closure*) retpriv->writeable, ((JsciTypeFunction *) retpriv->type)->GetCIF(), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
     return JS_FALSE;
 
   JS_SetPrivate(cx, retobj, retpriv);
@@ -237,7 +237,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
     return JS_FALSE;
   }
 
-  JSX_TypeFunction *ft = (JSX_TypeFunction *) type;
+  JsciTypeFunction *ft = (JsciTypeFunction *) type;
 
   if(ft->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", ft->nParam, argc);
 
@@ -321,7 +321,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
   }
 
   JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrv));
-  JSX_TypeFunction *ft = (JSX_TypeFunction *) finptr->type;
+  JsciTypeFunction *ft = (JsciTypeFunction *) finptr->type;
 
   if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0]->type != POINTERTYPE) {
     return JSX_ReportException(cx, "Wrong function type for finalize property");
@@ -435,7 +435,7 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
   JsciCallback *cb = (JsciCallback *) user_data;
   jsval rval=JSVAL_VOID;
-  JSX_TypeFunction *type = (JSX_TypeFunction *) cb->type;
+  JsciTypeFunction *type = (JsciTypeFunction *) cb->type;
 
   jsval *tmp_argv = new jsval[type->nParam];
   if(!tmp_argv) return;

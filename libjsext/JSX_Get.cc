@@ -152,7 +152,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
   case FUNCTIONTYPE:
   {
     // Create a new JS function which calls a C function
-    JSFunction *fun = JS_NewFunction(cx, JSX_NativeFunction, ((JSX_TypeFunction *) type)->nParam, 0, 0, "JSEXT_NATIVE");
+    JSFunction *fun = JS_NewFunction(cx, JSX_NativeFunction, ((JsciTypeFunction *) type)->nParam, 0, 0, "JSEXT_NATIVE");
     JSObject *funobj = JS_GetFunctionObject(fun);
     *rval=OBJECT_TO_JSVAL(funobj);
     return -1;

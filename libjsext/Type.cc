@@ -71,7 +71,7 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
     return JS_FALSE;
   }
 
-  JSX_TypeFunction *type = new JSX_TypeFunction;
+  JsciTypeFunction *type = new JsciTypeFunction;
   type->type=FUNCTIONTYPE;
 
   JSObject *retobj;
