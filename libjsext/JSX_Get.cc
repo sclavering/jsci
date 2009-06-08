@@ -160,7 +160,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
 
   case ARRAYTYPE:
   {
-    JSX_TypeArray *ta = (JSX_TypeArray *) type;
+    JsciTypeArray *ta = (JsciTypeArray *) type;
 
     if(type_is_char(ta->member)) {
       // Return a string from a char array

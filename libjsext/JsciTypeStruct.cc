@@ -9,8 +9,8 @@ ffi_type *JsciTypeStruct::GetFFIType() {
       int al = 1;
       JSX_Type *memb = this->member[i].membertype;
       while(memb->type == ARRAYTYPE) {
-        al *= ((JSX_TypeArray *) memb)->length;
-        memb = ((JSX_TypeArray *) memb)->member;
+        al *= ((JsciTypeArray *) memb)->length;
+        memb = ((JsciTypeArray *) memb)->member;
       }
       if(memb->type == BITFIELDTYPE) {
         int length = ((JsciTypeBitfield *) memb)->length;
@@ -40,8 +40,8 @@ ffi_type *JsciTypeStruct::GetFFIType() {
       ffi_type *t;
       JSX_Type *memb = this->member[i].membertype;
       while(memb->type == ARRAYTYPE) {
-        al *= ((JSX_TypeArray *) memb)->length;
-        memb = ((JSX_TypeArray *) memb)->member;
+        al *= ((JsciTypeArray *) memb)->length;
+        memb = ((JsciTypeArray *) memb)->member;
       }
       if(memb->type == BITFIELDTYPE) {
         int length = ((JsciTypeBitfield *) memb)->length;

@@ -113,18 +113,21 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
     }
 
   case TYPEPAIR(JSVAL_STRING,ARRAYTYPE):
-    if(!type_is_char(((JSX_TypeArray *) type)->member)) goto failure;
+  {
+    JsciTypeArray *ta = (JsciTypeArray *) type;
+    if(!type_is_char(ta->member)) goto failure;
 
     // Copy a string to a char array
 
     size=JS_GetStringLength(JSVAL_TO_STRING(v));
-    if(size < ((JSX_TypeArray *) type)->length) {
+    if(size < ta->length) {
       memcpy(*(char **)p, JS_GetStringBytes(JSVAL_TO_STRING(v)), size * sizeof(char));
-      memset(*(char **)p + size, 0, (((JSX_TypeArray *) type)->length - size) * sizeof(char));
+      memset(*(char **)p + size, 0, (ta->length - size) * sizeof(char));
     } else {
-      memcpy(*(char **)p, JS_GetStringBytes(JSVAL_TO_STRING(v)), ((JSX_TypeArray *) type)->length * sizeof(char));
+      memcpy(*(char **)p, JS_GetStringBytes(JSVAL_TO_STRING(v)), ta->length * sizeof(char));
     }
-    return sizeof(char) * ((JSX_TypeArray *) type)->length;
+    return sizeof(char) * ta->length;
+  }
 
   case TYPEPAIR(JSVAL_INT,POINTERTYPE):
 
@@ -310,15 +313,16 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   case TYPEPAIR(JSARRAY,ARRAYTYPE):
   {
     // Copy array elements to a fixed size array
+    JsciTypeArray *ta = (JsciTypeArray *) type;
     
     totsize=0;
-    size = ((JSX_TypeArray *) type)->length;
+    size = ta->length;
     obj=JSVAL_TO_OBJECT(v);
 
     for (i=0; i<size; i++) {
       jsval tmp;
       JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Set(cx, p + totsize, will_clean, ((JSX_TypeArray *) type)->member, tmp);
+      int thissize = JSX_Set(cx, p + totsize, will_clean, ta->member, tmp);
       if(!thissize) return 0;
       totsize+=thissize;
     }

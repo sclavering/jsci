@@ -113,7 +113,7 @@ struct JSX_TypePointer : JSX_Type {
   JSBool ContainsPointer();
 };
 
-struct JSX_TypeArray : JSX_Type {
+struct JsciTypeArray : JSX_Type {
   // ARRAYTYPE
   JSX_Type *member;
   int length;

@@ -1,16 +1,16 @@
 #include "jsci.h"
 
 
-int JSX_TypeArray::SizeInBytes() {
+int JsciTypeArray::SizeInBytes() {
   return this->length * this->member->SizeInBytes();
 }
 
 
-int JSX_TypeArray::AlignmentInBytes() {
+int JsciTypeArray::AlignmentInBytes() {
   return this->member->AlignmentInBytes();
 }
 
 
-JSBool JSX_TypeArray::ContainsPointer() {
+JSBool JsciTypeArray::ContainsPointer() {
   return this->member->ContainsPointer();
 }

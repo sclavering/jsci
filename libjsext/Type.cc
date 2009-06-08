@@ -182,7 +182,7 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   JSObject *retobj;
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_array_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
-  JSX_TypeArray *type = new JSX_TypeArray;
+  JsciTypeArray *type = new JsciTypeArray;
   type->type=ARRAYTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
