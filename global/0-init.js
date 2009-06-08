@@ -18,8 +18,6 @@ function(args) {
 
   const path = args.environment.JSX_HOME + '/global/';
   this.JSEXT1 = {
-    $parent: this,
-    $name: "JSEXT1",
     $path: path + 'JSEXT1',
 
     encodeUTF8: args.encodeUTF8,

@@ -26,7 +26,7 @@ function(args) {
   const path = args.cwd;
   JSEXT1 = { $path: path + '/JSEXT1' };
   JSEXT1.File = load.call(JSEXT1, path + '/JSEXT1/File.js');
-  JSEXT1.C = { $path: path + '/JSEXT1/C', $parent: JSEXT1 };
+  JSEXT1.C = { $path: path + '/JSEXT1/C' };
   JSEXT1.C.parse = load.call(JSEXT1.C, path + '/JSEXT1/C/parse.js');
   JSEXT1.C.jswrapper = load.call(JSEXT1.C, path + '/JSEXT1/C/jswrapper.js');
 
