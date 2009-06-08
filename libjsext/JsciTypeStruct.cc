@@ -1,6 +1,10 @@
 #include "jsci.h"
 
 
+JsciTypeStruct::JsciTypeStruct() : JsciTypeStructUnion(STRUCTTYPE) {
+}
+
+
 ffi_type *JsciTypeStruct::GetFFIType() {
   if(!this->ffiType.elements) {
     int nmember = 0;

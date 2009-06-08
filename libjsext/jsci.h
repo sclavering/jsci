@@ -31,6 +31,7 @@ enum JSX_TypeID {
 struct JsciType {
   enum JSX_TypeID type;
 
+  JsciType(JSX_TypeID);
   virtual ~JsciType();
 
   virtual ffi_type *GetFFIType();
@@ -43,6 +44,7 @@ struct JsciType {
 
 struct JsciTypeVoid : JsciType {
   // VOIDTYPE
+  JsciTypeVoid();
   ffi_type *GetFFIType();
 };
 
@@ -50,6 +52,8 @@ struct JsciTypeNumeric : JsciType {
   // INTTYPE, UINTTYPE, or FLOATTYPE
   int size;
   ffi_type ffiType;
+
+  JsciTypeNumeric(JSX_TypeID);
 
   ffi_type *GetFFIType();
   int SizeInBytes();
@@ -63,6 +67,7 @@ struct JsciTypeFunction : JsciType {
   JsciType *returnType;
   ffi_cif cif;
 
+  JsciTypeFunction();
   ~JsciTypeFunction();
 
   ffi_cif *GetCIF();
@@ -84,6 +89,7 @@ struct JsciTypeStructUnion : JsciType {
   int sizeOf; // in bits
   ffi_type ffiType;
 
+  JsciTypeStructUnion(JSX_TypeID);
   ~JsciTypeStructUnion();
 
   int SizeInBytes();
@@ -95,17 +101,23 @@ struct JsciTypeStructUnion : JsciType {
 };
 
 struct JsciTypeStruct : JsciTypeStructUnion {
+  JsciTypeStruct();
+
   ffi_type *GetFFIType();
   JSBool SetSizeAndAligments(JSContext *cx);
 };
 
 struct JsciTypeUnion : JsciTypeStructUnion {
+  JsciTypeUnion();
+
   JSBool SetSizeAndAligments(JSContext *cx);
 };
 
 struct JsciTypePointer : JsciType {
   // POINTERTYPE
   JsciType *direct;
+
+  JsciTypePointer();
 
   ffi_type *GetFFIType();
   int SizeInBytes();
@@ -118,6 +130,8 @@ struct JsciTypeArray : JsciType {
   JsciType *member;
   int length;
 
+  JsciTypeArray();
+
   int SizeInBytes();
   int AlignmentInBytes();
   JSBool ContainsPointer();
@@ -127,6 +141,8 @@ struct JsciTypeBitfield : JsciType {
   // BITFIELDTYPE
   JsciType *member;
   int length;
+
+  JsciTypeBitfield();
 
   int SizeInBits();
   int AlignmentInBits() { return 1; }

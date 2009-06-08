@@ -1,6 +1,10 @@
 #include "jsci.h"
 
 
+JsciTypeArray::JsciTypeArray() : JsciType(ARRAYTYPE) {
+}
+
+
 int JsciTypeArray::SizeInBytes() {
   return this->length * this->member->SizeInBytes();
 }

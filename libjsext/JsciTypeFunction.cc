@@ -1,6 +1,10 @@
 #include "jsci.h"
 
 
+JsciTypeFunction::JsciTypeFunction() : JsciType(FUNCTIONTYPE) {
+}
+
+
 JsciTypeFunction::~JsciTypeFunction() {
   if(this->param) delete this->param;
   if(this->cif.arg_types) delete this->cif.arg_types;

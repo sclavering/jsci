@@ -72,7 +72,6 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   }
 
   JsciTypeFunction *type = new JsciTypeFunction;
-  type->type=FUNCTIONTYPE;
 
   JSObject *retobj;
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_function_proto, 0);
@@ -112,14 +111,9 @@ JSClass *JSX_GetTypeClass(void) {
 
 
 // typeid must obviously be STRUCTTYPE or UNIONTYPE
-static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JSX_TypeID type_id, JSObject* proto) {
+static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JsciTypeStructUnion *type, JSObject* proto) {
   JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
   *rval = OBJECT_TO_JSVAL(retobj);
-  JsciTypeStructUnion *type = type_id == STRUCTTYPE ? (JsciTypeStructUnion*) new JsciTypeStruct : (JsciTypeStructUnion*) new JsciTypeUnion;
-  type->type = type_id;
-  type->member = 0;
-  type->nMember = 0;
-  type->sizeOf = 0;
   type->ffiType.elements = 0;
   JS_SetPrivate(cx, retobj, type);
   JSBool rv = JS_TRUE;
@@ -156,7 +150,6 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
   *rval=OBJECT_TO_JSVAL(retobj);
 
   JsciTypePointer *type = new JsciTypePointer;
-  type->type=POINTERTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->direct = sTypeVoid;
   JS_DefineElement(cx, retobj, 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
@@ -183,7 +176,6 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_array_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
   JsciTypeArray *type = new JsciTypeArray;
-  type->type=ARRAYTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
   type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
@@ -208,7 +200,6 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_bitfield_proto, 0);
   *rval=OBJECT_TO_JSVAL(retobj);
   JsciTypeBitfield *type = new JsciTypeBitfield;
-  type->type=BITFIELDTYPE;
   JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
   type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
@@ -225,8 +216,7 @@ static jsval init_numeric_Type(JSContext *cx, JSX_TypeID type_id, int size, ffi_
   JSObject *newtype;
   newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
-  JsciTypeNumeric *type = new JsciTypeNumeric;
-  type->type = type_id;
+  JsciTypeNumeric *type = new JsciTypeNumeric(type_id);
   type->size = size;
   type->ffiType = ffit;
   JS_SetPrivate(cx, newtype, type);
@@ -278,7 +268,6 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
   jsval newval = OBJECT_TO_JSVAL(newtype);
   JS_SetProperty(cx, typeobj, "void", &newval);
   JsciType *type = new JsciTypeVoid;
-  type->type = VOIDTYPE;
   JS_SetPrivate(cx, newtype, type);
   sTypeVoid = type;
 }
@@ -298,12 +287,12 @@ static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
 
 
 static JSBool JSX_Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeStructUnion(cx, argc, argv, rval, STRUCTTYPE, s_Type_struct_proto);
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, new JsciTypeStruct, s_Type_struct_proto);
 }
 
 
 static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  return JSX_NewTypeStructUnion(cx, argc, argv, rval, UNIONTYPE, s_Type_union_proto);
+  return JSX_NewTypeStructUnion(cx, argc, argv, rval, new JsciTypeUnion, s_Type_union_proto);
 }
 
 

@@ -1,6 +1,10 @@
 #include "jsci.h"
 
 
+JsciTypeBitfield::JsciTypeBitfield() : JsciType(BITFIELDTYPE) {
+}
+
+
 int JsciTypeBitfield::SizeInBits() {
   return this->length;
 }

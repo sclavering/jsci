@@ -2,6 +2,10 @@
 #include "jsci.h"
 
 
+JsciTypeStructUnion::JsciTypeStructUnion(JSX_TypeID t_id) : JsciType(t_id), member(0), nMember(0), sizeOf(0) {
+}
+
+
 JsciTypeStructUnion::~JsciTypeStructUnion() {
   if(this->member) {
     // member names were strdup()'d earlier

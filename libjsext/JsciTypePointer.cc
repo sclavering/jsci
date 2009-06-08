@@ -1,6 +1,10 @@
 #include "jsci.h"
 
 
+JsciTypePointer::JsciTypePointer() : JsciType(POINTERTYPE) {
+}
+
+
 ffi_type *JsciTypePointer::GetFFIType() {
   return &ffi_type_pointer;
 }
