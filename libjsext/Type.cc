@@ -30,6 +30,12 @@ static JSClass JSX_TypeClass={
 };
 
 
+static void WrapType(JSContext *cx, JsciType *t, JSObject* proto, jsval *rval) {
+  *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, &JSX_TypeClass, proto, 0));
+  JS_SetPrivate(cx, JSVAL_TO_OBJECT(*rval), t);
+}
+
+
 static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
   return JSVAL_IS_OBJECT(v) && !JSVAL_IS_NULL(v) && JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), &JSX_TypeClass, NULL);
 }
@@ -111,13 +117,9 @@ JSClass *JSX_GetTypeClass(void) {
 
 
 static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, jsval *rval, JsciTypeStructUnion *type, JSObject* proto) {
-  JSObject *retobj = JS_NewObject(cx, &JSX_TypeClass, proto, 0);
-  *rval = OBJECT_TO_JSVAL(retobj);
+  WrapType(cx, type, proto, rval);
   type->ffiType.elements = 0;
-  JS_SetPrivate(cx, retobj, type);
-  JSBool rv = JS_TRUE;
-  if(nMember) rv = type->ReplaceMembers(cx, retobj, nMember, member);
-  return rv;
+  return nMember ? type->ReplaceMembers(cx, JSVAL_TO_OBJECT(*rval), nMember, member) : JS_TRUE;
 }
 
 
@@ -194,11 +196,8 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
     return JS_FALSE;
   }
 
-  JSObject *retobj;
-  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_bitfield_proto, 0);
-  *rval=OBJECT_TO_JSVAL(retobj);
   JsciTypeBitfield *type = new JsciTypeBitfield;
-  JS_SetPrivate(cx, retobj, type);
+  WrapType(cx, type, s_Type_bitfield_proto, rval);
   type->length = JSVAL_TO_INT(len);
   type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
   return JS_TRUE;
@@ -210,49 +209,45 @@ JsciType *GetVoidType(void) {
 }
 
 
-static jsval TypeWrapper(JSContext *cx, JsciType *t) {
-  JSObject *newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
-  jsval newval = OBJECT_TO_JSVAL(newtype);
-  JS_SetPrivate(cx, newtype, t);
-  return newval;
-}
-
-
 static void init_types(JSContext *cx, JSObject *typeobj) {
-  jsval tmp;
-  tmp = TypeWrapper(cx, new JsciTypeUint(0, ffi_type_uchar));
+  jsval tmp = JSVAL_VOID;
+  JS_AddRoot(cx, &tmp);
+
+  WrapType(cx, new JsciTypeUint(0, ffi_type_uchar), 0, &tmp);
   JS_SetProperty(cx, typeobj, "unsigned_char", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeUint(1, ffi_type_ushort));
+  WrapType(cx, new JsciTypeUint(1, ffi_type_ushort), 0, &tmp);
   JS_SetProperty(cx, typeobj, "unsigned_short", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeUint(2, ffi_type_uint));
+  WrapType(cx, new JsciTypeUint(2, ffi_type_uint), 0, &tmp);
   JS_SetProperty(cx, typeobj, "unsigned_int", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeUint(3, ffi_type_ulong));
+  WrapType(cx, new JsciTypeUint(3, ffi_type_ulong), 0, &tmp);
   JS_SetProperty(cx, typeobj, "unsigned_long", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeUint(4, ffi_type_uint64));
+  WrapType(cx, new JsciTypeUint(4, ffi_type_uint64), 0, &tmp);
   JS_SetProperty(cx, typeobj, "unsigned_long_long", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeInt(0, ffi_type_schar));
+  WrapType(cx, new JsciTypeInt(0, ffi_type_schar), 0, &tmp);
   JS_SetProperty(cx, typeobj, "signed_char", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeInt(1, ffi_type_sshort));
+  WrapType(cx, new JsciTypeInt(1, ffi_type_sshort), 0, &tmp);
   JS_SetProperty(cx, typeobj, "signed_short", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeInt(2, ffi_type_sint));
+  WrapType(cx, new JsciTypeInt(2, ffi_type_sint), 0, &tmp);
   JS_SetProperty(cx, typeobj, "signed_int", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeInt(3, ffi_type_slong));
+  WrapType(cx, new JsciTypeInt(3, ffi_type_slong), 0, &tmp);
   JS_SetProperty(cx, typeobj, "signed_long", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeInt(4, ffi_type_sint64));
+  WrapType(cx, new JsciTypeInt(4, ffi_type_sint64), 0, &tmp);
   JS_SetProperty(cx, typeobj, "signed_long_long", &tmp);
   // xxx currently we let 0-ffi.js alias Type.int etc to Type.signed_int, which isn't portable.
   // limits.h has constants we could use to detect this.  char is particularly odd, since for C type checking it'd distinct from both "signed char" and "unsigned char", though always has the same representation as one or other of them.
 
-  tmp = TypeWrapper(cx, new JsciTypeFloat(0, ffi_type_float));
+  WrapType(cx, new JsciTypeFloat(0, ffi_type_float), 0, &tmp);
   JS_SetProperty(cx, typeobj, "float", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeFloat(1, ffi_type_double));
+  WrapType(cx, new JsciTypeFloat(1, ffi_type_double), 0, &tmp);
   JS_SetProperty(cx, typeobj, "double", &tmp);
-  tmp = TypeWrapper(cx, new JsciTypeFloat(2, ffi_type_longdouble));
+  WrapType(cx, new JsciTypeFloat(2, ffi_type_longdouble), 0, &tmp);
   JS_SetProperty(cx, typeobj, "long_double", &tmp);
 
   sTypeVoid = new JsciTypeVoid;
-  tmp = TypeWrapper(cx, sTypeVoid);
+  WrapType(cx, sTypeVoid, 0, &tmp);
   JS_SetProperty(cx, typeobj, "void", &tmp);
+
+  JS_RemoveRoot(cx, &tmp);
 }
 
 
