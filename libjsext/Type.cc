@@ -218,7 +218,7 @@ static jsval TypeWrapper(JSContext *cx, JsciType *t) {
 }
 
 
-static void init_int_types(JSContext *cx, JSObject *typeobj) {
+static void init_types(JSContext *cx, JSObject *typeobj) {
   jsval tmp;
   tmp = TypeWrapper(cx, new JsciTypeUint(0, ffi_type_uchar));
   JS_SetProperty(cx, typeobj, "unsigned_char", &tmp);
@@ -240,30 +240,19 @@ static void init_int_types(JSContext *cx, JSObject *typeobj) {
   JS_SetProperty(cx, typeobj, "signed_long", &tmp);
   tmp = TypeWrapper(cx, new JsciTypeInt(4, ffi_type_sint64));
   JS_SetProperty(cx, typeobj, "signed_long_long", &tmp);
-
   // xxx currently we let 0-ffi.js alias Type.int etc to Type.signed_int, which isn't portable.
   // limits.h has constants we could use to detect this.  char is particularly odd, since for C type checking it'd distinct from both "signed char" and "unsigned char", though always has the same representation as one or other of them.
-}
 
-
-static void init_float_types(JSContext *cx, JSObject *typeobj) {
-  jsval tmp;
   tmp = TypeWrapper(cx, new JsciTypeFloat(0, ffi_type_float));
   JS_SetProperty(cx, typeobj, "float", &tmp);
   tmp = TypeWrapper(cx, new JsciTypeFloat(1, ffi_type_double));
   JS_SetProperty(cx, typeobj, "double", &tmp);
   tmp = TypeWrapper(cx, new JsciTypeFloat(2, ffi_type_longdouble));
   JS_SetProperty(cx, typeobj, "long_double", &tmp);
-}
 
-
-static void init_other_types(JSContext *cx, JSObject *typeobj) {
-  JSObject *newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
-  jsval newval = OBJECT_TO_JSVAL(newtype);
-  JS_SetProperty(cx, typeobj, "void", &newval);
-  JsciType *type = new JsciTypeVoid;
-  JS_SetPrivate(cx, newtype, type);
-  sTypeVoid = type;
+  sTypeVoid = new JsciTypeVoid;
+  tmp = TypeWrapper(cx, sTypeVoid);
+  JS_SetProperty(cx, typeobj, "void", &tmp);
 }
 
 
@@ -364,9 +353,7 @@ extern "C" jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
     return JSVAL_VOID;
   }
 
-  init_int_types(cx, typeobj);
-  init_float_types(cx, typeobj);
-  init_other_types(cx, typeobj);
+  init_types(cx, typeobj);
 
   return OBJECT_TO_JSVAL(typeobj);
 }
