@@ -41,7 +41,7 @@ struct JSX_Type {
   virtual JSBool ContainsPointer();
 };
 
-struct JSX_TypeVoid : JSX_Type {
+struct JsciTypeVoid : JSX_Type {
   // VOIDTYPE
   ffi_type *GetFFIType();
 };

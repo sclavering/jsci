@@ -1,6 +1,6 @@
 #include "jsci.h"
 
 
-ffi_type *JSX_TypeVoid::GetFFIType() {
+ffi_type *JsciTypeVoid::GetFFIType() {
   return &ffi_type_void;
 }

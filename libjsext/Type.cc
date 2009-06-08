@@ -277,7 +277,7 @@ static void init_other_types(JSContext *cx, JSObject *typeobj) {
   JSObject *newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
   JS_SetProperty(cx, typeobj, "void", &newval);
-  JSX_Type *type = new JSX_TypeVoid;
+  JSX_Type *type = new JsciTypeVoid;
   type->type = VOIDTYPE;
   JS_SetPrivate(cx, newtype, type);
   sTypeVoid = type;
