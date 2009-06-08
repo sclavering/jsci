@@ -88,7 +88,7 @@ struct JsciTypeFunction : JsciType {
   JsciType *returnType;
   ffi_cif cif;
 
-  JsciTypeFunction();
+  JsciTypeFunction(int nParam);
   ~JsciTypeFunction();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);

@@ -1,7 +1,8 @@
 #include "jsci.h"
 
 
-JsciTypeFunction::JsciTypeFunction() : JsciType(FUNCTIONTYPE) {
+JsciTypeFunction::JsciTypeFunction(int nParam) : JsciType(FUNCTIONTYPE), nParam(nParam) {
+  this->param = new JsciType*[this->nParam + 1];
 }
 
 

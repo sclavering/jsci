@@ -63,25 +63,16 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   if(!jsval_is_Type(cx, returnType)) return JSX_ReportException(cx, "Type.function: the returnType arg must be a Type instance");
   if(!JSVAL_IS_OBJECT(params) || params == JSVAL_NULL || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) return JSX_ReportException(cx, "Type.function: the params arg must be an array");
 
-  JsciTypeFunction *type = new JsciTypeFunction;
-
-  JSObject *retobj;
-  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_function_proto, 0);
-  *rval=OBJECT_TO_JSVAL(retobj);
-
-  JSObject *paramobj;
   jsuint nParam;
-  paramobj = JSVAL_TO_OBJECT(params);
+  JSObject *paramobj = JSVAL_TO_OBJECT(params);
   if(!JS_GetArrayLength(cx, paramobj, &nParam)) return JS_FALSE;
 
-  type->nParam=nParam;
-  JS_SetPrivate(cx, retobj, type);
+  JsciTypeFunction *type = new JsciTypeFunction(nParam);
+  WrapType(cx, type, s_Type_function_proto, rval);
+  JSObject *retobj = JSVAL_TO_OBJECT(*rval);
 
   JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   type->returnType = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
-
-  type->param = new JsciType*[type->nParam + 1];
-
   type->cif.arg_types=0;
 
   for(int i = 0; i < nParam; i++) {
