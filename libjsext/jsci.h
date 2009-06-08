@@ -46,7 +46,7 @@ struct JSX_TypeVoid : JSX_Type {
   ffi_type *GetFFIType();
 };
 
-struct JSX_TypeNumeric : JSX_Type {
+struct JsciTypeNumeric : JSX_Type {
   // INTTYPE, UINTTYPE, or FLOATTYPE
   int size;
   ffi_type ffiType;
@@ -178,7 +178,7 @@ struct JsciCallback : JsciPointer {
 
 
 static inline int type_is_char(JSX_Type *t) {
-  return (t->type == INTTYPE || t->type == UINTTYPE) && 0 == ((JSX_TypeNumeric *) t)->size;
+  return (t->type == INTTYPE || t->type == UINTTYPE) && 0 == ((JsciTypeNumeric *) t)->size;
 }
 
 

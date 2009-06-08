@@ -1,16 +1,16 @@
 #include "jsci.h"
 
 
-ffi_type *JSX_TypeNumeric::GetFFIType() {
+ffi_type *JsciTypeNumeric::GetFFIType() {
   return &this->ffiType;
 }
 
 
-int JSX_TypeNumeric::SizeInBytes() {
+int JsciTypeNumeric::SizeInBytes() {
   return this->ffiType.size;
 }
 
 
-int JSX_TypeNumeric::AlignmentInBytes() {
+int JsciTypeNumeric::AlignmentInBytes() {
   return this->ffiType.alignment;
 }

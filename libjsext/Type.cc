@@ -225,7 +225,7 @@ static jsval init_numeric_Type(JSContext *cx, JSX_TypeID type_id, int size, ffi_
   JSObject *newtype;
   newtype = JS_NewObject(cx, &JSX_TypeClass, 0, 0);
   jsval newval = OBJECT_TO_JSVAL(newtype);
-  JSX_TypeNumeric *type = new JSX_TypeNumeric;
+  JsciTypeNumeric *type = new JsciTypeNumeric;
   type->type = type_id;
   type->size = size;
   type->ffiType = ffit;

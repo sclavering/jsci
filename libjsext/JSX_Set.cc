@@ -93,7 +93,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
   case TYPEPAIR(JSVAL_STRING,UINTTYPE):
 
-    switch(((JSX_TypeNumeric *) type)->size) {
+    switch(((JsciTypeNumeric *) type)->size) {
     case 0:
 
       // Copy a string to a char
@@ -164,7 +164,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
 
   bitfieldcommon:
-    size = ((JSX_TypeNumeric *) ((JsciTypeBitfield *) type)->member)->size;
+    size = ((JsciTypeNumeric *) ((JsciTypeBitfield *) type)->member)->size;
     goto intcommon;
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
@@ -190,7 +190,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
   intcommon:
 
     // Return a number from an int (of various sizes)
-    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
+    switch(size != -1 ? size : ((JsciTypeNumeric *) type)->size) {
 
     case 0:
       *(char *)p=tmpint;
@@ -244,7 +244,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 
   floatcommon:
 
-    switch(size != -1 ? size : ((JSX_TypeNumeric *) type)->size) {
+    switch(size != -1 ? size : ((JsciTypeNumeric *) type)->size) {
 
     case 0:
       *(float *)p=tmpdbl;

@@ -33,7 +33,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
   {
     int tmpint;
     // Return a number from an int (of various sizes)
-    switch(((JSX_TypeNumeric *) type)->size) {
+    switch(((JsciTypeNumeric *) type)->size) {
 
     case 0:
       tmpint=*(char *)p;
@@ -79,7 +79,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
   {
     int tmpuint;
     // Return a number from an unsigned int (of various sizes)
-    switch(((JSX_TypeNumeric *) type)->size) {
+    switch(((JsciTypeNumeric *) type)->size) {
 
     case 0:
       tmpuint=*(unsigned char *)p;
@@ -126,7 +126,7 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
 
     // Return a number from a float (of various sizes)
 
-    switch(((JSX_TypeNumeric *) type)->size) {
+    switch(((JsciTypeNumeric *) type)->size) {
 
     case 0:
       tmpdouble=*(float *)p;
