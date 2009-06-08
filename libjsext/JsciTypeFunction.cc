@@ -11,6 +11,15 @@ JsciTypeFunction::~JsciTypeFunction() {
 }
 
 
+int JsciTypeFunction::CtoJS(JSContext *cx, char *data, jsval *rval) {
+  // Create a new JS function which calls a C function
+  JSFunction *fun = JS_NewFunction(cx, JSX_NativeFunction, this->nParam, 0, 0, "JSEXT_NATIVE");
+  JSObject *funobj = JS_GetFunctionObject(fun);
+  *rval = OBJECT_TO_JSVAL(funobj);
+  return -1;
+}
+
+
 ffi_cif *JsciTypeFunction::GetCIF() {
   if(this->cif.arg_types) return &this->cif;
 

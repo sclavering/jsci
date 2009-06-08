@@ -34,6 +34,7 @@ struct JsciType {
   JsciType(JSX_TypeID);
   virtual ~JsciType();
 
+  virtual int CtoJS(JSContext *cx, char *data, jsval *rval) = 0;
   virtual ffi_type *GetFFIType();
   virtual int SizeInBits();
   virtual int SizeInBytes();
@@ -45,6 +46,8 @@ struct JsciType {
 struct JsciTypeVoid : JsciType {
   // VOIDTYPE
   JsciTypeVoid();
+
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
   ffi_type *GetFFIType();
 };
 
@@ -63,14 +66,20 @@ struct JsciTypeNumeric : JsciType {
 
 struct JsciTypeInt : JsciTypeNumeric {
   JsciTypeInt(int size, ffi_type);
+
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
 };
 
 struct JsciTypeUint : JsciTypeNumeric {
   JsciTypeUint(int size, ffi_type);
+
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
 };
 
 struct JsciTypeFloat : JsciTypeNumeric {
   JsciTypeFloat(int size, ffi_type);
+
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
 };
 
 struct JsciTypeFunction : JsciType {
@@ -83,6 +92,7 @@ struct JsciTypeFunction : JsciType {
   JsciTypeFunction();
   ~JsciTypeFunction();
 
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
   ffi_cif *GetCIF();
   int GetParamSizesAndFFITypes(JSContext *cx, ffi_type **arg_types);
 };
@@ -109,6 +119,7 @@ struct JsciTypeStructUnion : JsciType {
   int AlignmentInBytes();
   JSBool ContainsPointer();
 
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
   virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
   JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
 };
@@ -132,6 +143,7 @@ struct JsciTypePointer : JsciType {
 
   JsciTypePointer();
 
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
   ffi_type *GetFFIType();
   int SizeInBytes();
   int AlignmentInBytes();
@@ -145,6 +157,7 @@ struct JsciTypeArray : JsciType {
 
   JsciTypeArray();
 
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
   int SizeInBytes();
   int AlignmentInBytes();
   JSBool ContainsPointer();
@@ -157,6 +170,7 @@ struct JsciTypeBitfield : JsciType {
 
   JsciTypeBitfield();
 
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
   int SizeInBits();
   int AlignmentInBits() { return 1; }
   int AlignmentInBytes();
@@ -166,7 +180,6 @@ struct JsciTypeBitfield : JsciType {
 extern const char *JSX_typenames[];
 extern const char *JSX_jstypenames[];
 
-int JSX_Get(JSContext *cx, char *p, JsciType *type, jsval *rval);
 int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v);
 JSBool JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JsciTypeFunction *tf, jsval *vp, void **argptr);
 

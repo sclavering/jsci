@@ -268,7 +268,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
 
   *rval=JSVAL_VOID;
 
-  if(ft->returnType->type != VOIDTYPE) JSX_Get(cx, retbuf, ft->returnType, rval);
+  if(ft->returnType->type != VOIDTYPE) ft->returnType->CtoJS(cx, retbuf, rval);
 
   delete argptr_mem;
 
@@ -285,7 +285,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   *vp=JSVAL_VOID;
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  int ret = JSX_Get(cx, (char*) ptr->ptr, ptr->type, vp);
+  int ret = ptr->type->CtoJS(cx, (char*) ptr->ptr, vp);
   if(!ret) return JS_FALSE;
   if(ret == -1) {
     // Created new function
@@ -400,7 +400,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
 
-  int ret = JSX_Get(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), ptr->type, vp);
+  int ret = ptr->type->CtoJS(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), vp);
   if(ret == 0) return JS_FALSE;
 
   if (ret==-1 && id==JSVAL_ZERO) {
@@ -449,7 +449,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   for(int i = 0; i < type->nParam; i++) {
     JsciType *t = type->param[i];
     if(t->type == ARRAYTYPE) return; // xxx why don't we just treat it as a pointer type?
-    JSX_Get(cb->cx, (char*) *args, t, tmp_argv);
+    t->CtoJS(cb->cx, (char*) *args, tmp_argv);
   }
 
   if (!JS_CallFunction(cb->cx, JS_GetGlobalObject(cb->cx), cb->fun, type->nParam, tmp_argv, &rval)) {
