@@ -363,23 +363,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     return type->SizeInBytes();
   }
 
-  case TYPEPAIR(JSARRAY,SUTYPE):
-  {
-    JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
-    // Copy array elements to struct or union
-    obj=JSVAL_TO_OBJECT(v);
-    size = tsu->nMember;
-
-    for (i=0; i<size; i++) {
-      jsval tmp;
-      JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Set(cx, p + tsu->member[i].offset / 8, will_clean, tsu->member[i].membertype, tmp);
-      if(!thissize) return 0;
-    }
-
-    return type->SizeInBytes();
-  }
-
   case TYPEPAIR(JSNULL,SUTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):
   case TYPEPAIR(JSNULL,INTTYPE):
