@@ -11,7 +11,6 @@ function(args) {
   load("0-ffi.js");
 
   $path=".";
-  $curdir=this;
 
   clib = load("clib.jswrapper");
   for(var i = 0; clib['dl ' + i]; i++) ;
@@ -27,7 +26,6 @@ function(args) {
     encodeBase64: args.encodeBase64,
     decodeBase64: args.decodeBase64,
   };
-  JSEXT1.$curdir = JSEXT1;
 
   const ActiveDirectory = JSEXT1.ActiveDirectory = load('JSEXT1/ActiveDirectory.js');
   JSEXT1.os = ActiveDirectory.handlers.js.call(JSEXT1, 'os', ".js"); // ActiveDirectory needs its .stat()

@@ -37,7 +37,7 @@ Calling ...
 
 Files and subdirectories are loaded lazily, i.e. the first time the corresponding property is accessed.
 
-Each object also gets .$curdir and .$path properties.
+Each object also gets a .$path property.
 
 The action taken to convert each file into a javascript value is determined by the file name extension:
   .js files are evaluated
@@ -55,7 +55,6 @@ ActiveDirectory maintains an internal cache of all previously-created ActiveDire
 
 Properties of ActiveDirectory instances:
 
-* $curdir: [[Object]] which contains the current ActiveDirectory
 * $path: [[String]] which contains the path of the directory
 */
 (function() {
@@ -81,7 +80,6 @@ ActiveDirectory.get = function get(path, obj) {
   if(!obj && cached_instances[path]) return cached_instances[path];
 
   self.$path=path;
-  self.$curdir=self;
 
   if(!hasOwnProperty.call(self, '$getters')) self.$getters = {};
 
@@ -123,7 +121,6 @@ ActiveDirectory.get = function get(path, obj) {
           var newpath = path + '/' + propname;
           ActiveDirectory.get(newpath, val);
         }
-        self[propname].$curdir = self[propname];
       }
 
     } else {
