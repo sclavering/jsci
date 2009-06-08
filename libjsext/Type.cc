@@ -45,18 +45,11 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
   jsval tmp;
 
   JS_GetProperty(cx, membertype, "name", &tmp);
-  if(tmp == JSVAL_VOID || !JSVAL_IS_STRING(tmp)) {
-    JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
-    return JS_FALSE;
-  }
+  if(tmp == JSVAL_VOID || !JSVAL_IS_STRING(tmp)) return JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
   dest->name = strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
 
   JS_GetProperty(cx, membertype, "type", &tmp);
-  if(!jsval_is_Type(cx, tmp)) {
-    JSX_ReportException(cx, "Wrong or missing 'type' property in member type object");
-    // name is freed later
-    return JS_FALSE;
-  }
+  if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Wrong or missing 'type' property in member type object");
   dest->membertype = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
 
   return JS_TRUE;
@@ -67,15 +60,8 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   jsval returnType = argv[0];
   jsval params = argv[1];
 
-  if(!jsval_is_Type(cx, returnType)) {
-    JSX_ReportException(cx, "Type.function: the returnType arg must be a Type instance");
-    return JS_FALSE;
-  }
-
-  if(!JSVAL_IS_OBJECT(params) || params == JSVAL_NULL || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) {
-    JSX_ReportException(cx, "Type.function: the params arg must be an array");
-    return JS_FALSE;
-  }
+  if(!jsval_is_Type(cx, returnType)) return JSX_ReportException(cx, "Type.function: the returnType arg must be a Type instance");
+  if(!JSVAL_IS_OBJECT(params) || params == JSVAL_NULL || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) return JSX_ReportException(cx, "Type.function: the params arg must be an array");
 
   JsciTypeFunction *type = new JsciTypeFunction;
 
@@ -125,13 +111,11 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 
 static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval suv = argv[0];
-  if(!jsval_is_Type(cx, suv))
-    return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
+  if(!jsval_is_Type(cx, suv)) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
   if(t->type != SUTYPE) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) t;
-  if(tsu->nMember)
-    return JSX_ReportException(cx, "Type.replace_members(): the struct/union already has members");
+  if(tsu->nMember) return JSX_ReportException(cx, "Type.replace_members(): the struct/union already has members");
 
   return tsu->ReplaceMembers(cx, JSVAL_TO_OBJECT(argv[0]), argc - 1, &argv[1]);
 }
@@ -140,10 +124,7 @@ static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsv
 static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval direct = argv[0];
 
-  if(direct != JSVAL_VOID && !jsval_is_Type(cx, direct)) {
-    JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
-    return JS_FALSE;
-  }
+  if(direct != JSVAL_VOID && !jsval_is_Type(cx, direct)) return JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
 
   JsciTypePointer *type = new JsciTypePointer;
   WrapType(cx, type, s_Type_pointer_proto, rval);
@@ -159,14 +140,8 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   jsval member = argv[0];
   jsval len = argv[1];
 
-  if(!jsval_is_Type(cx, member)) {
-    JSX_ReportException(cx, "Type.array(): first argument must be a Type instance");
-    return JS_FALSE;
-  }
-  if(!JSVAL_IS_INT(len)) {
-    JSX_ReportException(cx, "Type.array(): second argument must be an integer");
-    return JS_FALSE;
-  }
+  if(!jsval_is_Type(cx, member)) return JSX_ReportException(cx, "Type.array(): first argument must be a Type instance");
+  if(!JSVAL_IS_INT(len)) return JSX_ReportException(cx, "Type.array(): second argument must be an integer");
 
   JsciTypeArray *type = new JsciTypeArray;
   type->length = JSVAL_TO_INT(len);
@@ -180,14 +155,8 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   jsval member = argv[0];
   jsval len = argv[1];
 
-  if(!jsval_is_Type(cx, member)) {
-    JSX_ReportException(cx, "Type.bitfield(): first argument must be a Type instance");
-    return JS_FALSE;
-  }
-  if(!JSVAL_IS_INT(len)) {
-    JSX_ReportException(cx, "Type.bitfield(): second argument must be an integer");
-    return JS_FALSE;
-  }
+  if(!jsval_is_Type(cx, member)) return JSX_ReportException(cx, "Type.bitfield(): first argument must be a Type instance");
+  if(!JSVAL_IS_INT(len)) return JSX_ReportException(cx, "Type.bitfield(): second argument must be an integer");
 
   JsciTypeBitfield *type = new JsciTypeBitfield;
   WrapType(cx, type, s_Type_bitfield_proto, rval);
@@ -246,8 +215,7 @@ static void init_types(JSContext *cx, JSObject *typeobj) {
 
 static JSBool JSX_Type_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   // Someone is calling the constructor against all common sense
-  JSX_ReportException(cx, "Type is not a constructor");
-  return JS_FALSE;
+  return JSX_ReportException(cx, "Type is not a constructor");
 }
 
 
@@ -270,10 +238,7 @@ static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *a
 static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval arg = argv[0];
   *rval = JSVAL_VOID;
-  if(!jsval_is_Type(cx, arg)) {
-    JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
-    return JS_FALSE;
-  }
+  if(!jsval_is_Type(cx, arg)) return JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
   JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(arg));
   int size = t->SizeInBytes();
   if(size) *rval = INT_TO_JSVAL(size);
