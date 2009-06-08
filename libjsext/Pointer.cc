@@ -323,7 +323,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
   JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrv));
   JSX_TypeFunction *ft = (JSX_TypeFunction *) finptr->type;
 
-  if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0].paramtype->type != POINTERTYPE || ft->param[0].isConst) {
+  if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0].paramtype->type != POINTERTYPE) {
     return JSX_ReportException(cx, "Wrong function type for finalize property");
   }
 

@@ -58,9 +58,8 @@ struct JSX_TypeNumeric : JSX_Type {
 
 struct JSX_FuncParam {
   JSX_Type *paramtype;
-  int isConst;
 
-  JSX_FuncParam() : paramtype(0), isConst(0) {}
+  JSX_FuncParam() : paramtype(0) {}
 };
 
 struct JSX_TypeFunction : JSX_Type {

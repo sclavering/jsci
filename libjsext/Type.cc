@@ -65,7 +65,6 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
   if(!FuncParam_Init(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
   if(memberno == type->nParam - 1) {
     type->param[type->nParam].paramtype = sTypeVoid;
-    type->param[type->nParam].isConst = 0;
   }
   if(type->cif.arg_types) {
     delete type->cif.arg_types;
@@ -110,7 +109,6 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   type->param = new JSX_FuncParam[type->nParam + 1];
 
   type->param[type->nParam].paramtype = sTypeVoid;
-  type->param[type->nParam].isConst=0;
   type->cif.arg_types=0;
 
   int i;
@@ -138,8 +136,6 @@ static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membe
     return JS_FALSE;
   }
   dest->paramtype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
-  JS_GetProperty(cx, membertype, "const", &tmp);
-  dest->isConst = tmp == JSVAL_TRUE ? 1 : 0;
   return JS_TRUE;
 }
 
