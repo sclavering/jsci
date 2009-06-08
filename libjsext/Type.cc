@@ -5,7 +5,6 @@
 
 
 static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
-static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype);
 
 static JSX_Type *sTypeVoid = NULL;
 // __proto__ for results of Type.function(...) and similar
@@ -62,10 +61,12 @@ static JSBool TypeFunction_SetMember(JSContext *cx, JSObject *obj, int memberno,
   JSX_TypeFunction *type = (JSX_TypeFunction *) JS_GetPrivate(cx, obj);
   if(memberno >= type->nParam) type->nParam = memberno + 1;
   if(!JSVAL_IS_OBJECT(member) || JSVAL_IS_NULL(member)) return JS_FALSE;
-  if(!FuncParam_Init(cx, type->param + memberno, JSVAL_TO_OBJECT(member))) return JS_FALSE;
-  if(memberno == type->nParam - 1) {
-    type->param[type->nParam].paramtype = sTypeVoid;
-  }
+
+  jsval tmp;
+  JS_GetProperty(cx, JSVAL_TO_OBJECT(member), "type", &tmp);
+  if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Type.function(): one of the argument descriptors has a bad or missing .type property");
+  type->param[memberno] = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+
   if(type->cif.arg_types) {
     delete type->cif.arg_types;
     type->cif.arg_types = 0;
@@ -106,18 +107,17 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
   JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   type->returnType = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
 
-  type->param = new JSX_FuncParam[type->nParam + 1];
+  type->param = new JSX_Type*[type->nParam + 1];
 
-  type->param[type->nParam].paramtype = sTypeVoid;
   type->cif.arg_types=0;
 
-  int i;
-  for(i = 0; i < nParam; i++) {
+  for(int i = 0; i < nParam; i++) {
     jsval thisparam;
     JS_GetElement(cx, paramobj, i, &thisparam);
     TypeFunction_SetMember(cx, retobj, i, thisparam);
     JS_DefineElement(cx, retobj, i, thisparam, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
+  type->param[type->nParam] = sTypeVoid;
 
   return JS_TRUE;
 }
@@ -125,18 +125,6 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
 
 JSClass *JSX_GetTypeClass(void) {
   return &JSX_TypeClass;
-}
-
-
-static JSBool FuncParam_Init(JSContext *cx, JSX_FuncParam *dest, JSObject *membertype) {
-  jsval tmp;
-  JS_GetProperty(cx, membertype, "type", &tmp);
-  if(!jsval_is_Type(cx, tmp)) {
-    JSX_ReportException(cx, "Type.function(): one of the argument descriptors has a bad or missing .type property");
-    return JS_FALSE;
-  }
-  dest->paramtype = (JSX_Type *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
-  return JS_TRUE;
 }
 
 

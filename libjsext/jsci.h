@@ -56,15 +56,9 @@ struct JSX_TypeNumeric : JSX_Type {
   int AlignmentInBytes();
 };
 
-struct JSX_FuncParam {
-  JSX_Type *paramtype;
-
-  JSX_FuncParam() : paramtype(0) {}
-};
-
 struct JSX_TypeFunction : JSX_Type {
   // FUNCTIONTYPE
-  JSX_FuncParam *param;
+  JSX_Type **param;
   int nParam;
   JSX_Type *returnType;
   ffi_cif cif;
@@ -151,7 +145,6 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JSX_Type *type);
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 
-int JSX_TypeSize_multi(JSContext *cx, uintN nargs, JSX_FuncParam *type, jsval *vp, ffi_type **arg_types);
 JSClass *JSX_GetTypeClass(void);
 JSClass *JSX_GetPointerClass(void);
 

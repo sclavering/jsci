@@ -323,7 +323,7 @@ static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, js
   JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrv));
   JSX_TypeFunction *ft = (JSX_TypeFunction *) finptr->type;
 
-  if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0].paramtype->type != POINTERTYPE) {
+  if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0]->type != POINTERTYPE) {
     return JSX_ReportException(cx, "Wrong function type for finalize property");
   }
 
@@ -447,9 +447,9 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   JS_AddRoot(cb->cx, &rval);
 
   for(int i = 0; i < type->nParam; i++) {
-    JSX_FuncParam *thistype = &type->param[i];
-    if(thistype->paramtype->type == ARRAYTYPE) return; // xxx why don't we just treat it as a pointer type?
-    JSX_Get(cb->cx, (char*) *args, thistype->paramtype, tmp_argv);
+    JSX_Type *t = type->param[i];
+    if(t->type == ARRAYTYPE) return; // xxx why don't we just treat it as a pointer type?
+    JSX_Get(cb->cx, (char*) *args, t, tmp_argv);
   }
 
   if (!JS_CallFunction(cb->cx, JS_GetGlobalObject(cb->cx), cb->fun, type->nParam, tmp_argv, &rval)) {

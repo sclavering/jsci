@@ -428,7 +428,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JSX_Type *type, jsval v) {
 JSBool JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JSX_TypeFunction *funct, jsval *vp, void **argptr) {
   int cursiz;
   for(int i = 0; i < funct->nParam; ++i) {
-    JSX_Type *t = funct->param[i].paramtype;
+    JSX_Type *t = funct->param[i];
 
     if(t->type == ARRAYTYPE) {
       if(!will_clean) return JS_FALSE;
