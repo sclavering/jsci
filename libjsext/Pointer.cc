@@ -259,7 +259,7 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   char *retbuf = (char *) (argptr + argc);
   char *argbuf = retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
-  if(arg_size && !JSX_Set_multi(cx, argbuf, 1, ft, argv, argptr)) goto failure;
+  if(arg_size && !JSX_Set_multi(cx, argbuf, ft, argv, argptr)) goto failure;
 
   ffi_call(cif, (void (*)()) ptr->ptr, (void *)retbuf, argptr);
 
@@ -456,7 +456,13 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
     //    printf("FAILCALL\n");
   }
   
-  JSX_Set_multi(cb->cx, 0, 0, type, tmp_argv, args);
+  for(int i = 0; i != type->nParam; ++i) {
+    JsciType *t = type->param[i];
+    if(t->type == ARRAYTYPE) return;
+    if(!JSX_Set(cb->cx, (char*) *args, 0, t, *tmp_argv)) return;
+    args++;
+    tmp_argv++;
+  }
 
   JS_RemoveRoot(cb->cx, &rval);
   for(int i = 0; i != type->nParam; ++i) {

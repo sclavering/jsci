@@ -181,7 +181,7 @@ extern const char *JSX_typenames[];
 extern const char *JSX_jstypenames[];
 
 int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v);
-JSBool JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JsciTypeFunction *tf, jsval *vp, void **argptr);
+JSBool JSX_Set_multi(JSContext *cx, char *ptr, JsciTypeFunction *tf, jsval *vp, void **argptr);
 
 JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JsciType *type);

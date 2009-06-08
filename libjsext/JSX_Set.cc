@@ -429,16 +429,15 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
 }
 
 
-JSBool JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JsciTypeFunction *funct, jsval *vp, void **argptr) {
+JSBool JSX_Set_multi(JSContext *cx, char *ptr, JsciTypeFunction *funct, jsval *vp, void **argptr) {
   int cursiz;
   for(int i = 0; i < funct->nParam; ++i) {
     JsciType *t = funct->param[i];
 
     if(t->type == ARRAYTYPE) {
-      if(!will_clean) return JS_FALSE;
       // In function calls, arrays are passed by pointer
       *(void **)ptr = JS_malloc(cx, t->SizeInBytes());
-      cursiz = JSX_Set(cx, (char*) *(void **)ptr, will_clean, t, *vp);
+      cursiz = JSX_Set(cx, (char*) *(void **)ptr, 1, t, *vp);
       if(cursiz) {
         cursiz = sizeof(void *);
       } else {
@@ -446,16 +445,11 @@ JSBool JSX_Set_multi(JSContext *cx, char *ptr, int will_clean, JsciTypeFunction 
         return JS_FALSE;
       }
     } else {
-      cursiz = JSX_Set(cx, (char*) (ptr ? ptr : *argptr), will_clean, t, *vp);
+      cursiz = JSX_Set(cx, (char*) ptr, 1, t, *vp);
     }
     if(!cursiz) return JS_FALSE;
-
-    if (ptr) {
-      *(argptr++)=ptr;
-      ptr += cursiz;
-    } else {
-      argptr++;
-    }
+    *(argptr++) = ptr;
+    ptr += cursiz;
     vp++;
   }
 
