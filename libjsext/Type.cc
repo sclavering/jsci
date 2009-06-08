@@ -145,14 +145,10 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
     return JS_FALSE;
   }
 
-  JSObject *retobj;
-  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_pointer_proto, 0);
-  *rval=OBJECT_TO_JSVAL(retobj);
-
   JsciTypePointer *type = new JsciTypePointer;
-  JS_SetPrivate(cx, retobj, type);
+  WrapType(cx, type, s_Type_pointer_proto, rval);
   type->direct = sTypeVoid;
-  JS_DefineElement(cx, retobj, 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+  JS_DefineElement(cx, JSVAL_TO_OBJECT(*rval), 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   if(direct != JSVAL_VOID) type->direct = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
 
   return JS_TRUE;
@@ -172,13 +168,10 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
     return JS_FALSE;
   }
 
-  JSObject *retobj;
-  retobj = JS_NewObject(cx, &JSX_TypeClass, s_Type_array_proto, 0);
-  *rval=OBJECT_TO_JSVAL(retobj);
   JsciTypeArray *type = new JsciTypeArray;
-  JS_SetPrivate(cx, retobj, type);
   type->length = JSVAL_TO_INT(len);
   type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
+  WrapType(cx, type, s_Type_array_proto, rval);
   return JS_TRUE;
 }
 
