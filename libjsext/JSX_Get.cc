@@ -262,16 +262,3 @@ int JSX_Get(JSContext *cx, char *p, JSX_Type *type, jsval *rval) {
   JSX_ReportException(cx, "Get: Could not convert C value of type %s to JS", JSX_typenames[type->type]);
   return 0;
 }
-
-
-int JSX_Get_multi(JSContext *cx, JSX_TypeFunction *funct, jsval *rval, void **argptr) {
-  int ret = 0;
-  for(int i = 0; i < funct->nParam; i++) {
-    JSX_FuncParam *thistype = &funct->param[i];
-    if(thistype->paramtype->type == ARRAYTYPE) return 0; // xxx why don't we just treat it as a pointer type?
-    int siz = JSX_Get(cx, (char*) *argptr, thistype->paramtype, rval);
-    if(!siz) return 0;
-    ret += siz;
-  }
-  return ret;
-}

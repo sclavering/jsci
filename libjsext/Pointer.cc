@@ -452,8 +452,12 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
     JS_AddRoot(cb->cx, tmp_argv+i);
   }
   JS_AddRoot(cb->cx, &rval);
-  
-  JSX_Get_multi(cb->cx, type, tmp_argv, args);
+
+  for(int i = 0; i < type->nParam; i++) {
+    JSX_FuncParam *thistype = &type->param[i];
+    if(thistype->paramtype->type == ARRAYTYPE) return; // xxx why don't we just treat it as a pointer type?
+    JSX_Get(cb->cx, (char*) *args, thistype->paramtype, tmp_argv);
+  }
 
   if (!JS_CallFunction(cb->cx, JS_GetGlobalObject(cb->cx), cb->fun, type->nParam, tmp_argv, &rval)) {
     //    printf("FAILCALL\n");
