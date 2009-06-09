@@ -13,7 +13,6 @@ Our JavaScript <-> C interface, using libffi.
 
 enum JSX_TypeID {
   INTTYPE,
-  UINTTYPE,
   FLOATTYPE,
   FUNCTIONTYPE,
   SUTYPE,
@@ -24,7 +23,7 @@ enum JSX_TypeID {
   TYPECOUNT
 };
 
-#define TYPECOUNT2 (TYPECOUNT + 6)
+#define TYPECOUNT2 (TYPECOUNT + 7)
 
 // We store an instance of this, or a subclass, inside each js Type object
 struct JsciType {
@@ -51,7 +50,7 @@ struct JsciTypeVoid : JsciType {
 };
 
 struct JsciTypeNumeric : JsciType {
-  // INTTYPE, UINTTYPE, or FLOATTYPE
+  // INTTYPE or FLOATTYPE
   int size;
   ffi_type ffiType;
 
@@ -228,7 +227,7 @@ struct JsciCallback : JsciPointer {
 
 
 static inline int type_is_char(JsciType *t) {
-  return (t->type == INTTYPE || t->type == UINTTYPE) && 0 == ((JsciTypeNumeric *) t)->size;
+  return t->type == INTTYPE && 0 == ((JsciTypeNumeric *) t)->size;
 }
 
 

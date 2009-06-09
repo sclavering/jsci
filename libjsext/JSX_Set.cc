@@ -44,7 +44,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     goto pointercommon;
 
   case TYPEPAIR(JSPOINTER,INTTYPE):
-  case TYPEPAIR(JSPOINTER,UINTTYPE):
 
     if(type->SizeInBytes() != sizeof(void*)) goto failure;
 
@@ -91,7 +90,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     return sizeof(char *);
 
   case TYPEPAIR(JSVAL_STRING,INTTYPE):
-  case TYPEPAIR(JSVAL_STRING,UINTTYPE):
 
     switch(((JsciTypeNumeric *) type)->size) {
     case 0:
@@ -139,7 +137,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     // fall through
 
   case TYPEPAIR(JSVAL_INT,INTTYPE):
-  case TYPEPAIR(JSVAL_INT,UINTTYPE):
 
     tmpint=JSVAL_TO_INT(v);
     goto intcommon;
@@ -168,7 +165,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     goto intcommon;
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
-  case TYPEPAIR(JSVAL_BOOLEAN,UINTTYPE):
 
     tmpint=v==JSVAL_TRUE?1:0;
     goto intcommon;
@@ -183,7 +179,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     // fall through
 
   case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
-  case TYPEPAIR(JSVAL_DOUBLE,UINTTYPE):
 
     tmpint=(int)*JSVAL_TO_DOUBLE(v);
 
@@ -363,7 +358,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSNULL,SUTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):
   case TYPEPAIR(JSNULL,INTTYPE):
-  case TYPEPAIR(JSNULL,UINTTYPE):
   case TYPEPAIR(JSNULL,FLOATTYPE):
 
     // Initialize with zero
@@ -377,7 +371,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSVOID,SUTYPE):
   case TYPEPAIR(JSVOID,ARRAYTYPE):
   case TYPEPAIR(JSVOID,INTTYPE):
-  case TYPEPAIR(JSVOID,UINTTYPE):
   case TYPEPAIR(JSVOID,FLOATTYPE):
 
     // Do nothing
