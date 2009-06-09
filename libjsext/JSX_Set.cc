@@ -79,25 +79,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     *(char **)p=JS_GetStringBytes(JSVAL_TO_STRING(v));
     return sizeof(char *);
 
-  case TYPEPAIR(JSVAL_STRING,INTTYPE):
-
-    switch(((JsciTypeNumeric *) type)->size) {
-    case 0:
-
-      // Copy a string to a char
-
-      *(char *)p=JS_GetStringBytes(JSVAL_TO_STRING(v))[0];
-      return sizeof(char);
-
-    case 1:
-
-      // Copy a string to a short
-
-      *(jschar *)p=JS_GetStringChars(JSVAL_TO_STRING(v))[0];
-      return sizeof(jschar);
-    }
-    goto failure;
-
   case TYPEPAIR(JSVAL_INT,INTTYPE):
 
     tmpint=JSVAL_TO_INT(v);
