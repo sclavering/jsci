@@ -75,15 +75,13 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
   }
 
   JsciType *t = (JsciType *) JS_GetPrivate(cx, type);
-  int size = t->SizeInBytes();
-  JsciPointer *retpriv = (JsciPointer *) new char[sizeof(JsciPointer) + size];
+  JsciPointer *retpriv = new JsciPointerAlloc(t->SizeInBytes());
 
   if (!retpriv)
     return JS_FALSE;
 
   JS_SetPrivate(cx, retobj, retpriv);
 
-  retpriv->ptr=retpriv+1;
   retpriv->type = (JsciType *) JS_GetPrivate(cx, type);
   retpriv->finalize=0;
 
@@ -126,10 +124,9 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  JsciPointer *ret = new JsciPointer;
+  JsciPointer *ret = new JsciPointer();
   if (!ret)
     return JS_FALSE;
-  ret->ptr=0;
   ret->type = (JsciType *) JS_GetPrivate(cx, typeobj);
   ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
@@ -147,12 +144,10 @@ static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *ar
   JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
   int length = INT_TO_JSVAL(argv[0]);
-  JsciPointer *ret = (JsciPointer *) new char[sizeof(JsciPointer) + length];
+  JsciPointer *ret = new JsciPointerAlloc(length);
   if (!ret)
     return JS_FALSE;
-  ret->ptr=ret+1;
   ret->type = GetVoidType();
-  ret->finalize=0;
   JS_SetPrivate(cx, newobj, ret);
 
   return JS_TRUE;
@@ -379,10 +374,9 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
   *rval = OBJECT_TO_JSVAL(newobj);
 
-  JsciPointer *newptr = (JsciPointer *) malloc(sizeof(JsciPointer));
+  JsciPointer *newptr = new JsciPointer();
   newptr->type = sutype->member[ix].membertype;
   newptr->ptr = (char*) ptr->ptr + sutype->member[ix].offset / 8;
-  newptr->finalize = 0;
   JS_SetPrivate(cx, newobj, newptr);
 
   return JS_TRUE;
@@ -433,6 +427,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   JsciTypeFunction *type = (JsciTypeFunction *) cb->type;
 
   jsval *tmp_argv = new jsval[type->nParam];
+  jsval *tmp_argv_orig = tmp_argv;
   if(!tmp_argv) return;
   
   for(int i = 0; i != type->nParam; ++i) {
@@ -463,7 +458,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   for(int i = 0; i != type->nParam; ++i) {
     JS_RemoveRoot(cb->cx, tmp_argv+i);
   }
-  JS_free(cb->cx, tmp_argv);
+  delete tmp_argv_orig;
 
   if(type->returnType->type != VOIDTYPE) JSX_Set(cb->cx, (char*) ret, 0, type->returnType, rval);
 }

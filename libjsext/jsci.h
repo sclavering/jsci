@@ -207,7 +207,14 @@ struct JsciPointer {
   JsciType *type;
   void (*finalize) (void *);
 
+  JsciPointer();
   ~JsciPointer();
+};
+
+// A version of JsciPointer that allocates and frees its ->ptr
+struct JsciPointerAlloc : JsciPointer {
+  JsciPointerAlloc(int num_bytes);
+  ~JsciPointerAlloc();
 };
 
 struct JsciCallback : JsciPointer {
