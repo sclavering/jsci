@@ -177,15 +177,11 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSVAL_DOUBLE,FLOATTYPE):
   case TYPEPAIR(JSVAL_BOOLEAN,FLOATTYPE):
   case TYPEPAIR(JSVAL_INT,FLOATTYPE):
-    return ((JsciTypeFloat *) type)->JStoC(cx, p, v, will_clean);
-
   case TYPEPAIR(JSVAL_STRING,ARRAYTYPE):
   case TYPEPAIR(JSARRAY,ARRAYTYPE):
   case TYPEPAIR(JSPOINTER,ARRAYTYPE):
-    return ((JsciTypeArray *) type)->JStoC(cx, p, v, will_clean);
-
   case TYPEPAIR(JSVAL_OBJECT,SUTYPE):
-    return ((JsciTypeStructUnion *) type)->JStoC(cx, p, v, will_clean);
+    return type->JStoC(cx, p, v, will_clean);
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   {

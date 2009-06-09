@@ -9,6 +9,11 @@ JsciType::~JsciType() {
 }
 
 
+int JsciType::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+  return JSX_ReportException(cx, "Bad JStoC call");
+}
+
+
 ffi_type *JsciType::GetFFIType() {
   return 0;
 }

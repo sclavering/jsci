@@ -33,6 +33,7 @@ struct JsciType {
   virtual ~JsciType();
 
   virtual int CtoJS(JSContext *cx, char *data, jsval *rval) = 0;
+  virtual int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
   virtual ffi_type *GetFFIType();
   virtual int SizeInBits();
   virtual int SizeInBytes();
@@ -116,12 +117,12 @@ struct JsciTypeStructUnion : JsciType {
   JsciTypeStructUnion();
   ~JsciTypeStructUnion();
 
+  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
   int SizeInBytes();
   int AlignmentInBytes();
   JSBool ContainsPointer();
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
-  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
   virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
   JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
 };
