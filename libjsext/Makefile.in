@@ -61,7 +61,7 @@ JsciTypeVoid.o: jsci.h
 JSX_Set.o: jsci.h
 
 
-JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o JsciType.o JsciTypeVoid.o JsciTypeNumeric.o JsciTypeInt.o JsciTypeUint.o JsciTypeFloat.o JsciTypePointer.o JsciTypeStructUnion.o JsciTypeStruct.o JsciTypeUnion.o JsciTypeBitfield.o JsciTypeArray.o JsciTypeFunction.o JSX_Set.o JsciPointer.o JsciPointerAlloc.o c_gram.o c_scan.o xml.o libctoxml.o strbuf.o
+JSX_OBJS = jsext.o environment.o load.o Dl.o Pointer.o Type.o encodeJSON.o decodeJSON.o encodeUTF8.o decodeUTF8.o encodeBase64.o decodeBase64.o clib.o util.o JsciType.o JsciTypeVoid.o JsciTypeNumeric.o JsciTypeInt.o JsciTypeUint.o JsciTypeFloat.o JsciTypePointer.o JsciTypeStructUnion.o JsciTypeStruct.o JsciTypeUnion.o JsciTypeBitfield.o JsciTypeArray.o JsciTypeFunction.o JSX_Set.o JsciPointer.o JsciPointerAlloc.o JsciCallback.o c_gram.o c_scan.o xml.o libctoxml.o strbuf.o
 
 jsext:	$(JSX_OBJS)
 	g++ $(JSAPI_FLAGS) $(LDFLAGS) $(JSX_OBJS) -o jsext -lm -pthread -rdynamic -ljs -ldl -lffi

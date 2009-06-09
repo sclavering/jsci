@@ -221,6 +221,8 @@ struct JsciCallback : JsciPointer {
   JSContext *cx;
   JSFunction *fun;
   void *writeable; // Points to writeable code
+
+  JsciCallback(JSContext *cx, JSFunction *fun, JsciType *t);
 };
 
 

@@ -83,32 +83,20 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
   JS_SetPrivate(cx, retobj, retpriv);
 
   retpriv->type = (JsciType *) JS_GetPrivate(cx, type);
-  retpriv->finalize=0;
 
   return JS_TRUE;
 }
 
 
 JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JsciType *type) {
-  if(type->type != FUNCTIONTYPE) {
-    JSX_ReportException(cx, "Type is not a C function");
-    return JS_FALSE;
-  }
+  if(type->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Type is not a C function");
 
   if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  JsciCallback *retpriv = new JsciCallback;
+  JsciCallback *retpriv = new JsciCallback(cx, fun, type);
   if (!retpriv)
     return JS_FALSE;
-
-  void *code;
-  retpriv->writeable=ffi_closure_alloc(sizeof(ffi_closure), &code);
-  retpriv->ptr=code;
-  retpriv->cx=cx;
-  retpriv->fun=fun;
-  retpriv->finalize=ffi_closure_free; //This would free the code address, not always identical to writeable address. So it is checked in finalize.
-  retpriv->type = type;
 
   if(ffi_prep_closure_loc((ffi_closure*) retpriv->writeable, ((JsciTypeFunction *) retpriv->type)->GetCIF(), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
     return JS_FALSE;
@@ -128,7 +116,6 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   if (!ret)
     return JS_FALSE;
   ret->type = (JsciType *) JS_GetPrivate(cx, typeobj);
-  ret->finalize=0;
   JS_SetPrivate(cx, retobj, ret);
 
   return JS_TRUE;
@@ -423,11 +410,10 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
 
 static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
   JsciCallback *cb = (JsciCallback *) user_data;
-  jsval rval=JSVAL_VOID;
   JsciTypeFunction *type = (JsciTypeFunction *) cb->type;
 
+  jsval rval = JSVAL_VOID;
   jsval *tmp_argv = new jsval[type->nParam];
-  jsval *tmp_argv_orig = tmp_argv;
   if(!tmp_argv) return;
   
   for(int i = 0; i != type->nParam; ++i) {
@@ -449,16 +435,15 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   for(int i = 0; i != type->nParam; ++i) {
     JsciType *t = type->param[i];
     if(t->type == ARRAYTYPE) return;
-    if(!JSX_Set(cb->cx, (char*) *args, 0, t, *tmp_argv)) return;
+    if(!JSX_Set(cb->cx, (char*) *args, 0, t, tmp_argv[i])) return;
     args++;
-    tmp_argv++;
   }
 
   JS_RemoveRoot(cb->cx, &rval);
   for(int i = 0; i != type->nParam; ++i) {
     JS_RemoveRoot(cb->cx, tmp_argv+i);
   }
-  delete tmp_argv_orig;
+  delete tmp_argv;
 
   if(type->returnType->type != VOIDTYPE) JSX_Set(cb->cx, (char*) ret, 0, type->returnType, rval);
 }
