@@ -95,27 +95,8 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
 
       *(jschar *)p=JS_GetStringChars(JSVAL_TO_STRING(v))[0];
       return sizeof(jschar);
-
-    default:
-      goto failure;
     }
-
-  case TYPEPAIR(JSVAL_STRING,ARRAYTYPE):
-  {
-    JsciTypeArray *ta = (JsciTypeArray *) type;
-    if(!type_is_char(ta->member)) goto failure;
-
-    // Copy a string to a char array
-
-    size=JS_GetStringLength(JSVAL_TO_STRING(v));
-    if(size < ta->length) {
-      memcpy(*(char **)p, JS_GetStringBytes(JSVAL_TO_STRING(v)), size * sizeof(char));
-      memset(*(char **)p + size, 0, (ta->length - size) * sizeof(char));
-    } else {
-      memcpy(*(char **)p, JS_GetStringBytes(JSVAL_TO_STRING(v)), ta->length * sizeof(char));
-    }
-    return sizeof(char) * ta->length;
-  }
+    goto failure;
 
   case TYPEPAIR(JSVAL_INT,INTTYPE):
 
@@ -207,6 +188,11 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSVAL_INT,FLOATTYPE):
     return ((JsciTypeFloat *) type)->JStoC(cx, p, v, will_clean);
 
+  case TYPEPAIR(JSVAL_STRING,ARRAYTYPE):
+  case TYPEPAIR(JSARRAY,ARRAYTYPE):
+  case TYPEPAIR(JSPOINTER,ARRAYTYPE):
+    return ((JsciTypeArray *) type)->JStoC(cx, p, v, will_clean);
+
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   {
     // Copy array elements to a variable array
@@ -245,26 +231,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     vararrayfailure2:
       if(will_clean) delete p;
       return 0;
-  }
-
-  case TYPEPAIR(JSARRAY,ARRAYTYPE):
-  {
-    // Copy array elements to a fixed size array
-    JsciTypeArray *ta = (JsciTypeArray *) type;
-    
-    totsize=0;
-    size = ta->length;
-    obj=JSVAL_TO_OBJECT(v);
-
-    for (i=0; i<size; i++) {
-      jsval tmp;
-      JS_GetElement(cx, obj, i, &tmp);
-      int thissize = JSX_Set(cx, p + totsize, will_clean, ta->member, tmp);
-      if(!thissize) return 0;
-      totsize+=thissize;
-    }
-
-    return totsize;
   }
 
   case TYPEPAIR(JSVAL_OBJECT,SUTYPE):
@@ -319,14 +285,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     // Do nothing
 
     return type->SizeInBytes();
-
-  case TYPEPAIR(JSPOINTER,ARRAYTYPE):
-
-    // Copy contents pointed to into array
-    size = type->SizeInBytes();
-    ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
-    memcpy(p, ptr->ptr, size);
-    return size;
 
   default:
     // Could not find appropriate conversion

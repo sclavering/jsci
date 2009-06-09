@@ -159,6 +159,7 @@ struct JsciTypeArray : JsciType {
   JsciTypeArray();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
+  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
   int SizeInBytes();
   int AlignmentInBytes();
   JSBool ContainsPointer();
