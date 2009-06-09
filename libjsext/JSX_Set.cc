@@ -57,8 +57,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     // Copy a null to a type *
 
     *(void **)p=NULL;
-
-    // fall through
+    return sizeof(void *);
 
   case TYPEPAIR(JSVOID,POINTERTYPE):
   case TYPEPAIR(JSVOID,FUNCTIONTYPE):
