@@ -118,15 +118,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     return sizeof(char) * ta->length;
   }
 
-  case TYPEPAIR(JSVAL_INT,POINTERTYPE):
-
-    // Copy a number to an undefined type or type *
-    // assume int
-
-    size=2;
-
-    // fall through
-
   case TYPEPAIR(JSVAL_INT,INTTYPE):
 
     tmpint=JSVAL_TO_INT(v);
