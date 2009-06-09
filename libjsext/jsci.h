@@ -208,7 +208,7 @@ struct JsciPointer {
   void (*finalize) (void *);
 
   JsciPointer();
-  ~JsciPointer();
+  virtual ~JsciPointer();
 };
 
 // A version of JsciPointer that allocates and frees its ->ptr
@@ -223,6 +223,7 @@ struct JsciCallback : JsciPointer {
   void *writeable; // Points to writeable code
 
   JsciCallback(JSContext *cx, JSFunction *fun, JsciType *t);
+  ~JsciCallback();
 };
 
 
