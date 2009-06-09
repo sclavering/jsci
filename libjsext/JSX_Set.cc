@@ -131,15 +131,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     tmpint=v==JSVAL_TRUE?1:0;
     goto intcommon;
 
-  case TYPEPAIR(JSVAL_DOUBLE,POINTERTYPE):
-
-    // Copy a number to a type *
-    // assume int
-
-    size=2;
-
-    // fall through
-
   case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
 
     tmpint=(int)*JSVAL_TO_DOUBLE(v);
