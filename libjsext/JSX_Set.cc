@@ -281,9 +281,9 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
         containsPointers = tp->direct->ContainsPointer();
         if(containsPointers) {
           // Allocate twice the space in order to store old pointers
-          *(void **)p = JS_malloc(cx, elemsize * size * 2);
+          *(void **)p = new char[elemsize * size * 2];
         } else {
-          *(void **)p = JS_malloc(cx, elemsize * size);
+          *(void **)p = new char[elemsize * size];
         }
       }
       
@@ -304,7 +304,7 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
 
     vararrayfailure2:
       if (will_clean) {
-        JS_free(cx, *(void **)p);
+        delete *(void **)p;
       }
     
       return 0;
@@ -415,12 +415,12 @@ JSBool JSX_Set_multi(JSContext *cx, char *ptr, JsciTypeFunction *funct, jsval *v
 
     if(t->type == ARRAYTYPE) {
       // In function calls, arrays are passed by pointer
-      *(void **)ptr = JS_malloc(cx, t->SizeInBytes());
+      *(void **)ptr = new char[t->SizeInBytes()];
       cursiz = JSX_Set(cx, (char*) *(void **)ptr, 1, t, *vp);
       if(cursiz) {
         cursiz = sizeof(void *);
       } else {
-        JS_free(cx, *(void **)ptr);
+        delete *(void **)ptr;
         return JS_FALSE;
       }
     } else {
