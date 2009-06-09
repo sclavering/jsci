@@ -59,13 +59,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     *(void **)p=NULL;
     return sizeof(void *);
 
-  case TYPEPAIR(JSVOID,POINTERTYPE):
-  case TYPEPAIR(JSVOID,FUNCTIONTYPE):
-
-    // Do nothing
-
-    return sizeof(void *);
-
   case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
     
     if(!is_void_or_char(((JsciTypePointer *) type)->direct)) goto failure;
@@ -215,13 +208,14 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     memset(p, 0, size);
     return size;
 
+  // Do-nothing cases
+  case TYPEPAIR(JSVOID,POINTERTYPE):
+  case TYPEPAIR(JSVOID,FUNCTIONTYPE):
+    return sizeof(void *);
   case TYPEPAIR(JSVOID,SUTYPE):
   case TYPEPAIR(JSVOID,ARRAYTYPE):
   case TYPEPAIR(JSVOID,INTTYPE):
   case TYPEPAIR(JSVOID,FLOATTYPE):
-
-    // Do nothing
-
     return type->SizeInBytes();
 
   default:
