@@ -22,6 +22,52 @@ int JsciTypePointer::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
+int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+  switch(JSX_JSType(cx, v)) {
+    case JSFUNC: {
+      if(this->direct->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Could not convert JS function to C non-function pointer type");
+      jsval tmpval = JSVAL_VOID;
+      JSFunction *fun = JS_ValueToFunction(cx, v);
+      JSObject *obj = JS_GetFunctionObject(fun);
+      JS_GetProperty(cx, obj, "__ptr__", &tmpval);
+      if(tmpval == JSVAL_VOID) {
+        // Create pointer
+        JSObject *newptr = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
+        tmpval = OBJECT_TO_JSVAL(newptr);
+        JS_DefineProperty(cx, obj, "__ptr__", tmpval, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+        if(!JSX_InitPointerCallback(cx, newptr, fun, this->direct)) return 0;
+      }
+      v = tmpval;
+      JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
+      *(void **)data = ptr->ptr;
+      return sizeof(void *);
+    }
+
+    // Copy a pointer object to a type *
+    case JSPOINTER: {
+      JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
+      *(void **)data = ptr->ptr;
+      return sizeof(void *);
+    }
+
+    // Copy a null to a type *
+    case JSNULL: {
+      *(void **)data = NULL;
+      return sizeof(void *);
+    }
+
+    // Copy a string to a void* (same as char* in this context)
+    case JSVAL_STRING: {
+      if(!is_void_or_char(this->direct)) return JSX_ReportException(cx, "Could not convert JS string to C non-char non-void pointer type");
+      if(!will_clean) return JSX_ReportException(cx, "Could not convert JS string to C in this context");
+      *(char **)data = JS_GetStringBytes(JSVAL_TO_STRING(v));
+      return sizeof(char *);
+    }
+  }
+  return JSX_ReportException(cx, "Could not convert JS value to C pointer type");
+}
+
+
 ffi_type *JsciTypePointer::GetFFIType() {
   return &ffi_type_pointer;
 }

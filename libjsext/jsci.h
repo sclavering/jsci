@@ -147,6 +147,7 @@ struct JsciTypePointer : JsciType {
   JsciTypePointer();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
+  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
   ffi_type *GetFFIType();
   int SizeInBytes();
   int AlignmentInBytes();

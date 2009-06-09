@@ -13,65 +13,12 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   int totsize;
   int i;
   JSObject *obj;
-  JsciPointer *ptr;
-  jsval tmpval;
-  JSFunction *fun;
 
   int typepair = TYPEPAIR(JSX_JSType(cx, v), type->type);
 
   // Determine the appropriate conversion
 
   switch(typepair) {
-  case TYPEPAIR(JSFUNC,POINTERTYPE):
-    if(((JsciTypePointer *) type)->direct->type != FUNCTIONTYPE)
-      goto failure;
-
-    fun=JS_ValueToFunction(cx,v);
-    obj=JS_GetFunctionObject(fun);
-    JS_GetProperty(cx, obj, "__ptr__", &tmpval);
-    if (tmpval==JSVAL_VOID) {
-      // Create pointer
-      JSObject *newptr=JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-      tmpval=OBJECT_TO_JSVAL(newptr);
-      JS_DefineProperty(cx, obj, "__ptr__", tmpval, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-
-      if(!JSX_InitPointerCallback(cx, newptr, fun, ((JsciTypePointer *) type)->direct)) {
-        return 0;
-      }
-    }
-    v=tmpval;
-    goto pointercommon;
-
-  case TYPEPAIR(JSPOINTER,POINTERTYPE):
-
-    // Copy a pointer object to a type *
-
-  pointercommon:
-
-    ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
-    *(void **)p=ptr->ptr;
-    return sizeof(void *);
-
-  case TYPEPAIR(JSNULL,POINTERTYPE):
-
-    // Copy a null to a type *
-
-    *(void **)p=NULL;
-    return sizeof(void *);
-
-  case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
-    
-    if(!is_void_or_char(((JsciTypePointer *) type)->direct)) goto failure;
-
-    // Copy a string to a void *
-    // same as char * in this context
-
-    if (!will_clean)
-      goto failure;
-
-    *(char **)p=JS_GetStringBytes(JSVAL_TO_STRING(v));
-    return sizeof(char *);
-
   case TYPEPAIR(JSVAL_INT,INTTYPE):
 
     tmpint=JSVAL_TO_INT(v);
@@ -155,6 +102,10 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSARRAY,ARRAYTYPE):
   case TYPEPAIR(JSPOINTER,ARRAYTYPE):
   case TYPEPAIR(JSVAL_OBJECT,SUTYPE):
+  case TYPEPAIR(JSFUNC,POINTERTYPE):
+  case TYPEPAIR(JSPOINTER,POINTERTYPE):
+  case TYPEPAIR(JSNULL,POINTERTYPE):
+  case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
     return type->JStoC(cx, p, v, will_clean);
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
