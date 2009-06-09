@@ -121,6 +121,7 @@ struct JsciTypeStructUnion : JsciType {
   JSBool ContainsPointer();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
+  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
   virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
   JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
 };

@@ -193,6 +193,9 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSPOINTER,ARRAYTYPE):
     return ((JsciTypeArray *) type)->JStoC(cx, p, v, will_clean);
 
+  case TYPEPAIR(JSVAL_OBJECT,SUTYPE):
+    return ((JsciTypeStructUnion *) type)->JStoC(cx, p, v, will_clean);
+
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   {
     // Copy array elements to a variable array
@@ -231,39 +234,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     vararrayfailure2:
       if(will_clean) delete p;
       return 0;
-  }
-
-  case TYPEPAIR(JSVAL_OBJECT,SUTYPE):
-  {
-    // Copy object elements to a struct or union
-    JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) type;
-    obj=JSVAL_TO_OBJECT(v);
-    size = tsu->nMember;
-
-    for (i=0; i<size; i++) {
-      jsval tmp;
-      int thissize;
-
-      JS_GetProperty(cx, obj, tsu->member[i].name, &tmp);
-
-      if(tsu->member[i].membertype->type == BITFIELDTYPE) {
-        int length = ((JsciTypeBitfield *) tsu->member[i].membertype)->length;
-        int offset = tsu->member[i].offset % 8;
-        int mask = ~(-1 << length);
-        int imask = ~(imask << offset);
-        int tmpint;
-        int tmpint2;
-        thissize = JSX_Set(cx, (char *) &tmpint, will_clean, tsu->member[i].membertype, tmp);
-        memcpy((char *) &tmpint2, p + tsu->member[i].offset / 8, thissize);
-        tmpint = (tmpint2 & imask) | ((tmpint & mask) << offset);
-        memcpy(p + tsu->member[i].offset / 8, (char *) &tmpint, thissize);
-      } else {
-        thissize = JSX_Set(cx, p + tsu->member[i].offset / 8, will_clean, tsu->member[i].membertype, tmp);
-      }
-      if(!thissize) return 0;
-    }
-
-    return type->SizeInBytes();
   }
 
   case TYPEPAIR(JSNULL,SUTYPE):

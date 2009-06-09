@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "jsci.h"
 
 
@@ -40,6 +41,35 @@ int JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
   }
   JS_RemoveRoot(cx, &tmp);
   return 1;
+}
+
+
+int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+  // Copy object elements to a struct or union
+  if(JSVAL_IS_OBJECT(v) && v != JSVAL_NULL) {
+    JSObject *obj = JSVAL_TO_OBJECT(v);
+    for(int i = 0; i != this->nMember; ++i) {
+      jsval tmp;
+      int thissize, tmpint, tmpint2;
+      JS_GetProperty(cx, obj, this->member[i].name, &tmp);
+      if(this->member[i].membertype->type == BITFIELDTYPE) {
+        int length = ((JsciTypeBitfield *) this->member[i].membertype)->length;
+        int offset = this->member[i].offset % 8;
+        int mask = ~(-1 << length);
+        int imask = ~(imask << offset);
+        thissize = JSX_Set(cx, (char *) &tmpint, will_clean, this->member[i].membertype, tmp);
+        memcpy((char *) &tmpint2, data + this->member[i].offset / 8, thissize);
+        tmpint = (tmpint2 & imask) | ((tmpint & mask) << offset);
+        memcpy(data + this->member[i].offset / 8, (char *) &tmpint, thissize);
+      } else {
+        thissize = JSX_Set(cx, data + this->member[i].offset / 8, will_clean, this->member[i].membertype, tmp);
+      }
+      if(!thissize) return 0;
+    }
+    return this->SizeInBytes();
+  }
+
+  return JSX_ReportException(cx, "Cannot convert JS value to a C struct/union");
 }
 
 
