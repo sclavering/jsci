@@ -43,14 +43,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     v=tmpval;
     goto pointercommon;
 
-  case TYPEPAIR(JSPOINTER,INTTYPE):
-
-    if(type->SizeInBytes() != sizeof(void*)) goto failure;
-
-    // Copy a pointer object to an int
-
-    // fall through
-
   case TYPEPAIR(JSPOINTER,POINTERTYPE):
 
     // Copy a pointer object to a type *
