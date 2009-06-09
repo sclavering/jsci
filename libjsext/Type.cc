@@ -36,11 +36,6 @@ static void WrapType(JSContext *cx, JsciType *t, JSObject* proto, jsval *rval) {
 }
 
 
-static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
-  return JSVAL_IS_OBJECT(v) && !JSVAL_IS_NULL(v) && JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), &JSX_TypeClass, NULL);
-}
-
-
 JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype) {
   jsval tmp;
 

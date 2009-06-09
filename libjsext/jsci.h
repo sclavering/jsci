@@ -233,4 +233,10 @@ static inline int is_void_or_char(JsciType *t) {
   return t->type == VOIDTYPE || type_is_char(t);
 }
 
+
+static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
+  return JSVAL_IS_OBJECT(v) && !JSVAL_IS_NULL(v) && JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetTypeClass(), NULL);
+}
+
+
 #endif

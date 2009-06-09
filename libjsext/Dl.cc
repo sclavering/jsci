@@ -74,19 +74,10 @@ static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsva
 
 
 static JSBool Dl_proto_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  if(argc != 1) return JSX_ReportException(cx, "Wrong number of arguments");
   char *symbol;
-
-  if (argc!=1) {
-    JSX_ReportException(cx, "Wrong number of arguments");
-    return JS_FALSE;
-  }
-
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &symbol)) {
-    return JS_FALSE;
-  }
-
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &symbol)) return JS_FALSE;
   *rval = dlsym((void *) JS_GetPrivate(cx, obj), symbol) != 0 ? JSVAL_TRUE : JSVAL_FALSE;
-
   return JS_TRUE;
 }
 
@@ -98,20 +89,11 @@ static void Dl_finalize(JSContext *cx, JSObject *obj) {
 
 
 static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval) {
-  if(!JSVAL_IS_STRING(argv[0])) {
-    JS_ReportError(cx, "Dl.prototype.pointer(): first argument must be a string");
-    return JS_FALSE;
-  }
-  if(!JSVAL_IS_OBJECT(argv[1]) || JSVAL_IS_NULL(argv[1]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[1]), JSX_GetTypeClass(), NULL)) {
-    JS_ReportError(cx, "Dl.prototype.pointer(): second argument must be a Type instance");
-    return JS_FALSE;
-  }
+  if(!JSVAL_IS_STRING(argv[0])) return JSX_ReportException(cx, "Dl.prototype.pointer(): first argument must be a string");
+  if(!jsval_is_Type(cx, argv[1])) return JSX_ReportException(cx, "Dl.prototype.pointer(): second argument must be a Type instance");
 
   void *sym = dlsym(JS_GetPrivate(cx, dl), JS_GetStringBytes(JSVAL_TO_STRING(argv[0])));
-  if(!sym) {
-    JSX_ReportException(cx, "Dl.prototype.pointer(): couldn't resolve symbol");
-    return JS_FALSE;
-  }
+  if(!sym) return JSX_ReportException(cx, "Dl.prototype.pointer(): couldn't resolve symbol");
 
   JSObject *obj;
   obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
