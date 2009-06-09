@@ -14,7 +14,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   int i;
   JSObject *obj;
   JsciPointer *ptr;
-  jsdouble tmpdbl;
   jsval tmpval;
   JSFunction *fun;
 
@@ -214,45 +213,9 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     return size;
 
   case TYPEPAIR(JSVAL_DOUBLE,FLOATTYPE):
-
-    tmpdbl = *JSVAL_TO_DOUBLE(v);
-    goto floatcommon;
-
   case TYPEPAIR(JSVAL_BOOLEAN,FLOATTYPE):
-
-    tmpdbl = v==JSVAL_TRUE?1.:0.;
-    goto floatcommon;
-
   case TYPEPAIR(JSVAL_INT,FLOATTYPE):
-
-    tmpdbl = (jsdouble) JSVAL_TO_INT(v);
-
-    // Copy a number to a float (of various sizes)
-
-  floatcommon:
-
-    switch(size != -1 ? size : ((JsciTypeNumeric *) type)->size) {
-
-    case 0:
-      *(float *)p=tmpdbl;
-      size=sizeof(float);
-      break;
-
-    case 1:
-      *(double *)p=tmpdbl;
-      size=sizeof(double);
-      break;
-
-      /*
-    case 2:
-      *(long double *)p=tmpdbl;
-      size=sizeof(long double);
-      break;
-      */
-
-    }
-
-    return size;
+    return ((JsciTypeFloat *) type)->JStoC(cx, p, v, will_clean);
 
   case TYPEPAIR(JSARRAY,POINTERTYPE):
   {
@@ -357,8 +320,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
     size = type->SizeInBytes();
     memset(p, 0, size);
     return size;
-
-    break;
 
   case TYPEPAIR(JSVOID,SUTYPE):
   case TYPEPAIR(JSVOID,ARRAYTYPE):

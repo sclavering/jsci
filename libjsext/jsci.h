@@ -78,6 +78,10 @@ struct JsciTypeFloat : JsciTypeNumeric {
   JsciTypeFloat(int size, ffi_type);
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
+  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
+
+ private:
+  JSBool CoerceJS(JSContext *cx, jsval v, jsdouble *rv);
 };
 
 struct JsciTypeFunction : JsciType {
