@@ -7,5 +7,5 @@ JsciPointerAlloc::JsciPointerAlloc(int num_bytes) : JsciPointer() {
 
 
 JsciPointerAlloc::~JsciPointerAlloc() {
-  delete this->ptr;
+  delete (char*) this->ptr;
 }
