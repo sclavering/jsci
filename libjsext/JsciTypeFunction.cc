@@ -2,7 +2,7 @@
 
 
 JsciTypeFunction::JsciTypeFunction(int nParam) : JsciType(FUNCTIONTYPE), nParam(nParam) {
-  this->param = new JsciType*[this->nParam + 1];
+  this->param = new JsciType*[this->nParam];
 }
 
 

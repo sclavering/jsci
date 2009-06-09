@@ -82,7 +82,6 @@ static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *ar
     type->param[i] = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
     JS_DefineElement(cx, retobj, i, tmp, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }
-  type->param[type->nParam] = sTypeVoid;
 
   return JS_TRUE;
 }
