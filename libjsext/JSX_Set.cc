@@ -51,7 +51,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   // Do-nothing cases
   case TYPEPAIR(JSVOID,POINTERTYPE):
   case TYPEPAIR(JSVOID,FUNCTIONTYPE):
-    return sizeof(void *);
   case TYPEPAIR(JSVOID,SUTYPE):
   case TYPEPAIR(JSVOID,ARRAYTYPE):
   case TYPEPAIR(JSVOID,INTTYPE):
