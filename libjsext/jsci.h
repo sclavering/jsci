@@ -19,11 +19,8 @@ enum JSX_TypeID {
   VOIDTYPE,
   POINTERTYPE,
   ARRAYTYPE,
-  BITFIELDTYPE,
-  TYPECOUNT
+  BITFIELDTYPE
 };
-
-#define TYPECOUNT2 (TYPECOUNT + 7)
 
 // We store an instance of this, or a subclass, inside each js Type object
 struct JsciType {
@@ -182,11 +179,7 @@ struct JsciTypeBitfield : JsciType {
 };
 
 
-extern const char *JSX_typenames[];
-extern const char *JSX_jstypenames[];
-
 int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v);
-JSBool JSX_Set_multi(JSContext *cx, char *ptr, JsciTypeFunction *tf, jsval *vp, void **argptr);
 
 JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JsciType *type);
@@ -195,7 +188,6 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 JSClass *JSX_GetTypeClass(void);
 JSClass *JSX_GetPointerClass(void);
 
-int JSX_CType(JsciType *type);
 int JSX_JSType(JSContext *cx, jsval rval);
 JsciType *GetVoidType(void); // the C "void" type
 JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype);
@@ -205,8 +197,6 @@ JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertyp
 #define JSPOINTER (JSVAL_TAGMASK+3)
 #define JSARRAY (JSVAL_TAGMASK+5)
 #define JSFUNC (JSVAL_TAGMASK+6)
-
-#define TYPEPAIR(a,b) ((TYPECOUNT2 * (a)) + (b))
 
 
 struct JsciPointer {

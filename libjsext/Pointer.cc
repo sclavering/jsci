@@ -28,38 +28,6 @@ static JSClass JSX_PointerClass={
     JSX_Pointer_finalize
 };
 
-const char *JSX_typenames[] = {
-  "integer",
-  "floating point",
-  "function",
-  "struct/union",
-  "void",
-  "pointer",
-  "array",
-  "char pointer",
-  "short pointer",
-  "char array",
-  "short array",
-  "undefined type"
-};
-
-const char *JSX_jstypenames[] = {
-  "Object",
-  "int",
-  "Number",
-  "?",
-  "String",
-  "?",
-  "Boolean",
-  "?",
-  "null",
-  "undefined",
-  "Pointer",
-  "Type",
-  "Array",
-  "Function"
-};
-
 
 JSClass * JSX_GetPointerClass(void) {
   return &JSX_PointerClass;
