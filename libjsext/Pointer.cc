@@ -29,12 +29,10 @@ static JSClass JSX_PointerClass={
 };
 
 const char *JSX_typenames[] = {
-  "signed integer",
-  "unsigned integer",
+  "integer",
   "floating point",
   "function",
-  "struct",
-  "union",
+  "struct/union",
   "void",
   "pointer",
   "array",
