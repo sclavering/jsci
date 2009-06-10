@@ -235,7 +235,32 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   char *retbuf = (char *) (argptr + argc);
   char *argbuf = retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
 
-  if(arg_size && !JSX_Set_multi(cx, argbuf, ft, argv, argptr)) goto failure;
+  if(arg_size) {
+    char *ptr = argbuf;
+    jsval *vp = argv;
+    void **argptr2 = argptr;
+    int cursiz;
+    for(int i = 0; i != ft->nParam; ++i) {
+      JsciType *t = ft->param[i];
+      if(t->type == ARRAYTYPE) {
+        // In function calls, arrays are passed by pointer
+        ptr = new char[t->SizeInBytes()];
+        cursiz = JSX_Set(cx, (char*) *(void **)ptr, 1, t, *vp);
+        if(cursiz) {
+          cursiz = sizeof(void *);
+        } else {
+          delete ptr;
+          goto failure;
+        }
+      } else {
+        cursiz = JSX_Set(cx, (char*) ptr, 1, t, *vp);
+      }
+      if(!cursiz) goto failure;
+      *(argptr2++) = ptr;
+      ptr += cursiz;
+      vp++;
+    }
+  }
 
   ffi_call(cif, (void (*)()) ptr->ptr, (void *)retbuf, argptr);
 

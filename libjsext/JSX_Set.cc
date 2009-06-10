@@ -68,31 +68,3 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   JSX_ReportException(cx, "Set: Could not convert value from JS %s to C %s",JSX_jstypenames[typepair/TYPECOUNT2],JSX_typenames[typepair%TYPECOUNT2]);
   return 0;
 }
-
-
-JSBool JSX_Set_multi(JSContext *cx, char *ptr, JsciTypeFunction *funct, jsval *vp, void **argptr) {
-  int cursiz;
-  for(int i = 0; i < funct->nParam; ++i) {
-    JsciType *t = funct->param[i];
-
-    if(t->type == ARRAYTYPE) {
-      // In function calls, arrays are passed by pointer
-      ptr = new char[t->SizeInBytes()];
-      cursiz = JSX_Set(cx, (char*) *(void **)ptr, 1, t, *vp);
-      if(cursiz) {
-        cursiz = sizeof(void *);
-      } else {
-        delete ptr;
-        return JS_FALSE;
-      }
-    } else {
-      cursiz = JSX_Set(cx, (char*) ptr, 1, t, *vp);
-    }
-    if(!cursiz) return JS_FALSE;
-    *(argptr++) = ptr;
-    ptr += cursiz;
-    vp++;
-  }
-
-  return JS_TRUE;
-}
