@@ -10,9 +10,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
 
   int size=-1;
   int tmpint;
-  int totsize;
-  int i;
-  JSObject *obj;
 
   int typepair = TYPEPAIR(JSX_JSType(cx, v), type->type);
 
@@ -107,46 +104,6 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSNULL,POINTERTYPE):
   case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
     return type->JStoC(cx, p, v, will_clean);
-
-  case TYPEPAIR(JSARRAY,POINTERTYPE):
-  {
-    // Copy array elements to a variable array
-      JsciTypePointer *tp = (JsciTypePointer *) type;
-      int containsPointers=0;
-      obj=JSVAL_TO_OBJECT(v);
-      JS_GetArrayLength(cx, obj, (jsuint*) &size);
-      int elemsize = tp->direct->SizeInBytes();
-
-      if (will_clean) {
-        // The variable array needs to be allocated
-        containsPointers = tp->direct->ContainsPointer();
-        if(containsPointers) {
-          // Allocate twice the space in order to store old pointers
-          *(void **)p = new char[elemsize * size * 2];
-        } else {
-          *(void **)p = new char[elemsize * size];
-        }
-      }
-      
-      totsize=0;
-    
-      for (i=0; i<size; i++) {
-        jsval tmp;
-        JS_GetElement(cx, obj, i, &tmp);
-        int thissize = JSX_Set(cx, *(char **)p + totsize, will_clean, tp->direct, tmp);
-        if(!thissize) goto vararrayfailure2;
-        totsize += thissize;
-      }
-
-      // Make backup of old pointers
-      if(containsPointers) memcpy(*(char **)p + elemsize * size, *(char **)p, elemsize * size);
-      
-      return sizeof(void *);
-
-    vararrayfailure2:
-      if(will_clean) delete p;
-      return 0;
-  }
 
   case TYPEPAIR(JSNULL,SUTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "jsci.h"
 
 
@@ -62,6 +63,43 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       if(!will_clean) return JSX_ReportException(cx, "Could not convert JS string to C in this context");
       *(char **)data = JS_GetStringBytes(JSVAL_TO_STRING(v));
       return sizeof(char *);
+    }
+
+    // Copy array elements to a variable array
+    case JSARRAY: {
+      int containsPointers = 0;
+      JSObject *obj = JSVAL_TO_OBJECT(v);
+      jsuint size;
+      JS_GetArrayLength(cx, obj, &size);
+      int elemsize = this->direct->SizeInBytes();
+
+      if(will_clean) {
+        // The variable array needs to be allocated
+        containsPointers = this->direct->ContainsPointer();
+        if(containsPointers) {
+          // Allocate twice the space in order to store old pointers
+          *(void **)data = new char[elemsize * size * 2];
+        } else {
+          *(void **)data = new char[elemsize * size];
+        }
+      }
+
+      int totsize = 0;
+      for(jsuint i = 0; i != size; ++i) {
+        jsval tmp;
+        JS_GetElement(cx, obj, i, &tmp);
+        int thissize = JSX_Set(cx, *(char **)data + totsize, will_clean, this->direct, tmp);
+        if(!thissize) {
+          delete data;
+          return 0;
+        }
+        totsize += thissize;
+      }
+
+      // Make backup of old pointers
+      if(containsPointers) memcpy(*(char **)data + elemsize * size, *(char **)data, elemsize * size);
+
+      return sizeof(void *);
     }
   }
   return JSX_ReportException(cx, "Could not convert JS value to C pointer type");
