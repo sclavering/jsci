@@ -26,7 +26,7 @@ int JsciTypePointer::CtoJS(JSContext *cx, char *data, jsval *rval) {
 int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
   switch(JSX_JSType(cx, v)) {
     case JSFUNC: {
-      if(this->direct->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Could not convert JS function to C non-function pointer type");
+      if(this->direct->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Cannot convert JS function to C non-function pointer type");
       jsval tmpval = JSVAL_VOID;
       JSFunction *fun = JS_ValueToFunction(cx, v);
       JSObject *obj = JS_GetFunctionObject(fun);
@@ -59,8 +59,8 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
 
     // Copy a string to a void* (same as char* in this context)
     case JSVAL_STRING: {
-      if(!is_void_or_char(this->direct)) return JSX_ReportException(cx, "Could not convert JS string to C non-char non-void pointer type");
-      if(!will_clean) return JSX_ReportException(cx, "Could not convert JS string to C in this context");
+      if(!is_void_or_char(this->direct)) return JSX_ReportException(cx, "Cannot convert JS string to C non-char non-void pointer type");
+      if(!will_clean) return JSX_ReportException(cx, "Cannot convert JS string to C in this context");
       *(char **)data = JS_GetStringBytes(JSVAL_TO_STRING(v));
       return sizeof(char *);
     }
@@ -102,7 +102,7 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       return sizeof(void *);
     }
   }
-  return JSX_ReportException(cx, "Could not convert JS value to C pointer type");
+  return JSX_ReportException(cx, "Cannot convert JS value to C pointer type");
 }
 
 

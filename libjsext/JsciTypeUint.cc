@@ -16,7 +16,7 @@ int JsciTypeUint::CtoJS(JSContext *cx, char *data, jsval *rval) {
     case 4: tmp = *(unsigned long long *) data; break;
     case 5: tmp = *(int64 *) data; break;
     default:
-      return JSX_ReportException(cx, "Could not convert C unsigned integer of unknown size to a javascript value");
+      return JSX_ReportException(cx, "Cannot convert C unsigned integer of unknown size to a javascript value");
   }
   if(INT_FITS_IN_JSVAL(tmp)) {
     *rval = INT_TO_JSVAL(tmp);

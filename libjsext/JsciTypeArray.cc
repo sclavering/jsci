@@ -35,7 +35,7 @@ int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
   switch(JSX_JSType(cx, v)) {
     // Copy a string to a char array
     case JSVAL_STRING: {
-      if(!type_is_char(this->member)) return JSX_ReportException(cx, "Could not convert JS string to a C array of non-chars");
+      if(!type_is_char(this->member)) return JSX_ReportException(cx, "Cannot convert JS string to a C array of non-chars");
       int size = JS_GetStringLength(JSVAL_TO_STRING(v));
       if(size < this->length) {
         memcpy(*(char **)data, JS_GetStringBytes(JSVAL_TO_STRING(v)), size * sizeof(char));
@@ -71,7 +71,7 @@ int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       return size;
     }
   }
-  return JSX_ReportException(cx, "Could not convert JS value to C array");
+  return JSX_ReportException(cx, "Cannot convert JS value to C array");
 }
 
 

@@ -6,7 +6,7 @@ JsciTypeVoid::JsciTypeVoid() : JsciType(VOIDTYPE) {
 
 
 int JsciTypeVoid::CtoJS(JSContext *cx, char *data, jsval *rval) {
-  return JSX_ReportException(cx, "Could not convert C value of type void to a JS value");
+  return JSX_ReportException(cx, "Cannot convert C value of type void to a JS value");
 }
 
 

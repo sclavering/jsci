@@ -16,7 +16,7 @@ int JsciTypeInt::CtoJS(JSContext *cx, char *data, jsval *rval) {
     case 4: tmp = *(long long *) data; break;
     case 5: tmp = *(int64 *) data; break;
     default:
-      return JSX_ReportException(cx, "Could not convert C signed integer of unknown size to a javascript value");
+      return JSX_ReportException(cx, "Cannot convert C signed integer of unknown size to a javascript value");
   }
   if(INT_FITS_IN_JSVAL(tmp)) {
     *rval = INT_TO_JSVAL(tmp);
@@ -51,7 +51,7 @@ int JsciTypeInt::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       *(int64 *)data = tmpint;
       return sizeof(int64);
   }
-  return JSX_ReportException(cx, "Cannot convert JS value to a C float/double");
+  return JSX_ReportException(cx, "Cannot convert JS value to a C integer");
 }
 
 

@@ -11,7 +11,7 @@ int JsciTypeFloat::CtoJS(JSContext *cx, char *data, jsval *rval) {
     case 0: tmpdouble = *(float *) data; break;
     case 1: tmpdouble = *(double *) data; break;
     default:
-      return JSX_ReportException(cx, "Could not convert C float of unknown size to a javascript value");
+      return JSX_ReportException(cx, "Cannot convert C float of unknown size to a javascript value");
   }
   JS_NewDoubleValue(cx, tmpdouble, rval);
   return 1;
