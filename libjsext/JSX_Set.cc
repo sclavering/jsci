@@ -17,65 +17,13 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
 
   switch(typepair) {
   case TYPEPAIR(JSVAL_INT,INTTYPE):
-
-    tmpint=JSVAL_TO_INT(v);
-    goto intcommon;
-
+  case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
+  case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
   case TYPEPAIR(JSVAL_INT,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_BOOLEAN,BITFIELDTYPE):
   case TYPEPAIR(JSNULL,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_DOUBLE,BITFIELDTYPE):
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
-    return JSX_ReportException(cx, "Could not convert JS value to C bitfield value because the bitfield is not within a struct/union");
-
-  case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
-
-    tmpint=v==JSVAL_TRUE?1:0;
-    goto intcommon;
-
-  case TYPEPAIR(JSVAL_DOUBLE,INTTYPE):
-
-    tmpint=(int)*JSVAL_TO_DOUBLE(v);
-
-  intcommon:
-
-    // Return a number from an int (of various sizes)
-    switch(size != -1 ? size : ((JsciTypeNumeric *) type)->size) {
-
-    case 0:
-      *(char *)p=tmpint;
-      size=sizeof(char);
-      break;
-
-    case 1:
-      *(short *)p=tmpint;
-      size=sizeof(short);
-      break;
-
-    case 2:
-      *(int *)p=tmpint;
-      size=sizeof(int);
-      break;
-
-    case 3:
-      *(long *)p=tmpint;
-      size=sizeof(long);
-      break;
-
-    case 4:
-      *(long long *)p=tmpint;
-      size=sizeof(long long);
-      break;
-
-    case 5:
-      *(int64 *)p=tmpint;
-      size=sizeof(int64);
-      break;
-
-    }
-
-    return size;
-
   case TYPEPAIR(JSVAL_DOUBLE,FLOATTYPE):
   case TYPEPAIR(JSVAL_BOOLEAN,FLOATTYPE):
   case TYPEPAIR(JSVAL_INT,FLOATTYPE):

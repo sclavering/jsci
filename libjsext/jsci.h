@@ -66,10 +66,15 @@ struct JsciTypeNumeric : JsciType {
 struct JsciTypeInt : JsciTypeNumeric {
   JsciTypeInt(int size, ffi_type);
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  virtual int CtoJS(JSContext *cx, char *data, jsval *rval);
+  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
+
+ private:
+  JSBool JsToInt(JSContext *cx, jsval v, int *rv);
 };
 
-struct JsciTypeUint : JsciTypeNumeric {
+// extends JsciTypeInt rather than just JsciTypeNumeric so that we can share JStoC(), though doing so is probably wrong
+struct JsciTypeUint : JsciTypeInt {
   JsciTypeUint(int size, ffi_type);
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
@@ -82,7 +87,7 @@ struct JsciTypeFloat : JsciTypeNumeric {
   int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
 
  private:
-  JSBool CoerceJS(JSContext *cx, jsval v, jsdouble *rv);
+  JSBool JsToDouble(JSContext *cx, jsval v, jsdouble *rv);
 };
 
 struct JsciTypeFunction : JsciType {
@@ -176,6 +181,7 @@ struct JsciTypeBitfield : JsciType {
   JsciTypeBitfield();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
+  int JStoC(JSContext *cx, char *data, jsval v, int will_clean);
   int SizeInBits();
   int AlignmentInBits() { return 1; }
   int AlignmentInBytes();

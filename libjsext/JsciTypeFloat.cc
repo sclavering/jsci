@@ -20,7 +20,7 @@ int JsciTypeFloat::CtoJS(JSContext *cx, char *data, jsval *rval) {
 
 int JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
   jsdouble tmpdouble;
-  if(!this->CoerceJS(cx, v, &tmpdouble)) return 0;
+  if(!this->JsToDouble(cx, v, &tmpdouble)) return 0;
   switch(this->size) {
     case 0:
       *(float *)data = tmpdouble;
@@ -33,7 +33,7 @@ int JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
 }
 
 
-JSBool JsciTypeFloat::CoerceJS(JSContext *cx, jsval v, jsdouble *rv) {
+JSBool JsciTypeFloat::JsToDouble(JSContext *cx, jsval v, jsdouble *rv) {
   switch(JSX_JSType(cx, v)) {
     case JSVAL_DOUBLE: *rv = *JSVAL_TO_DOUBLE(v); return JS_TRUE;
     case JSVAL_BOOLEAN: *rv = v == JSVAL_TRUE ? 1.0 : 0.0; return JS_TRUE;
