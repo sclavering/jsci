@@ -43,7 +43,6 @@ struct JsciType {
 };
 
 struct JsciTypeVoid : JsciType {
-  // VOIDTYPE
   JsciTypeVoid();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
@@ -51,7 +50,6 @@ struct JsciTypeVoid : JsciType {
 };
 
 struct JsciTypeNumeric : JsciType {
-  // INTTYPE or FLOATTYPE
   int size;
   ffi_type ffiType;
 
@@ -91,7 +89,6 @@ struct JsciTypeFloat : JsciTypeNumeric {
 };
 
 struct JsciTypeFunction : JsciType {
-  // FUNCTIONTYPE
   JsciType **param;
   int nParam;
   JsciType *returnType;
@@ -146,7 +143,6 @@ struct JsciTypeUnion : JsciTypeStructUnion {
 };
 
 struct JsciTypePointer : JsciType {
-  // POINTERTYPE
   JsciType *direct;
 
   JsciTypePointer();
@@ -160,7 +156,6 @@ struct JsciTypePointer : JsciType {
 };
 
 struct JsciTypeArray : JsciType {
-  // ARRAYTYPE
   JsciType *member;
   int length;
 
@@ -174,7 +169,6 @@ struct JsciTypeArray : JsciType {
 };
 
 struct JsciTypeBitfield : JsciType {
-  // BITFIELDTYPE
   JsciType *member;
   int length;
 
