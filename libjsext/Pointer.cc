@@ -15,6 +15,14 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 
 
+// Setting to undefined does nothing, only returns sizeof.
+int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
+  if(!type) return JSX_ReportException(cx, "Cannot convert JS value to C value, because the C type is not known");
+  if(v == JSVAL_VOID) return type->SizeInBytes();
+  return type->JStoC(cx, p, v, will_clean);
+}
+
+
 static JSClass JSX_PointerClass={
     "Pointer",
     JSCLASS_HAS_PRIVATE,
