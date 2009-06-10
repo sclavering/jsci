@@ -84,16 +84,13 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
         }
       }
 
-      int totsize = 0;
       for(jsuint i = 0; i != size; ++i) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        int thissize = JSX_Set(cx, *(char **)data + totsize, will_clean, this->direct, tmp);
-        if(!thissize) {
+        if(!JSX_Set(cx, *(char **)data + i * elemsize, will_clean, this->direct, tmp)) {
           delete data;
           return 0;
         }
-        totsize += thissize;
       }
 
       // Make backup of old pointers
