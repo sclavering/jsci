@@ -47,16 +47,14 @@ int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
     }
     // Copy array elements to a fixed size array
     case JSARRAY: {
-      int totsize = 0;
+      int elsize = this->member->SizeInBytes();
       JSObject *obj = JSVAL_TO_OBJECT(v);
       for(int i = 0; i != this->length; ++i) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        int thissize = JSX_Set(cx, data + totsize, will_clean, this->member, tmp);
-        if(!thissize) return 0;
-        totsize += thissize;
+        if(!JSX_Set(cx, data + elsize * i, will_clean, this->member, tmp)) return 0;
       }
-      return totsize;
+      return elsize * this->length;
     }
     case JSPOINTER: {
       // Copy contents pointed to into array
