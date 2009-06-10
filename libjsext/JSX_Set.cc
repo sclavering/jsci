@@ -23,26 +23,10 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
 
   case TYPEPAIR(JSVAL_INT,BITFIELDTYPE):
   case TYPEPAIR(JSVAL_BOOLEAN,BITFIELDTYPE):
-
-    tmpint=JSVAL_TO_INT(v);
-    goto bitfieldcommon;
-
   case TYPEPAIR(JSNULL,BITFIELDTYPE):
-
-    tmpint=0;
-    goto bitfieldcommon;
-
   case TYPEPAIR(JSVAL_DOUBLE,BITFIELDTYPE):
-
-    tmpint=(int)*JSVAL_TO_DOUBLE(v);
-    
-    // fall through
-
   case TYPEPAIR(JSVOID,BITFIELDTYPE):
-
-  bitfieldcommon:
-    size = ((JsciTypeNumeric *) ((JsciTypeBitfield *) type)->member)->size;
-    goto intcommon;
+    return JSX_ReportException(cx, "Could not convert JS value to C bitfield value because the bitfield is not within a struct/union");
 
   case TYPEPAIR(JSVAL_BOOLEAN,INTTYPE):
 
