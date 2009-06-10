@@ -56,21 +56,21 @@ int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v, int will_clea
     JSObject *obj = JSVAL_TO_OBJECT(v);
     for(int i = 0; i != this->nMember; ++i) {
       jsval tmp;
-      int thissize, tmpint, tmpint2;
       JS_GetProperty(cx, obj, this->member[i].name, &tmp);
       if(this->member[i].membertype->type == BITFIELDTYPE) {
         int length = ((JsciTypeBitfield *) this->member[i].membertype)->length;
         int offset = this->member[i].offset % 8;
         int mask = ~(-1 << length);
-        int imask = ~(imask << offset);
-        thissize = JSX_Set(cx, (char *) &tmpint, will_clean, this->member[i].membertype, tmp);
+        int imask = ~(imask << offset); // xxx imask is undefined!
+        int tmpint, tmpint2;
+        if(!JSX_Set(cx, (char *) &tmpint, will_clean, this->member[i].membertype, tmp)) return 0;
+        int thissize = this->member[i].membertype->SizeInBytes();
         memcpy((char *) &tmpint2, data + this->member[i].offset / 8, thissize);
         tmpint = (tmpint2 & imask) | ((tmpint & mask) << offset);
         memcpy(data + this->member[i].offset / 8, (char *) &tmpint, thissize);
       } else {
-        thissize = JSX_Set(cx, data + this->member[i].offset / 8, will_clean, this->member[i].membertype, tmp);
+        if(!JSX_Set(cx, data + this->member[i].offset / 8, will_clean, this->member[i].membertype, tmp)) return 0;
       }
-      if(!thissize) return 0;
     }
     return this->SizeInBytes();
   }
