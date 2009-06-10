@@ -8,9 +8,6 @@
 int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   if(!type) return JSX_ReportException(cx, "Cannot convert JS value to C value, because the C type is not known");
 
-  int size=-1;
-  int tmpint;
-
   int typepair = TYPEPAIR(JSX_JSType(cx, v), type->type);
 
   // Determine the appropriate conversion
@@ -35,18 +32,11 @@ int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
   case TYPEPAIR(JSPOINTER,POINTERTYPE):
   case TYPEPAIR(JSNULL,POINTERTYPE):
   case TYPEPAIR(JSVAL_STRING,POINTERTYPE):
-    return type->JStoC(cx, p, v, will_clean);
-
   case TYPEPAIR(JSNULL,SUTYPE):
   case TYPEPAIR(JSNULL,ARRAYTYPE):
   case TYPEPAIR(JSNULL,INTTYPE):
   case TYPEPAIR(JSNULL,FLOATTYPE):
-
-    // Initialize with zero
-
-    size = type->SizeInBytes();
-    memset(p, 0, size);
-    return size;
+    return type->JStoC(cx, p, v, will_clean);
 
   // Do-nothing cases
   case TYPEPAIR(JSVOID,POINTERTYPE):

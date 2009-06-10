@@ -46,7 +46,13 @@ int JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
 
 int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
   // Copy object elements to a struct or union
-  if(JSVAL_IS_OBJECT(v) && v != JSVAL_NULL) {
+  if(v == JSVAL_NULL) {
+    int size = this->SizeInBytes();
+    memset(data, 0, size);
+    return size;
+  }
+
+  if(JSVAL_IS_OBJECT(v)) {
     JSObject *obj = JSVAL_TO_OBJECT(v);
     for(int i = 0; i != this->nMember; ++i) {
       jsval tmp;

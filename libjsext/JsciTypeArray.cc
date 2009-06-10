@@ -65,6 +65,11 @@ int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       memcpy(data, ptr->ptr, size);
       return size;
     }
+    case JSNULL: {
+      int size = this->SizeInBytes();
+      memset(data, 0, size);
+      return size;
+    }
   }
   return JSX_ReportException(cx, "Could not convert JS value to C array");
 }

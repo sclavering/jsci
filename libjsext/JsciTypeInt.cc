@@ -60,6 +60,7 @@ JSBool JsciTypeInt::JsToInt(JSContext *cx, jsval v, int *rv) {
     case JSVAL_DOUBLE: *rv = (int) *JSVAL_TO_DOUBLE(v); return JS_TRUE;
     case JSVAL_BOOLEAN: *rv = v == JSVAL_TRUE ? 1 : 0; return JS_TRUE;
     case JSVAL_INT: *rv = JSVAL_TO_INT(v); return JS_TRUE;
+    case JSNULL: *rv = 0; return JS_TRUE;
   }
   return JSX_ReportException(cx, "Cannot convert JS value to a C float/double");
 }
