@@ -40,7 +40,8 @@
 #include "util.h"
 
 
-/* these are defined respectively in Type.c Pointer.c Dl.c and load.c */
+// These are mostly defined in other files
+extern "C" {
 jsval JSX_make_Type(JSContext *cx, JSObject *glo);
 jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
 jsval make_Dl(JSContext *cx, JSObject *glo);
@@ -55,6 +56,7 @@ jsval make_decodeBase64(JSContext *cx);
 jsval make_cToXML(JSContext *cx);
 static jsval make_gc(JSContext *cx);
 static jsval make_isCompilableUnit(JSContext *cx);
+}
 
 
 static char *strip_file_name(char *ini_file);
@@ -187,15 +189,13 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   tmp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
   JS_SetProperty(cx, argobj, "cwd", &tmp);
 
-  char *ifdup=0;
-  char *lastslash;
-  char *filename;
-  char *ini_file = getenv("JSEXT_INI");
-  if(ini_file == NULL) ini_file = libdir "/jsext/0-init.js";
+  const char *ini_file = getenv("JSEXT_INI");
+  if(!ini_file) ini_file = libdir "/jsext/0-init.js";
 
-  ifdup=strdup(ini_file);
-  lastslash=strip_file_name(ifdup);
-  if (lastslash) {
+  char *ifdup = strdup(ini_file);
+  char *filename;
+  char *lastslash = strip_file_name(ifdup);
+  if(lastslash) {
     *lastslash=0;
     chdir(ifdup);
     filename=lastslash+1;
@@ -223,7 +223,6 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   int fd=open(filename,O_RDONLY);
-  char *buf;
   JSScript *script=0;
   struct stat S;
   JSObject *scrobj=0;
@@ -233,7 +232,7 @@ static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
     return JS_FALSE; // File does not exist
   }
   fstat(fd, &S);
-  buf=malloc(S.st_size);
+  char *buf = new char[S.st_size];
   if (!buf) {
     JSX_ReportException(cx, "Out of memory for %s", filename);
     goto failure;
@@ -249,7 +248,7 @@ static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   scrobj=JS_NewScriptObject(cx, script);
   JS_AddRoot(cx, &scrobj);
 
-  free(buf);
+  delete buf;
   buf=0;
 
   close(fd);
@@ -262,7 +261,7 @@ static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
   return JS_TRUE;
 
  failure:
-  if (buf) free(buf);
+  if(buf) delete buf;
   if (fd) close(fd);
   if (scrobj) JS_RemoveRoot(cx, &scrobj);
   //  if (script) JS_DestroyScript(cx, script);
