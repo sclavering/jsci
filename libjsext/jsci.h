@@ -98,7 +98,6 @@ struct JsciTypeFunction : JsciType {
   JSBool Call(JSContext *cx, void *cfunc, uintN argc, jsval *argv, jsval *rval);
 
   ffi_cif *GetCIF();
-  int GetParamSizes(JSContext *cx);
 };
 
 struct JSX_SuMember {

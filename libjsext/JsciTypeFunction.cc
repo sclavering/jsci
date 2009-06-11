@@ -37,22 +37,17 @@ ffi_cif *JsciTypeFunction::GetCIF() {
 }
 
 
-int JsciTypeFunction::GetParamSizes(JSContext *cx) {
-  int totalsize = 0;
+JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *argv, jsval *rval) {
+  if(this->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", this->nParam, argc);
+
+  int arg_size = 0;
   for(uintN i = 0; i != this->nParam; ++i) {
     JsciType *t = this->param[i];
     int siz = t->SizeInBytes();
     if(!siz) return 0; // error
-    totalsize += siz;
+    arg_size += siz;
   }
-  return totalsize;
-}
 
-
-JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *argv, jsval *rval) {
-  if(this->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", this->nParam, argc);
-
-  size_t arg_size = this->GetParamSizes(cx);
   int retsize = this->returnType->SizeInBytes();
 
   char *argptr_mem = new char[arg_size + argc * sizeof(void*) + retsize + 8];
