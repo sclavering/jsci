@@ -202,22 +202,16 @@ static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 }
 
 
-static JSBool JSX_Pointer_getfinalize(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  *vp=JSVAL_VOID;
-  return JS_TRUE;
-}
-
-
-static JSBool JSX_Pointer_setfinalize(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
+static JSBool Pointer_proto_setFinalizer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  if (*vp==JSVAL_NULL || *vp==JSVAL_VOID) {
+  if(argv[0] == JSVAL_NULL || argv[0] == JSVAL_VOID) {
     ptr->finalize=0;
     return JS_TRUE;
   }
 
   jsval ptrv;
-  if(!JSVAL_IS_OBJECT(*vp) || !JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(*vp)) || !JS_LookupProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", &ptrv) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(ptrv), JSX_GetPointerClass(), NULL)) {
-    return JSX_ReportException(cx, "Wrong value type for finalize property");
+  if(!JSVAL_IS_OBJECT(argv[0]) || !JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[0])) || !JS_LookupProperty(cx, JSVAL_TO_OBJECT(argv[0]), "__ptr__", &ptrv) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(ptrv), JSX_GetPointerClass(), NULL)) {
+    return JSX_ReportException(cx, "Pointer.prototype.setFinalizer(): argument must be function");
   }
 
   JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrv));
@@ -378,12 +372,12 @@ extern "C" jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
     {"field", Pointer_proto_field, 1, 0, 0},
     {"string", Pointer_proto_string, 1, 0, 0},
     {"valueOf", Pointer_proto_valueOf, 0, 0, 0},
+    {"setFinalizer", Pointer_proto_setFinalizer, 1, 0, 0},
     {0,0,0,0,0}
   };
 
   static struct JSPropertySpec memberprop[]={
     {"$",0, JSPROP_PERMANENT, JSX_Pointer_getdollar,JSX_Pointer_setdollar},
-    {"finalize",0,0, JSX_Pointer_getfinalize, JSX_Pointer_setfinalize},
     {0,0,0,0,0}
   };
 

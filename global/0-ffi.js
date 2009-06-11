@@ -41,3 +41,5 @@ Type.unsigned_int64 = Type.unsigned_long_long;
 Pointer.prototype.toString = function() {
   return Number(this.valueOf()).toString(16);
 };
+
+Pointer.prototype.__defineSetter__("finalizer", Pointer.prototype.setFinalizer);
