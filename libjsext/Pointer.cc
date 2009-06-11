@@ -184,78 +184,10 @@ JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *a
   jsval ptrval;
   JS_LookupProperty(cx, funcobj, "__ptr__", &ptrval);
   JSObject *obj = JSVAL_TO_OBJECT(ptrval);
-
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  JsciType *type = ptr->type;
-
-  if(type->type != FUNCTIONTYPE) {
-    JSX_ReportException(cx, "call: Wrong pointer type");
-    return JS_FALSE;
-  }
-
-  JsciTypeFunction *ft = (JsciTypeFunction *) type;
-
-  if(ft->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", ft->nParam, argc);
-
-  ffi_type **arg_types = new ffi_type*[argc + 1];
-
-  size_t arg_size = ft->GetParamSizesAndFFITypes(cx, arg_types);
-
-  ffi_cif *cif = ft->GetCIF();
-
-  int retsize = ft->returnType->SizeInBytes();
-
-  char *argptr_mem = new char[arg_size + argc * sizeof(void*) + retsize + 8];
-  void **argptr = (void **) argptr_mem;
-
-  char *retbuf = (char *) (argptr + argc);
-  char *argbuf = retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
-
-  if(arg_size) {
-    char *ptr = argbuf;
-    jsval *vp = argv;
-    void **argptr2 = argptr;
-    int cursiz;
-    for(int i = 0; i != ft->nParam; ++i) {
-      JsciType *t = ft->param[i];
-      if(t->type == ARRAYTYPE) {
-        // In function calls, arrays are passed by pointer
-        ptr = new char[t->SizeInBytes()];
-        cursiz = JSX_Set(cx, (char*) *(void **)ptr, 1, t, *vp);
-        if(cursiz) {
-          cursiz = sizeof(void *);
-        } else {
-          delete ptr;
-          goto failure;
-        }
-      } else {
-        cursiz = JSX_Set(cx, (char*) ptr, 1, t, *vp);
-      }
-      if(!cursiz) goto failure;
-      *(argptr2++) = ptr;
-      ptr += cursiz;
-      vp++;
-    }
-  }
-
-  ffi_call(cif, (void (*)()) ptr->ptr, (void *)retbuf, argptr);
-
-  delete arg_types;
-  arg_types=0;
-
-  *rval=JSVAL_VOID;
-
-  if(ft->returnType->type != VOIDTYPE) ft->returnType->CtoJS(cx, retbuf, rval);
-
-  delete argptr_mem;
-
-  return JS_TRUE;
-
- failure:
-  delete argptr_mem;
-  if(arg_types) delete arg_types;
-
-  return JS_FALSE;
+  JsciType *t = ptr->type;
+  if(t->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Error: wrapper for C function has a non-function type");
+  return ((JsciTypeFunction *) t)->Call(cx, ptr->ptr, argc, argv, rval);
 }
 
 
