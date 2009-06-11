@@ -37,16 +37,14 @@ ffi_cif *JsciTypeFunction::GetCIF() {
 }
 
 
-int JsciTypeFunction::GetParamSizesAndFFITypes(JSContext *cx, ffi_type **arg_types) {
+int JsciTypeFunction::GetParamSizes(JSContext *cx) {
   int totalsize = 0;
   for(uintN i = 0; i != this->nParam; ++i) {
     JsciType *t = this->param[i];
     int siz = t->SizeInBytes();
     if(!siz) return 0; // error
-    *(arg_types++) = t->GetFFIType();
     totalsize += siz;
   }
-  *arg_types = 0;
   return totalsize;
 }
 
@@ -54,12 +52,7 @@ int JsciTypeFunction::GetParamSizesAndFFITypes(JSContext *cx, ffi_type **arg_typ
 JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *argv, jsval *rval) {
   if(this->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", this->nParam, argc);
 
-  ffi_type **arg_types = new ffi_type*[argc + 1];
-
-  size_t arg_size = this->GetParamSizesAndFFITypes(cx, arg_types);
-
-  ffi_cif *cif = this->GetCIF();
-
+  size_t arg_size = this->GetParamSizes(cx);
   int retsize = this->returnType->SizeInBytes();
 
   char *argptr_mem = new char[arg_size + argc * sizeof(void*) + retsize + 8];
@@ -95,10 +88,7 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
     }
   }
 
-  ffi_call(cif, (void (*)()) cfunc, (void *)retbuf, argptr);
-
-  delete arg_types;
-  arg_types=0;
+  ffi_call(this->GetCIF(), FFI_FN(cfunc), (void *)retbuf, argptr);
 
   *rval=JSVAL_VOID;
 
@@ -110,7 +100,6 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
 
  failure:
   delete argptr_mem;
-  if(arg_types) delete arg_types;
 
   return JS_FALSE;
 }
