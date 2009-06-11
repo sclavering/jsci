@@ -23,7 +23,7 @@ int JsciTypePointer::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v) {
   switch(JSX_JSType(cx, v)) {
     case JSFUNC: {
       if(this->direct->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Cannot convert JS function to C non-function pointer type");
@@ -74,7 +74,7 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       for(jsuint i = 0; i != size; ++i) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        if(!this->direct->JStoC(cx, *(char **)data + i * elemsize, tmp, will_clean)) {
+        if(!this->direct->JStoC(cx, *(char **)data + i * elemsize, tmp)) {
           delete data;
           return 0;
         }

@@ -9,7 +9,7 @@ JsciType::~JsciType() {
 }
 
 
-int JsciType::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+int JsciType::JStoC(JSContext *cx, char *data, jsval v) {
   return JSX_ReportException(cx, "Bad JStoC call");
 }
 

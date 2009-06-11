@@ -31,7 +31,7 @@ int JsciTypeArray::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v) {
   switch(JSX_JSType(cx, v)) {
     // Copy a string to a char array
     case JSVAL_STRING: {
@@ -52,7 +52,7 @@ int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       for(int i = 0; i != this->length; ++i) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        if(!this->member->JStoC(cx, data + elsize * i, tmp, will_clean)) return 0;
+        if(!this->member->JStoC(cx, data + elsize * i, tmp)) return 0;
       }
       return elsize * this->length;
     }

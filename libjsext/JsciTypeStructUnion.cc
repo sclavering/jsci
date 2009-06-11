@@ -44,7 +44,7 @@ int JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v) {
   // Copy object elements to a struct or union
   if(v == JSVAL_NULL) {
     int size = this->SizeInBytes();
@@ -64,13 +64,13 @@ int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v, int will_clea
         int mask = ~(-1 << length);
         int imask = ~(imask << offset); // xxx imask is undefined!
         int tmpint, tmpint2;
-        if(!t->JStoC(cx, (char *) &tmpint, tmp, will_clean)) return 0;
+        if(!t->JStoC(cx, (char *) &tmpint, tmp)) return 0;
         int thissize = t->SizeInBytes();
         memcpy((char *) &tmpint2, data + this->member[i].offset / 8, thissize);
         tmpint = (tmpint2 & imask) | ((tmpint & mask) << offset);
         memcpy(data + this->member[i].offset / 8, (char *) &tmpint, thissize);
       } else {
-        if(!t->JStoC(cx, data + this->member[i].offset / 8, tmp, will_clean)) return 0;
+        if(!t->JStoC(cx, data + this->member[i].offset / 8, tmp)) return 0;
       }
     }
     return this->SizeInBytes();

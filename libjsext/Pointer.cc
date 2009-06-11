@@ -156,7 +156,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
   // Set initial value, if provided
   if(argc >= 2 && argv[1] != JSVAL_VOID) {
     JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx,obj);
-    if(!ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1], 0)) return JS_FALSE;
+    if(!ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1])) return JS_FALSE;
   }
 
   return JS_TRUE;
@@ -197,7 +197,7 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  if(!ptr->type->JStoC(cx, (char*) ptr->ptr, *vp, 0)) return JS_FALSE;
+  if(!ptr->type->JStoC(cx, (char*) ptr->ptr, *vp)) return JS_FALSE;
   return JS_TRUE;
 }
 
@@ -312,7 +312,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  return ptr->type->JStoC(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), *vp, 0);
+  return ptr->type->JStoC(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), *vp);
 }
 
 
@@ -347,7 +347,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   for(int i = 0; i != type->nParam; ++i) {
     JsciType *t = type->param[i];
     if(t->type == ARRAYTYPE) return;
-    if(!t->JStoC(cb->cx, (char*) *args, tmp_argv[i], 0)) return;
+    if(!t->JStoC(cb->cx, (char*) *args, tmp_argv[i])) return;
     args++;
   }
 
@@ -357,7 +357,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   }
   delete tmp_argv;
 
-  if(type->returnType->type != VOIDTYPE) type->returnType->JStoC(cb->cx, (char*) ret, rval, 0);
+  if(type->returnType->type != VOIDTYPE) type->returnType->JStoC(cb->cx, (char*) ret, rval);
 }
 
 

@@ -28,7 +28,7 @@ int JsciTypeInt::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeInt::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+int JsciTypeInt::JStoC(JSContext *cx, char *data, jsval v) {
   int tmpint;
   if(!this->JsToInt(cx, v, &tmpint)) return 0;
   switch(this->size) {

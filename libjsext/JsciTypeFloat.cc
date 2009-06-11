@@ -18,7 +18,7 @@ int JsciTypeFloat::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
+int JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v) {
   jsdouble tmpdouble;
   if(!this->JsToDouble(cx, v, &tmpdouble)) return 0;
   switch(this->size) {
