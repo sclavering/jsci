@@ -66,22 +66,10 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
 
     // Copy array elements to a variable array
     case JSARRAY: {
-      int containsPointers = 0;
       JSObject *obj = JSVAL_TO_OBJECT(v);
       jsuint size;
       JS_GetArrayLength(cx, obj, &size);
       int elemsize = this->direct->SizeInBytes();
-
-      if(will_clean) {
-        // The variable array needs to be allocated
-        containsPointers = this->direct->ContainsPointer();
-        if(containsPointers) {
-          // Allocate twice the space in order to store old pointers
-          *(void **)data = new char[elemsize * size * 2];
-        } else {
-          *(void **)data = new char[elemsize * size];
-        }
-      }
 
       for(jsuint i = 0; i != size; ++i) {
         jsval tmp;
@@ -91,10 +79,6 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
           return 0;
         }
       }
-
-      // Make backup of old pointers
-      if(containsPointers) memcpy(*(char **)data + elemsize * size, *(char **)data, elemsize * size);
-
       return sizeof(void *);
     }
   }
