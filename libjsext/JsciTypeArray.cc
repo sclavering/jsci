@@ -52,7 +52,7 @@ int JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       for(int i = 0; i != this->length; ++i) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        if(!JSX_Set(cx, data + elsize * i, will_clean, this->member, tmp)) return 0;
+        if(!this->member->JStoC(cx, data + elsize * i, tmp, will_clean)) return 0;
       }
       return elsize * this->length;
     }

@@ -15,14 +15,6 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 
 
-// Setting to undefined does nothing, only returns sizeof.
-int JSX_Set(JSContext *cx, char *p, int will_clean, JsciType *type, jsval v) {
-  if(!type) return JSX_ReportException(cx, "Cannot convert JS value to C value, because the C type is not known");
-  if(v == JSVAL_VOID) return type->SizeInBytes();
-  return type->JStoC(cx, p, v, will_clean);
-}
-
-
 static JSClass JSX_PointerClass={
     "Pointer",
     JSCLASS_HAS_PRIVATE,
@@ -165,7 +157,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
   // Set initial value, if provided
   if(argc >= 2 && argv[1] != JSVAL_VOID) {
     JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx,obj);
-    if(!JSX_Set(cx, (char*) ptr->ptr, 0, ptr->type, argv[1])) return JS_FALSE;
+    if(!ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1], 0)) return JS_FALSE;
   }
 
   return JS_TRUE;
@@ -206,7 +198,7 @@ static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsva
 
 static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  if(!JSX_Set(cx, (char*) ptr->ptr, 0, ptr->type, *vp)) return JS_FALSE;
+  if(!ptr->type->JStoC(cx, (char*) ptr->ptr, *vp, 0)) return JS_FALSE;
   return JS_TRUE;
 }
 
@@ -330,8 +322,7 @@ static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, js
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  int ret = JSX_Set(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), 0, ptr->type, *vp);
-  return ret == 0 ? JS_FALSE : JS_TRUE;
+  return ptr->type->JStoC(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), *vp, 0);
 }
 
 
@@ -366,7 +357,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   for(int i = 0; i != type->nParam; ++i) {
     JsciType *t = type->param[i];
     if(t->type == ARRAYTYPE) return;
-    if(!JSX_Set(cb->cx, (char*) *args, 0, t, tmp_argv[i])) return;
+    if(!t->JStoC(cb->cx, (char*) *args, tmp_argv[i], 0)) return;
     args++;
   }
 
@@ -376,7 +367,7 @@ static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *use
   }
   delete tmp_argv;
 
-  if(type->returnType->type != VOIDTYPE) JSX_Set(cb->cx, (char*) ret, 0, type->returnType, rval);
+  if(type->returnType->type != VOIDTYPE) type->returnType->JStoC(cb->cx, (char*) ret, rval, 0);
 }
 
 

@@ -87,7 +87,7 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
       for(jsuint i = 0; i != size; ++i) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
-        if(!JSX_Set(cx, *(char **)data + i * elemsize, will_clean, this->direct, tmp)) {
+        if(!this->direct->JStoC(cx, *(char **)data + i * elemsize, tmp, will_clean)) {
           delete data;
           return 0;
         }

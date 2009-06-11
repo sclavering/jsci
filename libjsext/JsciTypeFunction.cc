@@ -60,15 +60,12 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
 
   if(arg_size) {
     char *ptr = argbuf;
-    jsval *vp = argv;
-    void **argptr2 = argptr;
     for(int i = 0; i != this->nParam; ++i) {
       JsciType *t = this->param[i];
       if(t->type == ARRAYTYPE) return JSX_ReportException(cx, "C function's parameter %i is of type array.  Make it a pointer, somehow", i);
-      if(!JSX_Set(cx, ptr, 1, t, *vp)) goto failure;
-      *(argptr2++) = ptr;
+      if(!t->JStoC(cx, ptr, argv[i], 1)) goto failure;
+      argptr[i] = ptr;
       ptr += argsizes[i];
-      vp++;
     }
   }
 
