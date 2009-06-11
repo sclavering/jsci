@@ -34,6 +34,12 @@ JSClass * JSX_GetPointerClass(void) {
 }
 
 
+static void WrapPointer(JSContext *cx, JsciPointer *p, jsval *rval) {
+  *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, &JSX_PointerClass, 0, 0));
+  JS_SetPrivate(cx, JSVAL_TO_OBJECT(*rval), p);
+}
+
+
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *type) {
   if (!JS_InstanceOf(cx, type, JSX_GetTypeClass(), NULL)) {
     JSX_ReportException(cx, "Wrong type argument");
@@ -89,20 +95,13 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
 
 
 static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  if (argc<1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0])<=0) {
-    JSX_ReportException(cx, "Wrong argument type to malloc");
-    return JS_FALSE;
-  }
+  if(argc < 1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0]) <= 0) return JSX_ReportException(cx, "Wrong argument type to malloc");
 
-  JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  *rval=OBJECT_TO_JSVAL(newobj);
   int length = INT_TO_JSVAL(argv[0]);
-  JsciPointer *ret = new JsciPointerAlloc(length);
-  if (!ret)
-    return JS_FALSE;
-  ret->type = GetVoidType();
-  JS_SetPrivate(cx, newobj, ret);
-
+  JsciPointer *p = new JsciPointerAlloc(length);
+  if(!p) return JS_FALSE;
+  p->type = GetVoidType();
+  WrapPointer(cx, p, rval);
   return JS_TRUE;
 }
 
@@ -281,13 +280,10 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(sutype->member[ix].membertype->type == BITFIELDTYPE)
     return JSX_ReportException(cx, "Pointer.prototype.field(): requested member is a bitfield: %s", myname);
 
-  JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  *rval = OBJECT_TO_JSVAL(newobj);
-
   JsciPointer *newptr = new JsciPointer();
   newptr->type = sutype->member[ix].membertype;
   newptr->ptr = (char*) ptr->ptr + sutype->member[ix].offset / 8;
-  JS_SetPrivate(cx, newobj, newptr);
+  WrapPointer(cx, newptr, rval);
 
   return JS_TRUE;
 }
