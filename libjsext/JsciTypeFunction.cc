@@ -40,6 +40,8 @@ ffi_cif *JsciTypeFunction::GetCIF() {
 JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *argv, jsval *rval) {
   if(this->nParam != argc) return JSX_ReportException(cx, "C function with %i parameters called with %i arguments", this->nParam, argc);
 
+  int ok = JS_FALSE;
+
   int arg_size = 0;
   for(uintN i = 0; i != this->nParam; ++i) {
     JsciType *t = this->param[i];
@@ -50,11 +52,9 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
 
   int retsize = this->returnType->SizeInBytes();
 
-  char *argptr_mem = new char[arg_size + argc * sizeof(void*) + retsize + 8];
-  void **argptr = (void **) argptr_mem;
-
-  char *retbuf = (char *) (argptr + argc);
-  char *argbuf = retbuf + retsize + 8; // ffi overwrites a few bytes on some archs.
+  void **argptr = new void*[argc];
+  char *argbuf = new char[arg_size];
+  char *retbuf = new char[retsize + 8]; // ffi overwrites a few bytes on some archs.
 
   if(arg_size) {
     char *ptr = argbuf;
@@ -89,12 +89,11 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
 
   if(this->returnType->type != VOIDTYPE) this->returnType->CtoJS(cx, retbuf, rval);
 
-  delete argptr_mem;
-
-  return JS_TRUE;
+  ok = JS_TRUE;
 
  failure:
-  delete argptr_mem;
-
-  return JS_FALSE;
+  delete argptr;
+  delete argbuf;
+  delete retbuf;
+  return ok;
 }
