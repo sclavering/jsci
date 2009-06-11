@@ -28,28 +28,28 @@ int JsciTypeInt::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeInt::JStoC(JSContext *cx, char *data, jsval v) {
+JSBool JsciTypeInt::JStoC(JSContext *cx, char *data, jsval v) {
   int tmpint;
-  if(!this->JsToInt(cx, v, &tmpint)) return 0;
+  if(!this->JsToInt(cx, v, &tmpint)) return JS_FALSE;
   switch(this->size) {
     case 0:
       *(char *)data = tmpint;
-      return sizeof(char);
+      return JS_TRUE;
     case 1:
       *(short *)data = tmpint;
-      return sizeof(short);
+      return JS_TRUE;
     case 2:
       *(int *)data = tmpint;
-      return sizeof(int);
+      return JS_TRUE;
     case 3:
       *(long *)data = tmpint;
-      return sizeof(long);
+      return JS_TRUE;
     case 4:
       *(long long *)data = tmpint;
-      return sizeof(long long);
+      return JS_TRUE;
     case 5:
       *(int64 *)data = tmpint;
-      return sizeof(int64);
+      return JS_TRUE;
   }
   return JSX_ReportException(cx, "Cannot convert JS value to a C integer");
 }

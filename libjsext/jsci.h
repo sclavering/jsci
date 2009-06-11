@@ -30,7 +30,7 @@ struct JsciType {
   virtual ~JsciType();
 
   virtual int CtoJS(JSContext *cx, char *data, jsval *rval) = 0;
-  virtual int JStoC(JSContext *cx, char *data, jsval v);
+  virtual JSBool JStoC(JSContext *cx, char *data, jsval v);
   virtual ffi_type *GetFFIType();
   virtual int SizeInBits();
   virtual int SizeInBytes();
@@ -62,7 +62,7 @@ struct JsciTypeInt : JsciTypeNumeric {
   JsciTypeInt(int size, ffi_type);
 
   virtual int CtoJS(JSContext *cx, char *data, jsval *rval);
-  int JStoC(JSContext *cx, char *data, jsval v);
+  JSBool JStoC(JSContext *cx, char *data, jsval v);
 
  private:
   JSBool JsToInt(JSContext *cx, jsval v, int *rv);
@@ -79,7 +79,7 @@ struct JsciTypeFloat : JsciTypeNumeric {
   JsciTypeFloat(int size, ffi_type);
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
-  int JStoC(JSContext *cx, char *data, jsval v);
+  JSBool JStoC(JSContext *cx, char *data, jsval v);
 
  private:
   JSBool JsToDouble(JSContext *cx, jsval v, jsdouble *rv);
@@ -118,7 +118,7 @@ struct JsciTypeStructUnion : JsciType {
   ~JsciTypeStructUnion();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
-  int JStoC(JSContext *cx, char *data, jsval v);
+  JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBytes();
   int AlignmentInBytes();
   JSBool ContainsPointer();
@@ -146,7 +146,7 @@ struct JsciTypePointer : JsciType {
   JsciTypePointer();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
-  int JStoC(JSContext *cx, char *data, jsval v);
+  JSBool JStoC(JSContext *cx, char *data, jsval v);
   ffi_type *GetFFIType();
   int SizeInBytes();
   int AlignmentInBytes();
@@ -160,7 +160,7 @@ struct JsciTypeArray : JsciType {
   JsciTypeArray();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
-  int JStoC(JSContext *cx, char *data, jsval v);
+  JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBytes();
   int AlignmentInBytes();
   JSBool ContainsPointer();
@@ -173,7 +173,7 @@ struct JsciTypeBitfield : JsciType {
   JsciTypeBitfield();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
-  int JStoC(JSContext *cx, char *data, jsval v);
+  JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBits();
   int AlignmentInBits() { return 1; }
   int AlignmentInBytes();

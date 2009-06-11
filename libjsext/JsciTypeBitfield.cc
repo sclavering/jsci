@@ -10,7 +10,7 @@ int JsciTypeBitfield::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeBitfield::JStoC(JSContext *cx, char *data, jsval v) {
+JSBool JsciTypeBitfield::JStoC(JSContext *cx, char *data, jsval v) {
   return JSX_ReportException(cx, "Cannot convert JS value to C bitfield value because the bitfield is not within a struct/union");
 }
 

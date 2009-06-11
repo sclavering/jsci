@@ -18,16 +18,16 @@ int JsciTypeFloat::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v) {
+JSBool JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v) {
   jsdouble tmpdouble;
-  if(!this->JsToDouble(cx, v, &tmpdouble)) return 0;
+  if(!this->JsToDouble(cx, v, &tmpdouble)) return JS_FALSE;
   switch(this->size) {
     case 0:
       *(float *)data = tmpdouble;
-      return sizeof(float);
+      return JS_TRUE;
     case 1:
       *(double *)data = tmpdouble;
-      return sizeof(double);
+      return JS_TRUE;
   }
   return JSX_ReportException(cx, "Cannot convert JS value to a C float/double");
 }

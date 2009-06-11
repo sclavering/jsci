@@ -44,12 +44,12 @@ int JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
 }
 
 
-int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v) {
+JSBool JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v) {
   // Copy object elements to a struct or union
   if(v == JSVAL_NULL) {
     int size = this->SizeInBytes();
     memset(data, 0, size);
-    return size;
+    return JS_TRUE;
   }
 
   if(JSVAL_IS_OBJECT(v)) {
@@ -64,16 +64,16 @@ int JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v) {
         int mask = ~(-1 << length);
         int imask = ~(imask << offset); // xxx imask is undefined!
         int tmpint, tmpint2;
-        if(!t->JStoC(cx, (char *) &tmpint, tmp)) return 0;
+        if(!t->JStoC(cx, (char *) &tmpint, tmp)) return JS_FALSE;
         int thissize = t->SizeInBytes();
         memcpy((char *) &tmpint2, data + this->member[i].offset / 8, thissize);
         tmpint = (tmpint2 & imask) | ((tmpint & mask) << offset);
         memcpy(data + this->member[i].offset / 8, (char *) &tmpint, thissize);
       } else {
-        if(!t->JStoC(cx, data + this->member[i].offset / 8, tmp)) return 0;
+        if(!t->JStoC(cx, data + this->member[i].offset / 8, tmp)) return JS_FALSE;
       }
     }
-    return this->SizeInBytes();
+    return JS_TRUE;
   }
 
   return JSX_ReportException(cx, "Cannot convert JS value to a C struct/union");
