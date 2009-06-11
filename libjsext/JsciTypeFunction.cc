@@ -42,11 +42,13 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
 
   int ok = JS_FALSE;
 
+  int *argsizes = new int[argc];
+
   int arg_size = 0;
   for(uintN i = 0; i != this->nParam; ++i) {
     JsciType *t = this->param[i];
-    int siz = t->SizeInBytes();
-    if(!siz) return 0; // error
+    int siz = argsizes[i] = t->SizeInBytes();
+    if(!siz) { delete argsizes; return JS_FALSE; }
     arg_size += siz;
   }
 
@@ -63,10 +65,9 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
     for(int i = 0; i != this->nParam; ++i) {
       JsciType *t = this->param[i];
       if(t->type == ARRAYTYPE) return JSX_ReportException(cx, "C function's parameter %i is of type array.  Make it a pointer, somehow", i);
-      int cursiz = JSX_Set(cx, ptr, 1, t, *vp);
-      if(!cursiz) goto failure;
+      if(!JSX_Set(cx, ptr, 1, t, *vp)) goto failure;
       *(argptr2++) = ptr;
-      ptr += cursiz;
+      ptr += argsizes[i];
       vp++;
     }
   }
@@ -80,6 +81,7 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
   ok = JS_TRUE;
 
  failure:
+  delete argsizes;
   delete argptr;
   delete argbuf;
   delete retbuf;
