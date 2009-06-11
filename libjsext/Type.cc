@@ -36,21 +36,6 @@ static void WrapType(JSContext *cx, JsciType *t, JSObject* proto, jsval *rval) {
 }
 
 
-JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype) {
-  jsval tmp;
-
-  JS_GetProperty(cx, membertype, "name", &tmp);
-  if(tmp == JSVAL_VOID || !JSVAL_IS_STRING(tmp)) return JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
-  dest->name = strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
-
-  JS_GetProperty(cx, membertype, "type", &tmp);
-  if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Wrong or missing 'type' property in member type object");
-  dest->membertype = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
-
-  return JS_TRUE;
-}
-
-
 static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval returnType = argv[0];
   jsval params = argv[1];

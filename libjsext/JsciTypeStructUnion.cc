@@ -108,9 +108,19 @@ JSBool JsciTypeStructUnion::ReplaceMembers(JSContext *cx, JSObject *obj, int nMe
   this->nMember = nMember;
   this->member = new JSX_SuMember[nMember];
 
+  jsval tmp;
   for(int i = 0; i != nMember; ++i) {
     if(!JSVAL_IS_OBJECT(members[i]) || JSVAL_IS_NULL(members[i])) goto failure;
-    if(!JSX_InitMemberType(cx, this->member + i, JSVAL_TO_OBJECT(members[i]))) goto failure;
+
+    JSObject *mobj = JSVAL_TO_OBJECT(members[i]);
+    JSX_SuMember *m = this->member + i;
+    JS_GetProperty(cx, mobj, "name", &tmp);
+    if(tmp == JSVAL_VOID || !JSVAL_IS_STRING(tmp)) return JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
+    m->name = strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
+    JS_GetProperty(cx, mobj, "type", &tmp);
+    if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Wrong or missing 'type' property in member type object");
+    m->membertype = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+
     // this is probably just to save the Type instances from GC, and thus the JsciType's from being free()'d
     JS_DefineElement(cx, obj, i, members[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
   }

@@ -189,7 +189,6 @@ JSClass *JSX_GetPointerClass(void);
 
 int JSX_JSType(JSContext *cx, jsval rval);
 JsciType *GetVoidType(void); // the C "void" type
-JSBool JSX_InitMemberType(JSContext *cx, JSX_SuMember *dest, JSObject *membertype);
 
 #define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
 #define JSVOID (JSVAL_TAGMASK+2)
