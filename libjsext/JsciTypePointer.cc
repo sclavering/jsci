@@ -60,7 +60,6 @@ int JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v, int will_clean) {
     // Copy a string to a void* (same as char* in this context)
     case JSVAL_STRING: {
       if(!is_void_or_char(this->direct)) return JSX_ReportException(cx, "Cannot convert JS string to C non-char non-void pointer type");
-      if(!will_clean) return JSX_ReportException(cx, "Cannot convert JS string to C in this context");
       *(char **)data = JS_GetStringBytes(JSVAL_TO_STRING(v));
       return sizeof(char *);
     }
