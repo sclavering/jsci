@@ -78,7 +78,7 @@ function Console(args) {
   this._histfile = args.histfile || null;
   this.prompt = args.prompt || "> ";
 
-  if(this._histfile) JSEXT1.libhistory.read_history(String(this._histfile));
+  if(this._histfile) JSEXT1.libreadline.read_history(String(this._histfile));
   JSEXT1.libreadline.rl_completion_entry_function.$ = iterate_completion;
 }
 
@@ -92,7 +92,7 @@ Console.prototype = {
   // Writes the history to the history file and closes the console.
   close: function() {
     if(this.closed) return;
-    if(this._histfile) JSEXT1.libhistory.write_history(String(this._histfile));
+    if(this._histfile) JSEXT1.libreadline.write_history(String(this._histfile));
     print("\n");
     this.closed = true;
   },
@@ -111,7 +111,7 @@ Console.prototype = {
       this.close();
       return;
     }
-    if(line != "") JSEXT1.libhistory.add_history(String(line));
+    if(line != "") JSEXT1.libreadline.add_history(String(line));
     return line;
   }
 };
