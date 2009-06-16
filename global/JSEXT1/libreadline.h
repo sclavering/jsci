@@ -1,5 +1,3 @@
-#pragma JSEXT recursion 1
-
 #include <readline/readline.h>
 #include <readline/history.h>
 
