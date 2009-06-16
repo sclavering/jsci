@@ -95,7 +95,7 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
 
 
 static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  if(argc < 1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0]) <= 0) return JSX_ReportException(cx, "Wrong argument type to malloc");
+  if(argc < 1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0]) <= 0) return JSX_ReportException(cx, "Pointer.malloc(): argument must be a positive integer number of bytes to allocate");
 
   int length = INT_TO_JSVAL(argv[0]);
   JsciPointer *p = new JsciPointerAlloc(length);
