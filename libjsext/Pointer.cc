@@ -11,7 +11,6 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *a
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
-static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data);
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 
 
@@ -67,14 +66,8 @@ JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun,
     return JS_FALSE;
 
   JsciCallback *retpriv = new JsciCallback(cx, fun, type);
-  if (!retpriv)
-    return JS_FALSE;
-
-  if(ffi_prep_closure_loc((ffi_closure*) retpriv->writeable, ((JsciTypeFunction *) retpriv->type)->GetCIF(), JSX_Pointer_Callback, retpriv, retpriv->ptr) != FFI_OK)
-    return JS_FALSE;
-
+  if(!retpriv || !retpriv->Init()) return JS_FALSE;
   JS_SetPrivate(cx, retobj, retpriv);
-
   return JS_TRUE;
 }
 
@@ -313,51 +306,6 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   return ptr->type->JStoC(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), *vp);
-}
-
-
-/*
-  Indirect entry point for callback from C program
- */
-
-static void JSX_Pointer_Callback(ffi_cif *cif, void *ret, void **args, void *user_data) {
-  JsciCallback *cb = (JsciCallback *) user_data;
-  JsciTypeFunction *type = (JsciTypeFunction *) cb->type;
-
-  jsval rval = JSVAL_VOID;
-  jsval *tmp_argv = new jsval[type->nParam];
-  if(!tmp_argv) return;
-  
-  for(int i = 0; i != type->nParam; ++i) {
-    tmp_argv[i]=JSVAL_VOID;
-    JS_AddRoot(cb->cx, tmp_argv+i);
-  }
-  JS_AddRoot(cb->cx, &rval);
-
-  for(int i = 0; i < type->nParam; i++) {
-    JsciType *t = type->param[i];
-    if(t->type == ARRAYTYPE) return; // xxx why don't we just treat it as a pointer type?
-    t->CtoJS(cb->cx, (char*) *args, tmp_argv);
-  }
-
-  if (!JS_CallFunction(cb->cx, JS_GetGlobalObject(cb->cx), cb->fun, type->nParam, tmp_argv, &rval)) {
-    //    printf("FAILCALL\n");
-  }
-  
-  for(int i = 0; i != type->nParam; ++i) {
-    JsciType *t = type->param[i];
-    if(t->type == ARRAYTYPE) return;
-    if(!t->JStoC(cb->cx, (char*) *args, tmp_argv[i])) return;
-    args++;
-  }
-
-  JS_RemoveRoot(cb->cx, &rval);
-  for(int i = 0; i != type->nParam; ++i) {
-    JS_RemoveRoot(cb->cx, tmp_argv+i);
-  }
-  delete tmp_argv;
-
-  if(type->returnType->type != VOIDTYPE) type->returnType->JStoC(cb->cx, (char*) ret, rval);
 }
 
 
