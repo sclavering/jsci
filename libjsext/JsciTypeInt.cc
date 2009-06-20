@@ -56,11 +56,9 @@ JSBool JsciTypeInt::JStoC(JSContext *cx, char *data, jsval v) {
 
 
 JSBool JsciTypeInt::JsToInt(JSContext *cx, jsval v, int *rv) {
-  switch(JSX_JSType(cx, v)) {
-    case JSVAL_DOUBLE: *rv = (int) *JSVAL_TO_DOUBLE(v); return JS_TRUE;
-    case JSVAL_BOOLEAN: *rv = v == JSVAL_TRUE ? 1 : 0; return JS_TRUE;
-    case JSVAL_INT: *rv = JSVAL_TO_INT(v); return JS_TRUE;
-    case JSNULL: *rv = 0; return JS_TRUE;
-  }
-  return JSX_ReportException(cx, "Cannot convert JS value to a C float/double");
+  if(JSVAL_IS_INT(v)) { *rv = JSVAL_TO_INT(v); return JS_TRUE; }
+  if(JSVAL_IS_DOUBLE(v)) { *rv = (int) *JSVAL_TO_DOUBLE(v); return JS_TRUE; }
+  if(JSVAL_IS_BOOLEAN(v)) { *rv = v == JSVAL_TRUE ? 1 : 0; return JS_TRUE; }
+  if(v == JSVAL_NULL) { *rv = 0; return JS_TRUE; }
+  return JSX_ReportException(cx, "Cannot convert JS value of unrecognised type to a C integer");
 }
