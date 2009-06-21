@@ -53,6 +53,7 @@ jsval make_encodeJSON(JSContext *cx);
 jsval make_decodeJSON(JSContext *cx);
 jsval make_encodeBase64(JSContext *cx);
 jsval make_decodeBase64(JSContext *cx);
+jsval make_stringifyHTML(JSContext *cx);
 jsval make_cToXML(JSContext *cx);
 static jsval make_gc(JSContext *cx);
 static jsval make_isCompilableUnit(JSContext *cx);
@@ -185,6 +186,8 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   JS_SetProperty(cx, argobj, "encodeBase64", &tmp);
   tmp = make_decodeBase64(cx);
   JS_SetProperty(cx, argobj, "decodeBase64", &tmp);
+  tmp = make_stringifyHTML(cx);
+  JS_SetProperty(cx, argobj, "stringifyHTML", &tmp);
   char cwd[1024];
   tmp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
   JS_SetProperty(cx, argobj, "cwd", &tmp);
