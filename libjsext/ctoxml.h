@@ -29,7 +29,6 @@
 #define _CTOXML_H
 
 #include "xml.h"
-#include "strbuf.h"
 #include "jsapi.h"
 
 extern JSContext *cparser_jscx;
@@ -37,10 +36,6 @@ extern jsval cparser_typedefs, cparser_preprocessor_directives;
 
 extern char *ctoxml_filename;
 extern char ctoxml_filename_errmsg[80];
-extern struct strbuf *ctoxml_STDOUT;
-
-static inline void PUTS(char* x) {
-  strbuf_cat(ctoxml_STDOUT, x);
-}
+extern XmlNode *cparser_root;
 
 #endif

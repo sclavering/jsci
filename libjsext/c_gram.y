@@ -503,8 +503,8 @@ jump_statement
   ;
 
 translation_unit
-  : external_definition                                    { xml_print($1); xml_free($1); }
-  | translation_unit external_definition                   { xml_print($2); xml_free($2); }
+  : external_definition                                    { $$ = $1; }
+  | translation_unit external_definition                   { $$ = xml_link($1, $2); }
   ;
 
 external_definition
@@ -528,7 +528,7 @@ identifier
   ;
 
 file
-  : translation_unit                                       {  }
+  : translation_unit                                       { xml_push(cparser_root, $1); }
   |                                                        {  }
   ;
 

@@ -6,6 +6,14 @@
 #include "strbuf.h"
 
 
+static struct strbuf *xmlstrbuf;
+
+
+static inline void PUTS(char* x) {
+  strbuf_cat(xmlstrbuf, x);
+}
+
+
 void xml_free(XmlNode *e) {
   int i;
   for(i = 0; i < e->nAttrib; i++) {
@@ -100,6 +108,12 @@ XmlNode *xml_link(XmlNode *e1, XmlNode *e2) {
 }
 
 
+XmlNode *xml_push(XmlNode *e1, XmlNode *e2) {
+  if(e1->inner) xml_link(e1->inner->last, e2);
+  else e1->inner = e2;
+}
+
+
 static void xml_print_escaped(char *s) {
   char str[2];
   while(*s) {
@@ -158,4 +172,13 @@ static void _xml_print(XmlNode *e) {
 void xml_print(XmlNode *e) {
   _xml_print(e);
   PUTS("\n");
+}
+
+
+char *xml_stringify(XmlNode *x) {
+  xmlstrbuf = strbuf_new();
+  xml_print(x);
+  char *ret = realloc(xmlstrbuf->buf, xmlstrbuf->len + 1);
+  free(xmlstrbuf); // don't use strbuf_free(), because we want to keep the buffer for now
+  return ret;
 }

@@ -1,8 +1,6 @@
 #ifndef _XML_H
 #define _XML_H
 
-#include <stdio.h>
-
 typedef struct _XmlAttr {
   char *name;
   char *value;
@@ -28,7 +26,8 @@ XmlNode *xml_text(char *tag, char *txt);
 XmlNode *xml_attrs(XmlNode *node, ...);
 
 XmlNode *xml_link(XmlNode *e1, XmlNode *e2);
-void xml_print(XmlNode *e);
+XmlNode *xml_push(XmlNode *e1, XmlNode *e2);
+char *xml_stringify(XmlNode *e);
 void xml_free(XmlNode *e);
 void c_unescape(char *in);
 

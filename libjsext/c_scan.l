@@ -36,7 +36,6 @@ IS                      (u|U|l|L)*
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "strbuf.h"
 #include "c_gram.h"
 #include "ctoxml.h"
 

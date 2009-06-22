@@ -1,38 +1,29 @@
 #include "ctoxml.h"
 #include <stdlib.h>
 #include "c_scan.h"
-#include "strbuf.h"
 #include "util.h"
 
-struct strbuf *ctoxml_STDOUT;
 extern int ctoxml_cfilepos;
-
 JSContext *cparser_jscx;
 jsval cparser_typedefs, cparser_preprocessor_directives;
+XmlNode *cparser_root;
 
 
 // C is a 0-terminated string
 // errorpos will be used to store string offset of 1st syntax error or -1 if parsing was ok
-// Returns 0-terminated string allocated with malloc.
-char *ctoxml(char *C, int *errorpos) {
+char *ctoxml(JSContext *cx, char *C, int *errorpos) {
   YY_BUFFER_STATE I=ctoxml_c_scan_string(C); // Input buffer
-  
-  ctoxml_STDOUT=strbuf_new();
   ctoxml_filename = 0;
-
-  PUTS("<C>\n");
+  cparser_root = xml("C", 0);
   int res = ctoxml_cparse();
+  char *ret = 0;
   if (res) {
     *errorpos = ctoxml_cfilepos;
   } else {
     *errorpos = -1;
-    PUTS("</C>");
+    ret = xml_stringify(cparser_root);
   }
-
   ctoxml_c_delete_buffer(I);
-
-  char *ret = realloc(ctoxml_STDOUT->buf, ctoxml_STDOUT->len + 1);
-  free(ctoxml_STDOUT);
   return ret;
 }
 
@@ -55,7 +46,7 @@ static JSBool jsx_cToXML(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
   cparser_jscx = cx;
   char *c_code = JS_GetStringBytes(JSVAL_TO_STRING(c_code_str));
   int errpos = 0;
-  char *xmlstr = ctoxml(c_code, &errpos);
+  char *xmlstr = ctoxml(cx, c_code, &errpos);
   if(errpos != -1) {
     JSX_ReportException(cx, "cToXML: C syntax error at %d", errpos);
     return JS_FALSE;
