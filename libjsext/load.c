@@ -20,31 +20,19 @@ The file may start with a #! line, which is ignored.
 
 
 static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  char *filename;
-  int fd;
-  struct stat S;
-  char *buf;
-  int shebanglen=0;
   JSScript *script=0;
   JSObject *scrobj=0;
 
-  if (argc<1) {
-    JSX_ReportException(cx, "Too few arguments");
-    return JS_FALSE;
-  }
+  if(!JSVAL_IS_STRING(argv[0])) return JSX_ReportException(cx, "load(): first argument must be a string");
 
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &filename)) {
-    return JS_FALSE;
-  }
+  char *filename = JS_GetStringBytes(JSVAL_TO_STRING(argv[0]));
 
-  fd=open(filename,O_RDONLY);
-  if (fd==-1) {
-    // File does not exist, throw exception
-    JSX_ReportException(cx, "load: Could not open %s",filename);
-    return JS_FALSE;
-  }
+  int fd = open(filename, O_RDONLY);
+  if(fd == -1) return JSX_ReportException(cx, "load(): could not open %s",filename);
+
+  struct stat S;
   fstat(fd, &S);
-  buf=malloc(S.st_size);
+  char *buf = malloc(S.st_size);
   if (!buf) {
     JSX_ReportException(cx, "load: Out of memory loading %s", filename);
     goto failure;
@@ -54,16 +42,7 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
     goto failure;
   }
 
-  if(S.st_size > 1 && buf[0] == '#' && buf[1] == '!') {
-    // shebang
-    while(buf[shebanglen] != '\n' && buf[shebanglen] != '\r') shebanglen++;
-    shebanglen++;
-    if(shebanglen < S.st_size && (buf[shebanglen] == '\n' || buf[shebanglen] == '\r') && buf[shebanglen] != buf[shebanglen - 1]) {
-      shebanglen++;
-    }
-  }
-
-  script=JS_CompileScript(cx, obj, buf + shebanglen, S.st_size - shebanglen, filename, shebanglen ? 2 : 1);
+  script=JS_CompileScript(cx, obj, buf, S.st_size, filename, 1);
   if (!script) goto failure;
   scrobj=JS_NewScriptObject(cx, script);
   
@@ -92,7 +71,7 @@ static JSBool load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval 
 
 
 jsval JSX_make_load(JSContext *cx) {
-  JSFunction *jsfun=JS_NewFunction(cx, load, 0, 0, 0, 0);
+  JSFunction *jsfun=JS_NewFunction(cx, load, 1, 0, 0, 0);
   if(!jsfun) return JSVAL_VOID;
   return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }
