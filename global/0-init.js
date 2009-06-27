@@ -1,11 +1,12 @@
 (function() {
-  jsxlib.load.call(this, "0-ffi.js");
+  const JSX_HOME = jsxlib.environment.JSX_HOME;
+  const path = JSX_HOME + '/global/';
+  jsxlib.load.call(this, path + "0-ffi.js");
   this.jsxcore = jsxlib; // backwards compatibility for CGI/FastCGI programs
 
-  clib = load("clib.jswrapper");
+  clib = load(path + "clib.jswrapper");
   for(var i = 0; clib['dl ' + i]; i++) ;
 
-  const path = jsxlib.environment.JSX_HOME + '/global/';
   this.JSEXT1 = {
     $path: path + 'JSEXT1',
 
@@ -17,7 +18,7 @@
     decodeBase64: jsxlib.decodeBase64,
   };
 
-  const ActiveDirectory = JSEXT1.ActiveDirectory = load('JSEXT1/ActiveDirectory.js');
+  const ActiveDirectory = JSEXT1.ActiveDirectory = load(path + 'JSEXT1/ActiveDirectory.js');
   JSEXT1.os = ActiveDirectory.handlers.js.call(JSEXT1, 'os', ".js"); // ActiveDirectory needs its .stat()
   ActiveDirectory.call(this, path);
   ActiveDirectory.call(JSEXT1, JSEXT1.$path);

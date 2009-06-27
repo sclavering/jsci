@@ -1,5 +1,5 @@
 (function() {
-  jsxlib.load.call(this, "0-ffi.js");
+  jsxlib.load.call(this, "0-ffi.js"); // the Makefile calls us from the correct working dir for this to work
 
   clib = {};
   clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl')).$;

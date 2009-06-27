@@ -45,7 +45,6 @@ extern "C" {
 jsval JSX_make_Type(JSContext *cx, JSObject *glo);
 jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
 jsval make_Dl(JSContext *cx, JSObject *glo);
-jsval JSX_make_load(JSContext *cx);
 jsval JSX_make_environment(JSContext *cx, JSObject *obj);
 jsval make_encodeUTF8(JSContext *cx);
 jsval make_decodeUTF8(JSContext *cx);
@@ -55,14 +54,13 @@ jsval make_encodeBase64(JSContext *cx);
 jsval make_decodeBase64(JSContext *cx);
 jsval make_stringifyHTML(JSContext *cx);
 jsval make_cToXML(JSContext *cx);
-static jsval make_gc(JSContext *cx);
-static jsval make_isCompilableUnit(JSContext *cx);
 }
 
+static jsval make_load(JSContext *cx);
+static jsval make_gc(JSContext *cx);
+static jsval make_isCompilableUnit(JSContext *cx);
 
-static char *strip_file_name(char *ini_file);
-
-static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval);
+static JSBool eval_file(JSContext *cx, JSObject *obj, const char *filename, jsval *rval);
 
 JSBool make_jsx_global_var(JSContext *cx, JSObject *gl);
 int JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
@@ -162,7 +160,7 @@ JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
   JS_SetProperty(cx, argobj, "Pointer", &tmp);
   tmp = make_Dl(cx, obj);
   JS_SetProperty(cx, argobj, "Dl", &tmp);
-  tmp = JSX_make_load(cx);
+  tmp = make_load(cx);
   JS_SetProperty(cx, argobj, "load", &tmp);
   tmp = make_cToXML(cx);
   JS_SetProperty(cx, argobj, "cToXML", &tmp);
@@ -195,87 +193,53 @@ JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
 }
 
 
-
 int JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
-  int32 rv = 1; // generic failure code
-
   const char *ini_file = getenv("JSEXT_INI");
   if(!ini_file) ini_file = libdir "/jsext/0-init.js";
-
-  char *ifdup = strdup(ini_file);
-  char *filename;
-  char *lastslash = strip_file_name(ifdup);
-  if(lastslash) {
-    *lastslash=0;
-    chdir(ifdup);
-    filename=lastslash+1;
-  } else {
-    filename=ifdup;
-  }
-
-  if(!exec(cx, obj, filename, rval)) goto exit;
-  rv = 0; // xxx make it return an exitcode provided by js
-  if(JSVAL_IS_INT(*rval)) rv = JSVAL_TO_INT(*rval);
-  else rv = 0; // mainly so that returning undefined is not an error
-
- exit:
-  if(ifdup) free(ifdup);
-  return rv;
+  if(!eval_file(cx, obj, ini_file, rval)) return 1;
+  if(JSVAL_IS_VOID(*rval)) return 0; // because not having an explicit return should not be an error
+  if(JSVAL_IS_INT(*rval)) return JSVAL_TO_INT(*rval);
+  return 1;
 }
 
 
-static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval) {
-  int fd=open(filename,O_RDONLY);
-  JSScript *script=0;
+static JSBool eval_file(JSContext *cx, JSObject *obj, const char *filename, jsval *rval) {
+  int fd = open(filename, O_RDONLY);
+  if(fd == -1) return JSX_ReportException(cx, "Could not open %s", filename);
+
+  JSBool ok = JS_FALSE;
   struct stat S;
-  JSObject *scrobj=0;
-
-  if (fd==-1) {
-    JSX_ReportException(cx, "Unable to open %s",filename);
-    return JS_FALSE; // File does not exist
-  }
   fstat(fd, &S);
-  char *buf = new char[S.st_size];
+  char *buf = (char*) malloc(S.st_size);
   if (!buf) {
-    JSX_ReportException(cx, "Out of memory for %s", filename);
-    goto failure;
+    JSX_ReportException(cx, "Out of memory when loading %s", filename);
+    goto exit;
   }
-  if (read(fd, buf, S.st_size)!=S.st_size) {
-    JSX_ReportException(cx, "Error loading %s",filename);
-    goto failure;
+  if(read(fd, buf, S.st_size) != S.st_size) {
+    JSX_ReportException(cx, "Error loading %s", filename);
+    goto exit;
   }
+  *rval=JSVAL_ZERO;
+  if(!JS_EvaluateScript(cx, obj, buf, S.st_size, filename, 1, rval)) goto exit;
 
-  script=JS_CompileScript(cx, obj, buf, S.st_size, filename, 1);
-  if (!script)
-    goto failure;
-  scrobj=JS_NewScriptObject(cx, script);
-  JS_AddRoot(cx, &scrobj);
-
-  delete buf;
-  buf=0;
-
-  close(fd);
-  fd=0;
-
-  if (!JS_ExecuteScript(cx, obj, script, rval)) goto failure;
-
-  JS_RemoveRoot(cx, &scrobj);
-  //  JS_DestroyScript(cx, script);
-  return JS_TRUE;
-
- failure:
-  if(buf) delete buf;
-  if (fd) close(fd);
-  if (scrobj) JS_RemoveRoot(cx, &scrobj);
-  //  if (script) JS_DestroyScript(cx, script);
-  return JS_FALSE;
+  ok = JS_TRUE;
+ exit:
+  if(buf) free(buf);
+  if(fd) close(fd);
+  return ok;
 }
 
 
-static char *strip_file_name(char *ini_file) {
-  char *lastslash=strrchr(ini_file,'/');
-  if(lastslash) return lastslash;
-  return 0;
+static JSBool jsx_load(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  if(!JSVAL_IS_STRING(argv[0])) return JSX_ReportException(cx, "load(): first argument must be a string");
+  return eval_file(cx, obj, JS_GetStringBytes(JSVAL_TO_STRING(argv[0])), rval);
+}
+
+
+static jsval make_load(JSContext *cx) {
+  JSFunction *jsfun = JS_NewFunction(cx, jsx_load, 1, 0, 0, 0);
+  if(!jsfun) return JSVAL_VOID;
+  return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }
 
 
