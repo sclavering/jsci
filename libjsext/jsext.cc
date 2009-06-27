@@ -64,7 +64,8 @@ static char *strip_file_name(char *ini_file);
 
 static JSBool exec(JSContext *cx, JSObject *obj, char *filename, jsval *rval);
 
-JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
+JSBool make_jsx_global_var(JSContext *cx, JSObject *gl);
+int JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
 static void printhelp(void) {
   puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
@@ -118,7 +119,7 @@ int main(int argc, char **argv, char **envp) {
   cx=JS_NewContext(rt, 65536);
   if (!cx) goto failure;
 
-  //  JS_SetOptions(cx, JSOPTION_VAROBJFIX);
+  JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
   JS_SetErrorReporter(cx, my_ErrorReporter);
 
   glob=JS_NewObject(cx, NULL, NULL, NULL);
@@ -131,7 +132,8 @@ int main(int argc, char **argv, char **envp) {
     goto failure;
 
   JS_AddRoot(cx, &rval);
-  exitcode = !JSX_init(cx, glob, &rval);
+  if(!make_jsx_global_var(cx, glob)) goto failure;
+  exitcode = JSX_init(cx, glob, &rval);
   JS_RemoveRoot(cx, &rval);
 
   JS_DestroyContext(cx);
@@ -146,17 +148,13 @@ int main(int argc, char **argv, char **envp) {
 }
 
 
-JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
-  JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
-
-  jsval argsval = JSVAL_VOID;
-  JS_AddRoot(cx, &argsval);
-  JSObject *argobj;
-  argobj = JS_NewObject(cx, 0, 0, 0);
-  argsval = OBJECT_TO_JSVAL(argobj);
-
+// create the .jsx property on the global object
+JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
   jsval tmp = JSVAL_VOID;
   JS_AddRoot(cx, &tmp);
+  JSObject *argobj = JS_NewObject(cx, 0, 0, 0); // needs renaming
+
+  if(!JS_DefineProperty(cx, obj, "jsxlib", OBJECT_TO_JSVAL(argobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
 
   tmp = JSX_make_Type(cx, obj);
   JS_SetProperty(cx, argobj, "Type", &tmp);
@@ -192,6 +190,15 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
   tmp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, getcwd(cwd, 1024)));
   JS_SetProperty(cx, argobj, "cwd", &tmp);
 
+  JS_RemoveRoot(cx, &tmp);
+  return JS_TRUE;
+}
+
+
+
+int JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
+  int32 rv = 1; // generic failure code
+
   const char *ini_file = getenv("JSEXT_INI");
   if(!ini_file) ini_file = libdir "/jsext/0-init.js";
 
@@ -206,20 +213,13 @@ JSBool JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
     filename=ifdup;
   }
 
-  if(!exec(cx, obj, filename, rval)) return JS_FALSE;
+  if(!exec(cx, obj, filename, rval)) goto exit;
+  rv = 0; // xxx make it return an exitcode provided by js
+  if(JSVAL_IS_INT(*rval)) rv = JSVAL_TO_INT(*rval);
+  else rv = 0; // mainly so that returning undefined is not an error
 
-  JSBool rv = JS_FALSE;
-  if(JSVAL_IS_OBJECT(*rval) && !JSVAL_IS_NULL(*rval) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(*rval))) {
-    jsval jsfun = *rval;
-    rv = JS_CallFunctionValue(cx, obj, jsfun, 1, &argsval, rval);
-  } else {
-    JSX_ReportException(cx, "Ini file does not evaluate to a function");
-  }
-
-  JS_RemoveRoot(cx, &argobj);
-  JS_RemoveRoot(cx, &tmp);
+ exit:
   if(ifdup) free(ifdup);
-
   return rv;
 }
 

@@ -2,6 +2,14 @@
 Implement bits of Pointer, Type, and Dl that don't need to be done in C
 */
 
+this.Type = jsxlib.Type;
+this.Pointer = jsxlib.Pointer;
+this.Dl = jsxlib.Dl;
+this.load = jsxlib.load;
+this.environment = jsxlib.environment;
+this.gc = jsxlib.gc;
+this.isCompilableUnit = jsxlib.isCompilableUnit;
+
 // xxx not portable (e.g. char can be unsigned)
 Type.char = Type.signed_char;
 Type.short = Type.signed_short;

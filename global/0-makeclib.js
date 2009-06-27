@@ -1,12 +1,5 @@
-function(args) {
-  this.Type = args.Type;
-  this.Pointer = args.Pointer;
-  this.Dl = args.Dl;
-  this.load = args.load;
-  this.environment = args.environment;
-  this.jsxcore = args;
-
-  load('0-ffi.js');
+(function() {
+  jsxlib.load.call(this, "0-ffi.js");
 
   clib = {};
   clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl')).$;
@@ -23,7 +16,7 @@ function(args) {
 
   print = function () {} // JSEXT1.C.parse() sometimes calls this
 
-  const path = args.cwd;
+  const path = jsxlib.cwd;
   JSEXT1 = { $path: path + '/JSEXT1' };
   JSEXT1.File = load.call(JSEXT1, path + '/JSEXT1/File.js');
   JSEXT1.C = { $path: path + '/JSEXT1/C' };
@@ -31,4 +24,4 @@ function(args) {
   JSEXT1.C.jswrapper = load.call(JSEXT1.C, path + '/JSEXT1/C/jswrapper.js');
 
   clib.puts(JSEXT1.C.jswrapper(path + "/clib.h"));
-}
+})()
