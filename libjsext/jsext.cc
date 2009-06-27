@@ -28,14 +28,10 @@
 
 #include <jsapi.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <dlfcn.h>
 #include "util.h"
 
 
@@ -60,20 +56,14 @@ static jsval make_gc(JSContext *cx);
 static jsval make_isCompilableUnit(JSContext *cx);
 
 static JSBool eval_file(JSContext *cx, JSObject *obj, const char *filename, jsval *rval);
-
-JSBool make_jsx_global_var(JSContext *cx, JSObject *gl);
+static JSBool make_jsx_global_var(JSContext *cx, JSObject *gl);
 int JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
 
-static void
-my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
-{
-  if (report->lineno && report->filename)
-    fprintf(stderr,"Line %d in %s:",report->lineno,report->filename);
-  else
-    fprintf(stderr,"Unknown file:");
-  if (message)
-    fprintf(stderr,"%s\n",message);
+static void my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report) {
+  const char *filename = report->filename ? report->filename : "<unknown>";
+  fprintf(stderr, "Line %d in %s:", report->lineno, filename);
+  if(message) fprintf(stderr, "%s\n", message);
 }
 
 
@@ -120,7 +110,7 @@ int main(int argc, char **argv, char **envp) {
 
 
 // create the .jsx property on the global object
-JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
+static JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
   jsval tmp = JSVAL_VOID;
   JS_AddRoot(cx, &tmp);
   JSObject *argobj = JS_NewObject(cx, 0, 0, 0); // needs renaming
