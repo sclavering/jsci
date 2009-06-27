@@ -27,7 +27,6 @@
 
 
 #include <jsapi.h>
-#include <getopt.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -65,13 +64,6 @@ static JSBool eval_file(JSContext *cx, JSObject *obj, const char *filename, jsva
 JSBool make_jsx_global_var(JSContext *cx, JSObject *gl);
 int JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
-static void printhelp(void) {
-  puts("jsext [OPTION]... [FILE] [ARGUMENT]...\n\n"
-       "Evaluates FILE. If it is an anonymous JavaScript function, arguments are passed to it\n\n"
-       "Options:\n"
-       "-h, --help\n"
-       "\tPrint help\n");
-}
 
 static void
 my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
@@ -91,25 +83,6 @@ int main(int argc, char **argv, char **envp) {
   JSObject *glob;
   int exitcode=0;
   jsval rval;
-
-  for (;;) {
-    static struct option long_options[] = {
-      {"help", 0, 0, 'h'},
-      {0, 0, 0, 0}
-    };
-
-    int c = getopt_long(argc, argv, "r:he:", long_options, 0);
-
-    switch(c) {
-    case 'h':
-      printhelp();
-      exit(0);
-      break;
-    }
-
-    if (c == -1)
-      break;
-  }
 
   rt=JS_NewRuntime(64000000);
   if (!rt) goto failure;
