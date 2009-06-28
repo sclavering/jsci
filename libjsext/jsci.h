@@ -186,14 +186,7 @@ JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 JSClass *JSX_GetTypeClass(void);
 JSClass *JSX_GetPointerClass(void);
 
-int JSX_JSType(JSContext *cx, jsval rval);
 JsciType *GetVoidType(void); // the C "void" type
-
-#define JSNULL (JSVAL_TAGMASK+1) // because JSVAL_NULL == JSVAL_OBJECT
-#define JSVOID (JSVAL_TAGMASK+2)
-#define JSPOINTER (JSVAL_TAGMASK+3)
-#define JSARRAY (JSVAL_TAGMASK+5)
-#define JSFUNC (JSVAL_TAGMASK+6)
 
 
 struct JsciPointer {

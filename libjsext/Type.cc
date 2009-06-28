@@ -216,27 +216,6 @@ static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-// Determine the JS type to an appropriate level of detail for the big 2D switch
-int JSX_JSType(JSContext *cx, jsval v) {
-  int jstype = JSVAL_TAG(v);
-  switch(jstype) {
-    case JSVAL_OBJECT:
-      if(v == JSVAL_NULL) return JSNULL;
-      if(JS_IsArrayObject(cx, JSVAL_TO_OBJECT(v))) return JSARRAY;
-      if(JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetPointerClass(), NULL)) return JSPOINTER;
-      if(JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(v))) return JSFUNC;
-      break;
-    case 1:
-    case 3:
-    case 5:
-    case 7:
-      if(v == JSVAL_VOID) return JSVOID;
-      return JSVAL_INT;
-  }
-  return jstype;
-}
-
-
 extern "C" jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeobj;
   JSObject *typeproto;
