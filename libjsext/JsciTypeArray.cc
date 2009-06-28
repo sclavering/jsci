@@ -32,9 +32,14 @@ int JsciTypeArray::CtoJS(JSContext *cx, char *data, jsval *rval) {
 
 
 JSBool JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v) {
-  switch(JSX_JSType(cx, v)) {
-    // Copy a string to a char array
-    case JSVAL_STRING: {
+  if(JSVAL_IS_NULL(v)) {
+    int size = this->SizeInBytes();
+    memset(data, 0, size);
+    return JS_TRUE;
+  }
+
+  if(JSVAL_IS_STRING(v)) {
+      // Copy a string to a char array
       if(!type_is_char(this->member)) return JSX_ReportException(cx, "Cannot convert JS string to a C array of non-chars");
       int size = JS_GetStringLength(JSVAL_TO_STRING(v));
       if(size < this->length) {
@@ -44,11 +49,13 @@ JSBool JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v) {
         memcpy(*(char **)data, JS_GetStringBytes(JSVAL_TO_STRING(v)), this->length * sizeof(char));
       }
       return JS_TRUE;
-    }
+  }
+
+  if(JSVAL_IS_OBJECT(v)) {
+    JSObject *obj = JSVAL_TO_OBJECT(v);
     // Copy array elements to a fixed size array
-    case JSARRAY: {
+    if(JS_IsArrayObject(cx, obj)) {
       int elsize = this->member->SizeInBytes();
-      JSObject *obj = JSVAL_TO_OBJECT(v);
       for(int i = 0; i != this->length; ++i) {
         jsval tmp;
         JS_GetElement(cx, obj, i, &tmp);
@@ -56,19 +63,16 @@ JSBool JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v) {
       }
       return JS_TRUE;
     }
-    case JSPOINTER: {
+
+    if(JS_InstanceOf(cx, obj, JSX_GetPointerClass(), NULL)) {
       // Copy contents pointed to into array
       int size = this->SizeInBytes();
-      JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(v));
+      JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
       memcpy(data, ptr->ptr, size);
       return JS_TRUE;
     }
-    case JSNULL: {
-      int size = this->SizeInBytes();
-      memset(data, 0, size);
-      return JS_TRUE;
-    }
   }
+
   return JSX_ReportException(cx, "Cannot convert JS value to C array");
 }
 

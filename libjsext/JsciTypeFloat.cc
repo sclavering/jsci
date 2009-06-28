@@ -34,11 +34,9 @@ JSBool JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v) {
 
 
 JSBool JsciTypeFloat::JsToDouble(JSContext *cx, jsval v, jsdouble *rv) {
-  switch(JSX_JSType(cx, v)) {
-    case JSVAL_DOUBLE: *rv = *JSVAL_TO_DOUBLE(v); return JS_TRUE;
-    case JSVAL_BOOLEAN: *rv = v == JSVAL_TRUE ? 1.0 : 0.0; return JS_TRUE;
-    case JSVAL_INT: *rv = (jsdouble) JSVAL_TO_INT(v); return JS_TRUE;
-    case JSNULL: *rv = 0; return JS_TRUE;
-  }
+  if(JSVAL_IS_DOUBLE(v)) { *rv = *JSVAL_TO_DOUBLE(v); return JS_TRUE; }
+  if(JSVAL_IS_INT(v)) { *rv = (jsdouble) JSVAL_TO_INT(v); return JS_TRUE; }
+  if(JSVAL_IS_BOOLEAN(v)) { *rv = v == JSVAL_TRUE ? 1.0 : 0.0; return JS_TRUE; }
+  if(JSVAL_IS_NULL(v)) { *rv = 0; return JS_TRUE; }
   return JSX_ReportException(cx, "Cannot convert JS value to a C float/double");
 }
