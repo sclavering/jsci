@@ -136,17 +136,16 @@ function readline(prompt) {
 }
 
 
-/*
-Beware: this function is called from libreadline, and thus cannot see it's scope (this file) while running.  That's why get_completion_list() is defined inside it, and .completion_cache is stored on arguments.callee rather than using a closure variable.
+var completion_cache = null;
 
+/*
 libreadline passes us a word/token to get completions for, and calls us repeatedly to get the full list of results one at a time.  We have to malloc() the return values, and libreadline will free() them.
 */
 function iterate_completion(text_ptr, state) {
-  const self = arguments.callee;
-
-  if(state == 0) self.completion_cache = get_completion_list(text_ptr.string());
-  if(!self.completion_cache || state >= self.completion_cache.length) return null;
-  return clib.strdup(String(self.completion_cache[state]));
+  if(state == 0) completion_cache = get_completion_list(text_ptr.string());
+  if(!completion_cache || state >= completion_cache.length) return null;
+  return clib.strdup(String(completion_cache[state]));
+}
 
   // Completes method/field names for expressions like |foo.bar.baz|
   // Doesn't handle e.g.: "foo".<tab><tab> (i.e. tab-completing methods of strings from a literal)
@@ -170,7 +169,6 @@ function iterate_completion(text_ptr, state) {
     } catch(x) {
     }
   }
-}
 
 
 return interactive;
