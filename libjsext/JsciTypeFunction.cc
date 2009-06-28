@@ -1,6 +1,9 @@
 #include "jsci.h"
 
 
+static JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *argv, jsval *rval);
+
+
 JsciTypeFunction::JsciTypeFunction(int nParam) : JsciType(FUNCTIONTYPE), nParam(nParam) {
   this->param = new JsciType*[this->nParam];
 }
@@ -83,4 +86,16 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
   delete argbuf;
   delete retbuf;
   return ok;
+}
+
+
+static JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *argv, jsval *rval) {
+  JSObject *funcobj = JSVAL_TO_OBJECT(argv[-2]);
+  jsval ptrval;
+  JS_LookupProperty(cx, funcobj, "__ptr__", &ptrval);
+  JSObject *obj = JSVAL_TO_OBJECT(ptrval);
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
+  JsciType *t = ptr->type;
+  if(t->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Error: wrapper for C function has a non-function type");
+  return ((JsciTypeFunction *) t)->Call(cx, ptr->ptr, argc, argv, rval);
 }

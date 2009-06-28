@@ -159,19 +159,6 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
 }
 
 
-
-JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *argv, jsval *rval) {
-  JSObject *funcobj = JSVAL_TO_OBJECT(argv[-2]);
-  jsval ptrval;
-  JS_LookupProperty(cx, funcobj, "__ptr__", &ptrval);
-  JSObject *obj = JSVAL_TO_OBJECT(ptrval);
-  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  JsciType *t = ptr->type;
-  if(t->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Error: wrapper for C function has a non-function type");
-  return ((JsciTypeFunction *) t)->Call(cx, ptr->ptr, argc, argv, rval);
-}
-
-
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   *vp=JSVAL_VOID;
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);

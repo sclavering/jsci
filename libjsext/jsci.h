@@ -180,7 +180,6 @@ struct JsciTypeBitfield : JsciType {
 };
 
 
-JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, jsval fun, JsciType *type);
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 
