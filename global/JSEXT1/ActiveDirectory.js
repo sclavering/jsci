@@ -160,22 +160,10 @@ function make_setter(self, propname) {
 
 
 function make_getter(self, propname, extension) {
-    return function() {
-      delete self[propname];
-      self[propname] = undefined;
-      try {
-        var val = handlers[extension].call(self, propname, "." + extension);
-      } catch (x) {
-        delete self[propname];
-        self.__defineGetter__(propname, arguments.callee);
-        self.__defineSetter__(propname, make_setter(self, propname));
-        throw(x);
-      }
-
-      if(self[propname] === undefined) self[propname] = val;
-
-      return val;
-    }
+  return function() {
+    delete self[propname];
+    return self[propname] = handlers[extension].call(self, propname, "." + extension);
+  }
 }
 
 
