@@ -31,12 +31,24 @@
 
   // it's painful setting these from C++ code, so we don't
   const empty_tag_names = jsxlib.stringifyHTML.empty_tag_names;
+  // The list of element names is taken from http://www.whatwg.org/specs/web-apps/current-work/multipage/syntax.html#serializing-html-fragments
+  empty_tag_names.area = true;
+  empty_tag_names.base = true;
+  empty_tag_names.basefont = true;
+  empty_tag_names.bgsound = true;
   empty_tag_names.br = true;
+  empty_tag_names.col = true;
+  empty_tag_names.embed = true;
+  empty_tag_names.frame = true;
   empty_tag_names.hr = true;
-  empty_tag_names.link = true;
-  empty_tag_names.meta = true;
   empty_tag_names.img = true;
   empty_tag_names.input = true;
+  empty_tag_names.keygen = true;
+  empty_tag_names.link = true;
+  empty_tag_names.meta = true;
+  empty_tag_names.param = true;
+  empty_tag_names.spacer = true;
+  empty_tag_names.wbr = true;
   const boolean_attribute_names = jsxlib.stringifyHTML.boolean_attribute_names;
   boolean_attribute_names.checked = true;
   boolean_attribute_names.selected = true;
