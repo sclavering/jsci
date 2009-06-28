@@ -181,7 +181,7 @@ struct JsciTypeBitfield : JsciType {
 
 
 JSBool JSX_NativeFunction(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, JSFunction *fun, JsciType *type);
+JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, jsval fun, JsciType *type);
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
 
 JSClass *JSX_GetTypeClass(void);
@@ -214,10 +214,11 @@ struct JsciPointerAlloc : JsciPointer {
 
 struct JsciCallback : JsciPointer {
   JSContext *cx;
-  JSFunction *fun;
+  jsval fun;
   void *writeable; // Points to writeable code
 
-  JsciCallback(JSContext *cx, JSFunction *fun, JsciType *t);
+  // the jsval must be for a js function
+  JsciCallback(JSContext *cx, jsval fun, JsciType *t);
   JSBool Init();
   ~JsciCallback();
 };

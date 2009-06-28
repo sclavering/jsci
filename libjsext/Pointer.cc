@@ -59,12 +59,9 @@ static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *ty
 }
 
 
-JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, JSFunction *fun, JsciType *type) {
+JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, jsval fun, JsciType *type) {
   if(type->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Type is not a C function");
-
-  if (!JS_DefineProperty(cx, retobj, "function", OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
-
+  if(!JS_DefineProperty(cx, retobj, "function", fun, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
   JsciCallback *retpriv = new JsciCallback(cx, fun, type);
   if(!retpriv || !retpriv->Init()) return JS_FALSE;
   JS_SetPrivate(cx, retobj, retpriv);
@@ -140,7 +137,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
     JsciType *type = ptr->type;
     // Accept both function type and pointer-to-function type
     if(type->type == POINTERTYPE) type = ((JsciTypePointer *) type)->direct;
-    if(JSX_InitPointerCallback(cx, obj, JS_ValueToFunction(cx, argv[1]), type)) return JS_FALSE;
+    if(JSX_InitPointerCallback(cx, obj, argv[1], type)) return JS_FALSE;
     return JS_TRUE;
   }
 
