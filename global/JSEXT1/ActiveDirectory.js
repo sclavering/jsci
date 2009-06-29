@@ -60,9 +60,6 @@ Properties of ActiveDirectory instances:
 (function() {
 
 
-const hasOwnProperty = Object.prototype.hasOwnProperty;
-
-
 const cached_instances = ActiveDirectory.cache = {
 }; // mapping from paths to already-created ActiveDirectory instances
 
@@ -81,50 +78,40 @@ ActiveDirectory.get = function get(path, obj) {
 
   self.$path=path;
 
-  if(!hasOwnProperty.call(self, '$getters')) self.$getters = {};
+  if(!self.$getters) self.$getters = {};
 
   var subdirs=[];
 
-  var dir = JSEXT1.os.dir(path);
-  for(var i in dir) {
-    if(!hasOwnProperty.call(dir, i)) continue;
-
-    var parts = dir[i].match(/^([^ -@][^.]*)(?:\.(.*))?/);
+  for each(var filename in JSEXT1.os.dir(path)) {
+    var parts = filename.match(/^([^ -@][^.]*)((?:\..*)?)$/);
     if(!parts) continue;
-
     var propname = parts[1], extension = parts[2];
     if(extension) {
-      if(handlers[extension] && !hasOwnProperty.call(self, propname) && propname != "valueOf") {
+      if(!/^\.(?:js|txt|html|h|jswrapper)$/.test(extension)) continue;
+
+      if(!self.hasOwnProperty(propname) && !(propname in Object.prototype)) {
         self.$getters[propname] = make_getter(self, propname, extension);
         self.__defineGetter__(propname, self.$getters[propname]);
         self.__defineSetter__(propname, make_setter(self, propname));
-      } else if(handlers[extension] && propname == "prototype") {
-        self.prototype = handlers[extension].call(self, propname, '.' + extension);
+      } else if(propname == "prototype") {
+        self.prototype = handle(self, propname, '.' + extension);
       }
     } else if(JSEXT1.os.isdir(path + '/' + propname)) {
       subdirs.push(propname);
     }
   }
 
-  for(var i in subdirs) {
-    if(!hasOwnProperty.call(subdirs, i)) continue;
-
-    var propname = subdirs[i];
-    if(hasOwnProperty.call(self, propname) && !self.$getters[propname]) {
-      // When making a function, the 'prototype' property will be automatically created.
-      // If there is also a 'prototype' directory, then read it right away - not possible
-      // to defer. The test above works because the 'prototype' property will have been
-      // defined (hasOwnProperty), but without a getter.
+  for each(var propname in subdirs) {
+    if(self.hasOwnProperty(propname) && !self.$getters[propname]) {
+      // function objects always have a .prototype property, so we can't just install a getter to lazily create it
       if(!self.__lookupGetter__(propname)) {
         if(typeof self == "function" && propname == "prototype") {
-          var val = self[propname];
-          var newpath = path + '/' + propname;
-          ActiveDirectory.get(newpath, val);
+          ActiveDirectory.get(path + '/' + propname, self[propname]);
         }
       }
 
     } else {
-      self.$getters[propname] = make_subdir_getter(self, propname, hasOwnProperty.call(self.$getters, propname) && self.$getters[propname]);
+      self.$getters[propname] = make_subdir_getter(self, propname, self.$getters[propname] || null);
       self.__defineGetter__(propname, self.$getters[propname]);
       self.__defineSetter__(propname, make_setter(self, propname));
     }
@@ -154,7 +141,7 @@ function make_subdir_getter(self, propname, oldgetter) {
 function make_setter(self, propname) {
     return function(value) {
       delete self[propname];
-      self[propname] = value;
+      return self[propname] = value;
     }
 }
 
@@ -162,58 +149,29 @@ function make_setter(self, propname) {
 function make_getter(self, propname, extension) {
   return function() {
     delete self[propname];
-    return self[propname] = handlers[extension].call(self, propname, "." + extension);
+    return self[propname] = handle(self, propname, extension);
   }
 }
 
 
-// A mapping from file extensions to handler functions to load and process those files.
-// It's occasionally used outside of this module
-const handlers = {
-  js: handle_script,
-
-  txt: handle_text,
-  html: handle_text,
-
-  h: handle_native,
-  jswrapper: handle_native,
-}
-
-
-/*
-JavaScript files are interpreted with the current directory's ActiveDirectory object on top of the scope chain.
-*/
-function handle_script(name, extension) {
-  return load.call(this, this.$path + '/' + name + extension);
-}
-
-
-function handle_text(name, extension) {
-  var file = new JSEXT1.File(this.$path + '/' + name + extension, "r");
-  var ret = file.read();
-  file.close();
-  return ret;
-}
-
-
-/*
-This handler handles .h files, and the .jswrapper files generated from them.
-
-The .jswrapper file is a javascript file returning an obejct containing the low-level type-marshalling wrappers for C code (using Type, Pointer, etc.).
-*/
-function handle_native(name, extension) {
-  const path = this.$path + '/';
-  var stat_h = JSEXT1.os.stat(path + name + '.h');
-  if(!stat_h) return undefined;
-  var stat_w = JSEXT1.os.stat(path + name + '.jswrapper');
-
-  if(!stat_w || stat_h.mtime > stat_w.mtime) {
-    JSEXT1.File.write(path + name + '.jswrapper', JSEXT1.wraplib(path + name + '.h'));
+function handle(self, name, extension) {
+  const path = self.$path, proppath = path + '/' + name, filename = proppath + extension;
+  switch(extension) {
+    case ".js":
+      return load.call(self, filename);
+    case ".txt":
+    case ".html":
+      return JSEXT1.File.read(filename);
+    case ".h":
+      if(!os.exists(proppath + '.jswrapper')) JSEXT1.File.write(proppath + '.jswrapper', JSEXT1.wraplib(proppath + '.h'));
+      // fall through
+    case ".jswrapper":
+      var ret = load.call(self, proppath + '.jswrapper');
+      // xxx make the wrapper file do this itself
+      for(var i = 0; ret['dl ' + i]; i++) { /* pass */ }
+      return ret;
   }
-
-  var ret = load.call(this, path + name + '.jswrapper');
-  for(var i = 0; ret['dl ' + i]; i++) { /* pass */ }
-  return ret;
+  return undefined;
 }
 
 
