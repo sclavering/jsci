@@ -169,7 +169,7 @@ function make_getter(self, propname, extension) {
 
 // A mapping from file extensions to handler functions to load and process those files.
 // It's occasionally used outside of this module
-const handlers = ActiveDirectory.handlers = {
+const handlers = {
   js: handle_script,
 
   txt: handle_text,

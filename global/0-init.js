@@ -18,8 +18,8 @@
     decodeBase64: jsxlib.decodeBase64,
   };
 
-  const ActiveDirectory = JSEXT1.ActiveDirectory = load(path + 'JSEXT1/ActiveDirectory.js');
-  JSEXT1.os = ActiveDirectory.handlers.js.call(JSEXT1, 'os', ".js"); // ActiveDirectory needs its .stat()
+  const ActiveDirectory = JSEXT1.ActiveDirectory = load.call(JSEXT1, path + 'JSEXT1/ActiveDirectory.js');
+  JSEXT1.os = load.call(JSEXT1, path + 'JSEXT1/os.js'); // ActiveDirectory needs its .stat()
   ActiveDirectory.call(this, path);
   ActiveDirectory.call(JSEXT1, JSEXT1.$path);
 
