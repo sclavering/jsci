@@ -24,6 +24,11 @@ The .jsx file to be executed should contain a single anonymous function, which w
 
 (function() {
 
+function cgi() {
+  new CGI();
+}
+
+
 /*
 A nonce type used in CGI.GET_data and CGI.POST_data so that an object arising
 from dots in the submitted field names can be distinguished easily from e.g.
@@ -521,9 +526,9 @@ function UploadedFile(data) {
 
 
 
-CGI.FormData = FormData;
-CGI.UploadedFile = UploadedFile;
+cgi.FormData = FormData;
+cgi.UploadedFile = UploadedFile;
 
-return CGI;
+return cgi;
 
 })()

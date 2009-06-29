@@ -40,8 +40,6 @@ function fcgi(path, backlog) {
 
 
 
-
-
 /*
 new File( FCGX_stream )
 
@@ -144,7 +142,6 @@ File.prototype = {
 
 
 
-
 function _fcgi_handle_request(fd) {
   var rq = new Pointer(libfcgi['struct FCGX_Request']);
 
@@ -160,7 +157,7 @@ function _fcgi_handle_request(fd) {
   stderr = new File(rq.field("err").$);
   environment = _fcgi_get_env(rq);
 
-  new CGI();
+  cgi();
   gc();
   libfcgi.FCGX_Finish_r(rq);
 }

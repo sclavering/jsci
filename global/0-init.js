@@ -28,6 +28,8 @@
   JSEXT1.__defineGetter__('exists', function() { return JSEXT1.os.exists; });
   JSEXT1.__defineGetter__('isdir', function() { return JSEXT1.os.isdir; });
   JSEXT1.__defineGetter__('stat', function() { return JSEXT1.os.stat; });
+  // so code that does "x instanceof JSEXT1.CGI.FormData" continues working
+  JSEXT1.__defineGetter__('CGI', function() { return JSEXT1.cgi; });
 
   // it's painful setting these from C++ code, so we don't
   const empty_tag_names = jsxlib.stringifyHTML.empty_tag_names;
@@ -60,14 +62,7 @@
 
   // And now run as FastCGI, CGI, or an interactive shell
 
-  if(environment.JSEXT_FCGI) {
-    return JSEXT1.fcgi();
-  }
-
-  if(environment.GATEWAY_INTERFACE) {
-    new JSEXT1.CGI();
-    return;
-  }
-
+  if(environment.JSEXT_FCGI) return JSEXT1.fcgi();
+  if(environment.GATEWAY_INTERFACE) return JSEXT1.cgi();
   return JSEXT1.interactive();
 })()
