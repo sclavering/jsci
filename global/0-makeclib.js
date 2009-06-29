@@ -5,7 +5,7 @@
   clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl')).$;
   clib.puts = Dl().pointer('puts', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl')).$;
 
-  // Things we need to get JSEXT1.File's popen() stuff working, which is needed for JSEXT1.C.runcpp():
+  // Things we need to get JSEXT1.File's popen() stuff working, which is needed for JSEXT1.wraplib() to run cpp
   const size_t = Type.unsigned_long;
   const FILE = Type['void']; // It's actually a struct, but we're only passing it around, so it's simpler not to care
   clib.feof = Dl().pointer('feof', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl')).$;
@@ -14,14 +14,12 @@
   clib.popen = Dl().pointer('popen', Type['function'](Type.pointer(FILE), [Type.pointer(Type.char), Type.pointer(Type.char)], false, 'cdecl')).$;
   clib.pclose = Dl().pointer('pclose', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl')).$;
 
-  print = function () {} // JSEXT1.C.parse() sometimes calls this
+  print = function () {} // JSEXT1.wraplib() sometimes calls this
 
   const path = jsxlib.cwd;
   JSEXT1 = { $path: path + '/JSEXT1' };
   JSEXT1.File = load.call(JSEXT1, path + '/JSEXT1/File.js');
-  JSEXT1.C = { $path: path + '/JSEXT1/C' };
-  JSEXT1.C.parse = load.call(JSEXT1.C, path + '/JSEXT1/C/parse.js');
-  JSEXT1.C.jswrapper = load.call(JSEXT1.C, path + '/JSEXT1/C/jswrapper.js');
+  JSEXT1.wraplib = load.call(JSEXT1, path + '/JSEXT1/wraplib.js');
 
-  clib.puts(JSEXT1.C.jswrapper(path + "/clib.h"));
+  clib.puts(JSEXT1.wraplib(path + "/clib.h"));
 })()
