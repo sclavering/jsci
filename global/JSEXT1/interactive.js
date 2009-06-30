@@ -3,40 +3,42 @@ interactive()
 
 A REPL for js.  Statements are evaluated as they are entered. The value of statements that are not terminated by a semicolon are printed on the console.
 */
-(function() {
+(function interactive() {
 
-function interactive() {
   const normalprompt = "jsx> ";
   const contprompt = ".... ";
-  var cons;
-  var cmdbuf;
+  const histfile = environment.HOME + "/.jsext_history";
 
-  if(!stdin.isatty()) {
-    cons = stdin;
-  } else {
-    cons = new Console({
-      prompt: normalprompt,
-      histfile: environment.HOME + "/.jsext_history",
-    });
+  var promptTxt = normalprompt;
+  var cmdbuf = "";
+  var completion_cache = null;
 
-    cmdbuf = "";
-    var global = function(){ return this; }();
+  JSEXT1.libreadline.read_history(histfile);
+  JSEXT1.libreadline.rl_completion_entry_function.$ = iterate_completion;
 
-    for(;;) {
-      cmdbuf += cons.readline();
-      if(cons.eof()) break;
-      if(isCompilableUnit(cmdbuf)) {
-        execline(cmdbuf);
-        cmdbuf = "";
-        cons.prompt = normalprompt;
-      } else {
-        cons.prompt = contprompt;
-      }
+  for(;;) {
+    clib.fflush(clib.stdout.$);
+    clib.fflush(clib.stderr.$);
+    var ptr = JSEXT1.libreadline.readline(promptTxt);
+    if(ptr === null) { // EOF
+      JSEXT1.libreadline.write_history(histfile);
+      print("\n");
+      break;
     }
-    cons.close();
-    return 0;
+
+    var line = ptr.string();
+    clib.free(ptr);
+    if(line) JSEXT1.libreadline.add_history(String(line));
+    cmdbuf += line;
+    if(isCompilableUnit(cmdbuf)) {
+      execline(cmdbuf);
+      cmdbuf = "";
+      promptTxt = normalprompt;
+    } else {
+      promptTxt = contprompt;
+    }
   }
-}
+  return 0;
 
 
 // the traceback stuff fails because there's no function *named* execline on the stack
@@ -65,80 +67,6 @@ function do_eval($$code) {
 
 
 /*
-new Console(args_obj)
-
-Uses GNU readline/history libraries to read lines of text from a console, allowing the use of arrow keys and line-editing.
-
-Optional arguments:
-  histfile: the name/path of a file to save the editor history in (e.g. ~/.foo_history)
-  prompt: a string like "> " used to indicate the console is expecting input
-  completion_function: A function which will be called when the user presses TAB twice.  It should take one string argument and return an array of possible completions to the string.
-*/
-function Console(args) {
-  this._histfile = args.histfile || null;
-  this.prompt = args.prompt || "> ";
-
-  if(this._histfile) JSEXT1.libreadline.read_history(String(this._histfile));
-  JSEXT1.libreadline.rl_completion_entry_function.$ = iterate_completion;
-}
-
-
-Console.prototype = {
-  prompt: "", // currently public
-  closed: false,
-
-  write: print,
-
-  // Writes the history to the history file and closes the console.
-  close: function() {
-    if(this.closed) return;
-    if(this._histfile) JSEXT1.libreadline.write_history(String(this._histfile));
-    print("\n");
-    this.closed = true;
-  },
-
-  // Returns true if the console has been closed with .close().
-  eof: function() {
-    return this.closed;
-  },
-
-  // Reads one line of text from the console.
-  readline: function() {
-    clib.fflush(clib.stdout.$);
-    clib.fflush(clib.stderr.$);
-    var line = readline(this.prompt);
-    if(line === undefined) {
-      this.close();
-      return;
-    }
-    if(line != "") JSEXT1.libreadline.add_history(String(line));
-    return line;
-  }
-};
-
-
-/*
-readline(prompt) => line
-
-The function readline() prints a prompt prompt and then reads and returns a single line of text from the user. If prompt is undefined or the empty string, no prompt is displayed.
-
-If readline encounters an EOF while reading the line, and the line is empty at that point, then undefined is returned. Otherwise, the line is ended just as if a newline had been typed.
-
-If you want the user to be able to get at the line later, you must call history.add() to save the line away in a history list of such lines.
-*/
-function readline(prompt) {
-  prompt = prompt ? String(prompt) : null;
-  const ret = JSEXT1.libreadline.readline(prompt);
-  if(ret === null) return; // encountered EOF
-  const str_ret = ret.string();
-  clib.free(ret);
-  return str_ret;
-}
-
-
-var completion_cache = null;
-
-/*
 libreadline passes us a word/token to get completions for, and calls us repeatedly to get the full list of results one at a time.  We have to malloc() the return values, and libreadline will free() them.
 */
 function iterate_completion(text_ptr, state) {
@@ -146,6 +74,7 @@ function iterate_completion(text_ptr, state) {
   if(!completion_cache || state >= completion_cache.length) return null;
   return clib.strdup(String(completion_cache[state]));
 }
+
 
   // Completes method/field names for expressions like |foo.bar.baz|
   // Doesn't handle e.g.: "foo".<tab><tab> (i.e. tab-completing methods of strings from a literal)
@@ -170,7 +99,4 @@ function iterate_completion(text_ptr, state) {
     }
   }
 
-
-return interactive;
-
-})()
+})
