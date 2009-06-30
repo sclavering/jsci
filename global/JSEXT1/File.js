@@ -167,17 +167,6 @@ File.prototype = {
 
 
 /*
-file = File.tmp() 
-       
-Return a new file object opened in update mode ("w+"). The file has no directory entries associated with it and will be automatically deleted once there are no file descriptors for the file. Availability: Unix, Windows. 
-*/
-File.tmp = function() {
-  return new File(clib.tmpfile());
-};
-
-
-
-/*
 str = File.read(path)
 
 Helper function to read the entire contents of a file.
