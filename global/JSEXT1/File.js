@@ -152,49 +152,6 @@ File.prototype = {
   
 
   /*
-  file.readline([size])
-
-  Returns one line of text, including terminating newline character.
-  If a _size_ is given, this will be the maximal line length.
-
-  Not Binary-safe if operating system's fgets reads null characters
-  */
-  readline: function(size) {
-    if(arguments.length < 1) size = -1;
-    if(size < 0) {
-      var trysize = 4096;
-      var ret = "";
-      while(!this.eof()) {
-        ret += this.readline(trysize);
-        if(ret[ret.length - 1] == '\n') break;
-      }
-      return ret;
-    }
-    var buf = Pointer.malloc(size + 1);
-    var line = clib.fgets(buf, size + 1, this.fp);
-    return buf.string();
-  },
-
-
-  /*
-  array = file.readlines([size])
-
-  Returns an array of lines with terminating newlines removed.
-  If a _size_ argument is given, this is the maximal line length.
-  */
-  readlines: function(size) {
-    if(arguments.length < 1) size = -1;
-    if(size < 0) {
-      var ret = [];
-      while(!this.eof()) ret.push(this.readline());
-      return ret;
-    }
-    var buf = this.read(size);
-    return buf.split(/\n/);
-  },
-  
-
-  /*
   file.seek (offset)
 
   Moves file pointer to the given position.
