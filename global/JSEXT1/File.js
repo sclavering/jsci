@@ -153,36 +153,6 @@ File.prototype = {
 
 
   /*
-  file.stat() -> obj
-    
-  Returns an object with vital stats from a file's inode.
-  */
-  stat: function() {
-    return JSEXT1.os.stat(this.fileno());
-  },
-
-
-  /*
-  num = file.tell()
-
-  Returns the current file position.
-  */
-  tell: function() {
-    return clib.ftell(this.fp);
-  },
-
-
-  /*
-  file.truncate()
-
-  Truncates the file at its current position, i.e. removes the rest of the file and reduces the file's size to the current file position.
-  */
-  truncate: function(size) {
-    clib.ftruncate(this.fileno(), size);
-  },
-
-
-  /*
   file.write(str)
 
   Writes _str_ to file at the current position.  The argument is converted to a [[String]] before being written.
