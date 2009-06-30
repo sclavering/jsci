@@ -118,16 +118,6 @@ File.prototype = {
 
 
   /*
-  bool = file.isatty()
-
-  Returns true if the underlying file is a terminal.    
-  */
-  isatty: function() {
-    return clib.isatty(this.fileno());
-  },
-    
-
-  /*
   str = file.read(n)
 
   Reads _n_ bytes or until end of file, whichever comes first. Returns result as a string.

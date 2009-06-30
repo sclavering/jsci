@@ -85,13 +85,6 @@ File.prototype = {
   },
 
   /*
-  stream.isatty()
-  */
-  isatty: function() {
-    return false;
-  },
-
-  /*
   stream.read([n])
   
   Reads up to n consecutive bytes from the input stream
