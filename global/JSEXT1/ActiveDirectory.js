@@ -37,8 +37,6 @@ Calling ...
 
 Files and subdirectories are loaded lazily, i.e. the first time the corresponding property is accessed.
 
-Each object also gets a .$path property.
-
 The action taken to convert each file into a javascript value is determined by the file name extension:
   .js files are evaluated
   .txt files are read
@@ -52,10 +50,6 @@ Files and directories which start with any ASCII character less than A are ignor
 If there are both e.g. a "foo.js" and a "foo.txt", one or other will be chosen abitrarily.
 
 ActiveDirectory maintains an internal cache of all previously-created ActiveDirectory objects (keyed by filesystem path), and will always return a cached object if available rather than creating a new one.  You should thus be careful about mutating ActiveDirectory instances (since the alterations will be shared).  The cache is unlimited in size, and never expired.
-
-Properties of ActiveDirectory instances:
-
-* $path: [[String]] which contains the path of the directory
 */
 (function() {
 
@@ -76,11 +70,8 @@ ActiveDirectory.get = function get(path, obj) {
 
   if(!obj && cached_instances[path]) return cached_instances[path];
 
-  self.$path=path;
-
-  if(!self.$getters) self.$getters = {};
-
-  var subdirs=[];
+  const getters = {};
+  const subdirs = [];
 
   for each(var filename in JSEXT1.os.dir(path)) {
     var parts = filename.match(/^([^ -@][^.]*)((?:\..*)?)$/);
@@ -90,11 +81,11 @@ ActiveDirectory.get = function get(path, obj) {
       if(!/^\.(?:js|txt|html|h|jswrapper)$/.test(extension)) continue;
 
       if(!self.hasOwnProperty(propname) && !(propname in Object.prototype)) {
-        self.$getters[propname] = make_getter(self, propname, extension);
-        self.__defineGetter__(propname, self.$getters[propname]);
+        getters[propname] = make_getter(self, path, propname, extension);
+        self.__defineGetter__(propname, getters[propname]);
         self.__defineSetter__(propname, make_setter(self, propname));
       } else if(propname == "prototype") {
-        self.prototype = handle(self, propname, '.' + extension);
+        self.prototype = handle(self, path, propname, '.' + extension);
       }
     } else if(JSEXT1.os.isdir(path + '/' + propname)) {
       subdirs.push(propname);
@@ -102,7 +93,7 @@ ActiveDirectory.get = function get(path, obj) {
   }
 
   for each(var propname in subdirs) {
-    if(self.hasOwnProperty(propname) && !self.$getters[propname]) {
+    if(self.hasOwnProperty(propname) && !getters[propname]) {
       // function objects always have a .prototype property, so we can't just install a getter to lazily create it
       if(!self.__lookupGetter__(propname)) {
         if(typeof self == "function" && propname == "prototype") {
@@ -111,8 +102,8 @@ ActiveDirectory.get = function get(path, obj) {
       }
 
     } else {
-      self.$getters[propname] = make_subdir_getter(self, propname, self.$getters[propname] || null);
-      self.__defineGetter__(propname, self.$getters[propname]);
+      getters[propname] = make_subdir_getter(self, path, propname, getters[propname] || null);
+      self.__defineGetter__(propname, getters[propname]);
       self.__defineSetter__(propname, make_setter(self, propname));
     }
   }
@@ -123,9 +114,9 @@ ActiveDirectory.get = function get(path, obj) {
 }
 
 
-function make_subdir_getter(self, propname, oldgetter) {
+function make_subdir_getter(self, path, propname, oldgetter) {
     return function() {
-      var val, newpath = self.$path + '/' + propname;
+      var val, newpath = path + '/' + propname;
       if(oldgetter) {
         val = oldgetter.call(self);
         ActiveDirectory.get(newpath, val);
@@ -146,16 +137,16 @@ function make_setter(self, propname) {
 }
 
 
-function make_getter(self, propname, extension) {
+function make_getter(self, path, propname, extension) {
   return function() {
     delete self[propname];
-    return self[propname] = handle(self, propname, extension);
+    return self[propname] = handle(self, path, propname, extension);
   }
 }
 
 
-function handle(self, name, extension) {
-  const path = self.$path, proppath = path + '/' + name, filename = proppath + extension;
+function handle(self, path, name, extension) {
+  const proppath = path + '/' + name, filename = proppath + extension;
   switch(extension) {
     case ".js":
       return load.call(self, filename);
