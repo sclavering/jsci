@@ -2,17 +2,17 @@
   jsxlib.load.call(this, "0-ffi.js"); // the Makefile calls us from the correct working dir for this to work
 
   clib = {};
-  clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl')).$;
-  clib.puts = Dl().pointer('puts', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl')).$;
+  clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl'));
+  clib.puts = Dl().pointer('puts', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl'));
 
   // Things we need to get JSEXT1.File's popen() stuff working, which is needed for JSEXT1.wraplib() to run cpp
   const size_t = Type.unsigned_long;
   const FILE = Type['void']; // It's actually a struct, but we're only passing it around, so it's simpler not to care
-  clib.feof = Dl().pointer('feof', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl')).$;
-  clib.ferror = Dl().pointer('ferror', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl')).$;
-  clib.fread = Dl().pointer('fread', Type['function'](size_t, [Type.pointer(FILE), size_t, size_t, Type.pointer(FILE)], false, 'cdecl')).$;
-  clib.popen = Dl().pointer('popen', Type['function'](Type.pointer(FILE), [Type.pointer(Type.char), Type.pointer(Type.char)], false, 'cdecl')).$;
-  clib.pclose = Dl().pointer('pclose', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl')).$;
+  clib.feof = Dl().pointer('feof', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl'));
+  clib.ferror = Dl().pointer('ferror', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl'));
+  clib.fread = Dl().pointer('fread', Type['function'](size_t, [Type.pointer(FILE), size_t, size_t, Type.pointer(FILE)], false, 'cdecl'));
+  clib.popen = Dl().pointer('popen', Type['function'](Type.pointer(FILE), [Type.pointer(Type.char), Type.pointer(Type.char)], false, 'cdecl'));
+  clib.pclose = Dl().pointer('pclose', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl'));
 
   print = function () {} // JSEXT1.wraplib() sometimes calls this
 
