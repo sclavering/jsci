@@ -193,7 +193,7 @@ function getInfoFromXML(info) {
 
             id = decl[i].id;
 
-            expr = "this['" + dlid + "'].pointer('" + decl[i].id + "'," + decl[i].type + ")" + (decl[i].isFunc ? ".$" : "");
+            expr = "this['" + dlid + "'].pointer('" + decl[i].id + "'," + decl[i].type + ")";
 
             tmpdep[dlid]=true;
           }
@@ -242,9 +242,7 @@ function getInfoFromXML(info) {
     if (ret.fd) {
       var callConv = decl..stdcall.length() ? "stdcall" : "cdecl";
       var dirfunc = "Type['function'](" + ret.type + ",[" + ret.params + "]," + ret.elipsis + ",'" + callConv + "')";
-      var ret2=indir(dirfunc, ret.fd.*[0], dep);
-      if (ret.fd.*[0].name() == "id") ret2.isFunc = true;
-      return ret2;
+      return indir(dirfunc, ret.fd.*[0], dep);
     }
 
     return ret;
