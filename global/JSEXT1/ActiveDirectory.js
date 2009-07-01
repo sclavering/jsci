@@ -157,10 +157,7 @@ function handle(self, path, name, extension) {
       if(!os.exists(proppath + '.jswrapper')) JSEXT1.File.write(proppath + '.jswrapper', JSEXT1.wraplib(proppath + '.h'));
       // fall through
     case ".jswrapper":
-      var ret = load.call(self, proppath + '.jswrapper');
-      // xxx make the wrapper file do this itself
-      for(var i = 0; ret['dl ' + i]; i++) { /* pass */ }
-      return ret;
+      return load.call(self, proppath + '.jswrapper');
   }
   return undefined;
 }

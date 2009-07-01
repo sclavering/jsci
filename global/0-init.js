@@ -5,7 +5,6 @@
   this.jsxcore = jsxlib; // backwards compatibility for CGI/FastCGI programs
 
   clib = load(path + "clib.jswrapper");
-  for(var i = 0; clib['dl ' + i]; i++) ;
 
   this.JSEXT1 = {
     $path: path + 'JSEXT1',
