@@ -171,13 +171,7 @@ static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
 static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   *vp=JSVAL_VOID;
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  int ret = ptr->type->CtoJS(cx, (char*) ptr->ptr, vp);
-  if(!ret) return JS_FALSE;
-  if(ret == -1) {
-    // Created new function
-    JS_DefineProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", OBJECT_TO_JSVAL(obj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-  }
-  return JS_TRUE;
+  return ptr->type->CtoJS(cx, (char*) ptr->ptr, vp);
 }
 
 
@@ -270,28 +264,9 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 
 
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
-  if (!JSVAL_IS_INT(id))
-    return JS_TRUE; // Only handle numerical properties
-
+  if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-
-  int ret = ptr->type->CtoJS(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), vp);
-  if(ret == 0) return JS_FALSE;
-
-  if (ret==-1 && id==JSVAL_ZERO) {
-
-    // Created new function
-    JS_DefineProperty(cx, JSVAL_TO_OBJECT(*vp), "__ptr__", OBJECT_TO_JSVAL(obj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-  }
-
-  if (ret==-1 && id!=JSVAL_ZERO) {
-
-    // Created new function through improper use of [] operator.
-    JSX_ReportException(cx, "Function pointers can not be treated as arrays");
-    return JS_FALSE;
-  }
-
-  return JS_TRUE;
+  return ptr->type->CtoJS(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), vp);
 }
 
 
