@@ -7,25 +7,25 @@
 
 
 
-static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
-static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
-static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+static JSBool Pointer__new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
+static void Pointer__finalize(JSContext *cx, JSObject *obj);
+static JSBool Pointer__getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+static JSBool Pointer__setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 
 
-static JSClass JSX_PointerClass={
+static JSClass PointerClass = {
     "Pointer",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
     JS_PropertyStub,
-    JSX_Pointer_getProperty,
-    JSX_Pointer_setProperty,
+    Pointer__getProperty,
+    Pointer__setProperty,
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
-    JSX_Pointer_finalize,
+    Pointer__finalize,
     NULL,
     NULL,
     Pointer__call,
@@ -38,12 +38,12 @@ static JSClass JSX_PointerClass={
 
 
 JSClass * JSX_GetPointerClass(void) {
-  return &JSX_PointerClass;
+  return &PointerClass;
 }
 
 
 static void WrapPointer(JSContext *cx, JsciPointer *p, jsval *rval) {
-  *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, &JSX_PointerClass, 0, 0));
+  *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, &PointerClass, 0, 0));
   JS_SetPrivate(cx, JSVAL_TO_OBJECT(*rval), p);
 }
 
@@ -112,7 +112,7 @@ static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval
   }
 
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  JSObject *newobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+  JSObject *newobj = JS_NewObject(cx, &PointerClass, 0, 0);
   *rval=OBJECT_TO_JSVAL(newobj);
   if (!JSX_InitPointer(cx, newobj, JSVAL_TO_OBJECT(argv[0]))) {
     return JS_FALSE;
@@ -124,12 +124,12 @@ static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval
 }
 
 
-static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer__new(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
   JSObject *obj;
   if(JS_IsConstructing(cx)) {
     obj = origobj;
   } else {
-    obj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
+    obj = JS_NewObject(cx, &PointerClass, 0, 0);
     *rval = OBJECT_TO_JSVAL(obj);
   }
 
@@ -162,20 +162,20 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *origobj, uintN argc, jsva
 }
 
 
-static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj) {
+static void Pointer__finalize(JSContext *cx, JSObject *obj) {
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   delete ptr;
 }
 
 
-static JSBool JSX_Pointer_getdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
+static JSBool Pointer__getDollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   *vp=JSVAL_VOID;
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   return ptr->type->CtoJS(cx, (char*) ptr->ptr, vp);
 }
 
 
-static JSBool JSX_Pointer_setdollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
+static JSBool Pointer__setDollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   if(!ptr->type->JStoC(cx, (char*) ptr->ptr, *vp)) return JS_FALSE;
   return JS_TRUE;
@@ -263,14 +263,14 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 }
 
 
-static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
+static JSBool Pointer__getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   return ptr->type->CtoJS(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), vp);
 }
 
 
-static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
+static JSBool Pointer__setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   return ptr->type->JStoC(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), *vp);
@@ -302,12 +302,12 @@ extern "C" jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   };
 
   static struct JSPropertySpec memberprop[]={
-    {"$",0, JSPROP_PERMANENT, JSX_Pointer_getdollar,JSX_Pointer_setdollar},
+    {"$", 0, JSPROP_PERMANENT, Pointer__getDollar, Pointer__setDollar},
     {0,0,0,0,0}
   };
 
-  JSObject *protoobj = JS_NewObject(cx, &JSX_PointerClass, 0, 0);
-  JSObject *classobj = JS_InitClass(cx, obj, protoobj, &JSX_PointerClass, JSX_Pointer_new, 0, memberprop, memberfunc, 0, staticfunc);
+  JSObject *protoobj = JS_NewObject(cx, &PointerClass, 0, 0);
+  JSObject *classobj = JS_InitClass(cx, obj, protoobj, &PointerClass, Pointer__new, 0, memberprop, memberfunc, 0, staticfunc);
   if(!classobj) return JSVAL_VOID;
 
   return OBJECT_TO_JSVAL(JS_GetConstructor(cx, classobj));
