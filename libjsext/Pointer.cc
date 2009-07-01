@@ -11,6 +11,7 @@ static JSBool JSX_Pointer_new(JSContext *cx, JSObject *obj, uintN argc, jsval *a
 static void JSX_Pointer_finalize(JSContext *cx, JSObject *obj);
 static JSBool JSX_Pointer_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 
 
@@ -24,7 +25,15 @@ static JSClass JSX_PointerClass={
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
-    JSX_Pointer_finalize
+    JSX_Pointer_finalize,
+    NULL,
+    NULL,
+    Pointer__call,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 
@@ -290,6 +299,15 @@ static JSBool JSX_Pointer_setProperty(JSContext *cx, JSObject *obj, jsval id, js
   if(!JSVAL_IS_INT(id)) return JS_TRUE; // Only handle numerical properties
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   return ptr->type->JStoC(cx, (char *) ptr->ptr + ptr->type->SizeInBytes() * JSVAL_TO_INT(id), *vp);
+}
+
+
+static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  // we want the JSObject for the Pointer instance being called, not the "this" js variable (which is probably null)
+  obj = JSVAL_TO_OBJECT(JS_ARGV_CALLEE(argv));
+  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
+  if(ptr->type->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Cannot call a Pointer instance that isn't a function pointer %x", ptr->type->type);
+  return ((JsciTypeFunction *) ptr->type)->Call(cx, ptr->ptr, argc, argv, rval);
 }
 
 
