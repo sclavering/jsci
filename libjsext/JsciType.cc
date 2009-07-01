@@ -37,8 +37,3 @@ int JsciType::AlignmentInBits() {
 int JsciType::AlignmentInBytes() {
   return 0; // nonsensical default
 }
-
-
-JSBool JsciType::ContainsPointer() {
-  return JS_FALSE;
-}

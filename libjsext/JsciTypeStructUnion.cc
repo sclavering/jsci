@@ -96,14 +96,6 @@ int JsciTypeStructUnion::AlignmentInBytes() {
 }
 
 
-JSBool JsciTypeStructUnion::ContainsPointer() {
-  for(int i = 0; i != this->nMember; ++i)
-    if(this->member[i].membertype->ContainsPointer())
-      return JS_TRUE;
-  return JS_FALSE;
-}
-
-
 JSBool JsciTypeStructUnion::ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members) {
   this->nMember = nMember;
   this->member = new JSX_SuMember[nMember];

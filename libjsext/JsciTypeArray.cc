@@ -85,8 +85,3 @@ int JsciTypeArray::SizeInBytes() {
 int JsciTypeArray::AlignmentInBytes() {
   return this->member->AlignmentInBytes();
 }
-
-
-JSBool JsciTypeArray::ContainsPointer() {
-  return this->member->ContainsPointer();
-}

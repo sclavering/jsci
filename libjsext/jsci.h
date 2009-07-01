@@ -36,7 +36,6 @@ struct JsciType {
   virtual int SizeInBytes();
   virtual int AlignmentInBits();
   virtual int AlignmentInBytes();
-  virtual JSBool ContainsPointer();
 };
 
 struct JsciTypeVoid : JsciType {
@@ -121,7 +120,6 @@ struct JsciTypeStructUnion : JsciType {
   JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBytes();
   int AlignmentInBytes();
-  JSBool ContainsPointer();
 
   virtual JSBool SetSizeAndAligments(JSContext *cx) = 0;
   JSBool ReplaceMembers(JSContext *cx, JSObject *obj, int nMember, jsval *members);
@@ -150,7 +148,6 @@ struct JsciTypePointer : JsciType {
   ffi_type *GetFFIType();
   int SizeInBytes();
   int AlignmentInBytes();
-  JSBool ContainsPointer();
 };
 
 struct JsciTypeArray : JsciType {
@@ -163,7 +160,6 @@ struct JsciTypeArray : JsciType {
   JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBytes();
   int AlignmentInBytes();
-  JSBool ContainsPointer();
 };
 
 struct JsciTypeBitfield : JsciType {

@@ -97,8 +97,3 @@ int JsciTypePointer::SizeInBytes() {
 int JsciTypePointer::AlignmentInBytes() {
   return ffi_type_pointer.alignment;
 }
-
-
-JSBool JsciTypePointer::ContainsPointer() {
-  return JS_TRUE;
-}
