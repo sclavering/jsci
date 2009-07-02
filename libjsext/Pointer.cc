@@ -144,12 +144,10 @@ static JSBool Pointer_proto_setFinalizer(JSContext *cx, JSObject *obj, uintN arg
     return JS_TRUE;
   }
 
-  jsval ptrv;
-  if(!JSVAL_IS_OBJECT(argv[0]) || !JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[0])) || !JS_LookupProperty(cx, JSVAL_TO_OBJECT(argv[0]), "__ptr__", &ptrv) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(ptrv), JSX_GetPointerClass(), NULL)) {
-    return JSX_ReportException(cx, "Pointer.prototype.setFinalizer(): argument must be function");
-  }
+  JSObject *arg = JSVAL_IS_OBJECT(argv[0]) ? JSVAL_TO_OBJECT(argv[0]) : 0;
+  if(!arg || !JS_InstanceOf(cx, arg, JSX_GetPointerClass(), NULL)) return JSX_ReportException(cx, "Pointer.prototype.setFinalizer(): argument must be Pointer to a function");
 
-  JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(ptrv));
+  JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, arg);
   JsciTypeFunction *ft = (JsciTypeFunction *) finptr->type;
 
   if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0]->type != POINTERTYPE) {
