@@ -176,9 +176,6 @@ struct JsciTypeBitfield : JsciType {
 };
 
 
-JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *obj, jsval fun, JsciType *type);
-JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj);
-
 JSClass *JSX_GetTypeClass(void);
 JSClass *JSX_GetPointerClass(void);
 
@@ -190,7 +187,7 @@ struct JsciPointer {
   JsciType *type;
   void (*finalize) (void *);
 
-  JsciPointer(JsciType *type);
+  JsciPointer(JsciType *type, void *ptr);
   virtual ~JsciPointer();
 };
 
@@ -230,6 +227,30 @@ static inline int is_void_or_char(JsciType *t) {
 
 static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
   return JSVAL_IS_OBJECT(v) && !JSVAL_IS_NULL(v) && JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetTypeClass(), NULL);
+}
+
+
+static inline JSBool WrapPointer(JSContext *cx, JsciPointer *p, jsval *rval) {
+  *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, JSX_GetPointerClass(), 0, 0));
+  return JS_SetPrivate(cx, JSVAL_TO_OBJECT(*rval), p);
+}
+
+
+// Used when we need to save a Type instance from GC, because we're sharing its JsciType*
+static inline JSBool WrapPointerAndSaveType(JSContext *cx, JsciPointer *p, jsval *rval, jsval typeobj) {
+  return WrapPointer(cx, p, rval) && JS_SetReservedSlot(cx, JSVAL_TO_OBJECT(*rval), 0, typeobj);
+}
+
+
+static inline JsciPointer *jsval_to_JsciPointer(JSContext *cx, jsval v) {
+  if(!JSVAL_IS_OBJECT(v)) return 0;
+  return (JsciPointer*) JS_GetInstancePrivate(cx, JSVAL_TO_OBJECT(v), JSX_GetPointerClass(), 0);
+}
+
+
+static inline JsciType *jsval_to_JsciType(JSContext *cx, jsval v) {
+  if(!JSVAL_IS_OBJECT(v)) return 0;
+  return (JsciType*) JS_GetInstancePrivate(cx, JSVAL_TO_OBJECT(v), JSX_GetTypeClass(), 0);
 }
 
 

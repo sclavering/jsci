@@ -16,7 +16,7 @@ static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 
 static JSClass PointerClass = {
     "Pointer",
-    JSCLASS_HAS_PRIVATE,
+    JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
     JS_PropertyStub,
     JS_PropertyStub,
     Pointer__getProperty,
@@ -41,77 +41,34 @@ JSClass * JSX_GetPointerClass(void) {
 }
 
 
-static void WrapPointer(JSContext *cx, JsciPointer *p, jsval *rval) {
-  *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, &PointerClass, 0, 0));
-  JS_SetPrivate(cx, JSVAL_TO_OBJECT(*rval), p);
-}
-
-
-JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
-  // xxx a hack to save typeobj from garbage collection, and thus stop the free()ing of the JsciType struct we share 
-  if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
-    return JS_FALSE;
-
-  JsciPointer *ret = new JsciPointer((JsciType *) JS_GetPrivate(cx, typeobj));
-  if (!ret)
-    return JS_FALSE;
-  JS_SetPrivate(cx, retobj, ret);
-
-  return JS_TRUE;
-}
-
-
 static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  if(argc < 1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0]) <= 0) return JSX_ReportException(cx, "Pointer.malloc(): argument must be a positive integer number of bytes to allocate");
-
-  int length = INT_TO_JSVAL(argv[0]);
-  JsciPointer *p = new JsciPointerAlloc(GetVoidType(), length);
-  if(!p) return JS_FALSE;
-  WrapPointer(cx, p, rval);
-  return JS_TRUE;
+  int sz = JSVAL_IS_INT(argv[0]) ? JSVAL_TO_INT(argv[0]) : 0;
+  if(sz <= 0) return JSX_ReportException(cx, "Pointer.malloc(): argument must be a positive integer number of bytes to allocate");
+  return WrapPointer(cx, new JsciPointerAlloc(GetVoidType(), sz), rval);
 }
 
 
 static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  if(!JSVAL_IS_OBJECT(argv[0]) || JSVAL_IS_NULL(argv[0]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
-    JSX_ReportException(cx, "Pointer.prototype.cast(): argument must be a Type instance");
-    return JS_FALSE;
-  }
-
-  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  JSObject *newobj = JS_NewObject(cx, &PointerClass, 0, 0);
-  *rval=OBJECT_TO_JSVAL(newobj);
-  if (!JSX_InitPointer(cx, newobj, JSVAL_TO_OBJECT(argv[0]))) {
-    return JS_FALSE;
-  }
-
-  JsciPointer *newptr = (JsciPointer *) JS_GetPrivate(cx, newobj);
-  newptr->ptr=ptr->ptr;
-  return JS_TRUE;
+  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  JsciPointer *orig = jsval_to_JsciPointer(cx, argv[-1]);
+  if(!t) return JSX_ReportException(cx, "Pointer.prototype.cast(): argument must be a Type instance");
+  return WrapPointer(cx, new JsciPointer(t, orig->ptr), rval);
 }
 
 
 static JSBool Pointer__new(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
-  if(!jsval_is_Type(cx, argv[0])) return JSX_ReportException(cx, "Pointer(): first argument must be a Type");
+  // note: we ignore origobj for simplicity of implementation
+  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  if(!t) return JSX_ReportException(cx, "Pointer(): first argument must be a Type");
 
-  JSObject *obj;
-  if(JS_IsConstructing(cx)) {
-    obj = origobj;
-  } else {
-    obj = JS_NewObject(cx, &PointerClass, 0, 0);
-    *rval = OBJECT_TO_JSVAL(obj);
-  }
-
-  JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(argv[0]));
-
-  // Accept both function type and pointer-to-function type
   JSBool isFunc = JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]));
+  // Accept both function type and pointer-to-function type
   if(isFunc && t->type == POINTERTYPE) t = ((JsciTypePointer*) t)->direct;
 
   JsciPointer *ptr = new JsciPointerAlloc(t, t->SizeInBytes());
-  if(!ptr) return JS_FALSE;
-  JS_SetPrivate(cx, obj, ptr);
-
+  if(!WrapPointer(cx, ptr, rval)) return JS_FALSE;
+  // We need to ensure the Type object doesn't get GC'd, because we're sharing its JsciType*
+  if(!JS_SetReservedSlot(cx, JSVAL_TO_OBJECT(*rval), 0, argv[0])) return JS_FALSE;
   if(argv[1] != JSVAL_VOID) return ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1]);
   return JS_TRUE;
 }
@@ -132,8 +89,7 @@ static JSBool Pointer__getDollar(JSContext *cx, JSObject *obj, jsval id, jsval *
 
 static JSBool Pointer__setDollar(JSContext *cx, JSObject *obj, jsval id, jsval *vp) {
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  if(!ptr->type->JStoC(cx, (char*) ptr->ptr, *vp)) return JS_FALSE;
-  return JS_TRUE;
+  return ptr->type->JStoC(cx, (char*) ptr->ptr, *vp);
 }
 
 
@@ -207,11 +163,8 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(sutype->member[ix].membertype->type == BITFIELDTYPE)
     return JSX_ReportException(cx, "Pointer.prototype.field(): requested member is a bitfield: %s", myname);
 
-  JsciPointer *newptr = new JsciPointer(sutype->member[ix].membertype);
-  newptr->ptr = (char*) ptr->ptr + sutype->member[ix].offset / 8;
-  WrapPointer(cx, newptr, rval);
-
-  return JS_TRUE;
+  JsciPointer *newptr = new JsciPointer(sutype->member[ix].membertype, (char*) ptr->ptr + sutype->member[ix].offset / 8);
+  return WrapPointer(cx, newptr, rval);
 }
 
 

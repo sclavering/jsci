@@ -11,14 +11,7 @@ int JsciTypePointer::CtoJS(JSContext *cx, char *data, jsval *rval) {
     *rval = JSVAL_NULL;
     return 1;
   }
-
-  JSObject *obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-  *rval = OBJECT_TO_JSVAL(obj);
-  JsciPointer *ptr = new JsciPointer(this->direct);
-  ptr->ptr = *(void **) data;
-  ptr->finalize = 0;
-  JS_SetPrivate(cx, obj, ptr);
-  return 1;
+  return WrapPointer(cx, new JsciPointer(this->direct, *(void **) data), rval);
 }
 
 

@@ -90,17 +90,11 @@ static void Dl_finalize(JSContext *cx, JSObject *obj) {
 
 static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval) {
   if(!JSVAL_IS_STRING(argv[0])) return JSX_ReportException(cx, "Dl.prototype.pointer(): first argument must be a string");
-  if(!jsval_is_Type(cx, argv[1])) return JSX_ReportException(cx, "Dl.prototype.pointer(): second argument must be a Type instance");
+  JsciType *t = jsval_to_JsciType(cx, argv[1]);
+  if(!t) return JSX_ReportException(cx, "Dl.prototype.pointer(): second argument must be a Type instance");
 
   void *sym = dlsym(JS_GetPrivate(cx, dl), JS_GetStringBytes(JSVAL_TO_STRING(argv[0])));
   if(!sym) return JSX_ReportException(cx, "Dl.prototype.pointer(): couldn't resolve symbol");
 
-  JSObject *obj;
-  obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-  *rval = OBJECT_TO_JSVAL(obj);
-  if(!JSX_InitPointer(cx, obj, JSVAL_TO_OBJECT(argv[1]))) return JS_FALSE;
-  JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  if(!ptr) return JS_FALSE;
-  ptr->ptr = sym;
-  return JS_TRUE;
+  return WrapPointerAndSaveType(cx, new JsciPointer(t, sym), rval, argv[1]);
 }
