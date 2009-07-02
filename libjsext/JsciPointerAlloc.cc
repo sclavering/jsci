@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciPointerAlloc::JsciPointerAlloc(int num_bytes) : JsciPointer() {
+JsciPointerAlloc::JsciPointerAlloc(JsciType *type, int num_bytes) : JsciPointer(type) {
   this->ptr = new char[num_bytes];
 }
 

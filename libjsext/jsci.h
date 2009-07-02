@@ -190,25 +190,31 @@ struct JsciPointer {
   JsciType *type;
   void (*finalize) (void *);
 
-  JsciPointer();
+  JsciPointer(JsciType *type);
   virtual ~JsciPointer();
 };
 
 // A version of JsciPointer that allocates and frees its ->ptr
 struct JsciPointerAlloc : JsciPointer {
-  JsciPointerAlloc(int num_bytes);
+  JsciPointerAlloc(JsciType *type, int num_bytes);
   ~JsciPointerAlloc();
 };
 
-struct JsciCallback : JsciPointer {
-  JSContext *cx;
-  jsval fun;
-  void *writeable; // Points to writeable code
-
+struct JsciCallback {
+ public:
   // the jsval must be for a js function
-  JsciCallback(JSContext *cx, jsval fun, JsciType *t);
-  JSBool Init();
+  static JsciCallback *GetForFunction(JSContext *cx, jsval fun, JsciTypeFunction *t);
+  static JsciCallback *Create(JSContext *cx, jsval fun, JsciTypeFunction *t);
   ~JsciCallback();
+  void *codeptr();
+  void exec(ffi_cif *cif, void *ret, void **args);
+ protected:
+  JsciCallback(JSContext *cx, jsval fun, JsciTypeFunction *t);
+  JSContext *cx;
+  JsciTypeFunction *type;
+  jsval fun;
+  void *code;
+  void *writeable; // Points to writeable code
 };
 
 

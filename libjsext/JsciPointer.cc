@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciPointer::JsciPointer() : ptr(0), finalize(0) {
+JsciPointer::JsciPointer(JsciType *type) : type(type), ptr(0), finalize(0) {
 }
 
 

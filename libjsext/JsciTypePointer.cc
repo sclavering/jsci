@@ -14,9 +14,8 @@ int JsciTypePointer::CtoJS(JSContext *cx, char *data, jsval *rval) {
 
   JSObject *obj = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
   *rval = OBJECT_TO_JSVAL(obj);
-  JsciPointer *ptr = new JsciPointer;
+  JsciPointer *ptr = new JsciPointer(this->direct);
   ptr->ptr = *(void **) data;
-  ptr->type = this->direct;
   ptr->finalize = 0;
   JS_SetPrivate(cx, obj, ptr);
   return 1;
@@ -41,17 +40,8 @@ JSBool JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v) {
 
     if(JS_ObjectIsFunction(cx, obj)) {
       if(this->direct->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Cannot convert JS function to C non-function pointer type");
-      jsval tmpval = JSVAL_VOID;
-      JS_GetProperty(cx, obj, "__ptr__", &tmpval);
-      if(tmpval == JSVAL_VOID) {
-        // Create pointer
-        JSObject *newptr = JS_NewObject(cx, JSX_GetPointerClass(), 0, 0);
-        tmpval = OBJECT_TO_JSVAL(newptr);
-        JS_DefineProperty(cx, obj, "__ptr__", tmpval, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-        if(!JSX_InitPointerCallback(cx, newptr, v, this->direct)) return JS_FALSE;
-      }
-      JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmpval));
-      *(void **)data = ptr->ptr;
+      JsciCallback *cb = JsciCallback::GetForFunction(cx, v, (JsciTypeFunction*) this->direct);
+      *(void **)data = cb->codeptr();
       return JS_TRUE;
     }
 

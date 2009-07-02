@@ -12,7 +12,6 @@ static void Pointer__finalize(JSContext *cx, JSObject *obj);
 static JSBool Pointer__getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool Pointer__setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *obj, JSObject *type);
 
 
 static JSClass PointerClass = {
@@ -48,45 +47,14 @@ static void WrapPointer(JSContext *cx, JsciPointer *p, jsval *rval) {
 }
 
 
-static JSBool JSX_InitPointerAlloc(JSContext *cx, JSObject *retobj, JSObject *type) {
-  if (!JS_InstanceOf(cx, type, JSX_GetTypeClass(), NULL)) {
-    JSX_ReportException(cx, "Wrong type argument");
-    return JS_FALSE;
-  }
-
-  JsciType *t = (JsciType *) JS_GetPrivate(cx, type);
-  JsciPointer *retpriv = new JsciPointerAlloc(t->SizeInBytes());
-
-  if (!retpriv)
-    return JS_FALSE;
-
-  JS_SetPrivate(cx, retobj, retpriv);
-
-  retpriv->type = (JsciType *) JS_GetPrivate(cx, type);
-
-  return JS_TRUE;
-}
-
-
-JSBool JSX_InitPointerCallback(JSContext *cx, JSObject *retobj, jsval fun, JsciType *type) {
-  if(type->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Type is not a C function");
-  if(!JS_DefineProperty(cx, retobj, "function", fun, 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
-  JsciCallback *retpriv = new JsciCallback(cx, fun, type);
-  if(!retpriv || !retpriv->Init()) return JS_FALSE;
-  JS_SetPrivate(cx, retobj, retpriv);
-  return JS_TRUE;
-}
-
-
 JSBool JSX_InitPointer(JSContext *cx, JSObject *retobj, JSObject *typeobj) {
   // xxx a hack to save typeobj from garbage collection, and thus stop the free()ing of the JsciType struct we share 
   if(!JS_DefineProperty(cx, retobj, "xxx", OBJECT_TO_JSVAL(typeobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT))
     return JS_FALSE;
 
-  JsciPointer *ret = new JsciPointer();
+  JsciPointer *ret = new JsciPointer((JsciType *) JS_GetPrivate(cx, typeobj));
   if (!ret)
     return JS_FALSE;
-  ret->type = (JsciType *) JS_GetPrivate(cx, typeobj);
   JS_SetPrivate(cx, retobj, ret);
 
   return JS_TRUE;
@@ -97,9 +65,8 @@ static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *ar
   if(argc < 1 || !JSVAL_IS_INT(argv[0]) || JSVAL_TO_INT(argv[0]) <= 0) return JSX_ReportException(cx, "Pointer.malloc(): argument must be a positive integer number of bytes to allocate");
 
   int length = INT_TO_JSVAL(argv[0]);
-  JsciPointer *p = new JsciPointerAlloc(length);
+  JsciPointer *p = new JsciPointerAlloc(GetVoidType(), length);
   if(!p) return JS_FALSE;
-  p->type = GetVoidType();
   WrapPointer(cx, p, rval);
   return JS_TRUE;
 }
@@ -125,6 +92,8 @@ static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 
 static JSBool Pointer__new(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
+  if(!jsval_is_Type(cx, argv[0])) return JSX_ReportException(cx, "Pointer(): first argument must be a Type");
+
   JSObject *obj;
   if(JS_IsConstructing(cx)) {
     obj = origobj;
@@ -133,31 +102,17 @@ static JSBool Pointer__new(JSContext *cx, JSObject *origobj, uintN argc, jsval *
     *rval = OBJECT_TO_JSVAL(obj);
   }
 
-  if(argc < 1 || !JSVAL_IS_OBJECT(argv[0]) || JSVAL_IS_NULL(argv[0]) || !JS_InstanceOf(cx, JSVAL_TO_OBJECT(argv[0]), JSX_GetTypeClass(), NULL)) {
-    JSX_ReportException(cx, "Pointer(): first argument must be a Type");
-    return JS_FALSE;
-  }
+  JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(argv[0]));
 
-  JSObject *typeObject = JSVAL_TO_OBJECT(argv[0]);
+  // Accept both function type and pointer-to-function type
+  JSBool isFunc = JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]));
+  if(isFunc && t->type == POINTERTYPE) t = ((JsciTypePointer*) t)->direct;
 
-  // Are we creating a C wrapper for a JS function so it can be used as a callback?
-  if(argc >= 2 && JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
-    JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, typeObject);
-    JsciType *type = ptr->type;
-    // Accept both function type and pointer-to-function type
-    if(type->type == POINTERTYPE) type = ((JsciTypePointer *) type)->direct;
-    if(JSX_InitPointerCallback(cx, obj, argv[1], type)) return JS_FALSE;
-    return JS_TRUE;
-  }
+  JsciPointer *ptr = new JsciPointerAlloc(t, t->SizeInBytes());
+  if(!ptr) return JS_FALSE;
+  JS_SetPrivate(cx, obj, ptr);
 
-  // Allocate memory and create Pointer instance
-  if(!JSX_InitPointerAlloc(cx, obj, JSVAL_TO_OBJECT(argv[0]))) return JS_FALSE;
-  // Set initial value, if provided
-  if(argc >= 2 && argv[1] != JSVAL_VOID) {
-    JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx,obj);
-    if(!ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1])) return JS_FALSE;
-  }
-
+  if(argv[1] != JSVAL_VOID) return ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1]);
   return JS_TRUE;
 }
 
@@ -254,8 +209,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
   if(sutype->member[ix].membertype->type == BITFIELDTYPE)
     return JSX_ReportException(cx, "Pointer.prototype.field(): requested member is a bitfield: %s", myname);
 
-  JsciPointer *newptr = new JsciPointer();
-  newptr->type = sutype->member[ix].membertype;
+  JsciPointer *newptr = new JsciPointer(sutype->member[ix].membertype);
   newptr->ptr = (char*) ptr->ptr + sutype->member[ix].offset / 8;
   WrapPointer(cx, newptr, rval);
 
@@ -307,7 +261,7 @@ extern "C" jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
   };
 
   JSObject *protoobj = JS_NewObject(cx, &PointerClass, 0, 0);
-  JSObject *classobj = JS_InitClass(cx, obj, protoobj, &PointerClass, Pointer__new, 0, memberprop, memberfunc, 0, staticfunc);
+  JSObject *classobj = JS_InitClass(cx, obj, protoobj, &PointerClass, Pointer__new, 2, memberprop, memberfunc, 0, staticfunc);
   if(!classobj) return JSVAL_VOID;
 
   return OBJECT_TO_JSVAL(JS_GetConstructor(cx, classobj));
