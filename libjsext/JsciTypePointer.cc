@@ -39,8 +39,8 @@ JSBool JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v) {
     }
 
     // Copy a pointer object to a type *
-    if(JS_InstanceOf(cx, obj, JSX_GetPointerClass(), NULL)) {
-      JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
+    JsciPointer *ptr = jsval_to_JsciPointer(cx, v);
+    if(ptr) {
       *(void **)data = ptr->ptr;
       return JS_TRUE;
     }

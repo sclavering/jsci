@@ -64,10 +64,10 @@ JSBool JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v) {
       return JS_TRUE;
     }
 
-    if(JS_InstanceOf(cx, obj, JSX_GetPointerClass(), NULL)) {
+    JsciPointer *ptr = jsval_to_JsciPointer(cx, v);
+    if(ptr) {
       // Copy contents pointed to into array
       int size = this->SizeInBytes();
-      JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
       memcpy(data, ptr->ptr, size);
       return JS_TRUE;
     }
