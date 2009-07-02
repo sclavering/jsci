@@ -1,9 +1,6 @@
 #include "jsci.h"
 
 
-static JSBool JSX_NativeFunction(JSContext *cx, JSObject *thisobj, uintN argc, jsval *argv, jsval *rval);
-
-
 JsciTypeFunction::JsciTypeFunction(int nParam) : JsciType(FUNCTIONTYPE), nParam(nParam) {
   this->param = new JsciType*[this->nParam];
 }
