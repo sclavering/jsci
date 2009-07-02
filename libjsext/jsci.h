@@ -90,7 +90,7 @@ struct JsciTypeFunction : JsciType {
   JsciType *returnType;
   ffi_cif cif;
 
-  JsciTypeFunction(int nParam);
+  JsciTypeFunction(JsciType *returnType, int nParam);
   ~JsciTypeFunction();
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
@@ -141,7 +141,7 @@ struct JsciTypeUnion : JsciTypeStructUnion {
 struct JsciTypePointer : JsciType {
   JsciType *direct;
 
-  JsciTypePointer();
+  JsciTypePointer(JsciType *direct);
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
@@ -154,7 +154,7 @@ struct JsciTypeArray : JsciType {
   JsciType *member;
   int length;
 
-  JsciTypeArray();
+  JsciTypeArray(JsciType *type, int length);
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
@@ -166,7 +166,7 @@ struct JsciTypeBitfield : JsciType {
   JsciType *member;
   int length;
 
-  JsciTypeBitfield();
+  JsciTypeBitfield(JsciType *type, int length);
 
   int CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
@@ -222,11 +222,6 @@ static inline int type_is_char(JsciType *t) {
 
 static inline int is_void_or_char(JsciType *t) {
   return t->type == VOIDTYPE || type_is_char(t);
-}
-
-
-static inline JSBool jsval_is_Type(JSContext *cx, jsval v) {
-  return JSVAL_IS_OBJECT(v) && !JSVAL_IS_NULL(v) && JS_InstanceOf(cx, JSVAL_TO_OBJECT(v), JSX_GetTypeClass(), NULL);
 }
 
 

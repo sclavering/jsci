@@ -18,7 +18,8 @@ static JSObject *s_Type_union_proto = NULL;
 
 static JSClass JSX_TypeClass={
     "Type",
-    JSCLASS_HAS_PRIVATE,
+    // we store a private JsciType*, and use slots to save other js Type objects from GC when we're sharing their JsciType's
+    JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(2),
     JS_PropertyStub,
     JS_PropertyStub,
     JS_PropertyStub,
@@ -30,37 +31,34 @@ static JSClass JSX_TypeClass={
 };
 
 
-static void WrapType(JSContext *cx, JsciType *t, JSObject* proto, jsval *rval) {
+static JSBool WrapType(JSContext *cx, JsciType *t, JSObject* proto, jsval *rval) {
   *rval = OBJECT_TO_JSVAL(JS_NewObject(cx, &JSX_TypeClass, proto, 0));
-  JS_SetPrivate(cx, JSVAL_TO_OBJECT(*rval), t);
+  return JS_SetPrivate(cx, JSVAL_TO_OBJECT(*rval), t);
 }
 
 
-static JSBool Type_function(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval returnType = argv[0];
-  jsval params = argv[1];
-
-  if(!jsval_is_Type(cx, returnType)) return JSX_ReportException(cx, "Type.function: the returnType arg must be a Type instance");
-  if(!JSVAL_IS_OBJECT(params) || params == JSVAL_NULL || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(params))) return JSX_ReportException(cx, "Type.function: the params arg must be an array");
+static JSBool Type_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  JsciType *rt = jsval_to_JsciType(cx, argv[0]);
+  if(!rt) return JSX_ReportException(cx, "Type.function(): the first argument must be a Type instance");
+  if(!JSVAL_IS_OBJECT(argv[1]) || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(argv[1]))) return JSX_ReportException(cx, "Type.function(): the second arg must be an array");
 
   jsuint nParam;
-  JSObject *paramobj = JSVAL_TO_OBJECT(params);
+  JSObject *paramobj = JSVAL_TO_OBJECT(argv[1]);
   if(!JS_GetArrayLength(cx, paramobj, &nParam)) return JS_FALSE;
 
-  JsciTypeFunction *type = new JsciTypeFunction(nParam);
-  WrapType(cx, type, s_Type_function_proto, rval);
+  JsciTypeFunction *type = new JsciTypeFunction(rt, nParam);
+  if(!WrapType(cx, type, s_Type_function_proto, rval)) return JS_FALSE;
   JSObject *retobj = JSVAL_TO_OBJECT(*rval);
-
-  JS_DefineProperty(cx, retobj, "returnType", returnType, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  type->returnType = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(returnType));
-  type->cif.arg_types=0;
+  // ensure the Type objects aren't GC'd, since we're sharing their JsciType instances
+  JS_SetReservedSlot(cx, retobj, 0, argv[0]);
+  JS_SetReservedSlot(cx, retobj, 1, argv[1]);
 
   for(int i = 0; i < nParam; i++) {
     jsval tmp;
     JS_GetElement(cx, paramobj, i, &tmp);
-    if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Type.function(): parameter %i is not a Type instance", i);
-    type->param[i] = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
-    JS_DefineElement(cx, retobj, i, tmp, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    JsciType *pt = jsval_to_JsciType(cx, tmp);
+    if(!pt) return JSX_ReportException(cx, "Type.function(): parameter %i is not a Type instance", i);
+    type->param[i] = pt;
   }
 
   return JS_TRUE;
@@ -80,59 +78,38 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 
 
 static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval suv = argv[0];
-  if(!jsval_is_Type(cx, suv)) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
-  JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(suv));
+  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  if(!t) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   if(t->type != SUTYPE) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) t;
   if(tsu->nMember) return JSX_ReportException(cx, "Type.replace_members(): the struct/union already has members");
-
   return tsu->ReplaceMembers(cx, JSVAL_TO_OBJECT(argv[0]), argc - 1, &argv[1]);
 }
 
 
 static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval direct = argv[0];
-
-  if(direct != JSVAL_VOID && !jsval_is_Type(cx, direct)) return JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
-
-  JsciTypePointer *type = new JsciTypePointer;
-  WrapType(cx, type, s_Type_pointer_proto, rval);
-  type->direct = sTypeVoid;
-  JS_DefineElement(cx, JSVAL_TO_OBJECT(*rval), 0, direct, 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);
-  if(direct != JSVAL_VOID) type->direct = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(direct));
-
-  return JS_TRUE;
+  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  if(!(t || argv[0] == JSVAL_VOID)) return JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
+  return WrapType(cx, new JsciTypePointer(t ? t : sTypeVoid), s_Type_pointer_proto, rval)
+      && JS_SetReservedSlot(cx, JSVAL_TO_OBJECT(*rval), 0, argv[0]);
 }
 
 
 static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval member = argv[0];
-  jsval len = argv[1];
-
-  if(!jsval_is_Type(cx, member)) return JSX_ReportException(cx, "Type.array(): first argument must be a Type instance");
-  if(!JSVAL_IS_INT(len)) return JSX_ReportException(cx, "Type.array(): second argument must be an integer");
-
-  JsciTypeArray *type = new JsciTypeArray;
-  type->length = JSVAL_TO_INT(len);
-  type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
-  WrapType(cx, type, s_Type_array_proto, rval);
-  return JS_TRUE;
+  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  if(!t) return JSX_ReportException(cx, "Type.array(): first argument must be a Type instance");
+  int len = JSVAL_IS_INT(argv[1]) ? JSVAL_TO_INT(argv[1]) : -1;
+  if(len < 0) return JSX_ReportException(cx, "Type.array(): second argument must be a non-negative integer");
+  return WrapType(cx, new JsciTypeArray(t, len), s_Type_array_proto, rval);
 }
 
 
 static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval member = argv[0];
-  jsval len = argv[1];
-
-  if(!jsval_is_Type(cx, member)) return JSX_ReportException(cx, "Type.bitfield(): first argument must be a Type instance");
-  if(!JSVAL_IS_INT(len)) return JSX_ReportException(cx, "Type.bitfield(): second argument must be an integer");
-
-  JsciTypeBitfield *type = new JsciTypeBitfield;
-  WrapType(cx, type, s_Type_bitfield_proto, rval);
-  type->length = JSVAL_TO_INT(len);
-  type->member = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(member));
-  return JS_TRUE;
+  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  if(!t) return JSX_ReportException(cx, "Type.bitfield(): first argument must be a Type instance");
+  int len = JSVAL_IS_INT(argv[1]) ? JSVAL_TO_INT(argv[1]) : -1;
+  if(len < 0) return JSX_ReportException(cx, "Type.bitfield(): second argument must be a non-negative integer");
+  return WrapType(cx, new JsciTypeBitfield(t, len), s_Type_bitfield_proto, rval);
 }
 
 
@@ -184,7 +161,6 @@ static void init_types(JSContext *cx, JSObject *typeobj) {
 
 
 static JSBool JSX_Type_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  // Someone is calling the constructor against all common sense
   return JSX_ReportException(cx, "Type is not a constructor");
 }
 
@@ -206,12 +182,10 @@ static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *a
 
 
 static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  jsval arg = argv[0];
-  *rval = JSVAL_VOID;
-  if(!jsval_is_Type(cx, arg)) return JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
-  JsciType *t = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(arg));
+  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  if(!t) return JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
   int size = t->SizeInBytes();
-  if(size) *rval = INT_TO_JSVAL(size);
+  *rval = size ? INT_TO_JSVAL(size) : JSVAL_VOID;
   return JS_TRUE;
 }
 

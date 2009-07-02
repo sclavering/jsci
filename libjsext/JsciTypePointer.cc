@@ -2,7 +2,7 @@
 #include "jsci.h"
 
 
-JsciTypePointer::JsciTypePointer() : JsciType(POINTERTYPE) {
+JsciTypePointer::JsciTypePointer(JsciType *direct) : JsciType(POINTERTYPE), direct(direct) {
 }
 
 

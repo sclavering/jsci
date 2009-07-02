@@ -110,8 +110,8 @@ JSBool JsciTypeStructUnion::ReplaceMembers(JSContext *cx, JSObject *obj, int nMe
     if(tmp == JSVAL_VOID || !JSVAL_IS_STRING(tmp)) return JSX_ReportException(cx, "Wrong or missing 'name' property in member type object");
     m->name = strdup(JS_GetStringBytes(JSVAL_TO_STRING(tmp)));
     JS_GetProperty(cx, mobj, "type", &tmp);
-    if(!jsval_is_Type(cx, tmp)) return JSX_ReportException(cx, "Wrong or missing 'type' property in member type object");
-    m->membertype = (JsciType *) JS_GetPrivate(cx, JSVAL_TO_OBJECT(tmp));
+    m->membertype = jsval_to_JsciType(cx, tmp);
+    if(!m->membertype) return JSX_ReportException(cx, "Struct/union-member descriptor doesn't have a .type property of type Type");
 
     // this is probably just to save the Type instances from GC, and thus the JsciType's from being free()'d
     JS_DefineElement(cx, obj, i, members[i], 0, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT);

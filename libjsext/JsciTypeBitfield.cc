@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciTypeBitfield::JsciTypeBitfield() : JsciType(BITFIELDTYPE) {
+JsciTypeBitfield::JsciTypeBitfield(JsciType *type, int length) : JsciType(BITFIELDTYPE), member(type), length(length) {
 }
 
 

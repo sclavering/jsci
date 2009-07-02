@@ -1,8 +1,9 @@
 #include "jsci.h"
 
 
-JsciTypeFunction::JsciTypeFunction(int nParam) : JsciType(FUNCTIONTYPE), nParam(nParam) {
+JsciTypeFunction::JsciTypeFunction(JsciType *returnType, int nParam) : JsciType(FUNCTIONTYPE), returnType(returnType), nParam(nParam) {
   this->param = new JsciType*[this->nParam];
+  this->cif.arg_types = 0;
 }
 
 
