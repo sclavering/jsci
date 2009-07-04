@@ -82,6 +82,7 @@ int main(int argc, char **argv, char **envp) {
 
   JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
   JS_SetErrorReporter(cx, my_ErrorReporter);
+  JS_SetVersion(cx, JSVERSION_LATEST);
 
   glob=JS_NewObject(cx, NULL, NULL, NULL);
   if (!glob)
