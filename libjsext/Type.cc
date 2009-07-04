@@ -4,7 +4,7 @@
 #include "jsci.h"
 
 
-static void JSX_Type_finalize(JSContext *cx, JSObject *obj);
+static void Type__finalize(JSContext *cx, JSObject *obj);
 
 static JsciType *sTypeVoid = NULL;
 // __proto__ for results of Type.function(...) and similar
@@ -27,7 +27,7 @@ static JSClass JSX_TypeClass={
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
-    JSX_Type_finalize
+    Type__finalize
 };
 
 
@@ -160,23 +160,23 @@ static void init_types(JSContext *cx, JSObject *typeobj) {
 }
 
 
-static JSBool JSX_Type_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type__new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   return JSX_ReportException(cx, "Type is not a constructor");
 }
 
 
-static void JSX_Type_finalize(JSContext *cx,  JSObject *obj) {
+static void Type__finalize(JSContext *cx,  JSObject *obj) {
   JsciType *type = (JsciType *) JS_GetPrivate(cx, obj);
   if(type) delete type;
 }
 
 
-static JSBool JSX_Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   return JSX_NewTypeStructUnion(cx, argc, argv, rval, new JsciTypeStruct, s_Type_struct_proto);
 }
 
 
-static JSBool JSX_Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   return JSX_NewTypeStructUnion(cx, argc, argv, rval, new JsciTypeUnion, s_Type_union_proto);
 }
 
@@ -199,8 +199,8 @@ extern "C" jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
     {"bitfield", Type_bitfield, 2, 0, 0},
     {"function", Type_function, 2, 0, 0},
     {"pointer", Type_pointer, 1, 0, 0},
-    {"struct",JSX_Type_struct,1,0,0},
-    {"union",JSX_Type_union,1,0,0},
+    {"struct", Type_struct, 1, 0, 0},
+    {"union", Type_union, 1, 0, 0},
     {"sizeof", Type_sizeof, 1, 0, 0},
     {"replace_members", Type_replace_members, 1, 0, 0},
     {0,0,0,0,0}
@@ -210,7 +210,7 @@ extern "C" jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
   if(!(1
       // init Type itself
       && (typeproto = JS_NewObject(cx, 0, 0, 0))
-      && (typeobj = JS_InitClass(cx, obj, typeproto, &JSX_TypeClass, JSX_Type_new, 0, 0, 0, 0, staticfunc))
+      && (typeobj = JS_InitClass(cx, obj, typeproto, &JSX_TypeClass, Type__new, 0, 0, 0, 0, staticfunc))
       && (typeobj = JS_GetConstructor(cx, typeobj))
       // expose __proto__ objects for Type.function(...) and similar, so 0-ffi can extend them
       && (s_Type_array_proto = JS_NewObject(cx, 0, typeproto, 0))
