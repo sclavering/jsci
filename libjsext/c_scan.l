@@ -89,9 +89,9 @@ void lexerror(char *msg);
 "void"                  { count(); return VOID; }
 "__builtin_va_list"     { count(); return VA; }
 "__int64"               { count(); return INT64; }
-"__stdcall"             { count(); return STDCALL; }
-"__cdecl"               { count(); return CDECL; }
-"_cdecl"                { count(); return CDECL; }
+"__stdcall"             { lexerror("encountered __stdcall, which is not supported"); }
+"__cdecl"               { lexerror("encountered __cdecl, which is not supported"); }
+"_cdecl"                { lexerror("encountered _cdecl, which is not supported"); }
 "volatile"              { count(); return VOLATILE; }
 "while"                 { count(); return WHILE; }
 "__declspec"            { lexerror("encountered __declspec, which is not supported"); }

@@ -30,7 +30,7 @@
   char *str;
 }
 
-%type <xml> primary_expr postfix_expr argument_expr_list unary_expr cast_expr multiplicative_expr additive_expr shift_expr relational_expr equality_expr and_expr exclusive_or_expr inclusive_or_expr logical_and_expr logical_or_expr conditional_expr assignment_expr expr constant_expr declaration declaration_specifiers init_declarator_list init_declarator struct_or_union_specifier struct_declaration_list struct_declaration struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator declarator direct_declarator pointer identifier_list parameter_type_list parameter_list parameter_declaration type_name abstract_declarator direct_abstract_declarator initializer initializer_list statement labeled_statement compound_statement declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement external_definition function_definition translation_unit type_specifier specifier_qualifier_list type_qualifier_list file storage_class_specifier type_qualifier asm_statement callspec direct_declarator2 declarator2 declarator_list2 strings callspecs
+%type <xml> primary_expr postfix_expr argument_expr_list unary_expr cast_expr multiplicative_expr additive_expr shift_expr relational_expr equality_expr and_expr exclusive_or_expr inclusive_or_expr logical_and_expr logical_or_expr conditional_expr assignment_expr expr constant_expr declaration declaration_specifiers init_declarator_list init_declarator struct_or_union_specifier struct_declaration_list struct_declaration struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator declarator direct_declarator pointer identifier_list parameter_type_list parameter_list parameter_declaration type_name abstract_declarator direct_abstract_declarator initializer initializer_list statement labeled_statement compound_statement declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement external_definition function_definition translation_unit type_specifier specifier_qualifier_list type_qualifier_list file storage_class_specifier type_qualifier asm_statement direct_declarator2 declarator2 declarator_list2 strings
 
 %type <str> identifier assignment_operator unary_operator struct_or_union typedeffed_name
 
@@ -38,7 +38,7 @@
 %token PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
 %token AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
 %token SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
-%token XOR_ASSIGN OR_ASSIGN TYPE_NAME ASM DECLSPEC STDCALL CDECL
+%token XOR_ASSIGN OR_ASSIGN TYPE_NAME ASM
 
 %token TYPEDEF EXTERN STATIC AUTO REGISTER INLINE
 %token CHAR SHORT INT INT64 LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID VA
@@ -327,21 +327,9 @@ type_qualifier
   | VOLATILE                                               { $$ = xml("volatile", 0); }
   ;
 
-callspec
-  : CDECL                                                  { $$ = xml("cdecl", 0); }
-  | STDCALL                                                { $$ = xml("stdcall", 0); }
-  ;
-
-callspecs
-  : callspec                                               { $$ = $1; }
-  | callspecs callspec                                     { $$ = xml_link($1, $2); }
-  ;
-
 declarator
   : direct_declarator                                      { $$ = $1; }
   | pointer direct_declarator                              { $$ = xml("ptr", $1, $2, 0); }
-  | pointer callspecs direct_declarator                    { $$ = xml("ptr", $1, xml_link($2, $3), 0); }
-  | callspec declarator                                    { $$ = xml_link($1, $2); }
   ;
 
 direct_declarator
@@ -357,8 +345,6 @@ direct_declarator
 declarator2
   : direct_declarator                                      { $$ = $1; }
   | pointer direct_declarator2                             { $$ = xml("ptr", $1, $2, 0); }
-  | pointer callspec direct_declarator2                    { $$ = xml("ptr", $1, xml_link($2, $3), 0); }
-  | callspec declarator                                    { $$ = xml_link($1, $2); }
   ;
 
 direct_declarator2
