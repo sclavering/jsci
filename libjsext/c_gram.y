@@ -30,7 +30,7 @@
   char *str;
 }
 
-%type <xml> primary_expr postfix_expr argument_expr_list unary_expr cast_expr multiplicative_expr additive_expr shift_expr relational_expr equality_expr and_expr exclusive_or_expr inclusive_or_expr logical_and_expr logical_or_expr conditional_expr assignment_expr expr constant_expr declaration declaration_specifiers init_declarator_list init_declarator struct_or_union_specifier struct_declaration_list struct_declaration struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator declarator direct_declarator pointer identifier_list parameter_type_list parameter_list parameter_declaration type_name abstract_declarator direct_abstract_declarator initializer initializer_list statement labeled_statement compound_statement declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement external_definition function_definition translation_unit type_specifier specifier_qualifier_list type_qualifier_list file storage_class_specifier type_qualifier asm_statement direct_declarator2 declarator2 declarator_list2 strings
+%type <xml> primary_expr postfix_expr argument_expr_list unary_expr cast_expr multiplicative_expr additive_expr shift_expr relational_expr equality_expr and_expr exclusive_or_expr inclusive_or_expr logical_and_expr logical_or_expr conditional_expr assignment_expr expr constant_expr declaration declaration_specifiers init_declarator_list init_declarator struct_or_union_specifier struct_declaration_list struct_declaration struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator declarator direct_declarator pointer parameter_type_list parameter_list parameter_declaration type_name abstract_declarator direct_abstract_declarator initializer initializer_list statement labeled_statement compound_statement declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement external_definition function_definition translation_unit type_specifier specifier_qualifier_list type_qualifier_list file storage_class_specifier type_qualifier asm_statement direct_declarator2 declarator2 declarator_list2 strings
 
 %type <str> identifier assignment_operator unary_operator struct_or_union typedeffed_name
 
@@ -339,7 +339,6 @@ direct_declarator
   | direct_declarator '[' constant_expr ']'                { $$ = xml("ix", $1, $3, 0); }
   | direct_declarator '(' ')'                              { $$ = xml("fd", $1, xml("pm", 0), 0); }
   | direct_declarator '(' parameter_type_list ')'          { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
-  | direct_declarator '(' identifier_list ')'              { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
   ;
 
 declarator2
@@ -355,7 +354,6 @@ direct_declarator2
   | direct_declarator2 '[' constant_expr ']'               { $$ = xml("ix", $1, $3, 0); }
   | direct_declarator2 '(' ')'                             { $$ = xml("fd", $1, xml("pm", 0), 0); }
   | direct_declarator2 '(' parameter_type_list ')'         { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
-  | direct_declarator2 '(' identifier_list ')'             { $$ = xml("fd", $1, xml("pm", $3, 0), 0); }
   ;
 
 pointer
@@ -384,11 +382,6 @@ parameter_declaration
   : declaration_specifiers declarator2                     { $$ = xml("d", $1, $2, 0); ctoxml_deftype_to_ident($$); }
   | declaration_specifiers abstract_declarator             { $$ = xml("d", $1, $2, 0); ctoxml_deftype_to_ident($$); }
   | declaration_specifiers                                 { $$ = xml("d", $1, 0); ctoxml_deftype_to_ident($$); }
-  ;
-
-identifier_list
-  : identifier                                             { $$ = xml_text("id", $1); }
-  | identifier_list ',' identifier                         { $$ = xml_link($1, xml_text("id", $3)); }
   ;
 
 type_name
