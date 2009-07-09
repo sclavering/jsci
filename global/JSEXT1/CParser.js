@@ -1,0 +1,847 @@
+(function() {
+
+const nothing = <></>; // simplifies some of the XML construction in the parser
+
+// Token kinds.
+const token_list = [
+  "tk_skip",
+  "tk_const_char", "tk_const_number", "tk_const_string",
+  "tk_ident", "tk_typedef_name",
+  "tk_punctuation", "tk_keyword",
+  // We use the lexer to identify some things that are more typically nonterminals in the grammar
+  "tk_type_qualifier", // type_qualifier
+  "tk_storage_class_specifier", // storage_class_specifier
+  "tk_type_specifier_literal", // part of type_specifier
+];
+const tokens = {};
+for(let i = 0; i != token_list.length; ++i) tokens[token_list[i]] = i;
+
+const keyword_aliases = { '_inline': 'inline', '__inline': 'inline' };
+
+const keywords = [
+  [['const', 'volatile'], tokens.tk_type_qualifier], // type_qualifier
+  [['extern', 'static', 'auto', 'register', 'inline'], tokens.tk_storage_class_specifier], // storage_class_specifier
+  [['char', 'short', 'int', '__int64', 'long', 'signed', 'unsigned', 'float', 'double', 'void', '__builtin_va_list'], tokens.tk_type_specifier_literal],
+  [['struct', 'union', 'enum'], tokens.tk_keyword],
+];
+
+const keyword_lookup = {};
+for each(let [words, val] in keywords) for each(let word in words) keyword_lookup[word] = val;
+
+const [lexer_re, match_handlers] = (function() {
+  const re_flags = "y"; // "sticky", which means ^ matches the .lastIndex property of the regex, rather than the start of the string
+
+  function esc(literal) literal.replace(/\{|\}|\(|\)|\[|\]|\^|\$|\.|\?|\*|\+|\|/g, "\\$&");
+  function any_of(list_of_literals) RegExp(list_of_literals.map(esc).join("|"));
+
+  const lex_parts = [
+    // whitespace
+    [/[ \t\v\f\n]/, tokens.tk_skip],
+    // C comments
+    [/\/\*|\/\//, function() CParser.prototype.ParseError("Encountered a C comment.  cpp should have already removed these")],
+    // #line, #define, etc
+    [/#[^\n]*\n/, function(str, lexer) {
+      // keep everything but line number things (e.g. '# 1 "/usr/lib/gcc/i486-linux-gnu/4.2.4/include/stdarg.h" 1 3 4')
+      if(str[1] != ' ') lexer._preprocessor_lines.push(str.slice(0, -1)); // consumer can't cope with the \n's
+      return [str, tokens.tk_skip];
+    }],
+    // char literal.
+    [/'(?:\\.|[^\\'])'/, tokens.tk_const_char],
+    // string literals
+    [/"(?:\\.|[^\\"])*"/, tokens.tk_const_string],
+    [/L"(?:\\.|[^\\"])*/, tokens.tk_const_string],
+    // numeric literals
+    [/\d+[Ee][+-]?\d+[fFlL]?|\d*\.\d+(?:[Ee][+-]?\d+)?[fFlL]?/, tokens.tk_const_number],
+    [/0[xX][a-fA-F0-9]+[uUlL]*|\d+[uUlL]*/, tokens.tk_const_number],
+    // operators
+    [any_of(["...", ">>=", "<<=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", ">>", "<<", "++", "--", "->", "&&", "||", "<=", ">=", "==", "!=", ";", "{", "}", ",", ":", "=", "(", ")", "[", "]", ".", "-", "+", "*", "/", "%", "<", ">", "^", "|", "?", "||", "&", "*", "+", "-", "~"]), tokens.tk_punctuation],
+    // variables and typenames, etc.
+    [/[a-zA-Z_][a-zA-Z_0-9]*/, function(str, lexer) {
+      if(str in keyword_aliases) str = keyword_aliases[str];
+      return [str, keyword_lookup[str] || (str in lexer._typedef_names ? tokens.tk_typedef_name : tokens.tk_ident)];
+    }],
+  ];
+
+  const re_bits = [];
+  const match_handlers = [NaN]; // the NaN is so the interesting values start at index 1, to match the re.exec() results
+
+  for each(let part in lex_parts) {
+    re_bits.push(String.slice(part[0], 1, -1)); // serialise the regex, and remove the leading and trailing /
+    match_handlers.push(part[1]);
+  }
+
+  const re = new RegExp("(" + re_bits.join(")|(") + ")", re_flags);
+  return [re, match_handlers];
+})()
+
+
+
+function Lexer(str, preprocessor_lines, typedef_names_set) {
+  this._str = str;
+  this._re = new RegExp(lexer_re);
+  this._preprocessor_lines = preprocessor_lines;
+  this._typedef_names = typedef_names_set;
+}
+
+Lexer.prototype = {
+  pos: function() {
+    return this._re.lastIndex;
+  },
+
+  rewind: function(pos) {
+    this._re.lastIndex = pos;
+  },
+
+  gettok: function() {
+    while(true) {
+      let match = this._re.exec(this._str);
+      if(!match) return null;
+
+      let i = 1;
+      while(!match[i]) ++i; // find which pattern was matched
+      let tokstr = match[0], handler = match_handlers[i]; // handler is a function, or a numeric constant
+      if(typeof handler == "function") [tokstr, handler] = handler(match[0], this);
+      if(handler === tokens.tk_skip) continue;
+//       print("lexed token <", tokstr, "> (", handler, ") ending at ", this._re.lastIndex, "\n");
+      let tok = new String(tokstr);
+      tok.tok_kind = handler;
+      return tok;
+    }
+  },
+}
+
+
+
+function Parser(srccode) {
+  this._srccode = srccode;
+  this.preprocessor_directives = [];
+  this._typedefs = {}; // a set.  lexing C requires tracking typedefs to disambiguate parts of the grammar
+  this._lexer = new Lexer(srccode, this.preprocessor_directives, this._typedefs);
+  this._nexttok = 0;
+}
+
+Parser.prototype = {
+  // methods that aren't grammar symbols
+
+  Peek: function Peek(arg) {
+    if(arg !== undefined) this.ParseError("Peek() passed an arg");
+    return this._Current();
+  },
+
+  PeekIf: function PeekIf(value) {
+    if(value === undefined) this.ParseError("PeekIf() passed undefined")
+    const t = this._Current();
+    return t && t == value ? t : null;
+  },
+
+  PeekIfKind: function PeekIfKind(token_kind) {
+    const t = this._Current();
+    return t && t.tok_kind == token_kind ? t : null;
+  },
+
+  Next: function Next(value) {
+    const t = this._Next();
+    if(value && t != value) this.ParseError("expecting token of value/kind '" + value + "' but got '" + t + "'");
+    return t;
+  },
+
+  NextAsKind: function NextAsKind(token_kind) {
+    const t = this.Next();
+    if(t.tok_kind != token_kind) this.ParseError("expecting token of value/kind " + token_kind + " but got '" + t + "'");
+    return t;
+  },
+
+  NextM: function NextM(value_list) {
+    const t = this.Next();
+    for(var i = 0; i != value_list.length; ++i) if(t == value_list[i]) return t;
+    this.ParseError("expecting one of '" + value_list.join("', '") + "' but found '" + t + "'");
+  },
+
+  NextIf: function NextIf(value) {
+    return this.PeekIf(value) ? this._Next() : null;
+  },
+
+  NextIfM: function NextIfM(value_list) {
+    const t = this._Current();
+    if(t) for(var i = 0; i != value_list.length; ++i) if(t == value_list[i]) return this._Next();
+    return null;
+  },
+
+  _Current: function _Current() {
+    if(!this._nexttok) this._nexttok = this._Next(true);
+    return this._nexttok;
+  },
+
+  _Next: function _Next(no_errors) {
+    if(this._nexttok) {
+      const t = this._nexttok;
+      this._nexttok = null;
+      return t;
+    }
+    const t2 = this._lexer.gettok();
+    if(!t2 && !no_errors) this.ParseError("ran out of tokens");
+    return t2;
+  },
+
+  // Error subclasses are painful in js, so just set a parameter instead
+  ParseError: function ParseError(msg) {
+    const pos = this._lexer.pos()
+    const snippet = (this._srccode.slice(Math.max(0, pos - 50), pos) + "^^" + this._srccode.slice(pos, pos + 50)).split("\n").join("\n\t");
+    const e = Error(msg + "\n\tAt char #" + pos + " marked by ^^ in the following:\n\t" + snippet + "\n");
+    e.isParseError = true;
+    throw e;
+  },
+
+  // the shift_expr/additive_expr/etc. productions all follow this basic pattern
+  ExprHelper: function ExprHelper(base_name, value_list) {
+    let e = this[base_name]();
+    while(true) {
+      let t = this.NextIfM(value_list);
+      if(!t) break;
+      e = <op op={ t }>{ e }{ this[base_name]() }</op>;
+    }
+    return e;
+  },
+
+  Try: function Try(symbol_name) {
+//     print("trying ", symbol_name);
+    const ix = this._lexer.pos(), _nexttok = this._nexttok;
+//     print(" starting at ", ix, " with _nexttok [", this._nexttok || '', "]\n");
+    try {
+      return this[symbol_name]();
+    } catch(e if e.isParseError) {
+      this._nexttok = _nexttok;
+      this._lexer.rewind(ix);
+      return null;
+    }
+  },
+
+  // The ghastly bit where we feed typedef's names back to the lexer to resolve the inherent ambiguity in the grammar
+  RecordTypedef: function(node) {
+    // yacc code also does some weird thing where it looks for a <dt/> and converts it to an <id/>.  not sure why.
+    for each(let id in node.id) this._typedefs[String(id)] = true;
+    for each(let ptr in node.ptr) this.RecordTypedef(ptr);
+    for each(let ix in node.ix) this.RecordTypedef(ix);
+    for each(let p in node.p) this.RecordTypedef(p);
+    // Handle stuff like "typedef int (*list_walk_action)(void *foo, void *);".  This will correctly ignore optional parameter names (if included), because they're inside a <pm/> that we don't recurse into
+    for each(let fd in node.fd) this.RecordTypedef(fd);
+  },
+
+
+  // grammar symbol methods
+
+  primary_expr: function primary_expr() {
+    // primary_expr  :  identifier  |  CONSTANT  |  strings  |  '(' expr ')'
+    const tok = this.Next();
+    switch(tok.tok_kind) {
+      case tokens.tk_ident:
+        return <id>{ tok }</id>;
+      case tokens.tk_const_char:
+        // xxx unescape
+        return <c>{ tok }</c>;
+      case tokens.tk_const_number: {
+        let match = tok.match(/^(.*)([fFlLuU])$/);
+        if(tok[0] != '0' && match) return <c length={ match[2] }>{ match[1] }</c>;
+        return <c>{ tok }</c>;
+      }
+      case tokens.tk_const_string: {
+        // xxx unescape
+        let xml = <><s>{ tok }</s></>;
+        while(this.Peek(tokens.tk_const_string)) xml += <s>{ this.Next() }</s>;
+        return xml;
+      }
+    }
+    if(tok == '(') {
+      let e = this.expr();
+      this.Next(')');
+      return <p>{ e }</p>;
+    }
+    this.ParseError("expected a constant");
+  },
+
+  postfix_expr: function postfix_expr() {
+    // postfix_expr  :  primary_expr ('[' expression ']'  |  '(' argument_expr_list ')'  |  '.' IDENTIFIER  |  '->' IDENTIFIER  |  '++'  |  '--')*
+    let e = this.primary_expr();
+    while(true) {
+      let t = this.Peek();
+      switch(String(t)) {
+        case '[': this.Next(); e = <ix>{ e }{ this.expr() }</ix>; this.Next(']'); continue;
+        case '.': this.Next(); e = <mb>{ e }{ this.identifier() }</mb>; continue;
+        case '->': this.Next(); e = <ptr>{ e }{ this.identifier() }</ptr>; continue;
+        case '++': this.Next(); e = <op op="++" post="1">{ e }</op>; continue;
+        case '--': this.Next(); e = <op op="--" post="1">{ e }</op>; continue;
+        case '(': this.Next(); e = <call>{ e }{ this.argument_expr_list() }</call>; continue;
+      }
+      break;
+    }
+    return e;
+  },
+
+  argument_expr_list: function argument_expr_list() {
+    // This was originally  "argument_expr_list  :  assignment_expr (',' assignment_expr)*"  but we are using:
+    // argument_expr_list  :  (assignment_expr (',' assignment_expr)*)? ')'
+    if(this.NextIf(')')) return <></>;
+    let ael = <>{ this.assignment_expr() }</>;
+    while(this.NextIf(',')) ael += this.assignment_expr();
+    this.Next(')');
+    return ael;
+  },
+
+  unary_expr: function unary_expr() {
+    /*
+    unary_expr
+      : postfix_expr
+      | '++' unary_expr
+      | '--' unary_expr
+      | unary_operator cast_expr
+      | 'sizeof' unary_expr
+      | 'sizeof' '(' type_name ')'
+    */
+    switch(String(this.Peek())) {
+      case '++':
+      case '--':
+        return <op op={ this.Next() } pre="1">{ this.unary_expr() }</op>;
+      case 'sizeof': {
+        this.Next();
+        if(this.NextIf('(')) {
+          let tn = this.type_name();
+          this.Next(')');
+          return <op op="sizeof" type="t">{ tn }</op>;
+        }
+        return <op op="sizeof" type="e">{ this.unary_expr() }</op>;
+      }
+      // unary_operator cast_expr
+      case '&':
+      case '*':
+      case '+':
+      case '-':
+      case '~':
+      case '!':
+        return <op op={ this.Next() }>{ this.cast_expr() }</op>;
+    }
+    return this.postfix_expr();
+  },
+
+  cast_expr: function cast_expr() {
+    // cast_expr  : '(' type_name ')' cast_expr  |  unary_expr
+    // the peek isn't sufficient, because a unary_expr can be parenthesised
+    return (this.PeekIf('(') && this.Try('cast_expr_real')) || this.unary_expr();
+  },
+
+  cast_expr_real: function cast_expr_real() {
+    // cast_expr_real: '(' type_name ')' cast_expr
+    this.Next('(');
+    const tn = this.type_name();
+    this.Next(')');
+    return <cast>{ tn }{ this.cast_expr() }</cast>;
+  },
+
+  multiplicative_expr: function multiplicative_expr() {
+    // multiplicative_expr: cast_expr (('*'|'/'|'%') cast_expr)*
+    return this.ExprHelper('cast_expr', ['*', '/', '%']);
+  },
+
+  additive_expr: function additive_expr() {
+    // additive_expr: multiplicative_expr (('+'|'-') multiplicative_expr)*
+    return this.ExprHelper('multiplicative_expr', ['+', '-']);
+  },
+
+  shift_expr: function shift_expr() {
+    // shift_expr: additive_expr (('<<'|'>>') additive_expr)*
+    return this.ExprHelper('additive_expr', ['<<', '>>']);
+  },
+
+  relational_expr: function relational_expr() {
+    // relational_expr: shift_expr (('<'|'>'|'<='|'>=') shift_expr)*
+    return this.ExprHelper('shift_expr', ['<', '>', '<=', '>=']);
+  },
+
+  equality_expr: function equality_expr() {
+    // equality_expr: relational_expr (('=='|'!=') relational_expr)*
+    return this.ExprHelper('relational_expr', ['==', '!=']);
+  },
+
+  and_expr: function and_expr() {
+    // and_expr: equality_expr ('&' equality_expr)*
+    return this.ExprHelper('equality_expr', ['&']);
+  },
+
+  xor_expr: function xor_expr() {
+    // xor_expr: and_expr ('^' and_expr)*
+    return this.ExprHelper('and_expr', ['^']);
+  },
+
+  inclusive_or_expr: function inclusive_or_expr() {
+    // inclusive_or_expr: xor_expr ('|' xor_expr)*
+    return this.ExprHelper('xor_expr', ['|']);
+  },
+
+  logical_and_expr: function logical_and_expr() {
+    // logical_and_expr: inclusive_or_expr ('&&' inclusive_or_expr)*
+    return this.ExprHelper('inclusive_or_expr', ['&&']);
+  },
+
+  logical_or_expr: function logical_or_expr() {
+    // logical_or_expr: logical_and_expr ('||' logical_and_expr)*
+    return this.ExprHelper('logical_and_expr', ['||']);
+  },
+
+  conditional_expr: function conditional_expr() {
+    // conditional_expr: logical_or_expr ('?' expr ':' conditional_expr)?
+    const e0 = this.logical_or_expr();
+    if(!this.NextIf('?')) return e0;
+    const e1 = this.expr();
+    this.Next(':');
+    const e2 = this.conditional_expr();
+    return <op op="?:">{ e0 }{ e1 }{ e2 }</op>;
+  },
+
+  assignment_expr: function assignment_expr() {
+    // assignment_expr  :  unary_expr assignment_operator assignment_expr  |  conditional_expr
+    // we must Try() the entire first branch, not just Try('unary_expr'), because things like constants...
+    return this.Try('assignment_expr_branch1') || this.conditional_expr();
+  },
+  assignment_expr_branch1: function assignment_expr_branch1() {
+    const ue = this.unary_expr(), op = this.assignment_operator(), e1 = this.assignment_expr();
+    return <op op={ op }>{ ue }{ e1 }</op>;
+  },
+
+  assignment_operator: function assignment_operator() {
+    return this.NextM(['=', '*=', '/=', '%=', '+=', '-=', '<<=', '>>=', '&=', '^=', '|=']);
+  },
+
+  expr: function expr() {
+    // expr: assignment_expr (',' assignment_expr)*
+    let e = this.assignment_expr();
+    while(this.NextIf(',')) e = <op op=",">{ e }{ this.assignment_expr() }</op>;
+    return e;
+  },
+
+  constant_expr: function constant_expr() this.conditional_expr(),
+
+  declaration: function declaration() {
+    // declaration: 'typedef'? declaration_specifiers init_declarator_list_optional
+    // xxx antlr had the ? swapped for the typedef case: "'typedef' declaration_specifiers? init_declarator_list ';'"
+    // xxx yacc had a whole declarator_list2 family to replace init_declarator_list, but allowing typedeffed_name as well as identifier as a direct_declarator expansion
+    const typedef = this.NextIf('typedef') ? <typedef/> : null;
+    const d = <d>{ typedef || nothing }{ this.declaration_specifiers() }{ this.init_declarator_list_optional() }</d>;
+    if(typedef) this.RecordTypedef(d);
+    return d;
+  },
+
+  declaration_specifiers: function declaration_specifiers() {
+    // declaration_specifiers  :  (storage_class_specifier | type_specifier | type_qualifier)+
+    let dss = <></>;
+    while(true) {
+      let t = this.Try('storage_class_specifier')
+        || this.Try('type_specifier')
+        || this.maybe_type_qualifier();
+      if(!t) break;
+      dss += t;
+    }
+    if(!dss.length()) this.ParseError("declaration_specifiers: expected at least one item, but encountered '" + this.Peek() + "' instead");
+    return dss;
+  },
+
+  init_declarator_list_optional: function init_declarator_list_optional() {
+    // init_declarator_list? ';'
+    const idl = this.PeekIf(';') ? nothing : this.init_declarator_list();
+    this.Next(';');
+    return idl;
+  },
+
+  init_declarator_list: function init_declarator_list() {
+    // init_declarator (',' init_declarator)*
+    let res = <>{ this.init_declarator() }</>;
+    while(this.NextIf(',')) res += this.init_declarator();
+    return res;
+  },
+
+  init_declarator: function init_declarator() {
+    // declarator ('=' initializer)?
+    const decl = this.declarator();
+    if(this.NextIf('=')) return <init>{ decl }{ this.initializer() }</init>;
+    return decl;
+  },
+
+  maybe_storage_class_specifier: function maybe_storage_class_specifier() {
+    return this.PeekIfKind(tokens.tk_storage_class_specifier) ? this.storage_class_specifier() : null;
+  },
+
+  storage_class_specifier: function storage_class_specifier() {
+    return <{ this.NextAsKind(tokens.tk_storage_class_specifier) }/>;
+  },
+
+  type_specifier: function type_specifier() {
+    /*
+    Based on:
+      type_specifier
+        : 'void'
+        | 'char'
+        | 'short'
+        | 'int'
+        | 'long'
+        | 'float'
+        | 'double'
+        | 'signed'
+        | 'unsigned'
+        | struct_or_union_specifier
+        | enum_specifier
+        | tk_typedef_name
+        ;
+    But we change the enum and struct/union cases to:
+        | 'enum' enum_specifier_guts
+        | 'struct' struct_or_union_specifier_guts
+        | 'union' struct_or_union_specifier_guts
+    */
+    const tok0 = this.Next();
+    if(tok0.tok_kind == tokens.tk_type_specifier_literal) return <t>{ tok0 }</t>;
+    switch(String(tok0)) {
+      case "struct":
+      case "union":
+        return this.struct_or_union_specifier_guts(String(tok0));
+      case "enum":
+        return this.enum_specifier_guts();
+    }
+    if(tok0.tok_kind == tokens.tk_typedef_name) return <dt>{ tok0 }</dt>;
+    this.ParseError("type_specifier: unexpected token: '" + tok0 + "'");
+  },
+
+  enum_specifier_guts: function() {
+    // Based on:
+    //   enum_specifier: 'enum' '{' enumerator_list '}'
+    //     | 'enum' IDENTIFIER '{' enumerator_list '}'
+    //     | 'enum' IDENTIFIER
+    // Based on enum_specifier, but we match the 'enum' in the caller, and the '}' in enumerator_list, so:
+    //   enum_specifier_guts
+    //     : '{' enumerator_list
+    //     | IDENTIFIER '{' enumerator_list
+    //     | IDENTIFIER
+    let tok0 = this.Next();
+    if(tok0 == '{') return <enum>{ this.enumerator_list() }</enum>;
+    if(this.NextIf('{')) return <enum id={ tok0 }>{ this.enumerator_list() }</enum>;
+    return <enum id={ tok0 }/>;
+  },
+
+  enumerator_list: function() {
+    // Based on:
+    //   enumerator_list: enumerator (',' enumerator)*
+    // but we also include the closing '}', and allow a trailing ',', so:
+    //   enumerator_list: enumerator (',' enumerator)* ','? '}'
+    let el = <>{ this.enumerator() }</>;
+    while(this.NextIf(',')) {
+      if(this.PeekIf('}')) break;
+      el += this.enumerator();
+    }
+    this.Next('}');
+    return el;
+  },
+
+  enumerator: function enumerator() {
+    // enumerator: IDENTIFIER ('=' constant_expr)?
+    const id = this.identifier();
+    if(this.NextIf('=')) return <>{ id }{ this.constant_expr() }</>;
+    return id;
+  },
+
+  struct_or_union_specifier_guts: function struct_or_union_specifier_guts(nodeName) {
+    // Based on struct_or_union_specifier, but excluding the leading struct_or_union, and the trailing '}'
+    //  : '{' struct_declaration_list
+    //  | IDENTIFIER '{' struct_declaration_list
+    //  | IDENTIFIER
+    if(this.NextIf('{')) return <{ nodeName }>{ this.struct_declaration_list() }</{ nodeName }>;
+    const id = this.identifier_or_typedef_name();
+    if(this.NextIf('{')) return <{ nodeName } id={ id }>{ this.struct_declaration_list() }</{ nodeName }>;
+    return <{ nodeName } id={ id }/>;
+  },
+
+  struct_declaration_list: function struct_declaration_list() {
+    // struct_declaration_list: struct_declaration+
+    // modified to match the trailing '}' too
+    let sdl = <>{ this.struct_declaration() }</>;
+    while(!this.NextIf('}')) sdl += this.struct_declaration();
+    return sdl;
+  },
+
+  struct_declaration: function struct_declaration() {
+    // struct_declaration: specifier_qualifier_list struct_declarator_list? ';'
+    // Omitting the struct_declarator_list allows anonymous members, which are typically unions.  Probably a GCC extension, but we must accept it to parse system headers (e.g. pthreadtypes.h)
+    const sd = <d>{ this.specifier_qualifier_list() }{ this.PeekIf(';') ? nothing : this.struct_declarator_list() }</d>;
+    this.Next(';');
+    return sd;
+  },
+
+  specifier_qualifier_list: function specifier_qualifier_list() {
+    // specifier_qualifier_list: ( type_qualifier | type_specifier )+
+    let sql = <></>;
+    while(true) {
+      let sq = this.maybe_type_qualifier() || this.Try('type_specifier');
+      if(!sq) break;
+      sql += sq;
+    }
+    if(!sql.length()) this.ParseError("specifier_qualifier_list: coudln't find any type_qualifier or type_specifier");
+    return sql;
+  },
+
+  struct_declarator_list: function struct_declarator_list() {
+    // struct_declarator_list: struct_declarator (',' struct_declarator)* ';'
+    // note: we moved the ';' here from the caller
+    let sdl = <>{ this.struct_declarator() }</>;
+    while(this.NextIf(',')) sdl += this.struct_declarator();
+    return sdl;
+  },
+
+  struct_declarator: function struct_declarator() {
+    // struct_declarator:  declarator (':' constant_expr)?  |  ':' constant_expr
+    if(this.NextIf(':')) return <bitfield>{ this.constant_expr() }</bitfield>;
+    const d = this.declarator();
+    return this.NextIf(':') ? <bitfield>{ d }{ this.constant_expr() }</bitfield> : d;
+  },
+
+  declarator: function declarator() {
+    // declarator:  pointer? direct_declarator  |  pointer
+    // xxx the plain pointer case is needed to handle stuff like: "int f(int (*)(int));" (the "(*)" part specifically).  Our yacc grammar doesn't seem to have had such a rule though.
+    const p = this.Try('pointer');
+    const dd0 = this.Try('direct_declarator'), dd = dd0 || nothing;
+    if(!p && !dd0) this.ParseError("declarator: expecting either a pointer or direct_declarator or both");
+    return p ? <ptr>{ p }{ dd }</ptr> : dd;
+  },
+
+  direct_declarator: function direct_declarator() {
+    // direct_declarator: declarator_prefix declarator_suffix*
+    // declarator_suffix:  '[' constant_expr? ']'  |  '(' (parameter_type_list | identifier_list)? ')'
+    // We omit the identifier_list case (for K&R function declarations/definitions), and move the ')', giving:
+    // declarator_suffix:  '[' constant_expr? ']'  |  '(' parameter_type_list
+    let t, dd = this.declarator_prefix();
+    while((t = this.NextIfM(['[', '(']))) {
+      if(t == '[') {
+        let ce = this.PeekIf(']') ? null : this.constant_expr();
+        this.Next(']');
+        dd = <ix>{ dd }{ ce || nothing }</ix>;
+      } else { // '('
+        dd = <fd>{ dd }<pm>{ this.parameter_type_list() }</pm></fd>;
+      }
+    }
+    return dd;
+  },
+
+  declarator_prefix: function declarator_prefix() {
+    // declarator_prefix:  identifier  |  '(' declarator ')'
+    if(this.NextIf('(')) {
+      const d = this.declarator();
+      this.Next(')');
+      return <p>{ d }</p>;
+    }
+    return this.identifier();
+  },
+
+  pointer: function pointer() {
+    // YACC:   pointer: '*' | '*' type_qualifier_list | '*' pointer | '*' type_qualifier_list pointer
+    // ANTLR:  pointer: '*' | '*' pointer | '*' type_qualifier+ pointer?
+    // here:   pointer: '*' type_qualifier* pointer?
+    this.Next('*');
+    const tql = this.type_qualifier_list();
+    const p = this.PeekIf('*') ? this.pointer() : null;
+    return <a>{ tql || nothing }{ p || nothing }</a>;
+  },
+
+  type_qualifier_list: function type_qualifier_list() {
+    // type_qualifier* (in our yacc grammar it was type_qualifier+, but "pointer" is simpler this way)
+    let tq, tql = <></>;
+    while((tq = this.maybe_type_qualifier())) tql += tq;
+    return tql;
+  },
+
+  maybe_type_qualifier: function maybe_type_qualifier() {
+    return this.PeekIfKind(tokens.tk_type_qualifier) ? this.type_qualifier() : null;
+  },
+
+  type_qualifier: function type_qualifier() {
+    return <{ this.NextAsKind(tokens.tk_type_qualifier) }/>;
+  },
+
+  parameter_type_list: function parameter_type_list() {
+    // parameter_type_list: (parameter_list (',' '...')?)? ')'   // the ')' has been moved here from the callers
+    // parameter_list: parameter_declaration (',' parameter_declaration)*
+    if(this.NextIf(')')) return <></>;
+    let ptl = <>{ this.parameter_declaration() }</>;
+    while(this.NextIf(',')) {
+      if(this.NextIf('...')) {
+        ptl += <elipsis/>;
+        break;
+      }
+      ptl += this.parameter_declaration();
+    }
+    this.Next(')');
+    return ptl;
+  },
+
+  parameter_declaration: function parameter_declaration() {
+    // parameter_declaration: declaration_specifiers (declarator|abstract_declarator)?
+    return <d>{ this.declaration_specifiers() }{ this.Try('declarator') || this.Try('abstract_declarator') || nothing }</d>;
+  },
+
+  type_name: function type_name() {
+    // type_name: specifier_qualifier_list abstract_declarator?
+    return <d>{ this.specifier_qualifier_list() }{ this.Try('abstract_declarator') || nothing }</d>;
+  },
+
+  abstract_declarator: function abstract_declarator() {
+    // abstract_declarator  :  pointer direct_abstract_declarator?  |  direct_abstract_declarator
+    if(this.PeekIf('*')) return <ptr>{ this.pointer() }{ this.Try('direct_abstract_declarator') || nothing }</ptr>;
+    return this.direct_abstract_declarator();
+  },
+
+  direct_abstract_declarator: function direct_abstract_declarator() {
+    // direct_abstract_declarator: ( '(' abstract_declarator ')' | abstract_declarator_suffix ) abstract_declarator_suffix*
+    let ads, dad = null;
+    if(this.NextIf('(')) {
+      dad = <p>{ this.abstract_declarator() }</p>
+      this.Next(')');
+    } else {
+      dad = this.abstract_declarator_suffix(nothing);
+    }
+    while((ads = this.abstract_declarator_suffix(dad))) dad = ads;
+    return dad;
+  },
+
+  abstract_declarator_suffix: function abstract_declarator_suffix(thing) {
+    // abstract_declarator_suffix: '[' ']' | '[' constant_expr ']' | '(' ')' | '(' parameter_type_list
+    if(this.NextIf('[')) {
+      if(this.NextIf(']')) return <ix>{ thing }</ix>;
+      const ce = this.constant_expr();
+      this.Next(']');
+      return <ix>{ thing }{ ce }</ix>;
+    }
+    this.Next('(');
+    return <fd>{ thing }{ this.parameter_type_list() }</fd>;
+  },
+
+  initializer: function initializer() {
+    // (initializer_list has been merged into this)
+    // initializer  :  assignment_expr  |  '{' initializer (',' initializer)* ','? '}'
+    if(!this.NextIf('{')) return this.assignment_expr();
+    let il = <></>;
+    while(true) {
+      il += this.initializer();
+      let t = this.Next();
+      if(t == '}') break;
+      if(t != ',') this.ParseError("initializer: expected a ',' or '}', but got '" + t + "'");
+      if(this.PeekIf('}')) break; // handle trailing comma
+    }
+    return <p>{ il }</p>;
+  },
+
+  // we don't actually care about statements
+  statement: function() {
+    /* statement
+      : expression_statement
+      // labeled_statement
+      | IDENTIFIER ':' statement
+      | 'case' constant_expr ':' statement
+      | 'default' ':' statement
+      // compound_statement (inlined)
+      '{' declaration* statement* '}'
+      // selection_statement
+      | 'if' '(' expr ')' statement ('else' statement)?
+      | 'switch' '(' expr ')' statement
+      // iteration_statement
+      | 'while' '(' expr ')' statement
+      | 'do' statement 'while' '(' expr ')' ';'
+      | 'for' '(' expression_statement expression_statement expr? ')' statement
+      // jump_statement
+      | 'goto' IDENTIFIER ';'
+      | 'continue' ';'
+      | 'break' ';'
+      | 'return' ';'
+      | 'return' expr ';'
+    */
+    const t0 = this.Peek();
+    switch(String(t0)) {
+      // switch and while happen to have the same structure
+      case 'switch':
+      case 'while':
+        this.Next(); this.Next('('); this.expr(); this.Next(')'); this.statement();
+        return nothing;
+      case 'do':
+        this.Next(); this.statement(); this.Next('while'); this.Next('('); this.expr(); this.Next(')'); this.Next(';');
+        return nothing;
+      case 'if':
+        this.Next(); this.Next('('); this.expr(); this.Next(')'); if(this.NextIf('else')) this.statement();
+        return nothing;
+      case 'for':
+        this.Next(); this.Next('('); this.expression_statement(); this.expression_statement(); if(!this.PeekIf(')')) this.expr(); this.Next(')'); this.statement();
+        return nothing;
+      case 'goto':
+        this.Next(); this.identifier(); this.Next(';');
+        return nothing;
+      case 'continue':
+      case 'break':
+        this.Next(); this.Next(';');
+        return nothing;
+      case 'return':
+        this.Next(); if(!this.PeekIf(';')) this.expr(); this.Next(';');
+        return nothing;
+      case 'case':
+        this.Next(); this.constant_expr(); this.Next(':'); this.statement();
+        return nothing;
+      case '{':
+        this.compound_statement();
+        return nothing;
+    }
+    throw Error("not implemented");
+  },
+
+  compound_statement: function() {
+    // compound_statement: '{' statement* '}'
+    this.Next('{');
+    while(!this.NextIf('}')) this.statement();
+    return <></>;
+  },
+
+  expression_statement: function expression_statement() {
+    if(!this.PeekIf(';')) this.expr();
+    this.Next(';');
+    return nothing;
+  },
+
+  external_definition: function external_definition() {
+    // external_definition: function_definition  |  declaration
+    return this.Try('function_definition') || this.declaration();
+  },
+
+  function_definition: function function_definition() {
+    // note: in K&R (pre-ANSI) C, a list of declarations can precede the compound_statement, and the declaration_specifiers are optional (i.e. the return type is optional) but we choose not to support that
+    // function_definition: declaration_specifiers declarator compound_statement
+    return <fdef>{ this.declaration_specifiers() }{ this.declarator() }{ this.compound_statement() }</fdef>;
+  },
+
+  identifier_or_typedef_name: function() {
+    const t = this.Next();
+    if(t.tok_kind == tokens.tk_ident || t.tok_kind == tokens.tk_typedef_name) return String(t);
+    this.ParseError("expecting an identifier or typedef'd name");
+  },
+
+  identifier: function identifier() {
+    const t = this.Next();
+    if(t.tok_kind != tokens.tk_ident) this.ParseError("expected an identifier, but got '" + t + "'");
+    return <id>{ t }</id>;
+  },
+
+  // this is the usual entry point
+  translation_unit: function translation_unit() {
+    // translation_unit: external_definition+
+    let ed, eds = <></>;
+    while(this.Peek()) eds += this.external_definition();
+    return <C>{ eds }</C>;
+  },
+
+  Debug: function(str, thing) {
+    print(str, ' peek [', this.Peek(), '] ', uneval(thing), '\n');
+  },
+};
+
+
+return Parser;
+
+})()
