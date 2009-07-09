@@ -19,6 +19,7 @@
   const path = jsxlib.cwd;
   JSEXT1 = { $path: path + '/JSEXT1' };
   JSEXT1.File = load.call(JSEXT1, path + '/JSEXT1/File.js');
+  JSEXT1.CParser = load.call(JSEXT1, path + '/JSEXT1/CParser.js');
   JSEXT1.wraplib = load.call(JSEXT1, path + '/JSEXT1/wraplib.js');
 
   clib.puts(JSEXT1.wraplib(path + "/clib.h"));

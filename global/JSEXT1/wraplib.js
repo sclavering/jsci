@@ -42,9 +42,10 @@ Since switching to using GCC's cpp, we lack clib.va_list, and have loads of cons
 
 
 function fragment(filename) {
-  const obj = jsxlib.cToXML(runcpp(filename));
-  obj.xml = new XML(obj.xml);
-  var parsed = getInfoFromXML(obj);
+  const srccode = runcpp(filename);
+  const parser = new CParser(srccode);
+  const xml = parser.translation_unit();
+  var parsed = getInfoFromXML({ xml: xml, preprocessor_directives: parser.preprocessor_directives });
   var src = {};
 
   for(var i in parsed.structs_and_unions)
