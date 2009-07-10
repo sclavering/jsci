@@ -431,7 +431,7 @@ Parser.prototype = {
     // declaration_specifiers  :  (storage_class_specifier | type_specifier | type_qualifier)+
     let dss = <></>;
     while(true) {
-      let t = this.Try('storage_class_specifier')
+      let t = this.maybe_storage_class_specifier()
         || this.Try('type_specifier')
         || this.maybe_type_qualifier();
       if(!t) break;
