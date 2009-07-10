@@ -7,7 +7,7 @@ const token_list = [
   "tk_skip",
   "tk_const_char", "tk_const_number", "tk_const_string",
   "tk_ident", "tk_typedef_name",
-  "tk_binop",
+  "tk_binop", "tk_assignment_op",
   "tk_punctuation", "tk_keyword",
   // We use the lexer to identify some things that are more typically nonterminals in the grammar
   "tk_type_qualifier", // type_qualifier
@@ -33,7 +33,15 @@ const [lexer_re, match_handlers] = (function() {
   const re_flags = "y"; // "sticky", which means ^ matches the .lastIndex property of the regex, rather than the start of the string
 
   function esc(literal) literal.replace(/\{|\}|\(|\)|\[|\]|\^|\$|\.|\?|\*|\+|\|/g, "\\$&");
-  function any_of(list_of_literals) RegExp(list_of_literals.map(esc).join("|"));
+
+  const ops = [
+    [["...", "++", "--", "->", ";", "{", "}", ",", ":", "=", "(", ")", "[", "]", ".", "?", "~"], tokens.tk_punctuation],
+    [['*=', '/=', '%=', '+=', '-=', '<<=', '>>=', '&=', '^=', '|=', '='], tokens.tk_assignment_op],
+    [['||', '&&', '&', '|', '^', '==', '!=', '<=', '>=', '<<', '>>', '<', '>', '+', '-', '*', '/', '%'], tokens.tk_binop],
+  ];
+  const op_re = RegExp(Array.concat.apply(null, [x[0] for each(x in ops)]).map(esc).join("|"));
+  const op_kind_map = {};
+  for each(let pair in ops) for each(let op in pair[0]) op_kind_map[op] = pair[1];
 
   const lex_parts = [
     // whitespace
@@ -55,8 +63,7 @@ const [lexer_re, match_handlers] = (function() {
     [/\d+[Ee][+-]?\d+[fFlL]?|\d*\.\d+(?:[Ee][+-]?\d+)?[fFlL]?/, tokens.tk_const_number],
     [/0[xX][a-fA-F0-9]+[uUlL]*|\d+[uUlL]*/, tokens.tk_const_number],
     // operators
-    [any_of(["...", ">>=", "<<=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", "++", "--", "->", ";", "{", "}", ",", ":", "=", "(", ")", "[", "]", ".", "?", "~"]), tokens.tk_punctuation],
-    [any_of(['||', '&&', '&', '|', '^', '==', '!=', '<=', '>=', '<<', '>>', '<', '>', '+', '-', '*', '/', '%']), tokens.tk_binop],
+    [op_re, function(str, lexer) [str, op_kind_map[str]]],
     // variables and typenames, etc.
     [/[a-zA-Z_][a-zA-Z_0-9]*/, function(str, lexer) {
       if(str in keyword_aliases) str = keyword_aliases[str];
@@ -179,12 +186,6 @@ Parser.prototype = {
     const t = this.Next();
     if(t.tok_kind != token_kind) this.ParseError("expecting token of value/kind " + token_kind + " but got '" + t + "'");
     return t;
-  },
-
-  NextM: function NextM(value_list) {
-    const t = this.Next();
-    for(var i = 0; i != value_list.length; ++i) if(t == value_list[i]) return t;
-    this.ParseError("expecting one of '" + value_list.join("', '") + "' but found '" + t + "'");
   },
 
   NextIf: function NextIf(value) {
@@ -397,12 +398,8 @@ Parser.prototype = {
     return this.Try('assignment_expr_branch1') || this.conditional_expr();
   },
   assignment_expr_branch1: function assignment_expr_branch1() {
-    const ue = this.unary_expr(), op = this.assignment_operator(), e1 = this.assignment_expr();
+    const ue = this.unary_expr(), op = this.NextAsKind(tokens.tk_assignment_op), e1 = this.assignment_expr();
     return <op op={ op }>{ ue }{ e1 }</op>;
-  },
-
-  assignment_operator: function assignment_operator() {
-    return this.NextM(['=', '*=', '/=', '%=', '+=', '-=', '<<=', '>>=', '&=', '^=', '|=']);
   },
 
   expr: function expr() {
