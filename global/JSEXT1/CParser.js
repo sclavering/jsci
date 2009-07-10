@@ -46,29 +46,29 @@ const [lexer_re, match_handlers] = (function() {
   const lex_parts = [
     // whitespace
     [/[ \t\v\f\n]/, tokens.tk_skip],
-    // C comments
-    [/\/\*|\/\//, function() CParser.prototype.ParseError("Encountered a C comment.  cpp should have already removed these")],
+    // variables and typenames, etc.
+    [/[a-zA-Z_][a-zA-Z_0-9]*/, function(str, lexer) {
+      if(str in keyword_aliases) str = keyword_aliases[str];
+      return [str, keyword_lookup[str] || (str in lexer._typedef_names ? tokens.tk_typedef_name : tokens.tk_ident)];
+    }],
+    // operators
+    [op_re, function(str, lexer) [str, op_kind_map[str]]],
     // #line, #define, etc
     [/#[^\n]*\n/, function(str, lexer) {
       // keep everything but line number things (e.g. '# 1 "/usr/lib/gcc/i486-linux-gnu/4.2.4/include/stdarg.h" 1 3 4')
       if(str[1] != ' ') lexer._preprocessor_lines.push(str.slice(0, -1)); // consumer can't cope with the \n's
       return [str, tokens.tk_skip];
     }],
+    // numeric literals
+    [/\d+[Ee][+-]?\d+[fFlL]?|\d*\.\d+(?:[Ee][+-]?\d+)?[fFlL]?/, tokens.tk_const_number],
+    [/0[xX][a-fA-F0-9]+[uUlL]*|\d+[uUlL]*/, tokens.tk_const_number],
     // char literal.
     [/'(?:\\.|[^\\'])'/, tokens.tk_const_char],
     // string literals
     [/"(?:\\.|[^\\"])*"/, tokens.tk_const_string],
     [/L"(?:\\.|[^\\"])*/, tokens.tk_const_string],
-    // numeric literals
-    [/\d+[Ee][+-]?\d+[fFlL]?|\d*\.\d+(?:[Ee][+-]?\d+)?[fFlL]?/, tokens.tk_const_number],
-    [/0[xX][a-fA-F0-9]+[uUlL]*|\d+[uUlL]*/, tokens.tk_const_number],
-    // operators
-    [op_re, function(str, lexer) [str, op_kind_map[str]]],
-    // variables and typenames, etc.
-    [/[a-zA-Z_][a-zA-Z_0-9]*/, function(str, lexer) {
-      if(str in keyword_aliases) str = keyword_aliases[str];
-      return [str, keyword_lookup[str] || (str in lexer._typedef_names ? tokens.tk_typedef_name : tokens.tk_ident)];
-    }],
+    // C comments
+    [/\/\*|\/\//, function() CParser.prototype.ParseError("Encountered a C comment.  cpp should have already removed these")],
   ];
 
   const re_bits = [];
