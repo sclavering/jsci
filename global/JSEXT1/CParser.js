@@ -104,7 +104,6 @@ Lexer.prototype = {
       let tokstr = match[0], handler = match_handlers[i]; // handler is a function, or a numeric constant
       if(typeof handler == "function") [tokstr, handler] = handler(match[0], this);
       if(handler === tokens.tk_skip) continue;
-//       print("lexed token <", tokstr, "> (", handler, ") ending at ", this._re.lastIndex, "\n");
       let tok = new String(tokstr);
       tok.tok_kind = handler;
       return tok;
@@ -228,9 +227,7 @@ Parser.prototype = {
   },
 
   Try: function Try(symbol_name) {
-//     print("trying ", symbol_name);
     const ix = this._lexer.pos(), _nexttok = this._nexttok;
-//     print(" starting at ", ix, " with _nexttok [", this._nexttok || '', "]\n");
     try {
       return this[symbol_name]();
     } catch(e if e.isParseError) {
