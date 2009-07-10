@@ -326,8 +326,8 @@ Parser.prototype = {
         return <op op={ this.Next() } pre="1">{ this.unary_expr() }</op>;
       case 'sizeof': {
         this.Next();
-        if(this.NextIf('(')) return <op op="sizeof" type="t">{ this.type_name_CP() }</op>;
-        return <op op="sizeof" type="e">{ this.unary_expr() }</op>;
+        if(this.NextIf('(')) return <sizeof_type>{ this.type_name_CP() }</sizeof_type>;
+        return <sizeof_expr>{ this.unary_expr() }</sizeof_expr>;
       }
       // unary_operator cast_expr
       case '&':

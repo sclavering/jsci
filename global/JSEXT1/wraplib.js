@@ -388,30 +388,28 @@ function getInfoFromXML(info) {
 
 
   function inner_eval(expr) {
-    if(expr.name() == "c") return String(expr);
-    if(expr.name() == "id") return sym[expr];
-    if(expr.name() == "p") return "(" + inner_eval(expr.*[0]) + ")";
-    if(expr.name() == "op") return _inner_eval_op(expr);
-  }
-
-
-  function _inner_eval_op(expr) {
-    if(expr.@op == "sizeof" && expr.@type == "t") {
-      var decl=expr.*[0];
-      var declor=decl[0].*[decl[0].*.length()-1];
-      var d=declaration(decl, {}, declor);
-      return Type.sizeof(liveeval(d.type));
+    switch(String(expr.name())) {
+      case "c": return String(expr);
+      case "id": return sym[expr];
+      case "p": return "(" + inner_eval(expr.*[0]) + ")";
+      case "sizeof_type": {
+        let decl = expr.*[0];
+        let declor = decl[0].*[decl[0].*.length() - 1];
+        let d = declaration(decl, {}, declor);
+        return Type.sizeof(liveeval(d.type));
+      }
+      case "sizeof_expr":
+        if(live[expr..id]) return Type.sizeof(live[expr..id].type);
+        // assume it's a string
+        return Type.sizeof(Type.char) * (String(expr..s).length + 1);
+      case "op":
+        switch(expr.*.length()) {
+          case 1: return expr.@op + inner_eval(expr.*[0]);
+          case 2: return inner_eval(expr.*[0]) + expr.@op + inner_eval(expr.*[1]);
+          case 3: return inner_eval(expr.*[0]) + "?"  + inner_eval(expr.*[1]) + ":" + inner_eval(expr.*[2]);
+        }
+        break;
     }
-
-    if(expr.@op == "sizeof" && expr.@type == "e") {
-      if(live[expr..id]) return Type.sizeof(live[expr..id].type);
-      // assume it's a string
-      return Type.sizeof(Type.char) * (String(expr..s).length + 1);
-    }
-
-    if(expr.*.length() == 1) return expr.@op + inner_eval(expr.*[0]);
-    if(expr.*.length() == 2) return inner_eval(expr.*[0]) + expr.@op + inner_eval(expr.*[1]);
-    if(expr.*.length() == 3) return inner_eval(expr.*[0]) + "?"  + inner_eval(expr.*[1]) + ":" + inner_eval(expr.*[2]);
   }
 
 
