@@ -14,8 +14,6 @@
   clib.popen = Dl().pointer('popen', Type['function'](Type.pointer(FILE), [Type.pointer(Type.char), Type.pointer(Type.char)], false, 'cdecl'));
   clib.pclose = Dl().pointer('pclose', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl'));
 
-  print = function () {} // JSEXT1.wraplib() sometimes calls this
-
   const path = jsxlib.cwd;
   JSEXT1 = { $path: path + '/JSEXT1' };
   JSEXT1.File = load.call(JSEXT1, path + '/JSEXT1/File.js');
