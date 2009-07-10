@@ -409,7 +409,10 @@ function getInfoFromXML(info) {
           case 3: return inner_eval(expr.*[0]) + "?"  + inner_eval(expr.*[1]) + ":" + inner_eval(expr.*[2]);
         }
         break;
+      case "cast":
+        return inner_eval(expr.*[1]); // evaluate teh thing being casted, ignoring the typecast itself
     }
+    throw Error("inner_eval called on " + uneval(expr));
   }
 
 
