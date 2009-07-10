@@ -108,7 +108,36 @@ Lexer.prototype = {
       return tok;
     }
   },
+};
+
+
+
+function ExprTreeLeaf(e) {
+  this.e = e;
 }
+ExprTreeLeaf.prototype = {
+  addR: function(op, prec, leaf) {
+    return new ExprTreeNode(op, prec, this, leaf);
+  },
+  xml: function() {
+    return this.e;
+  },
+};
+
+function ExprTreeNode(op, prec, l, r) {
+  this.op = op; this.prec = prec; this.l = l; this.r = r;
+}
+ExprTreeNode.prototype = {
+  addR: function(op, prec, e) {
+    if(prec < this.prec) return new ExprTreeNode(op, prec, this, e);
+    // higher precedence, so insert into our right branch
+    this.r = this.r.addR(op, prec, e);
+    return this;
+  },
+  xml: function() {
+    return <op op={ this.op }>{ this.l.xml() }{ this.r.xml() }</op>;
+  },
+};
 
 
 
@@ -190,17 +219,6 @@ Parser.prototype = {
     const e = Error(msg + "\n\tAt char #" + pos + " marked by ^^ in the following:\n\t" + snippet + "\n");
     e.isParseError = true;
     throw e;
-  },
-
-  // the shift_expr/additive_expr/etc. productions all follow this basic pattern
-  ExprHelper: function ExprHelper(base_name, value_list) {
-    let e = this[base_name]();
-    while(true) {
-      let t = this.NextIfM(value_list);
-      if(!t) break;
-      e = <op op={ t }>{ e }{ this[base_name]() }</op>;
-    }
-    return e;
   },
 
   Try: function Try(symbol_name) {
@@ -336,54 +354,34 @@ Parser.prototype = {
     return <cast>{ tn }{ this.cast_expr() }</cast>;
   },
 
-  multiplicative_expr: function multiplicative_expr() {
-    // multiplicative_expr: cast_expr (('*'|'/'|'%') cast_expr)*
-    return this.ExprHelper('cast_expr', ['*', '/', '%']);
+  logical_or_expr: function() {
+    const [op_list, op_prec] = this._opinfo();
+    let etree = new ExprTreeLeaf(this.cast_expr());
+    while(true) {
+      let t = this.NextIfM(op_list);
+      if(!t) break;
+      etree = etree.addR(t, op_prec[t], new ExprTreeLeaf(this.cast_expr()));
+    }
+    return etree.xml();
   },
-
-  additive_expr: function additive_expr() {
-    // additive_expr: multiplicative_expr (('+'|'-') multiplicative_expr)*
-    return this.ExprHelper('multiplicative_expr', ['+', '-']);
-  },
-
-  shift_expr: function shift_expr() {
-    // shift_expr: additive_expr (('<<'|'>>') additive_expr)*
-    return this.ExprHelper('additive_expr', ['<<', '>>']);
-  },
-
-  relational_expr: function relational_expr() {
-    // relational_expr: shift_expr (('<'|'>'|'<='|'>=') shift_expr)*
-    return this.ExprHelper('shift_expr', ['<', '>', '<=', '>=']);
-  },
-
-  equality_expr: function equality_expr() {
-    // equality_expr: relational_expr (('=='|'!=') relational_expr)*
-    return this.ExprHelper('relational_expr', ['==', '!=']);
-  },
-
-  and_expr: function and_expr() {
-    // and_expr: equality_expr ('&' equality_expr)*
-    return this.ExprHelper('equality_expr', ['&']);
-  },
-
-  xor_expr: function xor_expr() {
-    // xor_expr: and_expr ('^' and_expr)*
-    return this.ExprHelper('and_expr', ['^']);
-  },
-
-  inclusive_or_expr: function inclusive_or_expr() {
-    // inclusive_or_expr: xor_expr ('|' xor_expr)*
-    return this.ExprHelper('xor_expr', ['|']);
-  },
-
-  logical_and_expr: function logical_and_expr() {
-    // logical_and_expr: inclusive_or_expr ('&&' inclusive_or_expr)*
-    return this.ExprHelper('inclusive_or_expr', ['&&']);
-  },
-
-  logical_or_expr: function logical_or_expr() {
-    // logical_or_expr: logical_and_expr ('||' logical_and_expr)*
-    return this.ExprHelper('logical_and_expr', ['||']);
+  _opinfo: function() {
+    const prec_list = [
+      ['||'],                          // logical_or_expr: logical_and_expr ('||' logical_and_expr)*
+      ['&&'],                          // logical_and_expr: inclusive_or_expr ('&&' inclusive_or_expr)*
+      ['|'],                           // inclusive_or_expr: xor_expr ('|' xor_expr)*
+      ['^'],                           // xor_expr: and_expr ('^' and_expr)*
+      ['&'],                           // and_expr: equality_expr ('&' equality_expr)*
+      ['==', '!='],                    // equality_expr: relational_expr (('=='|'!=') relational_expr)*
+      ['<', '>', '<=', '>='],          // relational_expr: shift_expr (('<'|'>'|'<='|'>=') shift_expr)*
+      ['<<', '>>'],                    // shift_expr: additive_expr (('<<'|'>>') additive_expr)*
+      ['+', '-'],                      // additive_expr: multiplicative_expr (('+'|'-') multiplicative_expr)*
+      ['*', '/', '%']                  // multiplicative_expr: cast_expr (('*'|'/'|'%') cast_expr)*
+    ];
+    const op_list = Array.concat.apply(null, prec_list);
+    const op_prec = {};
+    for(let i = 0; i != prec_list.length; ++i) for each(let sym in prec_list[i]) op_prec[sym] = i + 1;
+    this._opinfo = function() [op_list, op_prec];
+    return this._opinfo();
   },
 
   conditional_expr: function conditional_expr() {
