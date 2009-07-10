@@ -48,7 +48,6 @@ jsval make_decodeJSON(JSContext *cx);
 jsval make_encodeBase64(JSContext *cx);
 jsval make_decodeBase64(JSContext *cx);
 jsval make_stringifyHTML(JSContext *cx);
-jsval make_cToXML(JSContext *cx);
 }
 
 static jsval make_load(JSContext *cx);
@@ -126,8 +125,6 @@ static JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
   JS_SetProperty(cx, argobj, "Dl", &tmp);
   tmp = make_load(cx);
   JS_SetProperty(cx, argobj, "load", &tmp);
-  tmp = make_cToXML(cx);
-  JS_SetProperty(cx, argobj, "cToXML", &tmp);
   tmp = make_gc(cx);
   JS_SetProperty(cx, argobj, "gc", &tmp);
   tmp = make_isCompilableUnit(cx);

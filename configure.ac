@@ -27,14 +27,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AC_PREREQ(2.59)
-AC_INIT(jsext, m4_esyscmd([cat RELEASE]), bugreport@jsext.net)
+AC_INIT(jsext, m4_esyscmd([cat RELEASE]), jsx@clav.me.uk)
 
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_AWK
-AC_PROG_LEX
-AC_PROG_YACC
 
 AC_PREFIX_DEFAULT([/usr])
 # Checks for libraries.
