@@ -319,7 +319,7 @@ Parser.prototype = {
       | '--' unary_expr
       | unary_operator cast_expr
       | 'sizeof' unary_expr
-      | 'sizeof' '(' type_name ')'
+      | 'sizeof' '(' type_name_CP
     */
     switch(String(this.Peek())) {
       case '++':
@@ -327,11 +327,7 @@ Parser.prototype = {
         return <op op={ this.Next() } pre="1">{ this.unary_expr() }</op>;
       case 'sizeof': {
         this.Next();
-        if(this.NextIf('(')) {
-          let tn = this.type_name();
-          this.Next(')');
-          return <op op="sizeof" type="t">{ tn }</op>;
-        }
+        if(this.NextIf('(')) return <op op="sizeof" type="t">{ this.type_name_CP() }</op>;
         return <op op="sizeof" type="e">{ this.unary_expr() }</op>;
       }
       // unary_operator cast_expr
@@ -347,17 +343,15 @@ Parser.prototype = {
   },
 
   cast_expr: function cast_expr() {
-    // cast_expr  : '(' type_name ')' cast_expr  |  unary_expr
+    // cast_expr  : '(' type_name_CP cast_expr  |  unary_expr
     // the peek isn't sufficient, because a unary_expr can be parenthesised
     return (this.PeekIf('(') && this.Try('cast_expr_real')) || this.unary_expr();
   },
 
   cast_expr_real: function cast_expr_real() {
-    // cast_expr_real: '(' type_name ')' cast_expr
+    // cast_expr_real: '(' type_name_CP cast_expr
     this.Next('(');
-    const tn = this.type_name();
-    this.Next(')');
-    return <cast>{ tn }{ this.cast_expr() }</cast>;
+    return <cast>{ this.type_name_CP() }{ this.cast_expr() }</cast>;
   },
 
   logical_or_expr: function() {
@@ -685,9 +679,11 @@ Parser.prototype = {
     return <d>{ this.declaration_specifiers() }{ this.Try('declarator') || this.Try('abstract_declarator') || nothing }</d>;
   },
 
-  type_name: function type_name() {
-    // type_name: specifier_qualifier_list abstract_declarator?
-    return <d>{ this.specifier_qualifier_list() }{ this.Try('abstract_declarator') || nothing }</d>;
+  type_name_CP: function type_name_CP() {
+    // type_name_CP: specifier_qualifier_list abstract_declarator? ')'
+    const tn = <d>{ this.specifier_qualifier_list() }{ this.PeekIf(')') ? nothing : this.abstract_declarator() }</d>;
+    this.Next(')');
+    return tn;
   },
 
   abstract_declarator: function abstract_declarator() {
