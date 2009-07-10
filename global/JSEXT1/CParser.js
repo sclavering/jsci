@@ -144,7 +144,7 @@ ExprTreeNode.prototype = {
     return this;
   },
   xml: function() {
-    return <op op={ this.op }>{ this.l.xml() }{ this.r.xml() }</op>;
+    return <binary_op op={ this.op }>{ this.l.xml() }{ this.r.xml() }</binary_op>;
   },
 };
 
@@ -291,8 +291,8 @@ Parser.prototype = {
         case '[': this.Next(); e = <ix>{ e }{ this.expr() }</ix>; this.Next(']'); continue;
         case '.': this.Next(); e = <mb>{ e }{ this.identifier() }</mb>; continue;
         case '->': this.Next(); e = <ptr>{ e }{ this.identifier() }</ptr>; continue;
-        case '++': this.Next(); e = <op op="++" post="1">{ e }</op>; continue;
-        case '--': this.Next(); e = <op op="--" post="1">{ e }</op>; continue;
+        case '++': this.Next(); e = <unary_op op="++" post="1">{ e }</unary_op>; continue;
+        case '--': this.Next(); e = <unary_op op="--" post="1">{ e }</unary_op>; continue;
         case '(': this.Next(); e = <call>{ e }{ this.argument_expr_list() }</call>; continue;
       }
       break;
@@ -323,7 +323,7 @@ Parser.prototype = {
     switch(String(this.Peek())) {
       case '++':
       case '--':
-        return <op op={ this.Next() } pre="1">{ this.unary_expr() }</op>;
+        return <unary_op op={ this.Next() } pre="1">{ this.unary_expr() }</unary_op>;
       case 'sizeof': {
         this.Next();
         if(this.NextIf('(')) return <sizeof_type>{ this.type_name_CP() }</sizeof_type>;
@@ -336,7 +336,7 @@ Parser.prototype = {
       case '-':
       case '~':
       case '!':
-        return <op op={ this.Next() }>{ this.cast_expr() }</op>;
+        return <unary_op op={ this.Next() }>{ this.cast_expr() }</unary_op>;
     }
     return this.postfix_expr();
   },
@@ -390,7 +390,7 @@ Parser.prototype = {
     const e1 = this.expr();
     this.Next(':');
     const e2 = this.conditional_expr();
-    return <op op="?:">{ e0 }{ e1 }{ e2 }</op>;
+    return <conditional_op>{ e0 }{ e1 }{ e2 }</conditional_op>;
   },
 
   assignment_expr: function assignment_expr() {
@@ -400,13 +400,13 @@ Parser.prototype = {
   },
   assignment_expr_branch1: function assignment_expr_branch1() {
     const ue = this.unary_expr(), op = this.NextAsKind(tokens.tk_assignment_op), e1 = this.assignment_expr();
-    return <op op={ op }>{ ue }{ e1 }</op>;
+    return <binary_op op={ op }>{ ue }{ e1 }</binary_op>;
   },
 
   expr: function expr() {
     // expr: assignment_expr (',' assignment_expr)*
     let e = this.assignment_expr();
-    while(this.NextIf(',')) e = <op op=",">{ e }{ this.assignment_expr() }</op>;
+    while(this.NextIf(',')) e = <binary_op op=",">{ e }{ this.assignment_expr() }</binary_op>;
     return e;
   },
 
