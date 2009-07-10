@@ -17,20 +17,19 @@ const token_list = [
 const tokens = {};
 for(let i = 0; i != token_list.length; ++i) tokens[token_list[i]] = i;
 
-const keyword_aliases = { '_inline': 'inline', '__inline': 'inline' };
-
-const keywords = [
-  [['const', 'volatile'], tokens.tk_type_qualifier], // type_qualifier
-  [['extern', 'static', 'auto', 'register', 'inline'], tokens.tk_storage_class_specifier], // storage_class_specifier
-  [['char', 'short', 'int', '__int64', 'long', 'signed', 'unsigned', 'float', 'double', 'void', '__builtin_va_list'], tokens.tk_type_specifier_literal],
-  [['struct', 'union', 'enum'], tokens.tk_keyword],
-];
-
-const keyword_lookup = {};
-for each(let [words, val] in keywords) for each(let word in words) keyword_lookup[word] = val;
 
 const [lexer_re, match_handlers] = (function() {
-  const re_flags = "y"; // "sticky", which means ^ matches the .lastIndex property of the regex, rather than the start of the string
+  const keyword_aliases = { '_inline': 'inline', '__inline': 'inline' };
+
+  const keywords = [
+    [['const', 'volatile'], tokens.tk_type_qualifier], // type_qualifier
+    [['extern', 'static', 'auto', 'register', 'inline'], tokens.tk_storage_class_specifier], // storage_class_specifier
+    [['char', 'short', 'int', '__int64', 'long', 'signed', 'unsigned', 'float', 'double', 'void', '__builtin_va_list'], tokens.tk_type_specifier_literal],
+    [['struct', 'union', 'enum'], tokens.tk_keyword],
+  ];
+
+  const keyword_lookup = {};
+  for each(let [words, val] in keywords) for each(let word in words) keyword_lookup[word] = val;
 
   function esc(literal) literal.replace(/\{|\}|\(|\)|\[|\]|\^|\$|\.|\?|\*|\+|\|/g, "\\$&");
 
@@ -79,7 +78,9 @@ const [lexer_re, match_handlers] = (function() {
     match_handlers.push(part[1]);
   }
 
-  const re = new RegExp("(" + re_bits.join(")|(") + ")", re_flags);
+  // "y" means "sticky", which always matches starting from .lastIndex property of the regex, with an implicit ^
+  const re = new RegExp("(" + re_bits.join(")|(") + ")", "y");
+
   return [re, match_handlers];
 })()
 
