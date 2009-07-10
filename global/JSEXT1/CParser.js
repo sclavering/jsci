@@ -7,6 +7,7 @@ const token_list = [
   "tk_skip",
   "tk_const_char", "tk_const_number", "tk_const_string",
   "tk_ident", "tk_typedef_name",
+  "tk_binop",
   "tk_punctuation", "tk_keyword",
   // We use the lexer to identify some things that are more typically nonterminals in the grammar
   "tk_type_qualifier", // type_qualifier
@@ -54,7 +55,8 @@ const [lexer_re, match_handlers] = (function() {
     [/\d+[Ee][+-]?\d+[fFlL]?|\d*\.\d+(?:[Ee][+-]?\d+)?[fFlL]?/, tokens.tk_const_number],
     [/0[xX][a-fA-F0-9]+[uUlL]*|\d+[uUlL]*/, tokens.tk_const_number],
     // operators
-    [any_of(["...", ">>=", "<<=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", ">>", "<<", "++", "--", "->", "&&", "||", "<=", ">=", "==", "!=", ";", "{", "}", ",", ":", "=", "(", ")", "[", "]", ".", "-", "+", "*", "/", "%", "<", ">", "^", "|", "?", "||", "&", "*", "+", "-", "~"]), tokens.tk_punctuation],
+    [any_of(["...", ">>=", "<<=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", "++", "--", "->", ";", "{", "}", ",", ":", "=", "(", ")", "[", "]", ".", "?", "~"]), tokens.tk_punctuation],
+    [any_of(['||', '&&', '&', '|', '^', '==', '!=', '<=', '>=', '<<', '>>', '<', '>', '+', '-', '*', '/', '%']), tokens.tk_binop],
     // variables and typenames, etc.
     [/[a-zA-Z_][a-zA-Z_0-9]*/, function(str, lexer) {
       if(str in keyword_aliases) str = keyword_aliases[str];
@@ -188,6 +190,10 @@ Parser.prototype = {
 
   NextIf: function NextIf(value) {
     return this.PeekIf(value) ? this._Next() : null;
+  },
+
+  NextIfKind: function(kind) {
+    return this.PeekIfKind(kind) ? this.Next() : null;
   },
 
   NextIfM: function NextIfM(value_list) {
@@ -358,7 +364,7 @@ Parser.prototype = {
     const [op_list, op_prec] = this._opinfo();
     let etree = new ExprTreeLeaf(this.cast_expr());
     while(true) {
-      let t = this.NextIfM(op_list);
+      let t = this.NextIfKind(tokens.tk_binop);
       if(!t) break;
       etree = etree.addR(t, op_prec[t], new ExprTreeLeaf(this.cast_expr()));
     }
