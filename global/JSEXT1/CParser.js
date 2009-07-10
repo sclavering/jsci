@@ -542,11 +542,8 @@ Parser.prototype = {
   },
 
   struct_declaration: function struct_declaration() {
-    // struct_declaration: specifier_qualifier_list struct_declarator_list? ';'
-    // Omitting the struct_declarator_list allows anonymous members, which are typically unions.  Probably a GCC extension, but we must accept it to parse system headers (e.g. pthreadtypes.h)
-    const sd = <d>{ this.specifier_qualifier_list() }{ this.PeekIf(';') ? nothing : this.struct_declarator_list() }</d>;
-    this.Next(';');
-    return sd;
+    // struct_declaration: specifier_qualifier_list struct_declarator_list
+    return <d>{ this.specifier_qualifier_list() }{ this.struct_declarator_list() }</d>;
   },
 
   specifier_qualifier_list: function specifier_qualifier_list() {
@@ -562,10 +559,11 @@ Parser.prototype = {
   },
 
   struct_declarator_list: function struct_declarator_list() {
-    // struct_declarator_list: struct_declarator (',' struct_declarator)* ';'
-    // note: we moved the ';' here from the caller
+    // struct_declarator_list:  ';'  |  struct_declarator (',' struct_declarator)* ';'
+    if(this.NextIf(';')) return nothing;
     let sdl = <>{ this.struct_declarator() }</>;
     while(this.NextIf(',')) sdl += this.struct_declarator();
+    this.Next(';');
     return sdl;
   },
 
