@@ -458,11 +458,8 @@ Parser.prototype = {
   },
 
   maybe_storage_class_specifier: function maybe_storage_class_specifier() {
-    return this.PeekIfKind(tokens.tk_storage_class_specifier) ? this.storage_class_specifier() : null;
-  },
-
-  storage_class_specifier: function storage_class_specifier() {
-    return <{ this.NextAsKind(tokens.tk_storage_class_specifier) }/>;
+    const t = this.NextIfKind(tokens.tk_storage_class_specifier);
+    return t ? <{ t }/> : null;
   },
 
   maybe_type_specifier: function maybe_type_specifier(null_on_error) {
@@ -634,11 +631,8 @@ Parser.prototype = {
   },
 
   maybe_type_qualifier: function maybe_type_qualifier() {
-    return this.PeekIfKind(tokens.tk_type_qualifier) ? this.type_qualifier() : null;
-  },
-
-  type_qualifier: function type_qualifier() {
-    return <{ this.NextAsKind(tokens.tk_type_qualifier) }/>;
+    const t = this.NextIfKind(tokens.tk_type_qualifier);
+    return t ? <{ t }/> : null;
   },
 
   parameter_type_list: function parameter_type_list() {
