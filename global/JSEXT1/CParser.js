@@ -582,7 +582,7 @@ Parser.prototype = {
   declarator: function declarator() {
     // declarator:  pointer? direct_declarator  |  pointer
     // xxx the plain pointer case is needed to handle stuff like: "int f(int (*)(int));" (the "(*)" part specifically).  Our yacc grammar doesn't seem to have had such a rule though.
-    const p = this.Try('pointer');
+    const p = this.maybe_pointer();
     const dd0 = this.Try('direct_declarator'), dd = dd0 || nothing;
     if(!p && !dd0) this.ParseError("declarator: expecting either a pointer or direct_declarator or both");
     return p ? <ptr>{ p }{ dd }</ptr> : dd;
@@ -616,14 +616,14 @@ Parser.prototype = {
     return this.identifier();
   },
 
-  pointer: function pointer() {
+  maybe_pointer: function maybe_pointer() {
     // YACC:   pointer: '*' | '*' type_qualifier_list | '*' pointer | '*' type_qualifier_list pointer
     // ANTLR:  pointer: '*' | '*' pointer | '*' type_qualifier+ pointer?
     // here:   pointer: '*' type_qualifier* pointer?
-    this.Next('*');
+    if(!this.NextIf('*')) return null;
     const tql = this.type_qualifier_list();
-    const p = this.PeekIf('*') ? this.pointer() : null;
-    return <a>{ tql || nothing }{ p || nothing }</a>;
+    const ptr = this.maybe_pointer();
+    return <a>{ tql }{ ptr || nothing }</a>;
   },
 
   type_qualifier_list: function type_qualifier_list() {
@@ -671,7 +671,8 @@ Parser.prototype = {
 
   abstract_declarator: function abstract_declarator() {
     // abstract_declarator  :  pointer direct_abstract_declarator?  |  direct_abstract_declarator
-    if(this.PeekIf('*')) return <ptr>{ this.pointer() }{ this.Try('direct_abstract_declarator') || nothing }</ptr>;
+    const ptr = this.maybe_pointer();
+    if(ptr) return <ptr>{ ptr }{ this.Try('direct_abstract_declarator') || nothing }</ptr>;
     return this.direct_abstract_declarator();
   },
 
