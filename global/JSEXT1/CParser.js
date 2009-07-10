@@ -12,7 +12,7 @@ const token_list = [
   // We use the lexer to identify some things that are more typically nonterminals in the grammar
   "tk_type_qualifier", // type_qualifier
   "tk_storage_class_specifier", // storage_class_specifier
-  "tk_type_specifier_literal", // part of type_specifier
+  "tk_type_specifier_keyword",  // part of type_specifier: a literal like "int", or an prefix like "struct"
 ];
 const tokens = {};
 for(let i = 0; i != token_list.length; ++i) tokens[token_list[i]] = i;
@@ -24,8 +24,8 @@ const [lexer_re, match_handlers] = (function() {
   const keywords = [
     [['const', 'volatile'], tokens.tk_type_qualifier], // type_qualifier
     [['extern', 'static', 'auto', 'register', 'inline'], tokens.tk_storage_class_specifier], // storage_class_specifier
-    [['char', 'short', 'int', '__int64', 'long', 'signed', 'unsigned', 'float', 'double', 'void', '__builtin_va_list'], tokens.tk_type_specifier_literal],
-    [['struct', 'union', 'enum'], tokens.tk_keyword],
+    [['char', 'short', 'int', '__int64', 'long', 'signed', 'unsigned', 'float', 'double', 'void', '__builtin_va_list'], tokens.tk_type_specifier_keyword],
+    [['enum', 'struct', 'union'], tokens.tk_type_specifier_keyword],
   ];
 
   const keyword_lookup = {};
@@ -427,7 +427,7 @@ Parser.prototype = {
     let dss = <></>;
     while(true) {
       let t = this.maybe_storage_class_specifier()
-        || this.Try('type_specifier')
+        || this.maybe_type_specifier()
         || this.maybe_type_qualifier();
       if(!t) break;
       dss += t;
@@ -465,39 +465,27 @@ Parser.prototype = {
     return <{ this.NextAsKind(tokens.tk_storage_class_specifier) }/>;
   },
 
-  type_specifier: function type_specifier() {
+  maybe_type_specifier: function maybe_type_specifier(null_on_error) {
     /*
-    Based on:
-      type_specifier
-        : 'void'
-        | 'char'
-        | 'short'
-        | 'int'
-        | 'long'
-        | 'float'
-        | 'double'
-        | 'signed'
-        | 'unsigned'
-        | struct_or_union_specifier
-        | enum_specifier
-        | tk_typedef_name
-        ;
-    But we change the enum and struct/union cases to:
-        | 'enum' enum_specifier_guts
-        | 'struct' struct_or_union_specifier_guts
-        | 'union' struct_or_union_specifier_guts
+    type_specifier
+      : 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed' | 'unsigned'
+      | 'enum' enum_specifier_guts
+      | ('struct' | 'union') struct_or_union_specifier_guts
+      | tk_typedef_name
+    Note that all the callers want the null-on-failure behaviour, so there's no non-maybe_ version
     */
-    const tok0 = this.Next();
-    if(tok0.tok_kind == tokens.tk_type_specifier_literal) return <t>{ tok0 }</t>;
-    switch(String(tok0)) {
+    const t = this.NextIfKind(tokens.tk_typedef_name);
+    if(t) return <dt>{ t }</dt>;
+    const kw = this.NextIfKind(tokens.tk_type_specifier_keyword);
+    if(!kw) return null;
+    switch(String(kw)) {
       case "struct":
       case "union":
-        return this.struct_or_union_specifier_guts(String(tok0));
+        return this.struct_or_union_specifier_guts(String(kw));
       case "enum":
         return this.enum_specifier_guts();
     }
-    if(tok0.tok_kind == tokens.tk_typedef_name) return <dt>{ tok0 }</dt>;
-    this.ParseError("type_specifier: unexpected token: '" + tok0 + "'");
+    return <t>{ kw }</t>;
   },
 
   enum_specifier_guts: function() {
@@ -568,7 +556,7 @@ Parser.prototype = {
     // specifier_qualifier_list: ( type_qualifier | type_specifier )+
     let sql = <></>;
     while(true) {
-      let sq = this.maybe_type_qualifier() || this.Try('type_specifier');
+      let sq = this.maybe_type_qualifier() || this.maybe_type_specifier();
       if(!sq) break;
       sql += sq;
     }
