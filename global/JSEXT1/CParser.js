@@ -555,12 +555,21 @@ Parser.prototype = {
   },
 
   declarator: function declarator() {
-    // declarator:  pointer? direct_declarator  |  pointer
+    // declarator:  pointer* direct_declarator  |  pointer+
     // xxx the plain pointer case is needed to handle stuff like: "int f(int (*)(int));" (the "(*)" part specifically).  Our yacc grammar doesn't seem to have had such a rule though.
-    const p = this.maybe_pointer();
+    let p, ptrs = <></>;
+    while((p = this.maybe_pointer())) ptrs += p;
     const dd0 = this.maybe_direct_declarator(), dd = dd0 || nothing;
-    if(!p && !dd0) this.ParseError("declarator: expecting either a pointer or direct_declarator or both");
-    return p ? <ptr>{ p }{ dd }</ptr> : dd;
+    if(!ptrs.length() && !dd0) this.ParseError("declarator: expecting either a pointer or direct_declarator or both");
+    return ptrs.length() ? <ptr>{ ptrs }{ dd }</ptr> : dd;
+  },
+
+  maybe_pointer: function maybe_pointer() {
+    // pointer: '*' type_qualifier*
+    if(!this.NextIf('*')) return null;
+    let t, a = <a/>;
+    while((t = this.NextIfKind(tokens.tk_type_qualifier))) a["@" + t] = "true";
+    return a;
   },
 
   maybe_direct_declarator: function direct_declarator() {
@@ -589,23 +598,6 @@ Parser.prototype = {
       break;
     }
     return dd;
-  },
-
-  maybe_pointer: function maybe_pointer() {
-    // YACC:   pointer: '*' | '*' type_qualifier_list | '*' pointer | '*' type_qualifier_list pointer
-    // ANTLR:  pointer: '*' | '*' pointer | '*' type_qualifier+ pointer?
-    // here:   pointer: '*' type_qualifier* pointer?
-    if(!this.NextIf('*')) return null;
-    const tql = this.type_qualifier_list();
-    const ptr = this.maybe_pointer();
-    return <a>{ tql }{ ptr || nothing }</a>;
-  },
-
-  type_qualifier_list: function type_qualifier_list() {
-    // type_qualifier* (in our yacc grammar it was type_qualifier+, but "pointer" is simpler this way)
-    let tq, tql = <></>;
-    while((tq = this.maybe_type_qualifier())) tql += tq;
-    return tql;
   },
 
   maybe_type_qualifier: function maybe_type_qualifier() {

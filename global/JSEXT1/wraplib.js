@@ -425,15 +425,14 @@ function getInfoFromXML(info) {
 
     switch(String(declor.name())) {
 
-    case 'ptr':
-      var asterisk=declor.a;
-      while (asterisk.length()) {
+    case 'ptr': {
+      const ptrcount = declor.a.length();
+      for(let i = 0; i != ptrcount; ++i) {
         a += "Type.pointer(";
         b += ")";
-        asterisk = asterisk.a;
       }
-      var inner=indir(a + dirtype + b, declor.*[1], dep);
-      return inner;
+      return indir(a + dirtype + b, declor.*[ptrcount], dep);
+    }
 
     case 'ix':
       if (declor.*.length()>1) {
