@@ -248,6 +248,7 @@ Parser.prototype = {
     for each(let p in node.p) this.RecordTypedef(p);
     // Handle stuff like "typedef int (*list_walk_action)(void *foo, void *);".  This will correctly ignore optional parameter names (if included), because they're inside a <pm/> that we don't recurse into
     for each(let fd in node.fd) this.RecordTypedef(fd);
+    return node;
   },
 
 
@@ -411,16 +412,6 @@ Parser.prototype = {
   },
 
   constant_expr: function constant_expr() this.conditional_expr(),
-
-  declaration: function declaration() {
-    // declaration: 'typedef'? declaration_specifiers init_declarator_list_optional
-    // xxx antlr had the ? swapped for the typedef case: "'typedef' declaration_specifiers? init_declarator_list ';'"
-    // xxx yacc had a whole declarator_list2 family to replace init_declarator_list, but allowing typedeffed_name as well as identifier as a direct_declarator expansion
-    const typedef = this.NextIf('typedef') ? <typedef/> : null;
-    const d = <d>{ typedef || nothing }{ this.declaration_specifiers() }{ this.init_declarator_list_optional() }</d>;
-    if(typedef) this.RecordTypedef(d);
-    return d;
-  },
 
   declaration_specifiers: function declaration_specifiers() {
     // declaration_specifiers  :  (storage_class_specifier | type_specifier | type_qualifier)+
@@ -782,13 +773,13 @@ Parser.prototype = {
 
   external_definition: function external_definition() {
     // external_definition: function_definition  |  declaration
-    return this.Try('function_definition') || this.declaration();
-  },
-
-  function_definition: function function_definition() {
-    // note: in K&R (pre-ANSI) C, a list of declarations can precede the compound_statement, and the declaration_specifiers are optional (i.e. the return type is optional) but we choose not to support that
+    // declaration: 'typedef'? declaration_specifiers init_declarator_list_optional
     // function_definition: declaration_specifiers declarator compound_statement
-    return <fdef>{ this.declaration_specifiers() }{ this.declarator() }{ this.compound_statement() }</fdef>;
+    if(this.NextIf('typedef')) return this.RecordTypedef(<d><typedef/>{ this.declaration_specifiers() }{ this.init_declarator_list_optional() }</d>);
+    const ds = this.declaration_specifiers();
+    const idl = this.Try('init_declarator_list_optional');
+    if(idl !== null) return <d>{ ds }{ idl }</d>;
+    return <fdef>{ ds }{ this.declarator() }{ this.compound_statement() }</fdef>;
   },
 
   identifier_or_typedef_name: function() {
