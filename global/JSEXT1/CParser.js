@@ -577,14 +577,14 @@ Parser.prototype = {
 
   declarator_suffixes: function declarator_suffixes(dd) {
     // declarator_suffixes:  declarator_suffix*
-    // declarator_suffix:  '[' constant_expr? ']'  |  '(' parameter_type_list
+    // declarator_suffix:  '[' constant_expr? ']'  |  '(' parameter_type_list_CP
     while(true) {
       if(this.NextIf('[')) {
         let ce = this.PeekIf(']') ? null : this.constant_expr();
         this.Next(']');
         dd = <ix>{ dd }{ ce || nothing }</ix>;
       } else if(this.NextIf('(')) {
-        dd = <fd>{ dd }<pm>{ this.parameter_type_list() }</pm></fd>;
+        dd = <fd>{ dd }<pm>{ this.parameter_type_list_CP() }</pm></fd>;
       }
       break;
     }
@@ -613,8 +613,8 @@ Parser.prototype = {
     return t ? <{ t }/> : null;
   },
 
-  parameter_type_list: function parameter_type_list() {
-    // parameter_type_list: (parameter_list (',' '...')?)? ')'   // the ')' has been moved here from the callers
+  parameter_type_list_CP: function parameter_type_list_CP() {
+    // parameter_type_list_CP: (parameter_list (',' '...')?)? ')'   // the ')' has been moved here from the callers
     // parameter_list: parameter_declaration (',' parameter_declaration)*
     if(this.NextIf(')')) return nothing;
     let ptl = <>{ this.parameter_declaration() }</>;
