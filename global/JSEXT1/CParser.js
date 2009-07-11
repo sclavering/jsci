@@ -428,16 +428,11 @@ Parser.prototype = {
   },
 
   init_declarator_list_optional: function init_declarator_list_optional() {
-    // init_declarator_list? ';'
-    const idl = this.PeekIf(';') ? nothing : this.init_declarator_list();
-    this.Next(';');
-    return idl;
-  },
-
-  init_declarator_list: function init_declarator_list() {
-    // init_declarator (',' init_declarator)*
+    // init_declarator_list_optional: (init_declarator (',' init_declarator)*)? ';'
+    if(this.NextIf(';')) return nothing;
     let res = <>{ this.init_declarator() }</>;
     while(this.NextIf(',')) res += this.init_declarator();
+    this.Next(';');
     return res;
   },
 
