@@ -303,7 +303,7 @@ Parser.prototype = {
   argument_expr_list: function argument_expr_list() {
     // This was originally  "argument_expr_list  :  assignment_expr (',' assignment_expr)*"  but we are using:
     // argument_expr_list  :  (assignment_expr (',' assignment_expr)*)? ')'
-    if(this.NextIf(')')) return <></>;
+    if(this.NextIf(')')) return nothing;
     let ael = <>{ this.assignment_expr() }</>;
     while(this.NextIf(',')) ael += this.assignment_expr();
     this.Next(')');
@@ -585,8 +585,6 @@ Parser.prototype = {
 
   direct_declarator: function direct_declarator() {
     // direct_declarator: declarator_prefix declarator_suffix*
-    // declarator_suffix:  '[' constant_expr? ']'  |  '(' (parameter_type_list | identifier_list)? ')'
-    // We omit the identifier_list case (for K&R function declarations/definitions), and move the ')', giving:
     // declarator_suffix:  '[' constant_expr? ']'  |  '(' parameter_type_list
     let t, dd = this.declarator_prefix();
     while((t = this.NextIfM(['[', '(']))) {
@@ -636,7 +634,7 @@ Parser.prototype = {
   parameter_type_list: function parameter_type_list() {
     // parameter_type_list: (parameter_list (',' '...')?)? ')'   // the ')' has been moved here from the callers
     // parameter_list: parameter_declaration (',' parameter_declaration)*
-    if(this.NextIf(')')) return <></>;
+    if(this.NextIf(')')) return nothing;
     let ptl = <>{ this.parameter_declaration() }</>;
     while(this.NextIf(',')) {
       if(this.NextIf('...')) {
@@ -682,7 +680,7 @@ Parser.prototype = {
   },
 
   abstract_declarator_suffix: function abstract_declarator_suffix(thing) {
-    // abstract_declarator_suffix: '[' ']' | '[' constant_expr ']' | '(' ')' | '(' parameter_type_list
+    // abstract_declarator_suffix: '[' constant_expr? ']' | '(' parameter_type_list
     if(this.NextIf('[')) {
       if(this.NextIf(']')) return <ix>{ thing }</ix>;
       const ce = this.constant_expr();
@@ -717,7 +715,7 @@ Parser.prototype = {
       | 'case' constant_expr ':' statement
       | 'default' ':' statement
       // compound_statement (inlined)
-      '{' declaration* statement* '}'
+      '{' statement* '}'
       // selection_statement
       | 'if' '(' expr ')' statement ('else' statement)?
       | 'switch' '(' expr ')' statement
@@ -731,6 +729,7 @@ Parser.prototype = {
       | 'break' ';'
       | 'return' ';'
       | 'return' expr ';'
+    xxx probably need to allow a declaration here?
     */
     const t0 = this.Peek();
     switch(String(t0)) {
@@ -772,7 +771,7 @@ Parser.prototype = {
     // compound_statement: '{' statement* '}'
     this.Next('{');
     while(!this.NextIf('}')) this.statement();
-    return <></>;
+    return nothing;
   },
 
   expression_statement: function expression_statement() {
