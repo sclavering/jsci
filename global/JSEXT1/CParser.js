@@ -197,12 +197,6 @@ Parser.prototype = {
     return this.PeekIfKind(kind) ? this.Next() : null;
   },
 
-  NextIfM: function NextIfM(value_list) {
-    const t = this._Current();
-    if(t) for(var i = 0; i != value_list.length; ++i) if(t == value_list[i]) return this._Next();
-    return null;
-  },
-
   _Current: function _Current() {
     if(!this._nexttok) this._nexttok = this._Next(true);
     return this._nexttok;
@@ -564,35 +558,37 @@ Parser.prototype = {
     // declarator:  pointer? direct_declarator  |  pointer
     // xxx the plain pointer case is needed to handle stuff like: "int f(int (*)(int));" (the "(*)" part specifically).  Our yacc grammar doesn't seem to have had such a rule though.
     const p = this.maybe_pointer();
-    const dd0 = this.Try('direct_declarator'), dd = dd0 || nothing;
+    const dd0 = this.maybe_direct_declarator(), dd = dd0 || nothing;
     if(!p && !dd0) this.ParseError("declarator: expecting either a pointer or direct_declarator or both");
     return p ? <ptr>{ p }{ dd }</ptr> : dd;
   },
 
-  direct_declarator: function direct_declarator() {
-    // direct_declarator: declarator_prefix declarator_suffix*
+  maybe_direct_declarator: function direct_declarator() {
+    // direct_declarator: (identifier | '(' declarator ')') declarator_suffixes
+    const id = this.maybe_identifier();
+    if(id) return this.declarator_suffixes(id);
+    if(this.NextIf('(')) {
+      const dd = this.declarator();
+      this.Next(')');
+      return this.declarator_suffixes(dd);
+    }
+    return null;
+  },
+
+  declarator_suffixes: function declarator_suffixes(dd) {
+    // declarator_suffixes:  declarator_suffix*
     // declarator_suffix:  '[' constant_expr? ']'  |  '(' parameter_type_list
-    let t, dd = this.declarator_prefix();
-    while((t = this.NextIfM(['[', '(']))) {
-      if(t == '[') {
+    while(true) {
+      if(this.NextIf('[')) {
         let ce = this.PeekIf(']') ? null : this.constant_expr();
         this.Next(']');
         dd = <ix>{ dd }{ ce || nothing }</ix>;
-      } else { // '('
+      } else if(this.NextIf('(')) {
         dd = <fd>{ dd }<pm>{ this.parameter_type_list() }</pm></fd>;
       }
+      break;
     }
     return dd;
-  },
-
-  declarator_prefix: function declarator_prefix() {
-    // declarator_prefix:  identifier  |  '(' declarator ')'
-    if(this.NextIf('(')) {
-      const d = this.declarator();
-      this.Next(')');
-      return <p>{ d }</p>;
-    }
-    return this.identifier();
   },
 
   maybe_pointer: function maybe_pointer() {
@@ -634,47 +630,15 @@ Parser.prototype = {
   },
 
   parameter_declaration: function parameter_declaration() {
-    // parameter_declaration: declaration_specifiers (declarator|abstract_declarator)?
-    return <d>{ this.declaration_specifiers() }{ this.Try('declarator') || this.Try('abstract_declarator') || nothing }</d>;
+    // parameter_declaration: declaration_specifiers declarator?
+    return <d>{ this.declaration_specifiers() }{ this.Try('declarator') || nothing }</d>;
   },
 
   type_name_CP: function type_name_CP() {
-    // type_name_CP: specifier_qualifier_list abstract_declarator? ')'
-    const tn = <d>{ this.specifier_qualifier_list() }{ this.PeekIf(')') ? nothing : this.abstract_declarator() }</d>;
+    // type_name_CP: specifier_qualifier_list declarator? ')'
+    const tn = <d>{ this.specifier_qualifier_list() }{ this.PeekIf(')') ? nothing : this.declarator() }</d>;
     this.Next(')');
     return tn;
-  },
-
-  abstract_declarator: function abstract_declarator() {
-    // abstract_declarator  :  pointer direct_abstract_declarator?  |  direct_abstract_declarator
-    const ptr = this.maybe_pointer();
-    if(ptr) return <ptr>{ ptr }{ this.Try('direct_abstract_declarator') || nothing }</ptr>;
-    return this.direct_abstract_declarator();
-  },
-
-  direct_abstract_declarator: function direct_abstract_declarator() {
-    // direct_abstract_declarator: ( '(' abstract_declarator ')' | abstract_declarator_suffix ) abstract_declarator_suffix*
-    let ads, dad = null;
-    if(this.NextIf('(')) {
-      dad = <p>{ this.abstract_declarator() }</p>
-      this.Next(')');
-    } else {
-      dad = this.abstract_declarator_suffix(nothing);
-    }
-    while((ads = this.abstract_declarator_suffix(dad))) dad = ads;
-    return dad;
-  },
-
-  abstract_declarator_suffix: function abstract_declarator_suffix(thing) {
-    // abstract_declarator_suffix: '[' constant_expr? ']' | '(' parameter_type_list
-    if(this.NextIf('[')) {
-      if(this.NextIf(']')) return <ix>{ thing }</ix>;
-      const ce = this.constant_expr();
-      this.Next(']');
-      return <ix>{ thing }{ ce }</ix>;
-    }
-    this.Next('(');
-    return <fd>{ thing }{ this.parameter_type_list() }</fd>;
   },
 
   initializer: function initializer() {
@@ -781,6 +745,11 @@ Parser.prototype = {
     const t = this.Next();
     if(t.tok_kind == tokens.tk_ident || t.tok_kind == tokens.tk_typedef_name) return String(t);
     this.ParseError("expecting an identifier or typedef'd name");
+  },
+
+  maybe_identifier: function() {
+    const t = this.NextIfKind(tokens.tk_ident);
+    return t ? <id>{ t }</id> : null;
   },
 
   identifier: function identifier() {
