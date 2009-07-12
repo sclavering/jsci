@@ -1,7 +1,11 @@
 (function() {
 
 return function(filename) {
-  return jswrapper(fragment(filename));
+  const srccode = runcpp(filename);
+  const parser = new CParser(srccode);
+  const xml = parser.translation_unit();
+  const parsed = getInfoFromXML(xml, parser.preprocessor_directives);
+  return jswrapper(parsed);
 };
 
 
@@ -41,28 +45,6 @@ Since switching to using GCC's cpp, we lack clib.va_list, and have loads of cons
 */
 
 
-function fragment(filename) {
-  const srccode = runcpp(filename);
-  const parser = new CParser(srccode);
-  const xml = parser.translation_unit();
-  var parsed = getInfoFromXML({ xml: xml, preprocessor_directives: parser.preprocessor_directives });
-  var src = {};
-
-  for(var i in parsed.structs_and_unions)
-      src[i] = parsed.structs_and_unions[i];
-
-  for(var i in parsed.sym) {
-      if(src[i]) {
-        src[i] = "this['" + i + "']=" + src[i] + ";" + parsed.sym[i];
-      } else {
-        src[i] = parsed.sym[i];
-      }
-  }
-
-  return src;
-}
-
-
 function jswrapper(fragment) {
   var getters = "";
   for(var i in fragment) {
@@ -100,36 +82,23 @@ To actually call a function or read/write a global variable, the library it is f
     Try to resolve symbols in filename.so
  - #pragma JSEXT dl main
     Try resolving symbols in the main program binary.  This can be used for libc, the SpiderMonkey API, etc.
-
-Returns an object containing the following properties:
-
-* su: Object containing one string property per declaration of structs and unions.
-* sym: Object containing one string property per symbol
 */
-function getInfoFromXML(info) {
-  var code = info.xml;
-
-  // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
-  var live = {};
-
-  // Contains symbols
-  var sym={};
-
-  // Contains declarations of structs and unions
-  var su={};
-
-  // Count number of dl files
-  var ndl=0;
+function getInfoFromXML(code, preprocessor_directives) {
+  const live = {}; // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
+  const sym = {};  // Contains symbols
+  const su = {};   // Contains declarations of structs and unions
+  const typelist = [];
+  var ndl = 0;     // Count number of dl files
 
   loaddls();
-  parse_inner.call(live);
-  initmacro.call(live);
+  parse_inner();
+  initmacro();
   allmacros();
 
-  return {
-    structs_and_unions: su,
-    sym: sym,
-  };
+  const src = {};
+  for(let i in su) src[i] = sym[i] ? "this['" + i + "']=" + su[i] + ";" + sym[i] : su[i];
+  for(let i in sym) if(!src[i]) src[i] = sym[i];
+  return src;
 
 
   function parse_inner() {
@@ -170,7 +139,7 @@ function getInfoFromXML(info) {
 
 
   function loaddls() {
-    for each(var pragma in info.preprocessor_directives) {
+    for each(var pragma in preprocessor_directives) {
       var match = pragma.match(/^#pragma[ \t]+JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
       if(!match) continue;
       var id = 'dl ' + (ndl++);
@@ -455,20 +424,13 @@ function getInfoFromXML(info) {
 Tries to coerce a C macro into a JavaScript expression
 */
 
-  var typelist;
-
   function initmacro() {
-    typelist=[];
-    for (var i in this) {
-      if ((this[i] instanceof Type) && i[0]!='$') {
-        typelist[i] = true;
-      }
-    }
+    for(let i in live) if((live[i] instanceof Type) && i[0]!='$') typelist[i] = true;
   }
 
 
   function allmacros() {
-    for each(var thing in info.preprocessor_directives) {
+    for each(var thing in preprocessor_directives) {
       var m = thing.match(/^#define[ \t]+([^ \t]+)[ \t]+(.*)$/);
       if(!m) continue;
       var id = m[1], val = m[2];
