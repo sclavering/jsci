@@ -407,6 +407,17 @@ Parser.prototype = {
 
   constant_expr: function constant_expr() this.conditional_expr(),
 
+  external_definition: function external_definition() {
+    // external_definition: function_definition  |  declaration
+    // declaration: 'typedef'? declaration_specifiers init_declarator_list_optional
+    // function_definition: declaration_specifiers declarator compound_statement
+    if(this.NextIf('typedef')) return this.RecordTypedef(<d><typedef/>{ this.declaration_specifiers() }{ this.init_declarator_list_optional() }</d>);
+    const ds = this.declaration_specifiers();
+    const idl = this.Try('init_declarator_list_optional');
+    if(idl !== null) return <d>{ ds }{ idl }</d>;
+    return <fdef>{ ds }{ this.declarator() }{ this.compound_statement() }</fdef>;
+  },
+
   declaration_specifiers: function declaration_specifiers() {
     // declaration_specifiers  :  (storage_class_specifier | type_specifier | type_qualifier)+
     let dss = <></>;
@@ -720,17 +731,6 @@ Parser.prototype = {
     if(!this.PeekIf(';')) this.expr();
     this.Next(';');
     return nothing;
-  },
-
-  external_definition: function external_definition() {
-    // external_definition: function_definition  |  declaration
-    // declaration: 'typedef'? declaration_specifiers init_declarator_list_optional
-    // function_definition: declaration_specifiers declarator compound_statement
-    if(this.NextIf('typedef')) return this.RecordTypedef(<d><typedef/>{ this.declaration_specifiers() }{ this.init_declarator_list_optional() }</d>);
-    const ds = this.declaration_specifiers();
-    const idl = this.Try('init_declarator_list_optional');
-    if(idl !== null) return <d>{ ds }{ idl }</d>;
-    return <fdef>{ ds }{ this.declarator() }{ this.compound_statement() }</fdef>;
   },
 
   identifier_or_typedef_name: function() {
