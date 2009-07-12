@@ -163,56 +163,47 @@ function Parser(srccode) {
 Parser.prototype = {
   // methods that aren't grammar symbols
 
-  Peek: function Peek(arg) {
-    if(arg !== undefined) this.ParseError("Peek() passed an arg");
-    return this._Current();
+  Peek: function Peek() {
+    return this._nexttok || (this._nexttok = this._lexer.gettok());
   },
 
   PeekIf: function PeekIf(value) {
-    if(value === undefined) this.ParseError("PeekIf() passed undefined")
-    const t = this._Current();
+    const t = this.Peek();
     return t && t == value ? t : null;
   },
 
-  PeekIfKind: function PeekIfKind(token_kind) {
-    const t = this._Current();
-    return t && t.tok_kind == token_kind ? t : null;
-  },
-
   Next: function Next(value) {
-    const t = this._Next();
+    const t = this.Peek();
+    if(!t) this.ParseError("ran out of tokens");
     if(value && t != value) this.ParseError("expecting token of value/kind '" + value + "' but got '" + t + "'");
+    this._Advance();
     return t;
   },
 
   NextAsKind: function NextAsKind(token_kind) {
-    const t = this.Next();
+    const t = this.Peek();
+    if(!t) this.ParseError("ran out of tokens");
     if(t.tok_kind != token_kind) this.ParseError("expecting token of value/kind " + token_kind + " but got '" + t + "'");
+    this._Advance();
     return t;
   },
 
   NextIf: function NextIf(value) {
-    return this.PeekIf(value) ? this._Next() : null;
+    const t = this.PeekIf(value);
+    if(t) this._Advance();
+    return t;
   },
 
   NextIfKind: function(kind) {
-    return this.PeekIfKind(kind) ? this.Next() : null;
+    const t = this.Peek();
+    if(!t || t.tok_kind != kind) return null;
+    this._Advance();
+    return t;
   },
 
-  _Current: function _Current() {
-    if(!this._nexttok) this._nexttok = this._Next(true);
-    return this._nexttok;
-  },
-
-  _Next: function _Next(no_errors) {
-    if(this._nexttok) {
-      const t = this._nexttok;
-      this._nexttok = null;
-      return t;
-    }
-    const t2 = this._lexer.gettok();
-    if(!t2 && !no_errors) this.ParseError("ran out of tokens");
-    return t2;
+  _Advance: function _Next(no_errors) {
+    if(!this._nexttok) throw Error("CParser: _Advance() called when Peek() returned null");
+    this._nexttok = null;
   },
 
   // Error subclasses are painful in js, so just set a parameter instead
