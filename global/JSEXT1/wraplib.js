@@ -402,7 +402,8 @@ function getInfoFromXML(info) {
         if(live[expr..id]) return Type.sizeof(live[expr..id].type);
         // assume it's a string
         return Type.sizeof(Type.char) * (String(expr..s).length + 1);
-      case "unary_op": return expr.@op + inner_eval(expr.*[0]);
+      case "prefix_op": return expr.@op + inner_eval(expr.*[0]);
+      case "postfix_op": return inner_eval(expr.*[0]) + expr.@op;
       case "binary_op": return inner_eval(expr.*[0]) + expr.@op + inner_eval(expr.*[1]);
       case "conditional_op": return inner_eval(expr.*[0]) + "?" + inner_eval(expr.*[1]) + ":" + inner_eval(expr.*[2]);
       case "cast":

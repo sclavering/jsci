@@ -286,8 +286,7 @@ Parser.prototype = {
         case '[': this.Next(); e = <ix>{ e }{ this.expr() }</ix>; this.Next(']'); continue;
         case '.': this.Next(); e = <mb>{ e }{ this.identifier() }</mb>; continue;
         case '->': this.Next(); e = <ptr>{ e }{ this.identifier() }</ptr>; continue;
-        case '++': this.Next(); e = <unary_op op="++" post="1">{ e }</unary_op>; continue;
-        case '--': this.Next(); e = <unary_op op="--" post="1">{ e }</unary_op>; continue;
+        case '++': case '--': e = <postfix_op op={ this.Next() }>{ e }</postfix_op>; continue;
         case '(': this.Next(); e = <call>{ e }{ this.argument_expr_list() }</call>; continue;
       }
       break;
@@ -318,7 +317,7 @@ Parser.prototype = {
     switch(String(this.Peek())) {
       case '++':
       case '--':
-        return <unary_op op={ this.Next() } pre="1">{ this.unary_expr() }</unary_op>;
+        return <prefix_op op={ this.Next() }>{ this.unary_expr() }</prefix_op>;
       case 'sizeof': {
         this.Next();
         if(this.NextIf('(')) return <sizeof_type>{ this.type_name_CP() }</sizeof_type>;
@@ -331,7 +330,7 @@ Parser.prototype = {
       case '-':
       case '~':
       case '!':
-        return <unary_op op={ this.Next() }>{ this.cast_expr() }</unary_op>;
+        return <prefix_op op={ this.Next() }>{ this.cast_expr() }</prefix_op>;
     }
     return this.postfix_expr();
   },
