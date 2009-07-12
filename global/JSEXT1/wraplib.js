@@ -118,9 +118,6 @@ function getInfoFromXML(info) {
   // Contains declarations of structs and unions
   var su={};
 
-  // Contains dependencies
-  var dep={};
-
   // Count number of dl files
   var ndl=0;
 
@@ -139,12 +136,10 @@ function getInfoFromXML(info) {
     var tu;
 
     for each(tu in code.*) {
-      var tmpdep={};
-
       switch(String(tu.name())) {
       case 'd': // declaration
       case 'fdef': // function definition
-        var decl = multiDeclaration(tu, tmpdep);
+        var decl = multiDeclaration(tu);
         var id, expr;
 
         for (var i in decl) {
@@ -162,15 +157,11 @@ function getInfoFromXML(info) {
             id = decl[i].id;
 
             expr = "this['" + dlid + "'].pointer('" + decl[i].id + "'," + decl[i].type + ")";
-
-            tmpdep[dlid]=true;
           }
 
           sym[id] = expr;
 
           liveeval("this['" + id + "']=" + expr);
-
-          dep[id] = tmpdep;
         }
         break;
       } // swtich
@@ -190,11 +181,11 @@ function getInfoFromXML(info) {
   }
 
 
-  function multiDeclaration(decl, dep) {
+  function multiDeclaration(decl) {
     var ret=[];
     for(var length = decl.*.length(); length--; ) {
       var declor=decl.*[length];
-      var unidec=declaration(decl, dep, declor);
+      var unidec = declaration(decl, declor);
       if(!unidec || !unidec.id) break;
       ret.push(unidec);
     }
@@ -202,13 +193,13 @@ function getInfoFromXML(info) {
   }
 
 
-  function declaration(decl, dep, declor) {
-    var ret = indir(dirtype(decl, dep), declor, dep);
+  function declaration(decl, declor) {
+    var ret = indir(dirtype(decl), declor);
 
     if (ret.fd) {
       var callConv = decl..stdcall.length() ? "stdcall" : "cdecl";
       var dirfunc = "Type['function'](" + ret.type + ",[" + ret.params + "]," + ret.elipsis + ",'" + callConv + "')";
-      return indir(dirfunc, ret.fd.*[0], dep);
+      return indir(dirfunc, ret.fd.*[0]);
     }
 
     return ret;
@@ -224,27 +215,23 @@ function getInfoFromXML(info) {
   }
 
 
-  function dirtype(decl, dep) {
+  function dirtype(decl) {
     var type;
     var lasttype;
     var size=0;
     var signed="";
 
-    if(decl.dt.length()) {
-      // Defined type
-      dep[decl.dt] = true;
-      return "this['" + decl.dt + "']";
-    }
+    // Defined type
+    if(decl.dt.length()) return "this['" + decl.dt + "']";
 
     if(decl.struct.length()) {
       // Struct declaration
       let id = String(decl.struct.@id);
       if(id) {
         suDeclare(decl.struct);
-        dep["struct " + id] = true;
         return "this['struct " + id + "']";
       }
-      return "Type.struct("+suMembers(decl.struct, dep)+")";
+      return "Type.struct(" + suMembers(decl.struct) + ")";
     }
 
     if(decl.union.length()) {
@@ -252,10 +239,9 @@ function getInfoFromXML(info) {
       let id = String(decl.union.@id);
       if(id) {
         suDeclare(decl.union);
-        dep["union " + id] = true;
         return "this['union " + id + "']";
       }
-      return "Type.union(" + suMembers(decl.union, dep) + ")";
+      return "Type.union(" + suMembers(decl.union) + ")";
     }
 
     if (decl.enum.length()) {
@@ -288,12 +274,12 @@ function getInfoFromXML(info) {
   }
 
 
-  function suMembers(su, dep) {
+  function suMembers(su) {
     var members=[];
     var n=0;
 
     for each (var member in su.*) {
-      var expr=multiDeclaration(member, dep);
+      var expr = multiDeclaration(member);
 
       for (var i=0; i<expr.length; i++) {
         if(!expr[i].id) expr[i].id = "anonymous" + (n++);
@@ -342,12 +328,10 @@ function getInfoFromXML(info) {
 
     // structs can be have members of the same struct type, so our getter creates a stub, then replace its innards
 
-    var tmpdep={};
-    var members = suMembers(su_xml, tmpdep);
+    var members = suMembers(su_xml);
     const suref = "this['" + id + "']";
     sym[id] = "Type.replace_members(" + suref + "," + members.join(',') + ")," + suref;
     liveeval(sym[id]);
-    dep[id] = tmpdep;
   }
 
 
@@ -359,7 +343,7 @@ function getInfoFromXML(info) {
       case "sizeof_type": {
         let decl = expr.*[0];
         let declor = decl[0].*[decl[0].*.length() - 1];
-        let d = declaration(decl, {}, declor);
+        let d = declaration(decl, declor);
         return Type.sizeof(liveeval(d.type));
       }
       case "sizeof_expr":
@@ -377,8 +361,7 @@ function getInfoFromXML(info) {
   }
 
 
-  function indir(dirtype, declor, dep) {
-
+  function indir(dirtype, declor) {
     if (!declor) { // void x(int, double)
       return {
         type: dirtype
@@ -396,7 +379,7 @@ function getInfoFromXML(info) {
         a += "Type.pointer(";
         b += ")";
       }
-      return indir(a + dirtype + b, declor.*[ptrcount], dep);
+      return indir(a + dirtype + b, declor.*[ptrcount]);
     }
 
     case 'ix':
@@ -407,23 +390,21 @@ function getInfoFromXML(info) {
         a = "Type.pointer(";
         b = ")";
       }
-      var inner=indir(a + dirtype + b, declor.*[0], dep);
-      //     inner.type=a+inner.type+b;
-      return inner;
+      return indir(a + dirtype + b, declor.*[0]);
 
     case 'p':
-      return indir(dirtype, declor.*[0], dep);
+      return indir(dirtype, declor.*[0]);
 
     case 'bitfield':
-      if(declor.*.length() == 1) return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[0])) + ")", <id>$</id>, dep);
-      return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[1])) + ")", declor.*[0], dep);
+      if(declor.*.length() == 1) return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[0])) + ")", <id>$</id>);
+      return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[1])) + ")", declor.*[0]);
 
     case 'fd':
       var params=[];
       var isvoid=false;
 
       for each(var param in declor.pm.d) {
-        var param_type = declaration(param, dep, param.*[param.*.length() - 1]);
+        var param_type = declaration(param, param.*[param.*.length() - 1]);
         // if we ever care about const types again: param["const"].length() > 0
         params.push(param_type.type);
         if (param_type.type == "Type['void']") isvoid = true;
