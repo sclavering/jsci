@@ -62,10 +62,12 @@ const [lexer_re, match_handlers] = (function() {
     [/\d+[Ee][+-]?\d+[fFlL]?|\d*\.\d+(?:[Ee][+-]?\d+)?[fFlL]?/, tokens.tk_const_number],
     [/0[xX][a-fA-F0-9]+[uUlL]*|\d+[uUlL]*/, tokens.tk_const_number],
     // char literal.
-    [/'(?:\\.|[^\\'])'/, tokens.tk_const_char],
+    [/'(?:\\.|[^\\'])'/, tokens.tk_const_char], // xxx unescape
     // string literals
-    [/"(?:\\.|[^\\"])*"/, tokens.tk_const_string],
-    [/L"(?:\\.|[^\\"])*/, tokens.tk_const_string],
+    [/L?"(?:\\.|[^\\"])*"/, function(str) {
+      if(str[0] == 'L') CParser.prototype.ParseError("Encountered an L\"...\" string literal, which we don't support");
+      return [str.slice(1, -1), tokens.tk_const_string]; // xxx unescape
+    }],
     // C comments
     [/\/\*|\/\//, function() CParser.prototype.ParseError("Encountered a C comment.  cpp should have already removed these")],
   ];
@@ -255,7 +257,6 @@ Parser.prototype = {
       case tokens.tk_ident:
         return <id>{ tok }</id>;
       case tokens.tk_const_char:
-        // xxx unescape
         return <c>{ tok }</c>;
       case tokens.tk_const_number: {
         let match = tok.match(/^(.*)([fFlLuU])$/);
@@ -263,10 +264,9 @@ Parser.prototype = {
         return <c>{ tok }</c>;
       }
       case tokens.tk_const_string: {
-        // xxx unescape
-        let xml = <><s>{ tok }</s></>;
-        while(this.Peek(tokens.tk_const_string)) xml += <s>{ this.Next() }</s>;
-        return xml;
+        let t, str = String(tok);
+        while((t = this.NextIfKind(tokens.tk_const_string))) str += t;
+        return <s>{ str }</s>;
       }
     }
     if(tok == '(') {
