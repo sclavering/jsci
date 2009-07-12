@@ -49,17 +49,14 @@ function fragment(filename) {
   var src = {};
 
   for(var i in parsed.structs_and_unions)
-    if(parsed.exported_symbols[i])
       src[i] = parsed.structs_and_unions[i];
 
   for(var i in parsed.sym) {
-    if(parsed.exported_symbols[i]) {
       if(src[i]) {
         src[i] = "this['" + i + "']=" + src[i] + ";" + parsed.sym[i];
       } else {
         src[i] = parsed.sym[i];
       }
-    }
   }
 
   return src;
@@ -120,7 +117,6 @@ all C library symbols and symbols from the SpiderMonkey API.
 
 Returns an object containing the following properties:
 
-* expsym: Object containing one key per symbol which is to be imported/exprted.
 * su: Object containing one string property per declaration of structs and unions.
 * sym: Object containing one string property per symbol
 */
@@ -139,9 +135,6 @@ function getInfoFromXML(info) {
   // Contains dependencies
   var dep={};
 
-  // Contains symbols to be exported
-  var expsym={};
-
   // Count number of dl files
   var ndl=0;
 
@@ -149,23 +142,11 @@ function getInfoFromXML(info) {
   parse_inner.call(live);
   initmacro.call(live);
   allmacros();
-  for(var i in expsym) include_dep(i);
 
   return {
-    exported_symbols: expsym,
     structs_and_unions: su,
     sym: sym,
   };
-
-
-  function include_dep(sym) {
-    for (var i in dep[sym]) {
-      if (!expsym[i]) {
-        expsym[i] = true;
-        include_dep(i);
-      }
-    }
-  }
 
 
   function parse_inner() {
@@ -204,8 +185,6 @@ function getInfoFromXML(info) {
           liveeval("this['" + id + "']=" + expr);
 
           dep[id] = tmpdep;
-
-          expsym[id] = true;
         }
         break;
       } // swtich
@@ -349,7 +328,6 @@ function getInfoFromXML(info) {
         if(prevsym !== undefined) {
           live[prevsym] = val;
           sym[prevsym] = String(val);
-          expsym[prevsym] = true;
           val++;
         }
         prevsym = sm;
@@ -361,7 +339,6 @@ function getInfoFromXML(info) {
     if (prevsym !== undefined) {
       live[prevsym] = val;
       sym[prevsym]=String(val);
-      expsym[prevsym]=true;
     }
   }
 
@@ -369,7 +346,6 @@ function getInfoFromXML(info) {
   function suDeclare(su_xml) {
     const struct_or_union = su_xml.name();
     const id = struct_or_union + " " + su_xml.@id;
-    expsym[id] = true;
 
     if (!su[id]) {
       const expr = su[id] = "Type." + struct_or_union + "()";
@@ -532,7 +508,6 @@ Tries to coerce a C macro into a JavaScript expression
       // ignore function-like macros, and macros that are redefining a symbol we already have
       if(id.indexOf("(") != -1 || sym[id]) continue;
       parsemacro.call(live, id, val);
-      if(live[id] !== undefined) expsym[id] = true;
     }
   }
 
@@ -568,13 +543,11 @@ Tries to coerce a C macro into a JavaScript expression
       if(this['struct ' + v]) { // #define _io_file _IO_FILE
         this['struct ' + id] = this['struct ' + v];
         sym['struct ' + id] = "this['struct " + v + "']";
-        if(expsym['struct ' + v]) expsym['struct ' + id] = true;
       }
 
       if(this['union ' + v]) { // #define _io_file _IO_FILE
         this['union ' + id] = this['union ' + v];
         sym['union ' + id] = "this['union " + v + "']";
-        if(expsym['union ' + v]) expsym['union ' + id] = true;
       }
 
       // alter references to global variables
