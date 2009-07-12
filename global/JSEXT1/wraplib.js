@@ -102,9 +102,7 @@ function getInfoFromXML(code, preprocessor_directives) {
 
 
   function parse_inner() {
-    var tu;
-
-    for each(tu in code.*) {
+    for each(let tu in code.*) {
       switch(String(tu.name())) {
       case 'd': // declaration
       case 'fdef': // function definition
@@ -164,14 +162,10 @@ function getInfoFromXML(code, preprocessor_directives) {
 
   function declaration(decl, declor) {
     var ret = indir(dirtype(decl), declor);
-
-    if (ret.fd) {
-      var callConv = decl..stdcall.length() ? "stdcall" : "cdecl";
-      var dirfunc = "Type['function'](" + ret.type + ",[" + ret.params + "]," + ret.elipsis + ",'" + callConv + "')";
-      return indir(dirfunc, ret.fd.*[0]);
-    }
-
-    return ret;
+    if(!ret.fd) return ret;
+    var callConv = decl..stdcall.length() ? "stdcall" : "cdecl";
+    var dirfunc = "Type['function'](" + ret.type + ",[" + ret.params + "]," + ret.elipsis + ",'" + callConv + "')";
+    return indir(dirfunc, ret.fd.*[0]);
   }
 
 
@@ -185,11 +179,6 @@ function getInfoFromXML(code, preprocessor_directives) {
 
 
   function dirtype(decl) {
-    var type;
-    var lasttype;
-    var size=0;
-    var signed="";
-
     // Defined type
     if(decl.dt.length()) return "this['" + decl.dt + "']";
 
@@ -220,8 +209,9 @@ function getInfoFromXML(code, preprocessor_directives) {
     }
 
     if(decl.t.length()) {
+      let lasttype, signed = "", size = 0;
       // Primitive declaration or return value of a function
-      for each (type in decl.t) {
+      for each(let type in decl.t) {
         if(type == "signed") signed = "signed_";
         if(type == "unsigned") signed = "unsigned_";
         if(type == "char") size -= 2;
