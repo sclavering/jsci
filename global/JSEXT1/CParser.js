@@ -733,9 +733,7 @@ Parser.prototype = {
   },
 
   identifier: function identifier() {
-    const t = this.Next();
-    if(t.tok_kind != tokens.tk_ident) this.ParseError("expected an identifier, but got '" + t + "'");
-    return <id>{ t }</id>;
+    return <id>{ this.NextAsKind(tokens.tk_ident) }</id>;
   },
 
   // this is the usual entry point
