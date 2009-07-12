@@ -477,26 +477,15 @@ Parser.prototype = {
   },
 
   enum_specifier_guts: function() {
-    // Based on:
-    //   enum_specifier: 'enum' '{' enumerator_list '}'
-    //     | 'enum' IDENTIFIER '{' enumerator_list '}'
-    //     | 'enum' IDENTIFIER
-    // Based on enum_specifier, but we match the 'enum' in the caller, and the '}' in enumerator_list, so:
-    //   enum_specifier_guts
-    //     : '{' enumerator_list
-    //     | IDENTIFIER '{' enumerator_list
-    //     | IDENTIFIER
+    // enum_specifier_guts:  '{' enumerator_list_CB  |  IDENTIFIER '{' enumerator_list_CB  |  IDENTIFIER
     let tok0 = this.Next();
-    if(tok0 == '{') return <enum>{ this.enumerator_list() }</enum>;
-    if(this.NextIf('{')) return <enum id={ tok0 }>{ this.enumerator_list() }</enum>;
+    if(tok0 == '{') return <enum>{ this.enumerator_list_CB() }</enum>;
+    if(this.NextIf('{')) return <enum id={ tok0 }>{ this.enumerator_list_CB() }</enum>;
     return <enum id={ tok0 }/>;
   },
 
-  enumerator_list: function() {
-    // Based on:
-    //   enumerator_list: enumerator (',' enumerator)*
-    // but we also include the closing '}', and allow a trailing ',', so:
-    //   enumerator_list: enumerator (',' enumerator)* ','? '}'
+  enumerator_list_CB: function() {
+    // enumerator_list_CB:  enumerator (',' enumerator)* ','? '}'
     let el = <>{ this.enumerator() }</>;
     while(this.NextIf(',')) {
       if(this.PeekIf('}')) break;
