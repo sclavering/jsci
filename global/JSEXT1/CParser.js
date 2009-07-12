@@ -226,6 +226,11 @@ Parser.prototype = {
     }
   },
 
+  Attrs: function(attr_map, node) {
+    for(let name in attr_map) node['@' + name] = attr_map[name];
+    return node;
+  },
+
   // The ghastly bit where we feed typedef's names back to the lexer to resolve the inherent ambiguity in the grammar
   RecordTypedef: function(node) {
     // yacc code also does some weird thing where it looks for a <dt/> and converts it to an <id/>.  not sure why.
@@ -398,23 +403,25 @@ Parser.prototype = {
   constant_expr: function constant_expr() this.conditional_expr(),
 
   external_definition: function external_definition() {
-    // external_definition: function_definition  |  declaration
-    // declaration: 'typedef'? declaration_specifiers init_declarator_list_optional
-    // function_definition: declaration_specifiers declarator compound_statement
+    // external_definition:  function_definition  |  typedef  |  declaration
+    // typedef: 'typedef' declaration_specifiers init_declarator_list_optional
+    // declaration:  storage_class_specifiers declaration_specifiers init_declarator_list_optional
+    // function_definition:  storage_class_specifiers declaration_specifiers declarator compound_statement
     if(this.NextIf('typedef')) return this.RecordTypedef(<d><typedef/>{ this.declaration_specifiers() }{ this.init_declarator_list_optional() }</d>);
+    const scss = {};
+    let t;
+    while((t = this.NextIfKind(tokens.tk_storage_class_specifier))) scss[t] = true;
     const ds = this.declaration_specifiers();
     const idl = this.Try('init_declarator_list_optional');
-    if(idl !== null) return <d>{ ds }{ idl }</d>;
-    return <fdef>{ ds }{ this.declarator() }{ this.compound_statement() }</fdef>;
+    if(idl !== null) return this.Attrs(scss, <d>{ ds }{ idl }</d>);
+    return this.Attrs(scss, <fdef>{ ds }{ this.declarator() }{ this.compound_statement() }</fdef>);
   },
 
   declaration_specifiers: function declaration_specifiers() {
-    // declaration_specifiers  :  (storage_class_specifier | type_specifier | type_qualifier)+
+    // declaration_specifiers:  (type_specifier | type_qualifier)+
     let dss = <></>;
     while(true) {
-      let t = this.maybe_storage_class_specifier()
-        || this.maybe_type_specifier()
-        || this.maybe_type_qualifier();
+      let t = this.maybe_type_specifier() || this.maybe_type_qualifier();
       if(!t) break;
       dss += t;
     }
@@ -436,11 +443,6 @@ Parser.prototype = {
     const decl = this.declarator();
     if(this.NextIf('=')) return <init>{ decl }{ this.initializer() }</init>;
     return decl;
-  },
-
-  maybe_storage_class_specifier: function maybe_storage_class_specifier() {
-    const t = this.NextIfKind(tokens.tk_storage_class_specifier);
-    return t ? <{ t }/> : null;
   },
 
   maybe_type_specifier: function maybe_type_specifier(null_on_error) {
