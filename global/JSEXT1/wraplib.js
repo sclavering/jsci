@@ -273,20 +273,22 @@ function getInfoFromXML(info) {
 
     if(decl.struct.length()) {
       // Struct declaration
-      if (decl.struct.@id.length()) {
+      let id = String(decl.struct.@id);
+      if(id) {
         suDeclare(decl.struct);
-        dep["struct "+decl.struct.@id]=true;
-        return "this['struct "+decl.struct.@id + "']";
+        dep["struct " + id] = true;
+        return "this['struct " + id + "']";
       }
       return "Type.struct("+suMembers(decl.struct, dep)+")";
     }
 
-    if (decl.union.length()) {
+    if(decl.union.length()) {
       // Union declaration
-      if (decl.union.@id.length()) {
+      let id = String(decl.union.@id);
+      if(id) {
         suDeclare(decl.union);
-        dep["union " + decl.union.@id] = true;
-        return "this['union " + decl.union.@id + "']";
+        dep["union " + id] = true;
+        return "this['union " + id + "']";
       }
       return "Type.union(" + suMembers(decl.union, dep) + ")";
     }

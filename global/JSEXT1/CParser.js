@@ -493,27 +493,30 @@ Parser.prototype = {
   },
 
   struct_or_union_specifier_guts: function struct_or_union_specifier_guts(nodeName) {
-    // Based on struct_or_union_specifier, but excluding the leading struct_or_union, and the trailing '}'
-    //  : '{' struct_declaration_list
-    //  | IDENTIFIER '{' struct_declaration_list
-    //  | IDENTIFIER
-    if(this.NextIf('{')) return <{ nodeName }>{ this.struct_declaration_list() }</{ nodeName }>;
-    const id = this.identifier_or_typedef_name();
-    if(this.NextIf('{')) return <{ nodeName } id={ id }>{ this.struct_declaration_list() }</{ nodeName }>;
-    return <{ nodeName } id={ id }/>;
+    // struct_or_union_specifier_guts:  IDENTIFIER  |  IDENTIFIER? struct_declaration_list
+    // note: we fail parsing "extern struct _IO_FILE *stdin;" in stdio.h without the tk_typedef_name case
+    const id = this.NextIfKind(tokens.tk_ident) || this.NextIfKind(tokens.tk_typedef_name);
+    if(!id && !this.PeekIf('{')) this.ParseError("missing '{' or identifier following '" + nodeName + "'");
+    return <{ nodeName } id={ id || "" }>{ this.struct_declaration_list() }</{ nodeName }>;
   },
 
   struct_declaration_list: function struct_declaration_list() {
-    // struct_declaration_list: struct_declaration+
-    // modified to match the trailing '}' too
-    let sdl = <>{ this.struct_declaration() }</>;
-    while(!this.NextIf('}')) sdl += this.struct_declaration();
+    // struct_declaration_list:  '{' struct_declaration+ '}'
+    if(!this.NextIf('{')) return nothing;
+    let sdl = <></>;
+    do { sdl += this.struct_declaration() } while(!this.NextIf('}'));
     return sdl;
   },
 
   struct_declaration: function struct_declaration() {
-    // struct_declaration: specifier_qualifier_list struct_declarator_list
-    return <d>{ this.specifier_qualifier_list() }{ this.struct_declarator_list() }</d>;
+    // struct_declaration: specifier_qualifier_list struct_declarator_list? ';'
+    // struct_declarator_list:  struct_declarator (',' struct_declarator)*
+    const sql = this.specifier_qualifier_list();
+    let sdl = <></>;
+    if(this.NextIf(';')) return <d>{ sql }</d>;
+    do { sdl += this.struct_declarator(); } while(this.NextIf(','));
+    this.Next(';');
+    return <d>{ sql }{ sdl }</d>;
   },
 
   specifier_qualifier_list: function specifier_qualifier_list() {
@@ -526,15 +529,6 @@ Parser.prototype = {
     }
     if(!sql.length()) this.ParseError("specifier_qualifier_list: coudln't find any type_qualifier or type_specifier");
     return sql;
-  },
-
-  struct_declarator_list: function struct_declarator_list() {
-    // struct_declarator_list:  ';'  |  struct_declarator (',' struct_declarator)* ';'
-    if(this.NextIf(';')) return nothing;
-    let sdl = <>{ this.struct_declarator() }</>;
-    while(this.NextIf(',')) sdl += this.struct_declarator();
-    this.Next(';');
-    return sdl;
   },
 
   struct_declarator: function struct_declarator() {
@@ -710,12 +704,6 @@ Parser.prototype = {
     if(!this.PeekIf(';')) this.expr();
     this.Next(';');
     return nothing;
-  },
-
-  identifier_or_typedef_name: function() {
-    const t = this.Next();
-    if(t.tok_kind == tokens.tk_ident || t.tok_kind == tokens.tk_typedef_name) return String(t);
-    this.ParseError("expecting an identifier or typedef'd name");
   },
 
   maybe_identifier: function() {
