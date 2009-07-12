@@ -92,28 +92,14 @@ return obj; \n\
 /*
 obj = getInfoFromXML(code)
 
-Examines the XML representation of a C program.  Recognizes the programming
-constructs used to declare functions, structs, unions, global variables,
-macros, #defines and enums. Also recognizes the following #pragma
-directives.
+Use the XML created by CParser to find declarations of functions, typedefs, structs, global variables etc (and also #define's), and generate a mapping from symbols to javascript code using Type/Dl/Pointer to provide access to them.
 
-### Pragma directives ###
+To actually call a function or read/write a global variable, the library it is from has to be dlopen()'d (via the Dl constructor).  The .h file can use pragmas to add libraries to the list to be dlopen()'d.  They will be searched in the order specified, though the location of the #pragma is otherwise unimportant (it can come after a symbol from that .so file).
 
-    #pragma JSEXT dl "filename"
-
-Instructs _parse_ to try to resolve global variables and functions
-in the given file, which should be a dynamic library.
-Applies to all symbols in the program, whether they are defined
-before or after the pragma directive. Libraries are searched
-in the order that they are mentioned in the program.
-
-    #pragma JSEXT dl main
-
-Instructs _parse_ to try to resolve global variables and functions
-in the executing program. On Linux, this can be used to resolve
-all C library symbols and symbols from the SpiderMonkey API.
-
-### Return value ###
+ - #pragma JSEXT dl "filename.so"
+    Try to resolve symbols in filename.so
+ - #pragma JSEXT dl main
+    Try resolving symbols in the main program binary.  This can be used for libc, the SpiderMonkey API, etc.
 
 Returns an object containing the following properties:
 
