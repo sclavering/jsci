@@ -46,16 +46,16 @@ const [lexer_re, match_handlers] = (function() {
     // whitespace
     [/[ \t\v\f\n]/, tokens.tk_skip],
     // variables and typenames, etc.
-    [/[a-zA-Z_][a-zA-Z_0-9]*/, function(str, lexer) {
+    [/[a-zA-Z_][a-zA-Z_0-9]*/, function(str, parser) {
       if(str in keyword_aliases) str = keyword_aliases[str];
-      return [str, keyword_lookup[str] || (str in lexer._typedef_names ? tokens.tk_typedef_name : tokens.tk_ident)];
+      return [str, keyword_lookup[str] || (str in parser._typedefs ? tokens.tk_typedef_name : tokens.tk_ident)];
     }],
     // operators
-    [op_re, function(str, lexer) [str, op_kind_map[str]]],
+    [op_re, function(str, parser) [str, op_kind_map[str]]],
     // #line, #define, etc
-    [/#[^\n]*\n/, function(str, lexer) {
+    [/#[^\n]*\n/, function(str, parser) {
       // keep everything but line number things (e.g. '# 1 "/usr/lib/gcc/i486-linux-gnu/4.2.4/include/stdarg.h" 1 3 4')
-      if(str[1] != ' ') lexer._preprocessor_lines.push(str.slice(0, -1)); // consumer can't cope with the \n's
+      if(str[1] != ' ') parser.preprocessor_directives.push(str.slice(0, -1)); // consumer can't cope with the \n's
       return [str, tokens.tk_skip];
     }],
     // numeric literals
@@ -85,41 +85,6 @@ const [lexer_re, match_handlers] = (function() {
 
   return [re, match_handlers];
 })()
-
-
-
-function Lexer(str, preprocessor_lines, typedef_names_set) {
-  this._str = str;
-  this._re = new RegExp(lexer_re);
-  this._preprocessor_lines = preprocessor_lines;
-  this._typedef_names = typedef_names_set;
-}
-
-Lexer.prototype = {
-  pos: function() {
-    return this._re.lastIndex;
-  },
-
-  rewind: function(pos) {
-    this._re.lastIndex = pos;
-  },
-
-  gettok: function() {
-    while(true) {
-      let match = this._re.exec(this._str);
-      if(!match) return null;
-
-      let i = 1;
-      while(!match[i]) ++i; // find which pattern was matched
-      let tokstr = match[0], handler = match_handlers[i]; // handler is a function, or a numeric constant
-      if(typeof handler == "function") [tokstr, handler] = handler(match[0], this);
-      if(handler === tokens.tk_skip) continue;
-      let tok = new String(tokstr);
-      tok.tok_kind = handler;
-      return tok;
-    }
-  },
-};
 
 
 
@@ -153,18 +118,45 @@ ExprTreeNode.prototype = {
 
 
 function Parser(srccode) {
+  this._lexer_re = new RegExp(lexer_re);
   this._srccode = srccode;
   this.preprocessor_directives = [];
   this._typedefs = {}; // a set.  lexing C requires tracking typedefs to disambiguate parts of the grammar
-  this._lexer = new Lexer(srccode, this.preprocessor_directives, this._typedefs);
   this._nexttok = 0;
 }
 
 Parser.prototype = {
+  // lexer methods
+
+  LexerPos: function() {
+    return this._lexer_re.lastIndex;
+  },
+
+  LexerRewind: function(pos) {
+    this._lexer_re.lastIndex = pos;
+  },
+
+  LexToken: function() {
+    while(true) {
+      let match = this._lexer_re.exec(this._srccode);
+      if(!match) return null;
+
+      let i = 1;
+      while(!match[i]) ++i; // find which pattern was matched
+      let tokstr = match[0], handler = match_handlers[i]; // handler is a function, or a numeric constant
+      if(typeof handler == "function") [tokstr, handler] = handler(match[0], this);
+      if(handler === tokens.tk_skip) continue;
+      let tok = new String(tokstr);
+      tok.tok_kind = handler;
+      return tok;
+    }
+  },
+
+
   // methods that aren't grammar symbols
 
   Peek: function Peek() {
-    return this._nexttok || (this._nexttok = this._lexer.gettok());
+    return this._nexttok || (this._nexttok = this.LexToken());
   },
 
   PeekIf: function PeekIf(value) {
@@ -208,7 +200,7 @@ Parser.prototype = {
 
   // Error subclasses are painful in js, so just set a parameter instead
   ParseError: function ParseError(msg) {
-    const pos = this._lexer.pos()
+    const pos = this.LexerPos()
     const snippet = (this._srccode.slice(Math.max(0, pos - 50), pos) + "^^" + this._srccode.slice(pos, pos + 50)).split("\n").join("\n\t");
     const e = Error(msg + "\n\tAt char #" + pos + " marked by ^^ in the following:\n\t" + snippet + "\n");
     e.isParseError = true;
@@ -216,12 +208,12 @@ Parser.prototype = {
   },
 
   Try: function Try(symbol_name) {
-    const ix = this._lexer.pos(), _nexttok = this._nexttok;
+    const ix = this.LexerPos(), _nexttok = this._nexttok;
     try {
       return this[symbol_name]();
     } catch(e if e.isParseError) {
       this._nexttok = _nexttok;
-      this._lexer.rewind(ix);
+      this.LexerRewind(ix);
       return null;
     }
   },
