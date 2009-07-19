@@ -245,7 +245,7 @@ Parser.prototype = {
       case tokens.tk_ident:
         return <id>{ tok }</id>;
       case tokens.tk_const_char:
-        return <c>{ tok }</c>;
+        return <c>'{ tok }'</c>;
       case tokens.tk_const_number: {
         let match = tok.match(/^(.*)([fFlLuU])$/);
         if(tok[0] != '0' && match) return <c length={ match[2] }>{ match[1] }</c>;

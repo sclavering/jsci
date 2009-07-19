@@ -263,8 +263,7 @@ function getInfoFromXML(code, preprocessor_directives) {
         }
         prevsym = sm;
       } else {
-        var expr = inner_eval(sm);
-        val = liveeval(expr);
+        val = liveeval(inner_eval(sm));
       }
     }
     if (prevsym !== undefined) {
@@ -296,7 +295,8 @@ function getInfoFromXML(code, preprocessor_directives) {
 
   function inner_eval(expr) {
     switch(String(expr.name())) {
-      case "c": return String(expr);
+      case "s": return '"' + String(expr) + '"'; // string literal
+      case "c": return String(expr); // number or char literal
       case "id": return sym[expr];
       case "p": return "(" + inner_eval(expr.*[0]) + ")";
       case "sizeof_type": {
@@ -421,62 +421,21 @@ Tries to coerce a C macro into a JavaScript expression
 
   function allmacros() {
     for each(var thing in preprocessor_directives) {
-      var m = thing.match(/^#define[ \t]+([^ \t]+)[ \t]+(.*)$/);
+      let m = thing.match(/^#define[ \t]+([^ \t]+)[ \t]+(.*)\s*$/);
       if(!m) continue;
-      var id = m[1], val = m[2];
-      // ignore function-like macros, and macros that are redefining a symbol we already have
+      let id = m[1], expansion = m[2];
+      // Ignore function-like macros, and macros that are redefining a symbol we already have
       if(id.indexOf("(") != -1 || sym[id]) continue;
-      parsemacro.call(live, id, val);
-    }
-  }
-
-
-  function parsemacro(id, val) {
-    // Change 123L into 123
-
-    var v = " " + val + " "; // not sure why we're wrapping it, but the old code did
-    v=v.replace(/([^a-zA-Z_0-9])([0-9]+)[lLuUfF]/g,"$1$2");
-    v=v.replace(/([^a-zA-Z_0-9])(0x[0-9a-fA-F]+)[lLuU]/g,"$1$2");
-
-    // remove typecasts
-
-    v = v.replace(/\( *([a-zA-Z_][a-zA-Z_0-9]*) *\)/g, function(str, sym) {
-        return typelist.hasOwnProperty(sym) ? "" : str;
-      });
-
-    v=v.replace(/\([ ]*(unsigned +|signed +)?(long +|short +)?(int|char|long|short|signed|unsigned|double|float)[ ]*\)/,"");
-
-    // change struct indexing
-    v = v.replace(/->[ \t]*([a-zA-Z_][a-zA-Z_0-9]*)/g, ".field('$1').$$");
-    // remove L before string like in L"string"
-    v=v.replace(/^([^"])*L"/,'$1"');
-
-    if(v == "  ") { // #define x
-
-      this[id] = null;
-      sym[id] = "null";
-
-    } else { // #define x 42
-      v = v.replace(/^[ \t]+|[ \t]+$/g, "");
-
-      if(this['struct ' + v]) { // #define _io_file _IO_FILE
-        this['struct ' + id] = this['struct ' + v];
-        sym['struct ' + id] = "this['struct " + v + "']";
+      if(!expansion) {
+        sym[id] = "null";
+        continue;
       }
-
-      if(this['union ' + v]) { // #define _io_file _IO_FILE
-        this['union ' + id] = this['union ' + v];
-        sym['union ' + id] = "this['union " + v + "']";
-      }
-
-      // alter references to global variables
-      //      v=v.replace(/([^0-9A-Za-z_.'"])([a-zA-Z_][a-zA-Z_0-9]*)/g,"$1this['$2']");
-
-      if (this[v]) { // #define stdin stdin
-        this[id] = this[v];
-        sym[id] = sym[v];
-      } else {
+      try {
+        let exml = new CParser(expansion).expr();
+        let v = inner_eval(exml);
         if(liveeval("this['" + id + "']=" + v) !== undefined) sym[id] = v;
+      } catch(e) {
+//         print("Error parsing this define:\n  ", thing, "\n", e, "\n", e.stack, "\n\n\n");
       }
     }
   }
