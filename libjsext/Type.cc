@@ -190,7 +190,7 @@ static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-extern "C" jsval JSX_make_Type(JSContext *cx, JSObject *obj) {
+jsval make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeobj;
   JSObject *typeproto;
 

@@ -191,7 +191,7 @@ static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 }
 
 
-extern "C" jsval JSX_make_Pointer(JSContext *cx, JSObject *obj) {
+jsval make_Pointer(JSContext *cx, JSObject *obj) {
   static struct JSFunctionSpec staticfunc[]={
     {"malloc", Pointer_malloc, 1, 0, 0},
     {0,0,0,0,0}

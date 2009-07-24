@@ -23,7 +23,7 @@ static JSClass JSEXT_dl_class = {
 };
 
 
-extern "C" jsval make_Dl(JSContext *cx, JSObject *glob) {
+jsval make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
     {"symbolExists", Dl_proto_symbolExists, 1, 0, 0},

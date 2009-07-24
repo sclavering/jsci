@@ -37,10 +37,10 @@ extern char **environ;
 
 
 // These are mostly defined in other files
-extern "C" {
-jsval JSX_make_Type(JSContext *cx, JSObject *glo);
-jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
+jsval make_Type(JSContext *cx, JSObject *glo);
+jsval make_Pointer(JSContext *cx, JSObject *glo);
 jsval make_Dl(JSContext *cx, JSObject *glo);
+extern "C" {
 jsval make_encodeUTF8(JSContext *cx);
 jsval make_decodeUTF8(JSContext *cx);
 jsval make_encodeJSON(JSContext *cx);
@@ -119,9 +119,9 @@ static JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
 
   if(!JS_DefineProperty(cx, obj, "jsxlib", OBJECT_TO_JSVAL(argobj), 0, 0, JSPROP_READONLY | JSPROP_PERMANENT)) return JS_FALSE;
 
-  tmp = JSX_make_Type(cx, obj);
+  tmp = make_Type(cx, obj);
   JS_SetProperty(cx, argobj, "Type", &tmp);
-  tmp = JSX_make_Pointer(cx, obj);
+  tmp = make_Pointer(cx, obj);
   JS_SetProperty(cx, argobj, "Pointer", &tmp);
   tmp = make_Dl(cx, obj);
   JS_SetProperty(cx, argobj, "Dl", &tmp);
