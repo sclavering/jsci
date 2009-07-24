@@ -58,7 +58,6 @@ static jsval make_isCompilableUnit(JSContext *cx);
 
 static JSBool eval_file(JSContext *cx, JSObject *obj, const char *filename, jsval *rval);
 static JSBool make_jsxlib(JSContext *cx, JSObject *gl);
-int JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
 
 static void my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *report) {
@@ -70,8 +69,6 @@ static void my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *
 
 int main(int argc, char **argv) {
   int exitcode = 1;
-  jsval rval;
-
   JSRuntime *rt = JS_NewRuntime(64000000);
   if(rt) {
     JSContext *cx = JS_NewContext(rt, 65536);
@@ -81,19 +78,20 @@ int main(int argc, char **argv) {
       JS_SetVersion(cx, JSVERSION_LATEST);
 
       JSObject *glob = JS_NewObject(cx, NULL, NULL, NULL);
-      if(glob) {
-        JS_SetGlobalObject(cx, glob);
-        if(JS_InitStandardClasses(cx, glob)) {
-          JS_AddRoot(cx, &rval);
-          if(make_jsxlib(cx, glob)) exitcode = JSX_init(cx, glob, &rval);
-          JS_RemoveRoot(cx, &rval);
+      if(glob && JS_InitStandardClasses(cx, glob) && make_jsxlib(cx, glob)) {
+        jsval rv;
+        JS_AddRoot(cx, &rv);
+        // Evaluate a .js startup file, and use the exit code it returns, if any.
+        if(eval_file(cx, glob, getenv("JSEXT_INI"), &rv)) {
+          exitcode = JSVAL_IS_VOID(rv) ? 0 : JSVAL_IS_INT(rv) ? JSVAL_TO_INT(rv) : 1;
         }
+        JS_RemoveRoot(cx, &rv);
       }
       JS_DestroyContext(cx);
     }
     JS_DestroyRuntime(rt);
   }
-
+  JS_ShutDown();
   return exitcode;
 }
 
@@ -140,16 +138,6 @@ static JSBool make_jsxlib(JSContext *cx, JSObject *obj) {
 
   JS_RemoveRoot(cx, &tmp);
   return JS_TRUE;
-}
-
-
-int JSX_init(JSContext *cx, JSObject *obj, jsval *rval) {
-  const char *ini_file = getenv("JSEXT_INI");
-  if(!ini_file) ini_file = libdir "/jsext/0-init.js";
-  if(!eval_file(cx, obj, ini_file, rval)) return 1;
-  if(JSVAL_IS_VOID(*rval)) return 0; // because not having an explicit return should not be an error
-  if(JSVAL_IS_INT(*rval)) return JSVAL_TO_INT(*rval);
-  return 1;
 }
 
 
