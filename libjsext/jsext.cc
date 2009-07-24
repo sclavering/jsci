@@ -26,13 +26,14 @@
 */
 
 
-#include <jsapi.h>
+#include "util.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#include "util.h"
+extern char **environ;
+
 
 
 // These are mostly defined in other files
@@ -40,7 +41,6 @@ extern "C" {
 jsval JSX_make_Type(JSContext *cx, JSObject *glo);
 jsval JSX_make_Pointer(JSContext *cx, JSObject *glo);
 jsval make_Dl(JSContext *cx, JSObject *glo);
-jsval JSX_make_environment(JSContext *cx, JSObject *obj);
 jsval make_encodeUTF8(JSContext *cx);
 jsval make_decodeUTF8(JSContext *cx);
 jsval make_encodeJSON(JSContext *cx);
@@ -49,6 +49,8 @@ jsval make_encodeBase64(JSContext *cx);
 jsval make_decodeBase64(JSContext *cx);
 jsval make_stringifyHTML(JSContext *cx);
 }
+
+static JSBool make_environment_vars_obj(JSContext *cx, jsval *rv);
 
 static jsval make_load(JSContext *cx);
 static jsval make_gc(JSContext *cx);
@@ -129,7 +131,7 @@ static JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
   JS_SetProperty(cx, argobj, "gc", &tmp);
   tmp = make_isCompilableUnit(cx);
   JS_SetProperty(cx, argobj, "isCompilableUnit", &tmp);
-  tmp = JSX_make_environment(cx, obj);
+  if(!make_environment_vars_obj(cx, &tmp)) return JS_FALSE;
   JS_SetProperty(cx, argobj, "environment", &tmp);
   tmp = make_encodeUTF8(cx);
   JS_SetProperty(cx, argobj, "encodeUTF8", &tmp);
@@ -233,4 +235,28 @@ static jsval make_isCompilableUnit(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, jsx_isCompilableUnit, 0, 0, 0, 0);
   if(!jsfun) return JSVAL_VOID;
   return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
+}
+
+
+static JSBool make_environment_vars_obj(JSContext *cx, jsval *rv) {
+  JSObject *obj = JS_NewObject(cx, 0, 0, 0);
+  if(!obj) return JS_FALSE;
+  *rv = OBJECT_TO_JSVAL(obj);
+
+  char **evp = environ;
+  char *name;
+  for( ; (name = *evp) != NULL; evp++) {
+    char *eqchar = name;
+    while(*eqchar && *eqchar != '=') eqchar++;
+    if(!*eqchar) continue;
+    JSString *valstr = JS_NewStringCopyZ(cx, eqchar + 1);
+    if(!valstr) return JS_FALSE;
+    *eqchar = 0;
+    jsval val = STRING_TO_JSVAL(valstr);
+    JSBool ok = JS_SetProperty(cx, obj, name, &val);
+    *eqchar = '=';
+    if(!ok) return JS_FALSE;
+  }
+
+  return JS_TRUE;
 }
