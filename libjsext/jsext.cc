@@ -57,7 +57,7 @@ static jsval make_gc(JSContext *cx);
 static jsval make_isCompilableUnit(JSContext *cx);
 
 static JSBool eval_file(JSContext *cx, JSObject *obj, const char *filename, jsval *rval);
-static JSBool make_jsx_global_var(JSContext *cx, JSObject *gl);
+static JSBool make_jsxlib(JSContext *cx, JSObject *gl);
 int JSX_init(JSContext *cx, JSObject *obj, jsval *rval);
 
 
@@ -111,8 +111,8 @@ int main(int argc, char **argv, char **envp) {
 }
 
 
-// create the .jsx property on the global object
-static JSBool make_jsx_global_var(JSContext *cx, JSObject *obj) {
+// create the .jsxlib property on the global object
+static JSBool make_jsxlib(JSContext *cx, JSObject *obj) {
   jsval tmp = JSVAL_VOID;
   JS_AddRoot(cx, &tmp);
   JSObject *argobj = JS_NewObject(cx, 0, 0, 0); // needs renaming
