@@ -68,46 +68,33 @@ static void my_ErrorReporter(JSContext *cx, const char *message, JSErrorReport *
 }
 
 
-int main(int argc, char **argv, char **envp) {
-  JSRuntime *rt;
-  JSContext *cx=0;
-  JSObject *glob;
-  int exitcode=0;
+int main(int argc, char **argv) {
+  int exitcode = 1;
   jsval rval;
 
-  rt=JS_NewRuntime(64000000);
-  if (!rt) goto failure;
+  JSRuntime *rt = JS_NewRuntime(64000000);
+  if(rt) {
+    JSContext *cx = JS_NewContext(rt, 65536);
+    if(cx) {
+      JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
+      JS_SetErrorReporter(cx, my_ErrorReporter);
+      JS_SetVersion(cx, JSVERSION_LATEST);
 
-  cx=JS_NewContext(rt, 65536);
-  if (!cx) goto failure;
-
-  JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
-  JS_SetErrorReporter(cx, my_ErrorReporter);
-  JS_SetVersion(cx, JSVERSION_LATEST);
-
-  glob=JS_NewObject(cx, NULL, NULL, NULL);
-  if (!glob)
-    goto failure;
-
-  JS_SetGlobalObject(cx, glob);
-
-  if (!JS_InitStandardClasses(cx, glob))
-    goto failure;
-
-  JS_AddRoot(cx, &rval);
-  if(!make_jsx_global_var(cx, glob)) goto failure;
-  exitcode = JSX_init(cx, glob, &rval);
-  JS_RemoveRoot(cx, &rval);
-
-  JS_DestroyContext(cx);
-  JS_DestroyRuntime(rt);
+      JSObject *glob = JS_NewObject(cx, NULL, NULL, NULL);
+      if(glob) {
+        JS_SetGlobalObject(cx, glob);
+        if(JS_InitStandardClasses(cx, glob)) {
+          JS_AddRoot(cx, &rval);
+          if(make_jsxlib(cx, glob)) exitcode = JSX_init(cx, glob, &rval);
+          JS_RemoveRoot(cx, &rval);
+        }
+      }
+      JS_DestroyContext(cx);
+    }
+    JS_DestroyRuntime(rt);
+  }
 
   return exitcode;
-
- failure:
-  if (cx) JS_DestroyContext(cx);
-  if (rt) JS_DestroyRuntime(rt);
-  return 1;
 }
 
 
