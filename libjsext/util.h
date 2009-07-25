@@ -3,10 +3,7 @@
 
 #include "jsapi.h"
 
-JS_BEGIN_EXTERN_C
-
-JSBool JSX_ReportException(JSContext *cx, const char *format, ...);
-
-JS_END_EXTERN_C
+// This used to be a function, and it's still handy to write "return JSX_ReportException(...)" rather than two statements
+#define JSX_ReportException(args...) (JS_ReportError(args), JS_FALSE);
 
 #endif
