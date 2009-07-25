@@ -5,7 +5,7 @@ JsciTypeInt::JsciTypeInt(int size, ffi_type ffit) : JsciTypeNumeric(INTTYPE, siz
 }
 
 
-int JsciTypeInt::CtoJS(JSContext *cx, char *data, jsval *rval) {
+JSBool JsciTypeInt::CtoJS(JSContext *cx, char *data, jsval *rval) {
   int tmp;
   // Return a number from an unsigned int (of various sizes)
   switch(this->size) {
@@ -18,13 +18,9 @@ int JsciTypeInt::CtoJS(JSContext *cx, char *data, jsval *rval) {
     default:
       return JSX_ReportException(cx, "Cannot convert C signed integer of unknown size to a javascript value");
   }
-  if(INT_FITS_IN_JSVAL(tmp)) {
-    *rval = INT_TO_JSVAL(tmp);
-  } else {
-    jsdouble d = (jsdouble) tmp;
-    JS_NewDoubleValue(cx, d, rval);
-  }
-  return 1;
+  if(!INT_FITS_IN_JSVAL(tmp)) return JS_NewNumberValue(cx, (jsdouble) tmp, rval);
+  *rval = INT_TO_JSVAL(tmp);
+  return JS_TRUE;
 }
 
 

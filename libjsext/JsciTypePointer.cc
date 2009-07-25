@@ -6,10 +6,10 @@ JsciTypePointer::JsciTypePointer(JsciType *direct) : JsciType(POINTERTYPE), dire
 }
 
 
-int JsciTypePointer::CtoJS(JSContext *cx, char *data, jsval *rval) {
+JSBool JsciTypePointer::CtoJS(JSContext *cx, char *data, jsval *rval) {
   if(*(void **)data == NULL) {
     *rval = JSVAL_NULL;
-    return 1;
+    return JS_TRUE;
   }
   return WrapPointer(cx, new JsciPointer(this->direct, *(void **) data), rval);
 }

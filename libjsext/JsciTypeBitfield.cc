@@ -5,7 +5,7 @@ JsciTypeBitfield::JsciTypeBitfield(JsciType *type, int length) : JsciType(BITFIE
 }
 
 
-int JsciTypeBitfield::CtoJS(JSContext *cx, char *data, jsval *rval) {
+JSBool JsciTypeBitfield::CtoJS(JSContext *cx, char *data, jsval *rval) {
   return this->member->CtoJS(cx, data, rval);
 }
 

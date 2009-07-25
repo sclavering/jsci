@@ -17,7 +17,7 @@ JsciTypeStructUnion::~JsciTypeStructUnion() {
 }
 
 
-int JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
+JSBool JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
   JSObject *obj = JS_NewObject(cx, 0, 0, 0);
   *rval = OBJECT_TO_JSVAL(obj);
 
@@ -26,10 +26,9 @@ int JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
   for(int i = 0; i != this->nMember; ++i) {
     JSX_SuMember mtype = this->member[i];
     JS_GetProperty(cx, obj, mtype.name, &tmp);
-    int ok = mtype.membertype->CtoJS(cx, data + mtype.offset / 8, &tmp);
-    if(!ok) {
+    if(!mtype.membertype->CtoJS(cx, data + mtype.offset / 8, &tmp)) {
       JS_RemoveRoot(cx, &tmp);
-      return 0; // the exception should already have been set
+      return JS_FALSE; // the exception should already have been set
     }
     if(mtype.membertype->type == BITFIELDTYPE) {
       int length = ((JsciTypeBitfield *) mtype.membertype)->length;
@@ -40,7 +39,7 @@ int JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
     JS_SetProperty(cx, obj, mtype.name, &tmp);
   }
   JS_RemoveRoot(cx, &tmp);
-  return 1;
+  return JS_TRUE;
 }
 
 

@@ -29,7 +29,7 @@ struct JsciType {
   JsciType(JSX_TypeID);
   virtual ~JsciType();
 
-  virtual int CtoJS(JSContext *cx, char *data, jsval *rval) = 0;
+  virtual JSBool CtoJS(JSContext *cx, char *data, jsval *rval) = 0;
   virtual JSBool JStoC(JSContext *cx, char *data, jsval v);
   virtual ffi_type *GetFFIType();
   virtual int SizeInBits();
@@ -41,7 +41,7 @@ struct JsciType {
 struct JsciTypeVoid : JsciType {
   JsciTypeVoid();
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   ffi_type *GetFFIType();
 };
 
@@ -60,7 +60,7 @@ struct JsciTypeNumeric : JsciType {
 struct JsciTypeInt : JsciTypeNumeric {
   JsciTypeInt(int size, ffi_type);
 
-  virtual int CtoJS(JSContext *cx, char *data, jsval *rval);
+  virtual JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
 
  private:
@@ -71,13 +71,13 @@ struct JsciTypeInt : JsciTypeNumeric {
 struct JsciTypeUint : JsciTypeInt {
   JsciTypeUint(int size, ffi_type);
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
 };
 
 struct JsciTypeFloat : JsciTypeNumeric {
   JsciTypeFloat(int size, ffi_type);
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
 
  private:
@@ -85,15 +85,15 @@ struct JsciTypeFloat : JsciTypeNumeric {
 };
 
 struct JsciTypeFunction : JsciType {
+  JsciType *returnType;
   JsciType **param;
   int nParam;
-  JsciType *returnType;
   ffi_cif cif;
 
   JsciTypeFunction(JsciType *returnType, int nParam);
   ~JsciTypeFunction();
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool Call(JSContext *cx, void *cfunc, uintN argc, jsval *argv, jsval *rval);
 
   ffi_cif *GetCIF();
@@ -116,7 +116,7 @@ struct JsciTypeStructUnion : JsciType {
   JsciTypeStructUnion();
   ~JsciTypeStructUnion();
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBytes();
   int AlignmentInBytes();
@@ -143,7 +143,7 @@ struct JsciTypePointer : JsciType {
 
   JsciTypePointer(JsciType *direct);
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
   ffi_type *GetFFIType();
   int SizeInBytes();
@@ -156,7 +156,7 @@ struct JsciTypeArray : JsciType {
 
   JsciTypeArray(JsciType *type, int length);
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBytes();
   int AlignmentInBytes();
@@ -168,7 +168,7 @@ struct JsciTypeBitfield : JsciType {
 
   JsciTypeBitfield(JsciType *type, int length);
 
-  int CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
   int SizeInBits();
   int AlignmentInBits() { return 1; }

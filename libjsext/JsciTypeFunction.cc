@@ -13,7 +13,7 @@ JsciTypeFunction::~JsciTypeFunction() {
 }
 
 
-int JsciTypeFunction::CtoJS(JSContext *cx, char *data, jsval *rval) {
+JSBool JsciTypeFunction::CtoJS(JSContext *cx, char *data, jsval *rval) {
   return JSX_ReportException(cx, "Pointer.prototype.$ cannot be used on pointers of type function.");
 }
 

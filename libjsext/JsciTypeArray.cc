@@ -6,11 +6,11 @@ JsciTypeArray::JsciTypeArray(JsciType *type, int length) : JsciType(ARRAYTYPE), 
 }
 
 
-int JsciTypeArray::CtoJS(JSContext *cx, char *data, jsval *rval) {
+JSBool JsciTypeArray::CtoJS(JSContext *cx, char *data, jsval *rval) {
   if(type_is_char(this->member)) {
     // Return a string from a char array
     *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, data, this->length));
-    return 1;
+    return JS_TRUE;
   }
 
   *rval = OBJECT_TO_JSVAL(JS_NewArrayObject(cx, 0, 0));
@@ -19,15 +19,14 @@ int JsciTypeArray::CtoJS(JSContext *cx, char *data, jsval *rval) {
   jsval tmp = JSVAL_VOID;
   JS_AddRoot(cx, &tmp);
   for(int i = 0; i != this->length; i++) {
-    int ok = this->member->CtoJS(cx, data + i * fieldsize, &tmp);
-    if(!ok) {
+    if(!this->member->CtoJS(cx, data + i * fieldsize, &tmp)) {
       JS_RemoveRoot(cx, &tmp);
-      return 0; // exception should already have been set
+      return JS_FALSE; // exception should already have been set
     }
     JS_SetElement(cx, obj, i, &tmp);
   }
   JS_RemoveRoot(cx, &tmp);
-  return 1;
+  return JS_TRUE;
 }
 
 
