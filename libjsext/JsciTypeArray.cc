@@ -2,7 +2,7 @@
 #include "jsci.h"
 
 
-JsciTypeArray::JsciTypeArray(JsciType *type, int length) : JsciType(ARRAYTYPE), member(type), length(length) {
+JsciTypeArray::JsciTypeArray(JsciType *type, int length) : member(type), length(length) {
 }
 
 

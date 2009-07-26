@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciTypeNumeric::JsciTypeNumeric(ffi_type ffit) : JsciType(NUMTYPE), ffiType(ffit) {
+JsciTypeNumeric::JsciTypeNumeric(ffi_type ffit) : ffiType(ffit) {
 }
 
 

@@ -2,7 +2,7 @@
 #include "jsci.h"
 
 
-JsciTypePointer::JsciTypePointer(JsciType *direct) : JsciType(POINTERTYPE), direct(direct) {
+JsciTypePointer::JsciTypePointer(JsciType *direct) : direct(direct) {
 }
 
 
@@ -32,8 +32,9 @@ JSBool JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v) {
     JSObject *obj = JSVAL_TO_OBJECT(v);
 
     if(JS_ObjectIsFunction(cx, obj)) {
-      if(this->direct->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Cannot convert JS function to C non-function pointer type");
-      JsciCallback *cb = JsciCallback::GetForFunction(cx, v, (JsciTypeFunction*) this->direct);
+      JsciTypeFunction* tf = dynamic_cast<JsciTypeFunction*>(this->direct);
+      if(!tf) return JSX_ReportException(cx, "Cannot convert JS function to C non-function pointer type");
+      JsciCallback *cb = JsciCallback::GetForFunction(cx, v, tf);
       *(void **)data = cb->codeptr();
       return JS_TRUE;
     }

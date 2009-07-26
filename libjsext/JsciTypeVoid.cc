@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciTypeVoid::JsciTypeVoid() : JsciType(VOIDTYPE) {
+JsciTypeVoid::JsciTypeVoid() {
 }
 
 

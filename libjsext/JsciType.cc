@@ -1,10 +1,6 @@
 #include "jsci.h"
 
 
-JsciType::JsciType(JSX_TypeID t_id) : type(t_id) {
-}
-
-
 JsciType::~JsciType() {
 }
 

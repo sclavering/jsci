@@ -35,8 +35,7 @@ version=@PACKAGE_VERSION@
 JSX_SHARED_FLAGS = $(JSAPI_FLAGS) -Dsysconfdir=\"$(sysconfdir)\" -I../js/src -Dlibdir=\"$(libdir)\"
 
 CFLAGS	= -Wall -O3 $(JSX_SHARED_FLAGS) $(XCFLAGS)
-CXXFLAGS = -Wall -O3 $(JSX_SHARED_FLAGS) -fno-exceptions -fno-rtti
-LFLAGS	= 
+CXXFLAGS = -Wall -O3 $(JSX_SHARED_FLAGS) -fno-exceptions
 LDFLAGS	= -L../js/src/Linux_All_OPT.OBJ
 
 all:	jsext

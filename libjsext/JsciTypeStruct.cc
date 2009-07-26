@@ -12,12 +12,14 @@ ffi_type *JsciTypeStruct::GetFFIType() {
     for(int i = 0; i != this->nMember; ++i) {
       int al = 1;
       JsciType *memb = this->member[i].membertype;
-      while(memb->type == ARRAYTYPE) {
-        al *= ((JsciTypeArray *) memb)->length;
-        memb = ((JsciTypeArray *) memb)->member;
+      JsciTypeArray *ta;
+      while((ta = dynamic_cast<JsciTypeArray*>(memb))) {
+        al *= ta->length;
+        memb = ta->member;
       }
-      if(memb->type == BITFIELDTYPE) {
-        int length = ((JsciTypeBitfield *) memb)->length;
+      JsciTypeBitfield *tb = dynamic_cast<JsciTypeBitfield*>(memb);
+      if(tb) {
+        int length = tb->length;
         if(bitsused && bitsused + length < 8) {
           al = 0;
         } else {
@@ -43,12 +45,14 @@ ffi_type *JsciTypeStruct::GetFFIType() {
       int al = 1;
       ffi_type *t;
       JsciType *memb = this->member[i].membertype;
-      while(memb->type == ARRAYTYPE) {
-        al *= ((JsciTypeArray *) memb)->length;
-        memb = ((JsciTypeArray *) memb)->member;
+      JsciTypeArray *ta;
+      while((ta = dynamic_cast<JsciTypeArray*>(memb))) {
+        al *= ta->length;
+        memb = ta->member;
       }
-      if(memb->type == BITFIELDTYPE) {
-        int length = ((JsciTypeBitfield *) memb)->length;
+      JsciTypeBitfield *tb = dynamic_cast<JsciTypeBitfield*>(memb);
+      if(tb) {
+        int length = tb->length;
         if(bitsused && bitsused + length < 8) {
           al = 0;
         } else {

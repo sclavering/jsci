@@ -81,8 +81,8 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JsciType *t = jsval_to_JsciType(cx, argv[0]);
   if(!t) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
-  if(t->type != SUTYPE) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
-  JsciTypeStructUnion *tsu = (JsciTypeStructUnion *) t;
+  JsciTypeStructUnion *tsu = dynamic_cast<JsciTypeStructUnion*>(t);
+  if(!tsu) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   if(tsu->nMember) return JSX_ReportException(cx, "Type.replace_members(): the struct/union already has members");
   return tsu->ReplaceMembers(cx, JSVAL_TO_OBJECT(argv[0]), argc - 1, &argv[1]);
 }

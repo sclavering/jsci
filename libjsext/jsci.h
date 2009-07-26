@@ -10,22 +10,8 @@ Our JavaScript <-> C interface, using libffi.
 #include <ffi.h>
 #include "util.h"
 
-
-enum JSX_TypeID {
-  NUMTYPE,
-  FUNCTIONTYPE,
-  SUTYPE,
-  VOIDTYPE,
-  POINTERTYPE,
-  ARRAYTYPE,
-  BITFIELDTYPE
-};
-
 // We store an instance of this, or a subclass, inside each js Type object
 struct JsciType {
-  enum JSX_TypeID type;
-
-  JsciType(JSX_TypeID);
   virtual ~JsciType();
 
   virtual JSBool CtoJS(JSContext *cx, char *data, jsval *rval) = 0;

@@ -63,7 +63,8 @@ static JSBool Pointer__new(JSContext *cx, JSObject *origobj, uintN argc, jsval *
 
   JSBool isFunc = JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]));
   // Accept both function type and pointer-to-function type
-  if(isFunc && t->type == POINTERTYPE) t = ((JsciTypePointer*) t)->direct;
+  JsciTypePointer* tp = dynamic_cast<JsciTypePointer*>(t);
+  if(isFunc && t) t = tp->direct;
 
   JsciPointer *ptr = new JsciPointerAlloc(t, t->SizeInBytes());
   if(!WrapPointer(cx, ptr, rval)) return JS_FALSE;
@@ -104,11 +105,9 @@ static JSBool Pointer_proto_setFinalizer(JSContext *cx, JSObject *obj, uintN arg
   if(!arg || !JS_InstanceOf(cx, arg, JSX_GetPointerClass(), NULL)) return JSX_ReportException(cx, "Pointer.prototype.setFinalizer(): argument must be Pointer to a function");
 
   JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, arg);
-  JsciTypeFunction *ft = (JsciTypeFunction *) finptr->type;
+  JsciTypeFunction *tf = dynamic_cast<JsciTypeFunction*>(finptr->type);
 
-  if(ft->type != FUNCTIONTYPE || ft->nParam != 1 || ft->param[0]->type != POINTERTYPE) {
-    return JSX_ReportException(cx, "Wrong function type for finalize property");
-  }
+  if(!tf || tf->nParam != 1 || !dynamic_cast<JsciTypePointer*>(tf->param[0])) return JSX_ReportException(cx, "Pointer.prototype.setFinalizer(): the supplied function isn't of an appropriate type");
 
   ptr->finalize = (void (*)(void *)) finptr->ptr;
 
@@ -144,11 +143,8 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
 
-  if(!ptr->type->type == POINTERTYPE) return JS_FALSE; // should be impossible
-
-  if(ptr->type->type != SUTYPE) return JSX_ReportException(cx, "Pointer.prototype.field(): must only be called on pointers to struct or union types");
-
-  JsciTypeStructUnion *sutype = (JsciTypeStructUnion *) ptr->type;
+  JsciTypeStructUnion *sutype = dynamic_cast<JsciTypeStructUnion*>(ptr->type);
+  if(!sutype) return JSX_ReportException(cx, "Pointer.prototype.field(): must only be called on pointers to struct or union types");
 
   char *myname = JS_GetStringBytes(JSVAL_TO_STRING(argv[0]));
 
@@ -160,7 +156,7 @@ static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsva
 
   if(ix == sutype->nMember)
     return JSX_ReportException(cx, "Pointer.prototype.field(): unknown struct/union member: %s", myname);
-  if(sutype->member[ix].membertype->type == BITFIELDTYPE)
+  if(dynamic_cast<JsciTypeBitfield*>(sutype->member[ix].membertype))
     return JSX_ReportException(cx, "Pointer.prototype.field(): requested member is a bitfield: %s", myname);
 
   JsciPointer *newptr = new JsciPointer(sutype->member[ix].membertype, (char*) ptr->ptr + sutype->member[ix].offset / 8);
@@ -186,8 +182,9 @@ static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   // we want the JSObject for the Pointer instance being called, not the "this" js variable (which is probably null)
   obj = JSVAL_TO_OBJECT(JS_ARGV_CALLEE(argv));
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  if(ptr->type->type != FUNCTIONTYPE) return JSX_ReportException(cx, "Cannot call a Pointer instance that isn't a function pointer %x", ptr->type->type);
-  return ((JsciTypeFunction *) ptr->type)->Call(cx, ptr->ptr, argc, argv, rval);
+  JsciTypeFunction *tf = dynamic_cast<JsciTypeFunction*>(ptr->type);
+  if(!tf) return JSX_ReportException(cx, "Tried to call a Pointer instance that isn't a function pointer");
+  return tf->Call(cx, ptr->ptr, argc, argv, rval);
 }
 
 

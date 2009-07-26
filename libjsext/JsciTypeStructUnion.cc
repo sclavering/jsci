@@ -3,7 +3,7 @@
 #include "jsci.h"
 
 
-JsciTypeStructUnion::JsciTypeStructUnion() : JsciType(SUTYPE), member(0), nMember(0), sizeOf(0) {
+JsciTypeStructUnion::JsciTypeStructUnion() : member(0), nMember(0), sizeOf(0) {
 }
 
 
@@ -30,8 +30,9 @@ JSBool JsciTypeStructUnion::CtoJS(JSContext *cx, char *data, jsval *rval) {
       JS_RemoveRoot(cx, &tmp);
       return JS_FALSE; // the exception should already have been set
     }
-    if(mtype.membertype->type == BITFIELDTYPE) {
-      int length = ((JsciTypeBitfield *) mtype.membertype)->length;
+    JsciTypeBitfield *tb = dynamic_cast<JsciTypeBitfield*>(mtype.membertype);
+    if(tb) {
+      int length = tb->length;
       int offset = mtype.offset % 8;
       int mask = ~(-1 << length);
       tmp = INT_TO_JSVAL((JSVAL_TO_INT(tmp) >> offset) & mask);
@@ -57,8 +58,9 @@ JSBool JsciTypeStructUnion::JStoC(JSContext *cx, char *data, jsval v) {
       jsval tmp;
       JS_GetProperty(cx, obj, this->member[i].name, &tmp);
       JsciType *t = this->member[i].membertype;
-      if(t->type == BITFIELDTYPE) {
-        int length = ((JsciTypeBitfield *) t)->length;
+      JsciTypeBitfield *tb = dynamic_cast<JsciTypeBitfield*>(t);
+      if(tb) {
+        int length = tb->length;
         int offset = this->member[i].offset % 8;
         int mask = ~(-1 << length);
         int imask = ~(imask << offset); // xxx imask is undefined!

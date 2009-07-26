@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciTypeFunction::JsciTypeFunction(JsciType *returnType, int nParam) : JsciType(FUNCTIONTYPE), returnType(returnType), nParam(nParam) {
+JsciTypeFunction::JsciTypeFunction(JsciType *returnType, int nParam) : returnType(returnType), nParam(nParam) {
   this->param = new JsciType*[this->nParam];
   this->cif.arg_types = 0;
 }
@@ -23,7 +23,7 @@ ffi_cif *JsciTypeFunction::GetCIF() {
 
   this->cif.arg_types = new ffi_type*[this->nParam];
   for(int i = 0; i != this->nParam; ++i) {
-    if(this->param[i]->type == ARRAYTYPE) {
+    if(dynamic_cast<JsciTypeArray*>(this->param[i])) {
       this->cif.arg_types[i] = &ffi_type_pointer;
     } else {
       this->cif.arg_types[i] = this->param[i]->GetFFIType();
@@ -59,7 +59,7 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
     char *ptr = argbuf;
     for(int i = 0; i != this->nParam; ++i) {
       JsciType *t = this->param[i];
-      if(t->type == ARRAYTYPE) return JSX_ReportException(cx, "C function's parameter %i is of type array.  Make it a pointer, somehow", i);
+      if(dynamic_cast<JsciTypeArray*>(t)) return JSX_ReportException(cx, "C function's parameter %i is of type array.  Make it a pointer, somehow", i);
       if(!t->JStoC(cx, ptr, argv[i])) goto failure;
       argptr[i] = ptr;
       ptr += argsizes[i];
@@ -70,7 +70,7 @@ JSBool JsciTypeFunction::Call(JSContext *cx, void *cfunc, uintN argc, jsval *arg
 
   *rval=JSVAL_VOID;
 
-  if(this->returnType->type != VOIDTYPE) this->returnType->CtoJS(cx, retbuf, rval);
+  if(!dynamic_cast<JsciTypeVoid*>(this->returnType)) this->returnType->CtoJS(cx, retbuf, rval);
 
   ok = JS_TRUE;
 

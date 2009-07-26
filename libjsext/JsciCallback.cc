@@ -65,7 +65,7 @@ void JsciCallback::exec(ffi_cif *cif, void *ret, void **args) {
 
   for(int i = 0; i != type->nParam; ++i) {
     JsciType *t = type->param[i];
-    if(t->type == ARRAYTYPE) return; // xxx why don't we just treat it as a pointer type?
+    if(dynamic_cast<JsciTypeArray*>(t)) return; // xxx why don't we just treat it as a pointer type?
     t->CtoJS(this->cx, (char*) args[i], tmp_argv + i);
   }
 
@@ -75,7 +75,7 @@ void JsciCallback::exec(ffi_cif *cif, void *ret, void **args) {
 
   for(int i = 0; i != type->nParam; ++i) {
     JsciType *t = type->param[i];
-    if(t->type == ARRAYTYPE) return;
+    if(dynamic_cast<JsciTypeArray*>(t)) return;
     if(!t->JStoC(this->cx, (char*) args[i], tmp_argv[i])) return;
   }
 
@@ -85,5 +85,5 @@ void JsciCallback::exec(ffi_cif *cif, void *ret, void **args) {
   }
   delete tmp_argv;
 
-  if(type->returnType->type != VOIDTYPE) type->returnType->JStoC(this->cx, (char*) ret, rval);
+  if(!dynamic_cast<JsciTypeVoid*>(type->returnType)) type->returnType->JStoC(this->cx, (char*) ret, rval);
 }
