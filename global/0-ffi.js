@@ -30,7 +30,6 @@ Type.signed_long_long.toString = function() { return "signed long long"; };
 
 Type.float.toString = function() { return "float"; };
 Type.double.toString = function() { return "double"; };
-Type.long_double.toString = function() { return "long double"; };
 
 Type['void'].toString = function() { return "void"; };
 

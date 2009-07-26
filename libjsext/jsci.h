@@ -46,7 +46,6 @@ struct JsciTypeVoid : JsciType {
 };
 
 struct JsciTypeNumeric : JsciType {
-  int size;
   ffi_type ffiType;
 
   ffi_type *GetFFIType();
@@ -54,10 +53,12 @@ struct JsciTypeNumeric : JsciType {
   int AlignmentInBytes();
 
  protected:
-  JsciTypeNumeric(JSX_TypeID, int size, ffi_type ffit);
+  JsciTypeNumeric(JSX_TypeID, ffi_type ffit);
 };
 
 struct JsciTypeInt : JsciTypeNumeric {
+  int size;
+
   JsciTypeInt(int size, ffi_type);
 
   virtual JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
@@ -67,7 +68,6 @@ struct JsciTypeInt : JsciTypeNumeric {
   JSBool JsToInt(JSContext *cx, jsval v, int *rv);
 };
 
-// extends JsciTypeInt rather than just JsciTypeNumeric so that we can share JStoC(), though doing so is probably wrong
 struct JsciTypeUint : JsciTypeInt {
   JsciTypeUint(int size, ffi_type);
 
@@ -75,13 +75,17 @@ struct JsciTypeUint : JsciTypeInt {
 };
 
 struct JsciTypeFloat : JsciTypeNumeric {
-  JsciTypeFloat(int size, ffi_type);
+  JsciTypeFloat();
 
   JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
   JSBool JStoC(JSContext *cx, char *data, jsval v);
+};
 
- private:
-  JSBool JsToDouble(JSContext *cx, jsval v, jsdouble *rv);
+struct JsciTypeDouble : JsciTypeNumeric {
+  JsciTypeDouble();
+
+  JSBool CtoJS(JSContext *cx, char *data, jsval *rval);
+  JSBool JStoC(JSContext *cx, char *data, jsval v);
 };
 
 struct JsciTypeFunction : JsciType {
@@ -216,7 +220,7 @@ struct JsciCallback {
 
 
 static inline int type_is_char(JsciType *t) {
-  return t->type == INTTYPE && 0 == ((JsciTypeNumeric *) t)->size;
+  return t->type == INTTYPE && 0 == ((JsciTypeInt *) t)->size;
 }
 
 

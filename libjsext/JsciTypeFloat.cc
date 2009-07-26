@@ -1,41 +1,33 @@
 #include "jsci.h"
 
 
-JsciTypeFloat::JsciTypeFloat(int size, ffi_type ffit) : JsciTypeNumeric(FLOATTYPE, size, ffit) {
+JsciTypeFloat::JsciTypeFloat() : JsciTypeNumeric(FLOATTYPE, ffi_type_float) {
 }
 
 
 JSBool JsciTypeFloat::CtoJS(JSContext *cx, char *data, jsval *rval) {
-  jsdouble tmpdouble = 0;
-  switch(this->size) {
-    case 0: tmpdouble = *(float *) data; break;
-    case 1: tmpdouble = *(double *) data; break;
-    default:
-      return JSX_ReportException(cx, "Cannot convert C float of unknown size to a javascript value");
-  }
-  return JS_NewNumberValue(cx, tmpdouble, rval);
+  return JS_NewNumberValue(cx, *(float*) data, rval);
 }
 
 
 JSBool JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v) {
   jsdouble tmpdouble;
-  if(!this->JsToDouble(cx, v, &tmpdouble)) return JS_FALSE;
-  switch(this->size) {
-    case 0:
-      *(float *)data = tmpdouble;
-      return JS_TRUE;
-    case 1:
-      *(double *)data = tmpdouble;
-      return JS_TRUE;
-  }
-  return JSX_ReportException(cx, "Cannot convert JS value to a C float/double");
+  if(!JS_ValueToNumber(cx, v, &tmpdouble)) return JS_FALSE;
+  *(float*)data = tmpdouble;
+  return JS_TRUE;
 }
 
 
-JSBool JsciTypeFloat::JsToDouble(JSContext *cx, jsval v, jsdouble *rv) {
-  if(JSVAL_IS_DOUBLE(v)) { *rv = *JSVAL_TO_DOUBLE(v); return JS_TRUE; }
-  if(JSVAL_IS_INT(v)) { *rv = (jsdouble) JSVAL_TO_INT(v); return JS_TRUE; }
-  if(JSVAL_IS_BOOLEAN(v)) { *rv = v == JSVAL_TRUE ? 1.0 : 0.0; return JS_TRUE; }
-  if(JSVAL_IS_NULL(v)) { *rv = 0; return JS_TRUE; }
-  return JSX_ReportException(cx, "Cannot convert JS value to a C float/double");
+
+JsciTypeDouble::JsciTypeDouble() : JsciTypeNumeric(FLOATTYPE, ffi_type_double) {
+}
+
+
+JSBool JsciTypeDouble::CtoJS(JSContext *cx, char *data, jsval *rval) {
+  return JS_NewNumberValue(cx, *(double*) data, rval);
+}
+
+
+JSBool JsciTypeDouble::JStoC(JSContext *cx, char *data, jsval v) {
+  return JS_ValueToNumber(cx, v, (double*) data);
 }

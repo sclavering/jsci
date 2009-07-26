@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciTypeInt::JsciTypeInt(int size, ffi_type ffit) : JsciTypeNumeric(INTTYPE, size, ffit) {
+JsciTypeInt::JsciTypeInt(int size, ffi_type ffit) : JsciTypeNumeric(INTTYPE, ffit), size(size) {
 }
 
 

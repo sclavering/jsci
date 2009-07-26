@@ -145,12 +145,10 @@ static void init_types(JSContext *cx, JSObject *typeobj) {
   // xxx currently we let 0-ffi.js alias Type.int etc to Type.signed_int, which isn't portable.
   // limits.h has constants we could use to detect this.  char is particularly odd, since for C type checking it'd distinct from both "signed char" and "unsigned char", though always has the same representation as one or other of them.
 
-  WrapType(cx, new JsciTypeFloat(0, ffi_type_float), 0, &tmp);
+  WrapType(cx, new JsciTypeFloat(), 0, &tmp);
   JS_SetProperty(cx, typeobj, "float", &tmp);
-  WrapType(cx, new JsciTypeFloat(1, ffi_type_double), 0, &tmp);
+  WrapType(cx, new JsciTypeDouble(), 0, &tmp);
   JS_SetProperty(cx, typeobj, "double", &tmp);
-  WrapType(cx, new JsciTypeFloat(2, ffi_type_longdouble), 0, &tmp);
-  JS_SetProperty(cx, typeobj, "long_double", &tmp);
 
   sTypeVoid = new JsciTypeVoid;
   WrapType(cx, sTypeVoid, 0, &tmp);
