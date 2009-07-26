@@ -12,8 +12,7 @@ Our JavaScript <-> C interface, using libffi.
 
 
 enum JSX_TypeID {
-  INTTYPE,
-  FLOATTYPE,
+  NUMTYPE,
   FUNCTIONTYPE,
   SUTYPE,
   VOIDTYPE,
@@ -53,7 +52,7 @@ struct JsciTypeNumeric : JsciType {
   int AlignmentInBytes();
 
  protected:
-  JsciTypeNumeric(JSX_TypeID, ffi_type ffit);
+  JsciTypeNumeric(ffi_type ffit);
 };
 
 struct JsciTypeInt : JsciTypeNumeric {

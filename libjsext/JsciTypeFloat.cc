@@ -1,7 +1,7 @@
 #include "jsci.h"
 
 
-JsciTypeFloat::JsciTypeFloat() : JsciTypeNumeric(FLOATTYPE, ffi_type_float) {
+JsciTypeFloat::JsciTypeFloat() : JsciTypeNumeric(ffi_type_float) {
 }
 
 
@@ -19,7 +19,7 @@ JSBool JsciTypeFloat::JStoC(JSContext *cx, char *data, jsval v) {
 
 
 
-JsciTypeDouble::JsciTypeDouble() : JsciTypeNumeric(FLOATTYPE, ffi_type_double) {
+JsciTypeDouble::JsciTypeDouble() : JsciTypeNumeric(ffi_type_double) {
 }
 
 
