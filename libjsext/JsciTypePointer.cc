@@ -23,7 +23,7 @@ JSBool JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v) {
 
   // Copy a string to a void* (same as char* in this context)
   if(JSVAL_IS_STRING(v)) {
-    if(!is_void_or_char(this->direct)) return JSX_ReportException(cx, "Cannot convert JS string to C non-char non-void pointer type");
+    if(this->direct != gTypeVoid && this->direct != gTypeChar) return JSX_ReportException(cx, "Cannot convert JS string to C non-char non-void pointer type");
     *(char **)data = JS_GetStringBytes(JSVAL_TO_STRING(v));
     return JS_TRUE;
   }

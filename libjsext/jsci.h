@@ -180,10 +180,12 @@ struct JsciTypeBitfield : JsciType {
 };
 
 
+extern JsciType *gTypeVoid; // void
+extern JsciType *gTypeChar; // (signed) char
+
+
 JSClass *JSX_GetTypeClass(void);
 JSClass *JSX_GetPointerClass(void);
-
-JsciType *GetVoidType(void); // the C "void" type
 
 
 struct JsciPointer {
@@ -217,16 +219,6 @@ struct JsciCallback {
   void *code;
   void *writeable; // Points to writeable code
 };
-
-
-static inline int type_is_char(JsciType *t) {
-  return t->type == INTTYPE && 0 == ((JsciTypeInt *) t)->size;
-}
-
-
-static inline int is_void_or_char(JsciType *t) {
-  return t->type == VOIDTYPE || type_is_char(t);
-}
 
 
 static inline JSBool WrapPointer(JSContext *cx, JsciPointer *p, jsval *rval) {

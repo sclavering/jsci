@@ -6,7 +6,8 @@
 
 static void Type__finalize(JSContext *cx, JSObject *obj);
 
-static JsciType *sTypeVoid = NULL;
+JsciType *gTypeVoid = NULL;
+JsciType *gTypeChar = NULL;
 // __proto__ for results of Type.function(...) and similar
 static JSObject *s_Type_array_proto = NULL;
 static JSObject *s_Type_bitfield_proto = NULL;
@@ -90,7 +91,7 @@ static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsv
 static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   JsciType *t = jsval_to_JsciType(cx, argv[0]);
   if(!(t || argv[0] == JSVAL_VOID)) return JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
-  return WrapType(cx, new JsciTypePointer(t ? t : sTypeVoid), s_Type_pointer_proto, rval)
+  return WrapType(cx, new JsciTypePointer(t ? t : gTypeVoid), s_Type_pointer_proto, rval)
       && JS_SetReservedSlot(cx, JSVAL_TO_OBJECT(*rval), 0, argv[0]);
 }
 
@@ -113,11 +114,6 @@ static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 }
 
 
-JsciType *GetVoidType(void) {
-  return sTypeVoid;
-}
-
-
 static void init_types(JSContext *cx, JSObject *typeobj) {
   jsval tmp = JSVAL_VOID;
   JS_AddRoot(cx, &tmp);
@@ -132,7 +128,8 @@ static void init_types(JSContext *cx, JSObject *typeobj) {
   JS_SetProperty(cx, typeobj, "unsigned_long", &tmp);
   WrapType(cx, new JsciTypeUint(4, ffi_type_uint64), 0, &tmp);
   JS_SetProperty(cx, typeobj, "unsigned_long_long", &tmp);
-  WrapType(cx, new JsciTypeInt(0, ffi_type_schar), 0, &tmp);
+  gTypeChar = new JsciTypeInt(0, ffi_type_schar);
+  WrapType(cx, gTypeChar, 0, &tmp);
   JS_SetProperty(cx, typeobj, "signed_char", &tmp);
   WrapType(cx, new JsciTypeInt(1, ffi_type_sshort), 0, &tmp);
   JS_SetProperty(cx, typeobj, "signed_short", &tmp);
@@ -150,8 +147,8 @@ static void init_types(JSContext *cx, JSObject *typeobj) {
   WrapType(cx, new JsciTypeDouble(), 0, &tmp);
   JS_SetProperty(cx, typeobj, "double", &tmp);
 
-  sTypeVoid = new JsciTypeVoid;
-  WrapType(cx, sTypeVoid, 0, &tmp);
+  gTypeVoid = new JsciTypeVoid();
+  WrapType(cx, gTypeVoid, 0, &tmp);
   JS_SetProperty(cx, typeobj, "void", &tmp);
 
   JS_RemoveRoot(cx, &tmp);

@@ -7,7 +7,7 @@ JsciTypeArray::JsciTypeArray(JsciType *type, int length) : JsciType(ARRAYTYPE), 
 
 
 JSBool JsciTypeArray::CtoJS(JSContext *cx, char *data, jsval *rval) {
-  if(type_is_char(this->member)) {
+  if(this->member == gTypeChar) {
     // Return a string from a char array
     *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, data, this->length));
     return JS_TRUE;
@@ -39,7 +39,7 @@ JSBool JsciTypeArray::JStoC(JSContext *cx, char *data, jsval v) {
 
   if(JSVAL_IS_STRING(v)) {
       // Copy a string to a char array
-      if(!type_is_char(this->member)) return JSX_ReportException(cx, "Cannot convert JS string to a C array of non-chars");
+      if(this->member != gTypeChar) return JSX_ReportException(cx, "Cannot convert JS string to a C array of non-chars");
       int size = JS_GetStringLength(JSVAL_TO_STRING(v));
       if(size < this->length) {
         memcpy(*(char **)data, JS_GetStringBytes(JSVAL_TO_STRING(v)), size * sizeof(char));

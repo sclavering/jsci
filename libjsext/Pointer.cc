@@ -44,7 +44,7 @@ JSClass * JSX_GetPointerClass(void) {
 static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   int sz = JSVAL_IS_INT(argv[0]) ? JSVAL_TO_INT(argv[0]) : 0;
   if(sz <= 0) return JSX_ReportException(cx, "Pointer.malloc(): argument must be a positive integer number of bytes to allocate");
-  return WrapPointer(cx, new JsciPointerAlloc(GetVoidType(), sz), rval);
+  return WrapPointer(cx, new JsciPointerAlloc(gTypeVoid, sz), rval);
 }
 
 
