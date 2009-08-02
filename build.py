@@ -39,7 +39,7 @@ def build():
   print "ok"
 
   print "Building clib.jswrapper ..."
-  shell('make -C global')
+  clib_wrapper()
   print "ok"
 
 
@@ -77,7 +77,7 @@ def jsx():
 
 
 def clib_wrapper():
-  shell("cd global ; JSEXT_INI='0-makeclib.js' ../jsext > clib.jswrapper");
+  run("JSEXT_INI='wrap_libc.js' ./jsext > global/clib.jswrapper");
 
 
 main()

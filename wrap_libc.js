@@ -1,5 +1,7 @@
 (function() {
-  jsxlib.load.call(this, "0-ffi.js"); // the Makefile calls us from the correct working dir for this to work
+  const JSX_HOME = jsxlib.environment.JSX_HOME;
+  const path = JSX_HOME + '/global/';
+  jsxlib.load.call(this, path + "0-ffi.js");
 
   clib = {};
   clib.chdir = Dl().pointer('chdir', Type['function'](Type.int, [Type.pointer(Type.char)], false, 'cdecl'));
@@ -14,7 +16,6 @@
   clib.popen = Dl().pointer('popen', Type['function'](Type.pointer(FILE), [Type.pointer(Type.char), Type.pointer(Type.char)], false, 'cdecl'));
   clib.pclose = Dl().pointer('pclose', Type['function'](Type.int, [Type.pointer(FILE)], false, 'cdecl'));
 
-  const path = jsxlib.cwd;
   JSEXT1 = { $path: path + '/JSEXT1' };
   JSEXT1.File = load.call(JSEXT1, path + '/JSEXT1/File.js');
   JSEXT1.CParser = load.call(JSEXT1, path + '/JSEXT1/CParser.js');
