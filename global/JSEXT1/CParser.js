@@ -167,7 +167,7 @@ Parser.prototype = {
   Next: function Next(value) {
     const t = this.Peek();
     if(!t) this.ParseError("ran out of tokens");
-    if(value && t != value) this.ParseError("expecting token of value/kind '" + value + "' but got '" + t + "'");
+    if(value && t != value) this.ParseError("expecting token '" + value + "'");
     this._Advance();
     return t;
   },
@@ -175,7 +175,7 @@ Parser.prototype = {
   NextAsKind: function NextAsKind(token_kind) {
     const t = this.Peek();
     if(!t) this.ParseError("ran out of tokens");
-    if(t.tok_kind != token_kind) this.ParseError("expecting token of value/kind " + token_kind + " but got '" + t + "'");
+    if(t.tok_kind != token_kind) this.ParseError("expecting token of kind " + token_kind);
     this._Advance();
     return t;
   },
@@ -490,7 +490,7 @@ Parser.prototype = {
     // struct_or_union_specifier_guts:  IDENTIFIER  |  IDENTIFIER? struct_declaration_list
     // note: we fail parsing "extern struct _IO_FILE *stdin;" in stdio.h without the tk_typedef_name case
     const id = this.NextIfKind(tokens.tk_ident) || this.NextIfKind(tokens.tk_typedef_name);
-    if(!id && !this.PeekIf('{')) this.ParseError("missing '{' or identifier following '" + nodeName + "'");
+    if(!id && !this.PeekIf('{')) this.ParseError("expecting '{' or an identifier");
     return <{ nodeName } id={ id || "" }>{ this.struct_declaration_list() }</{ nodeName }>;
   },
 
@@ -620,7 +620,7 @@ Parser.prototype = {
       il += this.initializer();
       let t = this.Next();
       if(t == '}') break;
-      if(t != ',') this.ParseError("initializer: expected a ',' or '}', but got '" + t + "'");
+      if(t != ',') this.ParseError("initializer: expected a ',' or '}'");
       if(this.PeekIf('}')) break; // handle trailing comma
     }
     return <p>{ il }</p>;
