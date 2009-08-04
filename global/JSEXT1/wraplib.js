@@ -179,6 +179,8 @@ function getInfoFromXML(code, preprocessor_directives) {
 
 
   function dirtype(decl) {
+    decl = decl.basic_type;
+
     // Defined type
     if(decl.dt.length()) return "this['" + decl.dt + "']";
 
@@ -364,7 +366,6 @@ function getInfoFromXML(code, preprocessor_directives) {
 
       for each(var param in declor.pm.d) {
         var param_type = declaration(param, param.*[param.*.length() - 1]);
-        // if we ever care about const types again: param["const"].length() > 0
         params.push(param_type.type);
         if (param_type.type == "Type['void']") isvoid = true;
       }

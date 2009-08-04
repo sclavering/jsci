@@ -410,16 +410,22 @@ Parser.prototype = {
   },
 
   basic_type: function basic_type() {
-    // grammars call this declaration_specifiers and specifier_qualifier_list (though one of those allows storage_class_specifiers, which we hoist to external_definition)
-    // basic_type:  (type_specifier | type_qualifier)+
-    let dss = <></>;
-    while(true) {
-      let t = this.maybe_type_specifier() || this.maybe_type_qualifier();
-      if(!t) break;
-      dss += t;
-    }
-    if(!dss.length()) this.ParseError("basic_type: expected at least one item");
-    return dss;
+    // This takes the places of declaration_specifiers and specifier_qualifier_list in most grammars, which are something like: "(storage_class_specifier| type_specifier | type_qualifier)+".  Instead, we hoist storage_class_specifier to external_definition, and use the more restrictive:
+    // basic_type:  type_qualifier* type_specifier* type_qualifier*
+    const attrs1 = this.type_qualifiers();
+    let ts, tss = <></>;
+    while((ts = this.maybe_type_specifier())) tss += ts;
+    // xxx should we add an implicit "int" here if tss is <></> ?
+    const attrs = this.type_qualifiers(attrs1);
+    if(!tss.length()) this.ParseError("basic_type: expected at least one item");
+    return this.Attrs(attrs, <basic_type>{ tss }</basic_type>);
+  },
+
+  type_qualifiers: function type_qualifiers(initial_set) {
+    // type_qualifiers:  type_qualifier*, but returned as a set rather than XML
+    const s = initial_set || {}; let t;
+    while((t = this.NextIfKind(tokens.tk_type_qualifier))) s[t] = true;
+    return s;
   },
 
   init_declarator_list_optional: function init_declarator_list_optional() {
@@ -533,10 +539,8 @@ Parser.prototype = {
 
   maybe_pointer: function maybe_pointer() {
     // pointer: '*' type_qualifier*
-    if(!this.NextIf('*')) return null;
-    let t, a = <a/>;
-    while((t = this.NextIfKind(tokens.tk_type_qualifier))) a["@" + t] = "true";
-    return a;
+    if(this.NextIf('*')) return this.Attrs(this.type_qualifiers(), <a/>);
+    return null;
   },
 
   maybe_direct_declarator: function direct_declarator() {
@@ -565,11 +569,6 @@ Parser.prototype = {
       break;
     }
     return dd;
-  },
-
-  maybe_type_qualifier: function maybe_type_qualifier() {
-    const t = this.NextIfKind(tokens.tk_type_qualifier);
-    return t ? <{ t }/> : null;
   },
 
   parameter_type_list_CP: function parameter_type_list_CP() {
