@@ -396,28 +396,29 @@ Parser.prototype = {
 
   external_definition: function external_definition() {
     // external_definition:  function_definition  |  typedef  |  declaration
-    // typedef: 'typedef' declaration_specifiers init_declarator_list_optional
-    // declaration:  storage_class_specifiers declaration_specifiers init_declarator_list_optional
-    // function_definition:  storage_class_specifiers declaration_specifiers declarator compound_statement
-    if(this.NextIf('typedef')) return this.RecordTypedef(<d><typedef/>{ this.declaration_specifiers() }{ this.init_declarator_list_optional() }</d>);
+    // typedef: 'typedef' basic_type init_declarator_list_optional
+    // declaration:  storage_class_specifiers basic_type init_declarator_list_optional
+    // function_definition:  storage_class_specifiers basic_type declarator compound_statement
+    if(this.NextIf('typedef')) return this.RecordTypedef(<d><typedef/>{ this.basic_type() }{ this.init_declarator_list_optional() }</d>);
     const scss = {};
     let t;
     while((t = this.NextIfKind(tokens.tk_storage_class_specifier))) scss[t] = true;
-    const ds = this.declaration_specifiers();
+    const ds = this.basic_type();
     const idl = this.Try('init_declarator_list_optional');
     if(idl !== null) return this.Attrs(scss, <d>{ ds }{ idl }</d>);
     return this.Attrs(scss, <fdef>{ ds }{ this.declarator() }{ this.compound_statement() }</fdef>);
   },
 
-  declaration_specifiers: function declaration_specifiers() {
-    // declaration_specifiers:  (type_specifier | type_qualifier)+
+  basic_type: function basic_type() {
+    // grammars call this declaration_specifiers and specifier_qualifier_list (though one of those allows storage_class_specifiers, which we hoist to external_definition)
+    // basic_type:  (type_specifier | type_qualifier)+
     let dss = <></>;
     while(true) {
       let t = this.maybe_type_specifier() || this.maybe_type_qualifier();
       if(!t) break;
       dss += t;
     }
-    if(!dss.length()) this.ParseError("declaration_specifiers: expected at least one item, but encountered '" + this.Peek() + "' instead");
+    if(!dss.length()) this.ParseError("basic_type: expected at least one item");
     return dss;
   },
 
@@ -503,26 +504,14 @@ Parser.prototype = {
   },
 
   struct_declaration: function struct_declaration() {
-    // struct_declaration: specifier_qualifier_list struct_declarator_list? ';'
+    // struct_declaration: basic_type struct_declarator_list? ';'
     // struct_declarator_list:  struct_declarator (',' struct_declarator)*
-    const sql = this.specifier_qualifier_list();
+    const sql = this.basic_type();
     let sdl = <></>;
     if(this.NextIf(';')) return <d>{ sql }</d>;
     do { sdl += this.struct_declarator(); } while(this.NextIf(','));
     this.Next(';');
     return <d>{ sql }{ sdl }</d>;
-  },
-
-  specifier_qualifier_list: function specifier_qualifier_list() {
-    // specifier_qualifier_list: ( type_qualifier | type_specifier )+
-    let sql = <></>;
-    while(true) {
-      let sq = this.maybe_type_qualifier() || this.maybe_type_specifier();
-      if(!sq) break;
-      sql += sq;
-    }
-    if(!sql.length()) this.ParseError("specifier_qualifier_list: coudln't find any type_qualifier or type_specifier");
-    return sql;
   },
 
   struct_declarator: function struct_declarator() {
@@ -600,13 +589,13 @@ Parser.prototype = {
   },
 
   parameter_declaration: function parameter_declaration() {
-    // parameter_declaration: declaration_specifiers declarator?
-    return <d>{ this.declaration_specifiers() }{ this.Try('declarator') || nothing }</d>;
+    // parameter_declaration: basic_type declarator?
+    return <d>{ this.basic_type() }{ this.Try('declarator') || nothing }</d>;
   },
 
   type_name_CP: function type_name_CP() {
-    // type_name_CP: specifier_qualifier_list declarator? ')'
-    const tn = <d>{ this.specifier_qualifier_list() }{ this.PeekIf(')') ? nothing : this.declarator() }</d>;
+    // type_name_CP: basic_type declarator? ')'
+    const tn = <d>{ this.basic_type() }{ this.PeekIf(')') ? nothing : this.declarator() }</d>;
     this.Next(')');
     return tn;
   },
