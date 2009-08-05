@@ -412,20 +412,20 @@ Parser.prototype = {
   basic_type: function basic_type() {
     // This takes the places of declaration_specifiers and specifier_qualifier_list in most grammars, which are something like: "(storage_class_specifier| type_specifier | type_qualifier)+".  Instead, we hoist storage_class_specifier to external_definition, and use the more restrictive:
     // basic_type:  type_qualifier* type_specifier* type_qualifier*
-    const attrs1 = this.type_qualifiers();
-    let ts, tss = <></>;
-    while((ts = this.maybe_type_specifier())) tss += ts;
-    // xxx should we add an implicit "int" here if tss is <></> ?
-    const attrs = this.type_qualifiers(attrs1);
-    if(!tss.length()) this.ParseError("basic_type: expected at least one item");
-    return this.Attrs(attrs, <basic_type>{ tss }</basic_type>);
+    const bt = <basic_type/>;
+    this.type_qualifiers(bt); // "const" typically comes before "int", etc. ...
+    var ts;
+    while((ts = this.maybe_type_specifier())) bt.appendChild(ts);
+    if(!bt.*.length()) this.ParseError("basic_type: expected at least one item")
+    this.type_qualifiers(bt); // ... but can legally come afterward
+    return bt;
   },
 
-  type_qualifiers: function type_qualifiers(initial_set) {
+  type_qualifiers: function type_qualifiers(node) {
     // type_qualifiers:  type_qualifier*, but returned as a set rather than XML
-    const s = initial_set || {}; let t;
-    while((t = this.NextIfKind(tokens.tk_type_qualifier))) s[t] = true;
-    return s;
+    var t;
+    while((t = this.NextIfKind(tokens.tk_type_qualifier))) node['@' + t] = true;
+    return node;
   },
 
   init_declarator_list_optional: function init_declarator_list_optional() {
@@ -531,8 +531,8 @@ Parser.prototype = {
     // declarator:  pointer* direct_declarator  |  pointer+
     // pointer: '*' type_qualifier*
     // xxx the plain pointer case is needed to handle stuff like: "int f(int (*)(int));" (the "(*)" part specifically).  Our yacc grammar doesn't seem to have had such a rule though.
-    let ptrs = <></>;
-    while(this.NextIf('*')) ptrs += this.Attrs(this.type_qualifiers(), <a/>);
+    let p, ptrs = <></>;
+    while(this.NextIf('*')) ptrs += this.type_qualifiers(<a/>);
     const dd0 = this.maybe_direct_declarator(), dd = dd0 || nothing;
     if(!ptrs.length() && !dd0) this.ParseError("declarator: expecting either a pointer or direct_declarator or both");
     return ptrs.length() ? <ptr>{ ptrs }{ dd }</ptr> : dd;
