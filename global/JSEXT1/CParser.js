@@ -529,18 +529,13 @@ Parser.prototype = {
 
   declarator: function declarator() {
     // declarator:  pointer* direct_declarator  |  pointer+
+    // pointer: '*' type_qualifier*
     // xxx the plain pointer case is needed to handle stuff like: "int f(int (*)(int));" (the "(*)" part specifically).  Our yacc grammar doesn't seem to have had such a rule though.
-    let p, ptrs = <></>;
-    while((p = this.maybe_pointer())) ptrs += p;
+    let ptrs = <></>;
+    while(this.NextIf('*')) ptrs += this.Attrs(this.type_qualifiers(), <a/>);
     const dd0 = this.maybe_direct_declarator(), dd = dd0 || nothing;
     if(!ptrs.length() && !dd0) this.ParseError("declarator: expecting either a pointer or direct_declarator or both");
     return ptrs.length() ? <ptr>{ ptrs }{ dd }</ptr> : dd;
-  },
-
-  maybe_pointer: function maybe_pointer() {
-    // pointer: '*' type_qualifier*
-    if(this.NextIf('*')) return this.Attrs(this.type_qualifiers(), <a/>);
-    return null;
   },
 
   maybe_direct_declarator: function direct_declarator() {
