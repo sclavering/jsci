@@ -49,7 +49,7 @@ function jswrapper(fragment) {
   var getters = "";
   for(var i in fragment) {
     var code = fragment[i];
-    if(/^(?:\d+|null|undefined)$/.test(code)) {
+    if(/^(?:-?\d+|null|undefined)$/.test(code)) {
       getters += 'obj[' + uneval(i) + '] = ' + code + ';\n';
     } else {
       getters += 'obj.__defineGetter__(' + uneval(i) + ', function() { return getter_helper.call(obj, ' + uneval(i) + ', ' + uneval(fragment[i]) + '); });\n';
