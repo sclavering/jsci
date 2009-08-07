@@ -265,7 +265,7 @@ function getInfoFromXML(code, preprocessor_directives) {
         }
         prevsym = sm;
       } else {
-        val = liveeval(inner_eval(sm));
+        val = eval_expr(sm);
       }
     }
     if (prevsym !== undefined) {
@@ -295,12 +295,25 @@ function getInfoFromXML(code, preprocessor_directives) {
   }
 
 
-  function inner_eval(expr) {
+  // Evaluate a constant expression.  Typical scenarios are array lengths, and macro constants using shift exprs.
+  function eval_expr(expr) {
     switch(String(expr.name())) {
-      case "s": return '"' + String(expr) + '"'; // string literal
-      case "c": return String(expr); // number or char literal
-      case "id": return sym[expr];
-      case "p": return "(" + inner_eval(expr.*[0]) + ")";
+      case "literal_string": return String(expr);
+      case "literal_char": return String(expr);
+      case "literal_number": {
+        // xxx treat unsigned literals differently, to fix e.g. "#define RLIM_INFINITY ((unsigned long int)(~0UL))"
+        let str = String(expr); str = str.replace(str[1] && str[1] == 'x' ? /[lLuU]+$/ : /[fFlLuU]+$/, '');
+        // We use eval because Number() treats literals with leading 0 as decimal
+        return eval(str);
+      }
+      case "id": {
+        // Some .h files use #define like a typedef, but returning a Type wouldn't work, since its uneval() is useless.
+        let thing = eval(sym[expr]);
+        if(thing instanceof Type) return undefined;
+        return thing;
+      }
+      case "p":
+        return eval_expr(expr.*[0]);
       case "sizeof_type": {
         let decl = expr.*[0];
         let declor = decl[0].*[decl[0].*.length() - 1];
@@ -311,14 +324,27 @@ function getInfoFromXML(code, preprocessor_directives) {
         if(live[expr..id]) return Type.sizeof(live[expr..id].type);
         // assume it's a string
         return Type.sizeof(Type.char) * (String(expr..s).length + 1);
-      case "prefix_op": return expr.@op + inner_eval(expr.*[0]);
-      case "postfix_op": return inner_eval(expr.*[0]) + expr.@op;
-      case "binary_op": return inner_eval(expr.*[0]) + expr.@op + inner_eval(expr.*[1]);
-      case "conditional_op": return inner_eval(expr.*[0]) + "?" + inner_eval(expr.*[1]) + ":" + inner_eval(expr.*[2]);
+      case "prefix_op":
+      case "postfix_op":
+        return eval_unary(expr.@op, eval_expr(expr.*[0]));
+      case "binary_op":
+        return eval(eval_expr(expr.*[0]) + ' ' + expr.@op + ' ' + eval_expr(expr.*[1]));
+      case "conditional_op":
+        return eval_expr(expr.*[0]) ? eval_expr(expr.*[1]) : eval_expr(expr.*[2]);
       case "cast":
-        return inner_eval(expr.*[1]); // evaluate teh thing being casted, ignoring the typecast itself
+        return eval_expr(expr.*[1]); // ignore the cast
     }
-    throw Error("inner_eval called on " + uneval(expr));
+    throw Error("eval_expr called on " + uneval(expr));
+  }
+
+  function eval_unary(op, val) {
+    switch(String(op)) {
+      case "++": return val + 1;
+      case "--": return val - 1;
+      case "-": return -val;
+      case "~": return ~val;
+    }
+    throw Error("eval_unary called on '" + op + "' and " + uneval(val));
   }
 
 
@@ -346,7 +372,7 @@ function getInfoFromXML(code, preprocessor_directives) {
     case 'ix':
       if (declor.*.length()>1) {
         a = "Type.array(";
-        b = "," + eval(inner_eval(declor.*[1])) + ")";
+        b = "," + uneval(eval_expr(declor.*[1])) + ")";
       } else { // x[]
         a = "Type.pointer(";
         b = ")";
@@ -357,8 +383,8 @@ function getInfoFromXML(code, preprocessor_directives) {
       return indir(dirtype, declor.*[0]);
 
     case 'bitfield':
-      if(declor.*.length() == 1) return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[0])) + ")", <id>$</id>);
-      return indir("Type.bitfield(" + dirtype + "," + eval(inner_eval(declor.*[1])) + ")", declor.*[0]);
+      if(declor.*.length() == 1) return indir("Type.bitfield(" + dirtype + "," + uneval(eval_expr(declor.*[0])) + ")", <id>$</id>);
+      return indir("Type.bitfield(" + dirtype + "," + uneval(eval_expr(declor.*[1])) + ")", declor.*[0]);
 
     case 'fd':
       var params=[];
@@ -433,8 +459,8 @@ Tries to coerce a C macro into a JavaScript expression
       }
       try {
         let exml = new CParser(expansion).expr();
-        let v = inner_eval(exml);
-        if(liveeval("this['" + id + "']=" + v) !== undefined) sym[id] = v;
+        let v = eval_expr(exml);
+        if(v !== undefined) sym[id] = uneval(live[id] = v);
       } catch(e) {
 //         print("Error parsing this define:\n  ", thing, "\n", e, "\n", e.stack, "\n\n\n");
       }

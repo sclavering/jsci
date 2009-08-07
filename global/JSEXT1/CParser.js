@@ -246,16 +246,13 @@ Parser.prototype = {
       case tokens.tk_ident:
         return <id>{ tok }</id>;
       case tokens.tk_const_char:
-        return <c>'{ tok }'</c>;
-      case tokens.tk_const_number: {
-        let match = tok.match(/^(.*)([fFlLuU])$/);
-        if(tok[0] != '0' && match) return <c length={ match[2] }>{ match[1] }</c>;
-        return <c>{ tok }</c>;
-      }
+        return <literal_char>{ tok }</literal_char>;
+      case tokens.tk_const_number:
+        return <literal_number>{ tok }</literal_number>;
       case tokens.tk_const_string: {
         let t, str = String(tok);
         while((t = this.NextIfKind(tokens.tk_const_string))) str += t;
-        return <s>{ str }</s>;
+        return <literal_string>{ str }</literal_string>;
       }
     }
     if(tok == '(') {
