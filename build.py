@@ -29,30 +29,17 @@ def clean():
 def build():
   if not os.path.exists(OBJDIR): os.mkdir(OBJDIR)
   if not os.path.isdir(OBJDIR): raise ("build directory %s is not a directory" % OBJDIR)
-
-  print "Building js/ (SpiderMonkey) ..."
   js()
-  print "ok"
-
-  print "Building jsx binaries ..."
   jsx()
-  print "ok"
-
-  print "Building clib.jswrapper ..."
   clib_wrapper()
-  print "ok"
 
 
 
 js_C = ['jsapi', 'jsarena', 'jsarray', 'jsatom', 'jsbool', 'jscntxt', 'jsdate', 'jsdbgapi', 'jsdhash', 'jsdtoa', 'jsemit', 'jsexn', 'jsfun', 'jsgc', 'jshash', 'jsinterp', 'jsinvoke', 'jsiter', 'jslock', 'jslog2', 'jslong', 'jsmath', 'jsnum', 'jsobj', 'jsopcode', 'jsparse', 'jsprf', 'jsregexp', 'jsscan', 'jsscope', 'jsscript', 'jsstr', 'jsutil', 'jsxdrapi', 'jsxml', 'prmjtime']
 
-js_CFLAGS = '-Wall -Wno-format -MMD -Os -UDEBUG -DXP_UNIX -DSVR4 -DSYSV -D_BSD_SOURCE -DPOSIX_SOURCE -I' + OBJDIR
+js_CFLAGS = '-Wall -Wno-format -Os -UDEBUG -DXP_UNIX -DSVR4 -DSYSV -D_BSD_SOURCE -DPOSIX_SOURCE -I' + OBJDIR
 
 def js():
-  # shell('make -C js/src -f Makefile.shiny', silent = False)
-  print "Creating jsautokw.h" 
-  #   run('gcc -o %s/jskwgen.o %s %s/jskwgen.c' % (OBJDIR, CFLAGS, OBJDIR))
-  #   gcc -o $(OBJDIR)/jskwgen $(CFLAGS) $(LDFLAGS) $(OBJDIR)/jskwgen.o
   run('gcc -o %s/jskwgen %s %s/jskwgen.c' % (OBJDIR, js_CFLAGS, JS_SRC_DIR))
   run('%s/jskwgen %s/jsautokw.h' % (OBJDIR, OBJDIR))
   # build jsautocfg.h
