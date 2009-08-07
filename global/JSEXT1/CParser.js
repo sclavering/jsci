@@ -104,8 +104,9 @@ function ExprTreeNode(op, prec, l, r) {
   this.op = op; this.prec = prec; this.l = l; this.r = r;
 }
 ExprTreeNode.prototype = {
+  _leftassoc: { '-': true, '/': true, '%': true },
   addR: function(op, prec, e) {
-    if(prec < this.prec) return new ExprTreeNode(op, prec, this, e);
+    if(prec < this.prec || (prec == this.prec && this._leftassoc[this.op])) return new ExprTreeNode(op, prec, this, e);
     // higher precedence, so insert into our right branch
     this.r = this.r.addR(op, prec, e);
     return this;
