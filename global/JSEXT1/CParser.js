@@ -118,15 +118,23 @@ ExprTreeNode.prototype = {
 
 
 
-function Parser(srccode) {
+function Parser() {
   this._lexer_re = new RegExp(lexer_re);
-  this._srccode = srccode;
   this.preprocessor_directives = [];
   this._typedefs = {}; // a set.  lexing C requires tracking typedefs to disambiguate parts of the grammar
-  this._nexttok = 0;
+  this._srccode = null;
+  this._nexttok = null;
 }
 
 Parser.prototype = {
+  Parse: function(code, grammar_rule) {
+    this._srccode = code;
+    this._lexer_re.lastIndex = 0;
+    this._nexttok = null;
+    return this[grammar_rule || 'translation_unit']();
+  },
+
+
   // lexer methods
 
   LexerPos: function() {

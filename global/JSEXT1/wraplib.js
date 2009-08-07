@@ -2,9 +2,9 @@
 
 return function(filename) {
   const srccode = runcpp(filename);
-  const parser = new CParser(srccode);
-  const xml = parser.translation_unit();
-  const parsed = getInfoFromXML(xml, parser.preprocessor_directives);
+  const parser = new CParser();
+  const xml = parser.Parse(srccode);
+  const parsed = getInfoFromXML(xml, parser);
   return jswrapper(parsed);
 };
 
@@ -83,7 +83,7 @@ To actually call a function or read/write a global variable, the library it is f
  - #pragma JSEXT dl main
     Try resolving symbols in the main program binary.  This can be used for libc, the SpiderMonkey API, etc.
 */
-function getInfoFromXML(code, preprocessor_directives) {
+function getInfoFromXML(code, parser) {
   const live = {}; // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
   const sym = {};  // Contains symbols
   const su = {};   // Contains declarations of structs and unions
@@ -137,7 +137,7 @@ function getInfoFromXML(code, preprocessor_directives) {
 
 
   function loaddls() {
-    for each(var pragma in preprocessor_directives) {
+    for each(var pragma in parser.preprocessor_directives) {
       var match = pragma.match(/^#pragma[ \t]+JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
       if(!match) continue;
       var id = 'dl ' + (ndl++);
@@ -447,7 +447,7 @@ Tries to coerce a C macro into a JavaScript expression
 
 
   function allmacros() {
-    for each(var thing in preprocessor_directives) {
+    for each(var thing in parser.preprocessor_directives) {
       let m = thing.match(/^#define[ \t]+([^ \t]+)[ \t]+(.*)\s*$/);
       if(!m) continue;
       let id = m[1], expansion = m[2];
@@ -458,7 +458,7 @@ Tries to coerce a C macro into a JavaScript expression
         continue;
       }
       try {
-        let exml = new CParser(expansion).expr();
+        let exml = parser.Parse(expansion, 'expr');
         let v = eval_expr(exml);
         if(v !== undefined) sym[id] = uneval(live[id] = v);
       } catch(e) {
