@@ -1,3 +1,11 @@
+/*
+pseudo_string = encodeUTF8(string [, modified])
+
+Takes a normal js string (i.e. UTF16), converts it to UTF8, and then returns it as a javascript string where each UTF8 has been padded out to a 16bit character.  (The ffi layer discards the high bytes of strings, so this ultimately does the right thing for sending UTF8 strings to C code, including outputting text.)
+
+If the optional |modified| argument is |true|, any zero characters in the input string are encoded as 0xc0 0x80 to avoid null bytes in the eventual C string (decodeUTF8() will automatically undo this transformation).
+*/
+
 #include <jsapi.h>
 
 static JSBool encodeUTF8(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {

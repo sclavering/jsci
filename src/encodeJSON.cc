@@ -1,3 +1,23 @@
+/*
+encodeJSON(val [, modified])
+
+Returns a JSON string representing val.
+
+If the optional _modified_ argument is given and is true, the encodeJSON will only escape quotes, backslashes, newlines, linefeeds and zero characters in strings.  This reduces the overhead of transporting 8-bit binary data over an 8-bit transport channel from 56% to 3.5%.  Any JSON decoder should still decode the strings correctly.
+
+Overhead
+---
+
+<table>
+<tr><th></th><th>standard JSON</th><th>modified JSON</th><th>standard JSON + encodeUTF8</th><th>modified JSON + encodeUTF8</th><th>standard JSON + encodeBase64</th><th>modified JSON + encodeBase64</th></tr>
+<tr><th>8-bit binary data<br/>8-bit transport channel</th><td>56%</td><td>3.5%</td><td>106%</td><td>53%</td><td>114%</td><td>41%</td></tr>
+<tr><th>16-bit binary data<br/>8-bit transport channel</th><td>n/a</td><td>n/a</td><td>48%</td><td>48%</td><td>n/a</td><td>n/a</td></tr>
+<tr><th>16-bit binary data<br/>16-bit transport channel</th><td>0.2%</td><td>0.01%</td><td>197%</td><td>197%</td><td>n/a</td><td>n/a</td></tr>
+</table>
+
+Note: The output from encodeBase64 is 7-bit data, and passes unchanged through encodeUTF8.
+*/
+
 #include <jsapi.h>
 #include <jsobj.h>
 #include <stdio.h>

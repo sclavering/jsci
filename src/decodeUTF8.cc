@@ -1,3 +1,9 @@
+/*
+str = decodeUTF8(pseudo_str)
+
+Javascript strings are supposed to be UTF16, but when the ffi layer converts a C string to a javascript one, it just pads each byte out with a high zero byte.  This function takes such a string, treats it as UTF8, ignoring the padding, and converts it to a proper UTF16 string.
+*/
+
 #include <jsapi.h>
 
 static JSBool decodeUTF8(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {

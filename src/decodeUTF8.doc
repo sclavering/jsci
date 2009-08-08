@@ -1,4 +1,0 @@
-    str2 = decodeUTF8 (str)
-
-The decodeUTF8 function computes a new version of a string in which certain two- and three- byte
-sequences are replaced by a single 16-bit output character.
