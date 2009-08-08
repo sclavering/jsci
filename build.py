@@ -17,7 +17,7 @@ else:
   raise "We only support building on/for Darwin and Linux, not '%s'" % os_arch
 
 
-setup(dirs = ['.', 'libjsext', 'global', OBJDIR, JS_SRC_DIR])
+setup(dirs = ['.', 'src', 'global', OBJDIR, JS_SRC_DIR])
 
 
 def clean():
@@ -51,7 +51,7 @@ jsx_CC = ['jsext', 'Dl', 'Pointer', 'Type', 'clib', 'encodeJSON', 'decodeJSON', 
 
 def jsx():
   flags = "-Wall -O3 -DXP_UNIX -I%s -I%s" % (OBJDIR, JS_SRC_DIR)
-  for s in jsx_CC: run("g++ -x c++ -c %s -fno-exceptions libjsext/%s.cc -o %s/%s.o" % (flags, s, OBJDIR, s))
+  for s in jsx_CC: run("g++ -x c++ -c %s -fno-exceptions src/%s.cc -o %s/%s.o" % (flags, s, OBJDIR, s))
 
 
 def link():
