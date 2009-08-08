@@ -6,7 +6,7 @@ from fabricate import *
 import os
 os_arch = os.uname()[0] # "Darwin" or "Linux"
 OBJDIR = 'build-' + os_arch
-JS_SRC_DIR = 'js/src/'
+JS_SRC_DIR = 'spidermonkey18'
 JS_OS_CFLAGS = ""
 if os_arch == "Linux":
   JS_OS_CFLAGS += " -DHAVE_LOCALTIME_R"
