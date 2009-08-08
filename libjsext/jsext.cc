@@ -45,8 +45,6 @@ jsval make_encodeUTF8(JSContext *cx);
 jsval make_decodeUTF8(JSContext *cx);
 jsval make_encodeJSON(JSContext *cx);
 jsval make_decodeJSON(JSContext *cx);
-jsval make_encodeBase64(JSContext *cx);
-jsval make_decodeBase64(JSContext *cx);
 jsval make_stringifyHTML(JSContext *cx);
 }
 
@@ -126,10 +124,6 @@ static JSBool make_jsxlib(JSContext *cx, JSObject *obj) {
   JS_SetProperty(cx, argobj, "encodeJSON", &tmp);
   tmp = make_decodeJSON(cx);
   JS_SetProperty(cx, argobj, "decodeJSON", &tmp);
-  tmp = make_encodeBase64(cx);
-  JS_SetProperty(cx, argobj, "encodeBase64", &tmp);
-  tmp = make_decodeBase64(cx);
-  JS_SetProperty(cx, argobj, "decodeBase64", &tmp);
   tmp = make_stringifyHTML(cx);
   JS_SetProperty(cx, argobj, "stringifyHTML", &tmp);
   char cwd[1024];

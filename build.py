@@ -50,7 +50,7 @@ def js():
 
 
 
-jsx_C = ['clib', 'encodeJSON', 'decodeJSON', 'encodeUTF8', 'decodeUTF8', 'encodeBase64', 'decodeBase64']
+jsx_C = ['clib', 'encodeJSON', 'decodeJSON', 'encodeUTF8', 'decodeUTF8']
 
 jsx_CC = ['jsext', 'Dl', 'Pointer', 'Type', 'stringifyHTML', 'JsciType', 'JsciTypeVoid', 'JsciTypeNumeric', 'JsciTypeInt', 'JsciTypeUint', 'JsciTypeFloat', 'JsciTypePointer', 'JsciTypeStructUnion', 'JsciTypeStruct', 'JsciTypeUnion', 'JsciTypeBitfield', 'JsciTypeArray', 'JsciTypeFunction', 'JsciPointer', 'JsciPointerAlloc', 'JsciCallback']
 

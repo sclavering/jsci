@@ -13,8 +13,6 @@
     decodeUTF8: jsxlib.decodeUTF8,
     encodeJSON: jsxlib.encodeJSON,
     decodeJSON: jsxlib.decodeJSON,
-    encodeBase64: jsxlib.encodeBase64,
-    decodeBase64: jsxlib.decodeBase64,
   };
 
   const ActiveDirectory = JSEXT1.ActiveDirectory = load.call(JSEXT1, path + 'JSEXT1/ActiveDirectory.js');
