@@ -60,7 +60,7 @@ static JSBool decodeUTF8(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
 
   p=ptr;
 
-  str=JS_malloc(cx, sizeof(jschar)*length);
+  str = (jschar*) JS_malloc(cx, sizeof(jschar) * length);
   s=str;
 
   while (p < end) {
@@ -104,6 +104,7 @@ static JSBool decodeUTF8(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
 }
 
 
+extern "C"
 jsval make_decodeUTF8(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, decodeUTF8, 0, 0, 0, 0);
   if(!jsfun) return JS_FALSE;

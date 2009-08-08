@@ -3,7 +3,6 @@
 from fabricate import *
 
 
-
 import os
 os_arch = os.uname()[0] # "Darwin" or "Linux"
 OBJDIR = 'build-' + os_arch
@@ -18,7 +17,6 @@ else:
   raise "We only support building on/for Darwin and Linux, not '%s'" % os_arch
 
 
-
 setup(dirs = ['.', 'libjsext', 'global', OBJDIR, JS_SRC_DIR])
 
 
@@ -31,8 +29,8 @@ def build():
   if not os.path.isdir(OBJDIR): raise ("build directory %s is not a directory" % OBJDIR)
   js()
   jsx()
+  link()
   clib_wrapper()
-
 
 
 js_C = ['jsapi', 'jsarena', 'jsarray', 'jsatom', 'jsbool', 'jscntxt', 'jsdate', 'jsdbgapi', 'jsdhash', 'jsdtoa', 'jsemit', 'jsexn', 'jsfun', 'jsgc', 'jshash', 'jsinterp', 'jsinvoke', 'jsiter', 'jslock', 'jslog2', 'jslong', 'jsmath', 'jsnum', 'jsobj', 'jsopcode', 'jsparse', 'jsprf', 'jsregexp', 'jsscan', 'jsscope', 'jsscript', 'jsstr', 'jsutil', 'jsxdrapi', 'jsxml', 'prmjtime']
@@ -49,18 +47,16 @@ def js():
   for s in js_C: run('gcc -c %s -o %s/%s.o %s/%s.c' % (js_CFLAGS, OBJDIR, s, JS_SRC_DIR, s))
 
 
-
-jsx_C = ['clib', 'encodeJSON', 'decodeJSON', 'encodeUTF8', 'decodeUTF8']
-
-jsx_CC = ['jsext', 'Dl', 'Pointer', 'Type', 'stringifyHTML', 'JsciType', 'JsciTypeVoid', 'JsciTypeNumeric', 'JsciTypeInt', 'JsciTypeUint', 'JsciTypeFloat', 'JsciTypePointer', 'JsciTypeStructUnion', 'JsciTypeStruct', 'JsciTypeUnion', 'JsciTypeBitfield', 'JsciTypeArray', 'JsciTypeFunction', 'JsciPointer', 'JsciPointerAlloc', 'JsciCallback']
+jsx_CC = ['jsext', 'Dl', 'Pointer', 'Type', 'clib', 'encodeJSON', 'decodeJSON', 'encodeUTF8', 'decodeUTF8', 'stringifyHTML', 'JsciType', 'JsciTypeVoid', 'JsciTypeNumeric', 'JsciTypeInt', 'JsciTypeUint', 'JsciTypeFloat', 'JsciTypePointer', 'JsciTypeStructUnion', 'JsciTypeStruct', 'JsciTypeUnion', 'JsciTypeBitfield', 'JsciTypeArray', 'JsciTypeFunction', 'JsciPointer', 'JsciPointerAlloc', 'JsciCallback']
 
 def jsx():
   flags = "-Wall -O3 -DXP_UNIX -I%s -I%s" % (OBJDIR, JS_SRC_DIR)
-  for s in jsx_C:  run("gcc -c %s libjsext/%s.c -o %s/%s.o" % (flags, s, OBJDIR, s))
-  for s in jsx_CC: run("g++ -c %s -fno-exceptions libjsext/%s.cc -o %s/%s.o" % (flags, s, OBJDIR, s))
-  js_objects = ' '.join([OBJDIR + '/' + s + '.o' for s in js_C])
-  jsx_objects = ' '.join([OBJDIR + '/' + s + '.o' for s in jsx_C + jsx_CC])
-  run('g++ -lm -pthread -rdynamic -ldl -lffi -o %s/jsext %s %s' % (OBJDIR, js_objects, jsx_objects))
+  for s in jsx_CC: run("g++ -x c++ -c %s -fno-exceptions libjsext/%s.cc -o %s/%s.o" % (flags, s, OBJDIR, s))
+
+
+def link():
+  objects = ' '.join([OBJDIR + '/' + s + '.o' for s in js_C + jsx_CC])
+  run('g++ -lm -pthread -rdynamic -ldl -lffi -o %s/jsext %s' % (OBJDIR, objects))
 
 
 def clib_wrapper():

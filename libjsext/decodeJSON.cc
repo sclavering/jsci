@@ -571,6 +571,7 @@ static JSBool decodeJSON(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 }
 
 
+extern "C"
 jsval make_decodeJSON(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, decodeJSON, 0, 0, 0, 0);
   if(!jsfun) return JSVAL_VOID;

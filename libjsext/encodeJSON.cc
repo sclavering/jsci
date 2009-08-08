@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include "util.h"
+#include "jsdate.h"
+#include "jsnum.h" // for JSDOUBLE_IS_NaN
 
 struct JSON {
   JSContext *cx;
@@ -20,42 +22,38 @@ struct JSON {
 #define swap(a,b) ((a)^=(b), (b)^=(a), (a)^=(b))
 
 static inline void expand_buf(struct JSON *s, int n) {
-  int len=s->p-s->buf;
-  if (len+n > s->capacity) {
-    s->capacity*=2;
-    if (len+n > s->capacity)
-      s->capacity=len+n;
-    s->buf=JS_realloc(s->cx, s->buf, sizeof(jschar)*s->capacity);
-    s->p=s->buf+len;
+  int len = s->p - s->buf;
+  if(len+n > s->capacity) {
+    s->capacity *= 2;
+    if(len + n > s->capacity) s->capacity = len + n;
+    s->buf = (jschar*) JS_realloc(s->cx, s->buf, sizeof(jschar) * s->capacity);
+    s->p = s->buf + len;
   }
 }
 
 static inline void inflate_buf(struct JSON *s, int n) {
-  int m=n;
-  while (n--)
-    s->p[n]=((char *)s->p)[n];
-  s->p+=m;
+  int m = n;
+  while(n--) s->p[n] = ((char *) s->p)[n];
+  s->p += m;
 }
 
 static inline JSBool value_to_JSON(struct JSON *s);
 
 static inline JSBool check_cycle(struct JSON *s) {
-  int i;
-  jsval v=s->stack[s->recursion-1];
-  for (i=s->recursion-1; i--;) {
-    if (s->stack[i]==v) {
+  jsval v = s->stack[s->recursion - 1];
+  for(int i = s->recursion - 1; i--;) {
+    if(s->stack[i] == v) {
       JSX_ReportException(s->cx, "Object contains cycles");
       return JS_TRUE;
     }
   }
-  s->stacksize+=16;
-  s->stack=JS_realloc(s->cx, s->stack, sizeof(jsval)*s->stacksize);
-
+  s->stacksize += 16;
+  s->stack = (jsval*) JS_realloc(s->cx, s->stack, sizeof(jsval) * s->stacksize);
   return JS_FALSE;
 }
 
 static JSBool array_to_JSON(struct JSON *s) {
-  int i, len, empty=1;
+  int empty=1;
   JSObject *array=JSVAL_TO_OBJECT(s->v);
 
   s->stack[s->recursion]=s->v;
@@ -66,10 +64,10 @@ static JSBool array_to_JSON(struct JSON *s) {
   expand_buf(s, 1);
   *(s->p++)='[';
 
-  if (!JS_GetArrayLength(s->cx, array, &len))
-    return JS_FALSE;
+  jsuint len;
+  if(!JS_GetArrayLength(s->cx, array, &len)) return JS_FALSE;
 
-  for (i=0; i<len; i++) {
+  for(int i = 0; i < len; i++) {
     jschar *before=s->p;
 
     OBJ_GET_PROPERTY(s->cx, array, INT_TO_JSID(i), &s->v);
@@ -87,8 +85,9 @@ static JSBool array_to_JSON(struct JSON *s) {
   if (empty) {
     expand_buf(s, 1);
     *(s->p++)=']';
-  } else
+  } else {
     s->p[-1]=']';
+  }
   return JS_TRUE;
 }
 
@@ -350,8 +349,7 @@ static inline JSBool value_to_JSON(struct JSON *s) {
 
   case JSVAL_DOUBLE:
     tmpdbl=*JSVAL_TO_DOUBLE(s->v);
-    if (isnan(tmpdbl))
-      tmpdbl=0.;
+    if(JSDOUBLE_IS_NaN(tmpdbl)) tmpdbl = 0.;
     tmpint = sprintf((char *)s->p, "%.20lg", tmpdbl);
     inflate_buf(s, tmpint);
     break;
@@ -369,11 +367,11 @@ static JSBool encodeJSON(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
   s.cx=cx;
   s.v=argv[0];
   s.capacity=512;
-  s.buf=s.p=JS_malloc(cx, sizeof(jschar)*s.capacity);
+  s.buf = s.p = (jschar*) JS_malloc(cx, sizeof(jschar) * s.capacity);
   if (!s.buf)
     return JS_FALSE;
 
-  s.stack=JS_malloc(cx, sizeof(jsval)*16);
+  s.stack = (jsval*) JS_malloc(cx, sizeof(jsval) * 16);
   if (!s.stack) {
     JS_free(cx, s.buf);
     return JS_FALSE;
@@ -400,6 +398,7 @@ static JSBool encodeJSON(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 }
 
 
+extern "C"
 jsval make_encodeJSON(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, encodeJSON, 0, 0, 0, 0);
   if(!jsfun) return JS_FALSE;
