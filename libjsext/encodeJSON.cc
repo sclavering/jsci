@@ -398,7 +398,6 @@ static JSBool encodeJSON(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-extern "C"
 jsval make_encodeJSON(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, encodeJSON, 0, 0, 0, 0);
   if(!jsfun) return JS_FALSE;

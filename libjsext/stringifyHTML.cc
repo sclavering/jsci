@@ -335,7 +335,7 @@ static JSBool stringifyHTML(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 }
 
 
-extern "C" jsval make_stringifyHTML(JSContext *cx) {
+jsval make_stringifyHTML(JSContext *cx) {
   JSFunction *f = JS_NewFunction(cx, stringifyHTML, 1, 0, 0, "stringifyHTML");
   if(!f) return JSVAL_VOID;
   JSObject *o = JS_GetFunctionObject(f);

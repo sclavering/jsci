@@ -104,7 +104,6 @@ static JSBool decodeUTF8(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
 }
 
 
-extern "C"
 jsval make_decodeUTF8(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, decodeUTF8, 0, 0, 0, 0);
   if(!jsfun) return JS_FALSE;

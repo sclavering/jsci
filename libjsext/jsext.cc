@@ -40,13 +40,11 @@ extern char **environ;
 jsval make_Type(JSContext *cx, JSObject *glo);
 jsval make_Pointer(JSContext *cx, JSObject *glo);
 jsval make_Dl(JSContext *cx, JSObject *glo);
-extern "C" {
 jsval make_encodeUTF8(JSContext *cx);
 jsval make_decodeUTF8(JSContext *cx);
 jsval make_encodeJSON(JSContext *cx);
 jsval make_decodeJSON(JSContext *cx);
 jsval make_stringifyHTML(JSContext *cx);
-}
 
 static JSBool make_environment_vars_obj(JSContext *cx, jsval *rv);
 
