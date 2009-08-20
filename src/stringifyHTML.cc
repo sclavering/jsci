@@ -67,10 +67,10 @@ static void XMLArrayCursorFinish(JSXMLArrayCursor *cursor) {
 }
 
 
-static void *XMLArrayCursorNext(JSXMLArrayCursor *cursor) {
+static JSXML *XMLArrayCursorNext(JSXMLArrayCursor *cursor) {
   JSXMLArray *array = cursor->array;
   if(!array || cursor->index >= array->length) return NULL;
-  return cursor->root = array->vector[cursor->index++];
+  return (JSXML*) (cursor->root = array->vector[cursor->index++]);
 }
 
 
@@ -90,13 +90,11 @@ static JSString *XMLToXMLString(JSContext *cx, JSXML *xml) {
     case JSXML_CLASS_LIST: {
       JSXMLArrayCursor cursor;
       XMLArrayCursorInit(&cursor, &xml->xml_kids);
-      uint32 i = 0;
       JSXML *kid;
-      while ((kid = (JSXML *) XMLArrayCursorNext(&cursor)) != NULL) {
+      while((kid = XMLArrayCursorNext(&cursor))) {
         JSString *kidstr = XMLToXMLString(cx, kid);
         if (!kidstr) break;
         js_AppendJSString(&sb, kidstr);
-        ++i;
       }
       XMLArrayCursorFinish(&cursor);
       if (kid) goto list_out;
@@ -157,7 +155,7 @@ static void AppendAllAttributes(JSContext *cx, JSXML *xml, JSStringBuffer *sb) {
   JSXMLArrayCursor cursor;
   XMLArrayCursorInit(&cursor, &xml->xml_attrs);
   JSXML *attr;
-  while((attr = (JSXML *) XMLArrayCursorNext(&cursor)) != NULL) {
+  while((attr = XMLArrayCursorNext(&cursor))) {
     JSBool isbool = is_boolean_attribute(cx, attr->name->localName);
     JSBool isfalsey = boolean_attribute_is_falsey(cx, attr->xml_value);
     if(!isbool || !isfalsey) {
@@ -174,7 +172,7 @@ static void AppendAllChildren(JSContext *cx, JSXML *xml, JSStringBuffer *sb) {
   JSXMLArrayCursor cursor;
   XMLArrayCursorInit(&cursor, &xml->xml_kids);
   JSXML *kid;
-  while((kid = (JSXML *) XMLArrayCursorNext(&cursor)) != NULL) {
+  while((kid = XMLArrayCursorNext(&cursor))) {
     JSString *kidstr = XMLToXMLString(cx, kid);
     if(!kidstr) break;
     js_AppendJSString(sb, kidstr);
