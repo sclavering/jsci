@@ -28,22 +28,6 @@ static inline JSBool is_in_set(JSContext *cx, JSString *str, JSObject *set) {
 }
 
 
-// pretty sure HTML5 calls these "void elements"
-static inline JSBool is_empty_element(JSContext *cx, JSString *localName) {
-  return is_in_set(cx, localName, empty_tag_names);
-}
-
-
-static inline JSBool is_boolean_attribute(JSContext *cx, JSString *name) {
-  return is_in_set(cx, name, boolean_attribute_names);
-}
-
-
-static inline JSBool boolean_attribute_is_falsey(JSContext *cx, JSString *value) {
-  return is_in_set(cx, value, boolean_attribute_falsey_values);
-}
-
-
 static void XMLArrayCursorInit(JSXMLArrayCursor *cursor, JSXMLArray *array){
   JSXMLArrayCursor *next;
   cursor->array = array;
@@ -125,7 +109,7 @@ static JSString *XMLToXMLString(JSContext *cx, JSXML *xml) {
   AppendAllAttributes(cx, xml, &sb);
 
   js_AppendChar(&sb, '>');
-  if(!is_empty_element(cx, xml->name->localName)) {
+  if(!is_in_set(cx, xml->name->localName, empty_tag_names)) {
     AppendAllChildren(cx, xml, &sb);
     js_AppendCString(&sb, "</");
     js_AppendJSString(&sb, xml->name->localName);
@@ -150,8 +134,8 @@ static void AppendAllAttributes(JSContext *cx, JSXML *xml, JSStringBuffer *sb) {
   XMLArrayCursorInit(&cursor, &xml->xml_attrs);
   JSXML *attr;
   while((attr = XMLArrayCursorNext(&cursor))) {
-    JSBool isbool = is_boolean_attribute(cx, attr->name->localName);
-    JSBool isfalsey = boolean_attribute_is_falsey(cx, attr->xml_value);
+    JSBool isbool = is_in_set(cx, attr->name->localName, boolean_attribute_names);
+    JSBool isfalsey = isbool && is_in_set(cx, attr->xml_value, boolean_attribute_falsey_values);
     if(!isbool || !isfalsey) {
       js_AppendChar(sb, ' ');
       js_AppendJSString(sb, attr->name->localName);
