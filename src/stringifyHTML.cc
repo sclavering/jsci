@@ -14,7 +14,6 @@ static JSString *XMLToXMLString(JSContext *cx, JSXML *xml);
 static void AppendAllAttributes(JSContext *cx, JSXML *xml, JSStringBuffer *sb);
 static void AppendAllChildren(JSContext *cx, JSXML *xml, JSStringBuffer *sb);
 static void AppendAttributeValue(JSContext *cx, JSStringBuffer *sb, JSString *valstr);
-static JSString *MakeXMLCommentString(JSContext *cx, JSStringBuffer *sb, JSString *str);
 
 
 // the objects keys are used as a set.  the members are provided from JS code (it's easier)
@@ -113,13 +112,8 @@ static JSString *XMLToXMLString(JSContext *cx, JSXML *xml) {
     }
 
     case JSXML_CLASS_COMMENT:
-      return MakeXMLCommentString(cx, &sb, xml->xml_value);
-
     case JSXML_CLASS_PROCESSING_INSTRUCTION:
-      JSX_ReportException(cx, "stringifyHTML(): called on an XML processing instruction node");
       return 0;
-
-    default:;
   }
 
   /* After this point, control must flow through label out: to exit. */
@@ -287,39 +281,6 @@ static void AppendAttributeValue(JSContext *cx, JSStringBuffer *sb, JSString *va
 }
 
 
-// takes ownership of sb->base, if sb is non-null, in all cases of success or failure.
-static JSString *MakeXMLCommentString(JSContext *cx, JSStringBuffer *sb, JSString *str) {
-  static const jschar comment_prefix_ucNstr[] = {'<', '!', '-', '-'};
-  static const jschar comment_suffix_ucNstr[] = {'-', '-', '>'};
-  const jschar *prefix = comment_prefix_ucNstr;
-  size_t prefixlength = 4;
-  const jschar *suffix = comment_suffix_ucNstr;
-  size_t suffixlength = 3;
-
-  jschar *bp, *base;
-
-  size_t length = JSSTRING_LENGTH(str);
-  size_t newlength = STRING_BUFFER_OFFSET(sb) + prefixlength + length + suffixlength;
-  bp = base = (jschar *) JS_realloc(cx, sb->base, (newlength + 1) * sizeof(jschar));
-  if (!bp) {
-    js_FinishStringBuffer(sb);
-    return NULL;
-  }
-
-  bp += STRING_BUFFER_OFFSET(sb);
-  js_strncpy(bp, prefix, prefixlength);
-  bp += prefixlength;
-  js_strncpy(bp, JSSTRING_CHARS(str), length);
-  bp += length;
-  js_strncpy(bp, suffix, suffixlength);
-  bp[suffixlength] = 0;
-
-  str = js_NewString(cx, base, newlength);
-  if(!str) free(base);
-  return str;
-}
-
-
 static JSBool stringifyHTML(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   jsval v = argv[0];
   if(!JSVAL_IS_OBJECT(v) || JSVAL_IS_NULL(v)) return JSX_ReportException(cx, "stringifyHTML(): argument should be an XML/XMLList instance, but isn't even an object");
@@ -327,8 +288,8 @@ static JSBool stringifyHTML(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
   if(!OBJECT_IS_XML(cx, o)) return JSX_ReportException(cx, "stringifyHTML: argument should be an XML/XMLList instance, but is of a different object type");
   JSXML *xml = (JSXML *) JS_GetPrivate(cx, o);
   JSString *str = XMLToXMLString(cx, xml);
-  if(!str) return JS_FALSE;
-  *rval = STRING_TO_JSVAL(str);
+  if(str) *rval = STRING_TO_JSVAL(str);
+  else *rval = JS_GetEmptyStringValue(cx);
   return JS_TRUE;
 }
 
