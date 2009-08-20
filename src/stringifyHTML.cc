@@ -96,8 +96,12 @@ static JSString *XMLToXMLString(JSContext *cx, JSXML *xml) {
     }
 
     case JSXML_CLASS_COMMENT:
-    case JSXML_CLASS_PROCESSING_INSTRUCTION:
       return 0;
+
+    // So that stringifyHTML() callers have some way to get raw HTML (e.g. from a database) included within an E4X template
+    case JSXML_CLASS_PROCESSING_INSTRUCTION:
+      // xxx should check ->name->localName first, for "jsx_raw_html" or similar
+      return xml->xml_value;
   }
 
   /* After this point, control must flow through label out: to exit. */
