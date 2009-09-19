@@ -15,10 +15,10 @@
     decodeJSON: jsxlib.decodeJSON,
   };
 
-  const ActiveDirectory = JSEXT1.ActiveDirectory = load.call(JSEXT1, path + 'JSEXT1/ActiveDirectory.js');
-  JSEXT1.os = load.call(JSEXT1, path + 'JSEXT1/os.js'); // ActiveDirectory needs its .stat()
-  ActiveDirectory.call(this, path);
-  ActiveDirectory.call(JSEXT1, JSEXT1.$path);
+  const Module = this.Module = load.call(JSEXT1, path + 'Module.js');
+  JSEXT1.os = load.call(JSEXT1, path + 'JSEXT1/os.js'); // Module needs .dir() .isdir() and .exists()
+  Module(path, this);
+  Module(JSEXT1.$path, JSEXT1);
 
   // For out-of-tree code using the old names.  We can't just use a JSEXT1.js, because it would be ignored
   JSEXT1.__defineGetter__('dir', function() { return JSEXT1.os.dir; });
