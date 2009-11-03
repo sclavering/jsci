@@ -390,48 +390,6 @@ static JSBool parse_array(struct JSON *s) {
 }
 
 
-struct rec {
-  JSContext *cx;
-  JSFunction *fun;
-  JSObject *obj;
-  jsval id;
-  jsval v;
-  jsval tmp;
-};
-
-
-static JSBool recurse(struct rec *r) {
-  if(JSVAL_IS_OBJECT(r->v) && !JSVAL_IS_NULL(r->v)) {
-    JSObject *object=JSVAL_TO_OBJECT(r->v);
-    JSIdArray *id;
-    int len;
-    jsval idval=r->id;
-    jsval v=r->v;
-
-    id=JS_Enumerate(r->cx, object);
-
-    len=id->length;
-
-    for(int i = 0; i < len; i++) {
-      if(!JS_IdToValue(r->cx, id->vector[i], &r->id)) return JS_FALSE;
-      OBJ_GET_PROPERTY(r->cx, object, id->vector[i], &r->v);
-      if(!recurse(r)) return JS_FALSE;
-      OBJ_SET_PROPERTY(r->cx, object, id->vector[i], &r->v);
-    }
-
-    JS_DestroyIdArray(r->cx, id);
-
-    r->v=v;
-    r->id=idval;
-  }
-
-  if(!JS_CallFunction(r->cx, r->obj, r->fun, 2, &r->id, &r->tmp)) return JS_FALSE;
-
-  r->v=r->tmp;
-  return JS_TRUE;
-}
-
-
 static JSBool decodeJSON(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
   if(argc < 1 || !JSVAL_IS_STRING(argv[0])) return JSX_ReportException(cx, "Missing or illegal argument to decodeJSON");
 
