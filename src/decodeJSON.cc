@@ -26,96 +26,75 @@ static JSBool syntaxerror(struct JSON *s) {
 static JSBool parse_array(struct JSON *s);
 static JSBool parse_value(struct JSON *s, jschar end);
 
-static inline int parse_unescape(struct JSON *s) {
-  int val=0;
-  int i;
+static int parse_unescape(struct JSON *s) {
   jschar *p=s->p;
   jschar *start=p;
 
   s->p++; // "
   for (;;) {
     switch (*s->p) {
-    case '\\':
-      s->p++;
-      switch(*(s->p++)) {
-      case '\"':
-	*(p++)='\"';
-	break;
       case '\\':
-	*(p++)='\\';
-	break;
-      case '/':
-      case 'b':
-	*(p++)='/';
-	break;
-      case 'f':
-	*(p++)='\f';
-	break;
-      case 'n':
-	*(p++)='\n';
-	break;
-      case 'r':
-	*(p++)='\r';
-	break;
-      case 't':
-	*(p++)='\t';
-	break;
-      case 'u':
-	val=0;
-	for (i=4; --i;) {
-	  switch(*s->p) {
-	  case '0':
-	  case '1':
-	  case '2':
-	  case '3':
-	  case '4':
-	  case '5':
-	  case '6':
-	  case '7':
-	  case '8':
-	  case '9':
-	    val = val<<4 | (*(s->p)-'0');
-	    s->p++;
-	    break;
-	  case 'a':
-	  case 'b':
-	  case 'c':
-	  case 'd':
-	  case 'e':
-	  case 'f':
-	    val = val<<4 | (*(s->p)-'a'+10);
-	    s->p++;
-	    break;
-	  case 'A':
-	  case 'B':
-	  case 'C':
-	  case 'D':
-	  case 'E':
-	  case 'F':
-	    val = val<<4 | (*(s->p)-'A'+10);
-	    s->p++;
-	    break;
-	  default:
-	    return -1;
-	  }
-	}
-	*(p++)=val;
-	break;
+        s->p++;
+        switch(*(s->p++)) {
+          case '\"':
+            *(p++)='\"';
+            break;
+          case '\\':
+            *(p++)='\\';
+            break;
+          case '/':
+          case 'b':
+            *(p++)='/';
+            break;
+          case 'f':
+            *(p++)='\f';
+            break;
+          case 'n':
+            *(p++)='\n';
+            break;
+          case 'r':
+            *(p++)='\r';
+            break;
+          case 't':
+            *(p++)='\t';
+            break;
+          case 'u': {
+            int val = 0;
+            for(int i = 4; --i; ) {
+              switch(*s->p) {
+              case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+                val = val<<4 | (*(s->p)-'0');
+                s->p++;
+                break;
+              case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+                val = val<<4 | (*(s->p)-'a'+10);
+                s->p++;
+                break;
+              case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+                val = val<<4 | (*(s->p)-'A'+10);
+                s->p++;
+                break;
+              default:
+                return -1;
+              }
+            }
+            *(p++)=val;
+            break;
+          }
+          default:
+            *(p++)=s->p[-1];
+        }
+        break;
+
+      case 0:
+        return -1;
+
+      case '\"':
+        s->p++;
+        return p - start;
 
       default:
-	*(p++)=s->p[-1];
-      }
-      break;
-
-    case 0:
-      return -1;
-
-    case '\"':
-      s->p++;
-      return p-start;
-
-    default:
-      *(p++)=*(s->p++);
+        *(p++) = *(s->p++);
     }
   }
 }
@@ -124,7 +103,7 @@ static JSBool parse_string(struct JSON *s) {
   jschar *start=s->p;
   int len=parse_unescape(s);
   JSString *ret;
-  
+
   if (len==-1)
     return syntaxerror(s);
 
@@ -163,42 +142,42 @@ static JSBool parse_object(struct JSON *s) {
       name=s->p;
       namelen=parse_unescape(s);
       if (namelen==-1)
-	return JS_FALSE;
-      
+        return JS_FALSE;
+
       // scan for colon
       while (*s->p!=':') {
-	switch(*(s->p++)) {
-	case ' ':
-	case '\t':
-	case '\n':
-	case '\r':
-	  break;
-	default:
-	  return syntaxerror(s);
-	}
+        switch(*(s->p++)) {
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+          break;
+        default:
+          return syntaxerror(s);
+        }
       }
       s->p++;
 
       s->vp=&prop;
       if (!parse_value(s, '}'))
-	return JS_FALSE;
+        return JS_FALSE;
       if (!JS_SetUCProperty(s->cx, object, name, namelen, &prop))
-	return JS_FALSE;
+        return JS_FALSE;
 
       // Scan for comma
-      
+
       while (*s->p!=',') {
-	switch(*(s->p++)) {
-	case '}':
-	  return JS_TRUE;
-	case ' ':
-	case '\t':
-	case '\n':
-	case '\r':
-	  break;
-	default:
-	  return syntaxerror(s);
-	}
+        switch(*(s->p++)) {
+        case '}':
+          return JS_TRUE;
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+          break;
+        default:
+          return syntaxerror(s);
+        }
       }
       s->p++;
       break;
@@ -290,24 +269,23 @@ static JSBool parse_number(struct JSON *s) {
       case '7':
       case '8':
       case '9':
-	n=n*10+(*s->p-'0');
-	s->p++;
-	break;
+        n=n*10+(*s->p-'0');
+        s->p++;
+        break;
 
       case '.':
       case 'e':
       case 'E':
-	goto intend;
-	
+        goto intend;
+
       default:
-	goto end;
+        goto end;
       }
     }
   default:
     return syntaxerror(s);
   }
 
-  
  intend:
   switch(*s->p) {
   case '.':
@@ -402,17 +380,17 @@ static JSBool parse_value(struct JSON *s, jschar end) {
     switch(*s->p) {
     case ',':
       if (end!=0) {
-	*s->vp=JSVAL_VOID;
-	return JS_TRUE;
+        *s->vp=JSVAL_VOID;
+        return JS_TRUE;
       } else
-	return syntaxerror(s);
+        return syntaxerror(s);
 
     case ']':
     case '}':
       if (*s->p==end) {
-	return JS_TRUE;
+        return JS_TRUE;
       } else
-	return syntaxerror(s);
+        return syntaxerror(s);
 
     case '"':
       return parse_string(s);
@@ -470,9 +448,9 @@ static JSBool parse_array(struct JSON *s) {
 
   for (;;) {
     if ((*s->p)!=' ' &&
-	(*s->p)!='\t' &&
-	(*s->p)!='\n' &&
-	(*s->p)!='\r') break;
+        (*s->p)!='\t' &&
+        (*s->p)!='\n' &&
+        (*s->p)!='\r') break;
     s->p++;
   }
 
@@ -493,14 +471,14 @@ static JSBool parse_array(struct JSON *s) {
     while (*s->p!=',') {
       switch(*(s->p++)) {
       case ']':
-	return JS_TRUE;
+        return JS_TRUE;
       case ' ':
       case '\t':
       case '\n':
       case '\r':
-	break;
+        break;
       default:
-	return syntaxerror(s);
+        return syntaxerror(s);
       }
     }
     s->p++;
@@ -520,11 +498,9 @@ struct rec {
 };
 
 static JSBool recurse(struct rec *r) {
-  if (JSVAL_IS_OBJECT(r->v) &&
-      !JSVAL_IS_NULL(r->v)) {
+  if(JSVAL_IS_OBJECT(r->v) && !JSVAL_IS_NULL(r->v)) {
     JSObject *object=JSVAL_TO_OBJECT(r->v);
     JSIdArray *id;
-    int i;
     int len;
     jsval idval=r->id;
     jsval v=r->v;
@@ -532,18 +508,18 @@ static JSBool recurse(struct rec *r) {
     id=JS_Enumerate(r->cx, object);
 
     len=id->length;
-    
-    for (i=0; i<len; i++) {
+
+    for(int i = 0; i < len; i++) {
       if (!JS_IdToValue(r->cx, id->vector[i], &r->id))
-	return JS_FALSE;
+        return JS_FALSE;
 
       OBJ_GET_PROPERTY(r->cx, object, id->vector[i], &r->v);
 
       if (!recurse(r))
-	return JS_FALSE;
+        return JS_FALSE;
 
       OBJ_SET_PROPERTY(r->cx, object, id->vector[i], &r->v);
-    }    
+    }
 
     JS_DestroyIdArray(r->cx, id);
 
