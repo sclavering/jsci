@@ -559,21 +559,17 @@ static JSBool recurse(struct rec *r) {
 }
 
 static JSBool decodeJSON(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  struct JSON s;
-
-  if (argc<1 || !JSVAL_IS_STRING(argv[0])) {
-    JSX_ReportException(cx, "Missing or illegal argument to decodeJSON");
+  if(argc < 1 || !JSVAL_IS_STRING(argv[0])) {
+    return JSX_ReportException(cx, "Missing or illegal argument to decodeJSON");
   }
 
+  struct JSON s;
   s.vp=rval;
   s.cx=cx;
   s.p=JS_GetStringChars(JS_ValueToString(cx, argv[0]));
   s.start=s.p;
 
-  if (!parse_value(&s, 0))
-    return JS_FALSE;
-
-  return JS_TRUE;
+  return parse_value(&s, 0);
 }
 
 
