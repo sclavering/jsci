@@ -24,7 +24,7 @@ static JSBool syntaxerror(struct JSON *s) {
 }
 
 static JSBool parse_array(struct JSON *s);
-static inline JSBool parse_value(struct JSON *s, jschar end);
+static JSBool parse_value(struct JSON *s, jschar end);
 
 static inline int parse_unescape(struct JSON *s) {
   int val=0;
@@ -120,7 +120,7 @@ static inline int parse_unescape(struct JSON *s) {
   }
 }
 
-static inline JSBool parse_string(struct JSON *s) {
+static JSBool parse_string(struct JSON *s) {
   jschar *start=s->p;
   int len=parse_unescape(s);
   JSString *ret;
@@ -212,7 +212,7 @@ static JSBool parse_object(struct JSON *s) {
   return JS_FALSE;
 }
 
-static inline JSBool parse_true(struct JSON *s) {
+static JSBool parse_true(struct JSON *s) {
   s->p++; //t
   if (*(s->p++)!='r')
     return syntaxerror(s);
@@ -224,7 +224,7 @@ static inline JSBool parse_true(struct JSON *s) {
   return JS_TRUE;
 }
 
-static inline JSBool parse_false(struct JSON *s) {
+static JSBool parse_false(struct JSON *s) {
   s->p++; //f
   if (*(s->p++)!='a')
     return syntaxerror(s);
@@ -238,7 +238,7 @@ static inline JSBool parse_false(struct JSON *s) {
   return JS_TRUE;
 }
 
-static inline JSBool parse_null(struct JSON *s) {
+static JSBool parse_null(struct JSON *s) {
   s->p++; //n
   if (*(s->p++)!='u')
     return syntaxerror(s);
@@ -250,7 +250,7 @@ static inline JSBool parse_null(struct JSON *s) {
   return JS_TRUE;
 }
 
-static inline JSBool parse_number(struct JSON *s) {
+static JSBool parse_number(struct JSON *s) {
   jsdouble n=0.;
   int sgn=-1;
   int expsgn=1;
@@ -397,7 +397,7 @@ static inline JSBool parse_number(struct JSON *s) {
   return JS_NewNumberValue(s->cx, sgn==1?n:-n, s->vp);
 }
 
-static inline JSBool parse_value(struct JSON *s, jschar end) {
+static JSBool parse_value(struct JSON *s, jschar end) {
   for (;;) {
     switch(*s->p) {
     case ',':
