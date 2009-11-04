@@ -44,7 +44,7 @@ static int find_unescaped_string_length(struct JSON *s) {
           case '\"': case '\\': case '/': case 'b': case 'f': case 'n': case 'r': case 't':
             break;
           case 'u': {
-            for(int i = 4; --i; ) {
+            for(int i = 0; i != 4; ++i) {
               switch(*(++p)) {
                 case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
                 case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
@@ -108,7 +108,7 @@ static jschar* parse_and_unescape_string(struct JSON *s, int unescaped_length) {
             break;
           case 'u': {
             int val = 0;
-            for(int i = 4; --i; ) {
+            for(int i = 0; i != 4; ++i) {
               val = val << 4;
               switch(*s->p) {
                 case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
