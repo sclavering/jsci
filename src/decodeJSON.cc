@@ -27,39 +27,84 @@ static JSBool parse_array(struct JSON *s);
 static JSBool parse_value(struct JSON *s, jschar end);
 
 
-// xxx this mutates the original string's characters, which is very very wrong.
-// e.g. because of this, running: x = '"foo"'; decodeJSON(x); will leave x as 'fooo"'
-static int parse_unescape(struct JSON *s) {
-  jschar *p=s->p;
-  jschar *start=p;
+static int find_unescaped_string_length(struct JSON *s) {
+  jschar *p = s->p;
+  int len = 0;
 
-  s->p++; // "
+  p++; // skip "
+  for(;;) {
+    switch(*p) {
+      case '\"':
+        return len;
+      case 0:
+        return -1;
+      case '\\':
+        switch(*(++p)) {
+          // '\b' and '\/' seem a bit odd, but they're in the JSON spec
+          case '\"': case '\\': case '/': case 'b': case 'f': case 'n': case 'r': case 't':
+            break;
+          case 'u': {
+            for(int i = 4; --i; ) {
+              switch(*(++p)) {
+                case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+                case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+                case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+                  break;
+                default:
+                  return -1;
+              }
+            }
+            break;
+          }
+          default:
+            return -1;
+        }
+        // fall through
+      default:
+        ++p;
+        ++len;
+    }
+  }
+  return len;
+}
+
+
+// call this after find_unescaped_string_length()
+static jschar* parse_and_unescape_string(struct JSON *s, int unescaped_length) {
+  jschar *buf = (jschar*) JS_malloc(s->cx, sizeof(jschar) * unescaped_length);
+  if(!buf) return 0;
+  jschar *ret = buf;
+
+  s->p++; // skip "
   for (;;) {
     switch (*s->p) {
+      case '\"':
+        s->p++;
+        return ret;
       case '\\':
         s->p++;
         switch(*(s->p++)) {
           case '\"':
-            *(p++)='\"';
+            *(buf++) = '\"';
             break;
           case '\\':
-            *(p++)='\\';
+            *(buf++) = '\\';
             break;
           case '/':
           case 'b':
-            *(p++)='/';
+            *(buf++) = '/';
             break;
           case 'f':
-            *(p++)='\f';
+            *(buf++) = '\f';
             break;
           case 'n':
-            *(p++)='\n';
+            *(buf++) = '\n';
             break;
           case 'r':
-            *(p++)='\r';
+            *(buf++) = '\r';
             break;
           case 't':
-            *(p++)='\t';
+            *(buf++) = '\t';
             break;
           case 'u': {
             int val = 0;
@@ -75,38 +120,29 @@ static int parse_unescape(struct JSON *s) {
                 case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
                   val |= *(s->p) - 'A' + 10;
                   break;
-                default:
-                  return -1;
               }
               s->p++;
             }
-            *(p++)=val;
+            *(buf++) = val;
             break;
           }
           default:
-            *(p++)=s->p[-1];
+            *(buf++) = s->p[-1];
         }
         break;
-
-      case 0:
-        return -1;
-
-      case '\"':
-        s->p++;
-        return p - start;
-
       default:
-        *(p++) = *(s->p++);
+        *(buf++) = *(s->p++);
     }
   }
+  return 0; // unreachable
 }
 
 
 static JSBool parse_string(struct JSON *s) {
-  jschar *start = s->p;
-  int len = parse_unescape(s);
+  int len = find_unescaped_string_length(s);
   if(len == -1) return syntaxerror(s);
-  JSString *ret = JS_NewUCStringCopyN(s->cx, start, len);
+  jschar *buf = parse_and_unescape_string(s, len);
+  JSString *ret = JS_NewUCString(s->cx, buf, len);
   if(!ret) return JS_FALSE;
   *s->vp = STRING_TO_JSVAL(ret);
   return JS_TRUE;
@@ -133,9 +169,9 @@ static JSBool parse_object(struct JSON *s) {
         s->p++;
         return JS_TRUE;
       case '"': {
-        jschar *name = s->p;
-        int namelen = parse_unescape(s);
+        int namelen = find_unescaped_string_length(s);
         if(namelen == -1) return JS_FALSE;
+        jschar *name = parse_and_unescape_string(s, namelen);
 
         // scan for colon
         while(*s->p != ':') {

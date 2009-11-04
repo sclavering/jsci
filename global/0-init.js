@@ -28,11 +28,6 @@
   // so code that does "x instanceof JSEXT1.CGI.FormData" continues working
   JSEXT1.__defineGetter__('CGI', function() { return JSEXT1.cgi; });
 
-  // xxx decodeJSON() is broken and modifies the characters in its argument.
-  // We work around this by forcing the JS engine to duplicate the string first.
-  const raw_decodeJSON = JSEXT1.decodeJSON;
-  JSEXT1.decodeJSON = function(x) { return raw_decodeJSON(('0' + x).slice(1)) }
-
   // it's painful setting these from C++ code, so we don't
   const empty_tag_names = jsxlib.stringifyHTML.empty_tag_names;
   // The list of element names is taken from http://www.whatwg.org/specs/web-apps/current-work/multipage/syntax.html#serializing-html-fragments
