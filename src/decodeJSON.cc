@@ -27,6 +27,8 @@ static JSBool parse_array(struct JSON *s);
 static JSBool parse_value(struct JSON *s, jschar end);
 
 
+// xxx this mutates the original string's characters, which is very very wrong.
+// e.g. because of this, running: x = '"foo"'; decodeJSON(x); will leave x as 'fooo"'
 static int parse_unescape(struct JSON *s) {
   jschar *p=s->p;
   jschar *start=p;
