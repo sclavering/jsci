@@ -91,8 +91,10 @@ static jschar* parse_and_unescape_string(struct JSON *s, int unescaped_length) {
             *(buf++) = '\\';
             break;
           case '/':
-          case 'b':
             *(buf++) = '/';
+            break;
+          case 'b':
+            *(buf++) = 8; // backspace
             break;
           case 'f':
             *(buf++) = '\f';
