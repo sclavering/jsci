@@ -41,13 +41,11 @@ A REPL for js.  Statements are evaluated as they are entered. The value of state
   return 0;
 
 
-// the traceback stuff fails because there's no function *named* execline on the stack
 function execline(line) {
   try {
-    var rval = do_eval(line);
     line = line.replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, '');
-    var lastchar = line.substr(line.length - 1);
-    if(lastchar != ';' && lastchar != '}' && lastchar != '>' && rval !== undefined) print(String(rval)+'\n');
+    const rval = do_eval(line);
+    if(!/[;}]$/.test(line) && rval !== undefined) print_result(rval);
   } catch(err) {
     if(err.fileName && err.lineNumber) print('Line ' + err.lineNumber + ' in ' + err.fileName + ':');
     print((err.message || err) + '\n');
@@ -58,6 +56,12 @@ function execline(line) {
       print(stack.join('\n') + '\n');
     }
   }
+}
+
+function print_result(val) {
+  // uneval() is a far more useful default than String()
+  // Terminals are typically UTF8 these days, and it's certianly better than just truncating each 16-bit value
+  print(jsxlib.encodeUTF8(uneval(val)), '\n');
 }
 
 
