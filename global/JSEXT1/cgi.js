@@ -190,7 +190,10 @@ CGI.prototype = {
   For use as .onerror() when debugging.  Outputs the error in the response body (and sets the content-type to text for readability).
   */
   print_error: function(exception) {
-    this.responseHeaders.contentType = 'text/plain; charset=UTF-8';
+    // Setting headers can throw if the app has already started sending the body, and anything thrown here not be caught
+    try {
+      this.responseHeaders.contentType = 'text/plain; charset=UTF-8';
+    } catch(e) {}
     print(this._format_error_as_string(exception));
   },
 
