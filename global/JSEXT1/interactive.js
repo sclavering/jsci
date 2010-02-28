@@ -29,7 +29,7 @@ A REPL for js.  Statements are evaluated as they are entered. The value of state
     var line = ptr.string();
     clib.free(ptr);
     if(line) JSEXT1.libreadline.add_history(String(line));
-    cmdbuf += line;
+    cmdbuf += line + "\n"; // if we don't re-add the linebreak, it's impossible to use line-comments in the shell
     if(isCompilableUnit(cmdbuf)) {
       execline(cmdbuf);
       cmdbuf = "";
