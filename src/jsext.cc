@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
   if(rt) {
     JSContext *cx = JS_NewContext(rt, 65536);
     if(cx) {
-      JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX);
+      JS_SetOptions(cx, JS_GetOptions(cx) | JSOPTION_VAROBJFIX | JSOPTION_ATLINE);
       JS_SetErrorReporter(cx, my_ErrorReporter);
       JS_SetVersion(cx, JSVERSION_LATEST);
 
