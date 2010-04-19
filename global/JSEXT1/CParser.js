@@ -545,10 +545,13 @@ Parser.prototype = {
   },
 
   maybe_direct_declarator: function direct_declarator() {
+    // For normal declarators, this would be:
     // direct_declarator: (identifier | '(' declarator ')') declarator_suffixes
+    // ... but we also use this for parameter types, where an identifier can be omitted
     const id = this.maybe_identifier();
     if(id) return this.declarator_suffixes(id);
     if(this.NextIf('(')) {
+      // xxx we ought to Try this, because declarator_suffixes can also start with a '('
       const dd = this.declarator();
       this.Next(')');
       return this.declarator_suffixes(dd);
