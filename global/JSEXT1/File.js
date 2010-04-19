@@ -23,7 +23,7 @@ function File(filename, mode) {
   function popen(command) {
     if(mode != "r" && mode != "w" && mode != "a") throw("popen: Invalid mode");
     fp = clib.popen(command, mode);
-    if(!fp) throw new Error("File: Coupld not open process '" + command + "'");
+    if(!fp) throw new Error("File: Could not open process '" + command + "'");
     fp.finalize = clib.pclose;
     this.name = "<command " + command + ">";
     this.close = pclose;
