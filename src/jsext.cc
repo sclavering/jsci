@@ -78,7 +78,10 @@ int main(int argc, char **argv) {
         jsval rv;
         JS_AddRoot(cx, &rv);
         // Evaluate a .js startup file, and use the exit code it returns, if any.
-        if(eval_file(cx, glob, getenv("JSEXT_INI"), &rv)) {
+        // We allow SCRIPT_FILENAME for running CGI apps directly, in which case they have to implement everything themselves.
+        char *scriptfilename = getenv("JSEXT_INI");
+        if(!scriptfilename) scriptfilename = getenv("SCRIPT_FILENAME");
+        if(eval_file(cx, glob, scriptfilename, &rv)) {
           exitcode = JSVAL_IS_VOID(rv) ? 0 : JSVAL_IS_INT(rv) ? JSVAL_TO_INT(rv) : 1;
         }
         JS_RemoveRoot(cx, &rv);
