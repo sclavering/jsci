@@ -98,7 +98,7 @@ function getInfoFromXML(code, parser) {
   allmacros();
 
   const src = {};
-  for(let i in su) src[i] = sym[i] ? "this['" + i + "']=" + su[i] + ";" + sym[i] : su[i];
+  for(let i in su) src[i] = sym[i] ? 'this.' + i + '=' + su[i] + ";" + sym[i] : su[i];
   for(let i in sym) if(!src[i]) src[i] = sym[i];
   return src;
 
@@ -129,7 +129,7 @@ function getInfoFromXML(code, parser) {
 
           sym[id] = expr;
 
-          liveeval("this['" + id + "']=" + expr);
+          liveeval('this.' + id + '=' + expr);
         }
         break;
       } // swtich
@@ -175,14 +175,14 @@ function getInfoFromXML(code, parser) {
     decl = decl.basic_type;
 
     // Defined type
-    if(decl.dt.length()) return "this['" + decl.dt + "']";
+    if(decl.dt.length()) return 'this.' + decl.dt;
 
     if(decl.struct.length()) {
       // Struct declaration
       let id = String(decl.struct.@id);
       if(id) {
         suDeclare(decl.struct);
-        return "this['struct " + id + "']";
+        return 'this.struct$' + id;
       }
       return "Type.struct(" + suMembers(decl.struct) + ")";
     }
@@ -192,7 +192,7 @@ function getInfoFromXML(code, parser) {
       let id = String(decl.union.@id);
       if(id) {
         suDeclare(decl.union);
-        return "this['union " + id + "']";
+        return 'this.union$' + id;
       }
       return "Type.union(" + suMembers(decl.union) + ")";
     }
@@ -270,7 +270,7 @@ function getInfoFromXML(code, parser) {
 
   function suDeclare(su_xml) {
     const struct_or_union = su_xml.name();
-    const id = struct_or_union + " " + su_xml.@id;
+    const id = struct_or_union + "$" + su_xml.@id;
 
     if (!su[id]) {
       const expr = su[id] = "Type." + struct_or_union + "()";
@@ -282,7 +282,7 @@ function getInfoFromXML(code, parser) {
     // structs can be have members of the same struct type, so our getter creates a stub, then replace its innards
 
     var members = suMembers(su_xml);
-    const suref = "this['" + id + "']";
+    const suref = "this." + id;
     sym[id] = "Type.replace_members(" + suref + "," + members.join(',') + ")," + suref;
     liveeval(sym[id]);
   }

@@ -136,7 +136,7 @@ File.prototype = {
 
 
 function _fcgi_handle_request(fd) {
-  var rq = new Pointer(libfcgi['struct FCGX_Request']);
+  var rq = new Pointer(libfcgi.struct$FCGX_Request);
 
   var res = libfcgi.FCGX_InitRequest(rq, fd, 0);
   if(res != 0) throw new Error("FCGX_InitRequest");

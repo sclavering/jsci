@@ -47,7 +47,7 @@ Miscellaneous wrappers for os-related things in clib where the raw ffi interface
   Returns true if path exists and is a directory. Otherwise, returns false
   */
   isdir: function(path) {
-    const ret = Pointer(clib['struct stat']);
+    const ret = Pointer(clib.struct$stat);
     if(clib.call_stat(path, ret) == -1) return false;
     if((ret.field("st_mode").$ & clib.__S_IFMT) == clib.__S_IFDIR) return true;
     return false;
@@ -61,7 +61,7 @@ Miscellaneous wrappers for os-related things in clib where the raw ffi interface
   Perform a stat/fstat system call on the given path or integer file handle. Times are returned as date objects.
   */
   stat: function(path_or_fileno) {
-    const buf = Pointer(clib['struct stat']);
+    const buf = Pointer(clib.struct$stat);
     const func = typeof path_or_fileno == 'number' ? clib.call_fstat : clib.call_stat;
     if(func(path_or_fileno, buf) == -1) return null;
 
