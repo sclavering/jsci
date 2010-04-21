@@ -86,7 +86,6 @@ To actually call a function or read/write a global variable, the library it is f
 function getInfoFromXML(code, parser) {
   const live = {}; // Contains the evaluated code. Used during processing to evaluate sizeof() expressions.
   const sym = {};  // Contains symbols
-  const su = {};   // Contains declarations of structs and unions
   const typelist = [];
 
   const libname = find_library_name();
@@ -97,10 +96,7 @@ function getInfoFromXML(code, parser) {
   initmacro();
   allmacros();
 
-  const src = {};
-  for(let i in su) src[i] = sym[i];
-  for(let i in sym) if(!src[i]) src[i] = sym[i];
-  return src;
+  return sym;
 
 
   function parse_inner() {
@@ -255,11 +251,10 @@ function getInfoFromXML(code, parser) {
     const struct_or_union = String(su_xml.name()), name = String(su_xml.@id);
     const id = name ? struct_or_union + "$" + name : '';
     // xxx actually, the existing declaration may be just a stub forward-declaration, in which case we should be replacing it.
-    if(id && su[id]) return 'obj.' + id;
+    if(id && sym[id]) return 'obj.' + id;
     // xxx doesn't handle recursive struct types like "struct foo { struct foo *ptr; }"
     let js = "Type." + struct_or_union + "(" + suMembers(su_xml).join(', ') + ")";
     if(!id) return js;
-    su[id] = true;
     sym[id] = js;
     live[id] = liveeval(js);
     return 'obj.' + id;
