@@ -12,7 +12,7 @@ return function(filename) {
 function runcpp(filename) {
   /*
   cpp is assumed to be the one from GCC.  Tested using "cpp (GCC) 4.2.4 (Ubuntu 4.2.4-1ubuntu3)"
-  
+
   -dD
     keeps "#define FOO 42" and similar, so we can include such constants in the .jswrapper
     expands macros, so that function prototypes are in the form we can parse
@@ -88,9 +88,11 @@ function getInfoFromXML(code, parser) {
   const sym = {};  // Contains symbols
   const su = {};   // Contains declarations of structs and unions
   const typelist = [];
-  var ndl = 0;     // Count number of dl files
 
-  loaddls();
+  const libname = find_library_name();
+  live.$lib = Dl(libname);
+  sym.$lib = 'Dl(' + uneval(libname) + ')';
+
   parse_inner();
   initmacro();
   allmacros();
@@ -118,12 +120,11 @@ function getInfoFromXML(code, parser) {
             expr = decl[i].type;
           } else {
             // Resolve pointer
-            var dlid = find_dl(decl[i].id);
-            if(!dlid) break;
+            if(!live.$lib.symbolExists(decl[i].id)) break;
 
             id = decl[i].id;
 
-            expr = "this['" + dlid + "'].pointer('" + decl[i].id + "'," + decl[i].type + ")";
+            expr = "this.$lib.pointer('" + decl[i].id + "'," + decl[i].type + ")";
           }
 
           sym[id] = expr;
@@ -136,15 +137,16 @@ function getInfoFromXML(code, parser) {
   }
 
 
-  function loaddls() {
+  function find_library_name() {
+    let libname = null;
     for each(var pragma in parser.preprocessor_directives) {
-      var match = pragma.match(/^#pragma[ \t]+JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
+      let match = pragma.match(/^#pragma[ \t]+JSEXT[ \t]+dl[ \t]+(?:"([^"]*)"|(main))[ \t]*$/);
       if(!match) continue;
-      var id = 'dl ' + (ndl++);
-      var filename = match[1] || ""
-      live[id] = filename ? Dl(match[1]) : Dl();
-      sym[id] = "Dl(" + (filename ? "'" + filename.replace(/\\/g, "\\\\") + "'" : "") + ")";
+      if(libname) throw new Error("wraplib: .h file contains multiple '#pragma JSEXT dl' lines");
+      libname = match[1] || "";
     }
+    if(libname === null) throw new Error("wraplib: .h file contains no '#pragma JSEXT dl' line");
+    return libname;
   }
 
 
@@ -166,15 +168,6 @@ function getInfoFromXML(code, parser) {
     var callConv = decl..stdcall.length() ? "stdcall" : "cdecl";
     var dirfunc = "Type['function'](" + ret.type + ",[" + ret.params + "]," + ret.elipsis + ",'" + callConv + "')";
     return indir(dirfunc, ret.fd.*[0]);
-  }
-
-
-  function find_dl(ident) {
-    for(var i = 0; i < ndl; i++) {
-      if(live['dl ' + i].symbolExists(ident))
-        return "dl " + i;
-    }
-    return null;
   }
 
 
