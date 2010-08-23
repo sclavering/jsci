@@ -47,7 +47,7 @@ def js():
   for s in js_C: run('gcc -c %s -o %s/%s.o %s/%s.c' % (js_CFLAGS, OBJDIR, s, JS_SRC_DIR, s))
 
 
-jsx_CC = ['jsext', 'Dl', 'Pointer', 'Type', 'clib', 'encodeJSON', 'decodeJSON', 'encodeUTF8', 'decodeUTF8', 'stringifyHTML', 'JsciType', 'JsciTypeVoid', 'JsciTypeNumeric', 'JsciTypeInt', 'JsciTypeUint', 'JsciTypeFloat', 'JsciTypePointer', 'JsciTypeStructUnion', 'JsciTypeStruct', 'JsciTypeUnion', 'JsciTypeBitfield', 'JsciTypeArray', 'JsciTypeFunction', 'JsciPointer', 'JsciPointerAlloc', 'JsciCallback']
+jsx_CC = ['jsext', 'Dl', 'Pointer', 'Type', 'encodeJSON', 'decodeJSON', 'encodeUTF8', 'decodeUTF8', 'stringifyHTML', 'JsciType', 'JsciTypeVoid', 'JsciTypeNumeric', 'JsciTypeInt', 'JsciTypeUint', 'JsciTypeFloat', 'JsciTypePointer', 'JsciTypeStructUnion', 'JsciTypeStruct', 'JsciTypeUnion', 'JsciTypeBitfield', 'JsciTypeArray', 'JsciTypeFunction', 'JsciPointer', 'JsciPointerAlloc', 'JsciCallback']
 
 def jsx():
   flags = "-Wall -O3 -DXP_UNIX -I%s -I%s" % (OBJDIR, JS_SRC_DIR)

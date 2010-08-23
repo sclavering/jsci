@@ -26,10 +26,3 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
-
-// These functions need a wrapper, as they are sometimes inlined
-
-int call_stat(const char *file_name, struct stat *buf);
-int call_fstat(int filedes, struct stat *buf);
-int call_lstat(const char *file_name, struct stat *buf);
-int call_mknod(const char *pathname, mode_t mode, dev_t dev);

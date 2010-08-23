@@ -46,45 +46,7 @@ Miscellaneous wrappers for os-related things in clib where the raw ffi interface
 
   Returns true if path exists and is a directory. Otherwise, returns false
   */
-  isdir: function(path) {
-    const ret = Pointer(clib.struct$stat);
-    if(clib.call_stat(path, ret) == -1) return false;
-    if((ret.field("st_mode").$ & clib.__S_IFMT) == clib.__S_IFDIR) return true;
-    return false;
-  },
-
-
-  /*
-  stat(path) -> obj
-  stat(fileno) -> obj
-
-  Perform a stat/fstat system call on the given path or integer file handle. Times are returned as date objects.
-  */
-  stat: function(path_or_fileno) {
-    const buf = Pointer(clib.struct$stat);
-    const func = typeof path_or_fileno == 'number' ? clib.call_fstat : clib.call_stat;
-    if(func(path_or_fileno, buf) == -1) return null;
-
-    var s = buf.$;
-    var r = {};
-    for(var rawprop in s) {
-      var jsprop = rawprop.substr(3); // remove the "st_" prefix
-      switch(rawprop) {
-        case "st_atim":
-        case "st_ctim":
-        case "st_mtim":
-          r[jsprop + "e"] = new Date(s[rawprop].tv_sec * 1000);
-          break;
-        case "st_dev":
-        case "st_rdev":
-          r[jsprop] = s[rawprop].$;
-          break;
-        default:
-          r[jsprop] = s[rawprop];
-      }
-    }
-    return r;
-  },
+  isdir: function(path) jsxlib.isDirOrLinkToDir(path),
 
 
   /*

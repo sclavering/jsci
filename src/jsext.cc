@@ -51,6 +51,7 @@ static JSBool make_environment_vars_obj(JSContext *cx, jsval *rv);
 static jsval make_load(JSContext *cx);
 static jsval make_gc(JSContext *cx);
 static jsval make_isCompilableUnit(JSContext *cx);
+static jsval make_isDirOrLinkToDir(JSContext *cx);
 
 static JSBool eval_file(JSContext *cx, JSObject *obj, const char *filename, jsval *rval);
 static JSBool make_jsxlib(JSContext *cx, JSObject *gl);
@@ -115,6 +116,8 @@ static JSBool make_jsxlib(JSContext *cx, JSObject *obj) {
   JS_SetProperty(cx, argobj, "gc", &tmp);
   tmp = make_isCompilableUnit(cx);
   JS_SetProperty(cx, argobj, "isCompilableUnit", &tmp);
+  tmp = make_isDirOrLinkToDir(cx);
+  JS_SetProperty(cx, argobj, "isDirOrLinkToDir", &tmp);
   if(!make_environment_vars_obj(cx, &tmp)) return JS_FALSE;
   JS_SetProperty(cx, argobj, "environment", &tmp);
   tmp = make_encodeUTF8(cx);
@@ -190,10 +193,7 @@ static jsval make_gc(JSContext *cx) {
 
 
 static JSBool jsx_isCompilableUnit(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  if(argc != 1) {
-    JSX_ReportException(cx, "Wrong number of arguments");
-    return JS_FALSE;
-  }
+  if(argc != 1) return JSX_ReportException(cx, "Wrong number of arguments");
   char *expr;
   if(!JS_ConvertArguments(cx, argc, argv, "s", &expr)) return JS_FALSE;
   *rval = JS_BufferIsCompilableUnit(cx, obj, expr, strlen(expr)) ? JSVAL_TRUE : JSVAL_FALSE;
@@ -203,6 +203,24 @@ static JSBool jsx_isCompilableUnit(JSContext *cx, JSObject *obj, uintN argc, jsv
 
 static jsval make_isCompilableUnit(JSContext *cx) {
   JSFunction *jsfun = JS_NewFunction(cx, jsx_isCompilableUnit, 0, 0, 0, 0);
+  if(!jsfun) return JSVAL_VOID;
+  return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
+}
+
+
+static JSBool jsx_isDirOrLinkToDir(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+  if(argc != 1) return JSX_ReportException(cx, "Wrong number of arguments");
+  char *filename;
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &filename)) return JS_FALSE;
+  struct stat s;
+  *rval = JSVAL_FALSE;
+  if(stat(filename, &s) != -1 && S_ISDIR(s.st_mode)) *rval = JSVAL_TRUE;
+  return JS_TRUE;
+}
+
+
+static jsval make_isDirOrLinkToDir(JSContext *cx) {
+  JSFunction *jsfun = JS_NewFunction(cx, jsx_isDirOrLinkToDir, 0, 0, 0, 0);
   if(!jsfun) return JSVAL_VOID;
   return OBJECT_TO_JSVAL(JS_GetFunctionObject(jsfun));
 }

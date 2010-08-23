@@ -24,7 +24,6 @@
   JSEXT1.__defineGetter__('dir', function() { return JSEXT1.os.dir; });
   JSEXT1.__defineGetter__('exists', function() { return JSEXT1.os.exists; });
   JSEXT1.__defineGetter__('isdir', function() { return JSEXT1.os.isdir; });
-  JSEXT1.__defineGetter__('stat', function() { return JSEXT1.os.stat; });
   // so code that does "x instanceof JSEXT1.CGI.FormData" continues working
   JSEXT1.__defineGetter__('CGI', function() { return JSEXT1.cgi; });
 
