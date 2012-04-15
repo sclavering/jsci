@@ -87,7 +87,7 @@ static JSBool array_to_JSON(struct JSON *s) {
   jsuint len;
   if(!JS_GetArrayLength(s->cx, array, &len)) return JS_FALSE;
 
-  for(int i = 0; i < len; i++) {
+  for(unsigned i = 0; i < len; i++) {
     jschar *before=s->p;
 
     OBJ_GET_PROPERTY(s->cx, array, INT_TO_JSID(i), &s->v);
