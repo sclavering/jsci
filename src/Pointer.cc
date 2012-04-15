@@ -41,16 +41,20 @@ JSClass * JSX_GetPointerClass(void) {
 }
 
 
-static JSBool Pointer_malloc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  int sz = JSVAL_IS_INT(argv[0]) ? JSVAL_TO_INT(argv[0]) : 0;
+static JSBool Pointer_malloc(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
+  int sz = argc >= 1 && JSVAL_IS_INT(argv[0]) ? JSVAL_TO_INT(argv[0]) : 0;
   if(sz <= 0) return JSX_ReportException(cx, "Pointer.malloc(): argument must be a positive integer number of bytes to allocate");
   return WrapPointer(cx, new JsciPointerAlloc(gTypeVoid, sz), rval);
 }
 
 
-static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
-  JsciType *t = jsval_to_JsciType(cx, argv[0]);
-  JsciPointer *orig = jsval_to_JsciPointer(cx, argv[-1]);
+static JSBool Pointer_proto_cast(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
+  JsciType *t = argc >= 1 ? jsval_to_JsciType(cx, argv[0]) : NULL;
+  JsciPointer *orig = jsval_to_JsciPointer(cx, JS_THIS(cx, vp));
   if(!t) return JSX_ReportException(cx, "Pointer.prototype.cast(): argument must be a Type instance");
   return WrapPointer(cx, new JsciPointer(t, orig->ptr), rval);
 }
@@ -58,10 +62,10 @@ static JSBool Pointer_proto_cast(JSContext *cx, JSObject *obj, uintN argc, jsval
 
 static JSBool Pointer__new(JSContext *cx, JSObject *origobj, uintN argc, jsval *argv, jsval *rval) {
   // note: we ignore origobj for simplicity of implementation
-  JsciType *t = jsval_to_JsciType(cx, argv[0]);
+  JsciType *t = argc >= 1 ? jsval_to_JsciType(cx, argv[0]) : NULL;
   if(!t) return JSX_ReportException(cx, "Pointer(): first argument must be a Type");
 
-  JSBool isFunc = JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]));
+  JSBool isFunc = argc >= 2 && JSVAL_IS_OBJECT(argv[1]) && JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]));
   // Accept both function type and pointer-to-function type
   JsciTypePointer* tp = dynamic_cast<JsciTypePointer*>(t);
   if(isFunc && t) t = tp->direct;
@@ -70,7 +74,7 @@ static JSBool Pointer__new(JSContext *cx, JSObject *origobj, uintN argc, jsval *
   if(!WrapPointer(cx, ptr, rval)) return JS_FALSE;
   // We need to ensure the Type object doesn't get GC'd, because we're sharing its JsciType*
   if(!JS_SetReservedSlot(cx, JSVAL_TO_OBJECT(*rval), 0, argv[0])) return JS_FALSE;
-  if(argv[1] != JSVAL_VOID) return ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1]);
+  if(argc >= 2 && argv[1] != JSVAL_VOID) return ptr->type->JStoC(cx, (char*) ptr->ptr, argv[1]);
   return JS_TRUE;
 }
 
@@ -94,14 +98,16 @@ static JSBool Pointer__setDollar(JSContext *cx, JSObject *obj, jsval id, jsval *
 }
 
 
-static JSBool Pointer_proto_setFinalizer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_setFinalizer(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* argv = JS_ARGV(cx, vp);
+  JSObject* obj = JS_THIS_OBJECT(cx, vp);
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
-  if(argv[0] == JSVAL_NULL || argv[0] == JSVAL_VOID) {
+  if(argc >= 1 && (argv[0] == JSVAL_NULL || argv[0] == JSVAL_VOID)) {
     ptr->finalize=0;
     return JS_TRUE;
   }
 
-  JSObject *arg = JSVAL_IS_OBJECT(argv[0]) ? JSVAL_TO_OBJECT(argv[0]) : 0;
+  JSObject *arg = argc >= 1 && JSVAL_IS_OBJECT(argv[0]) ? JSVAL_TO_OBJECT(argv[0]) : 0;
   if(!arg || !JS_InstanceOf(cx, arg, JSX_GetPointerClass(), NULL)) return JSX_ReportException(cx, "Pointer.prototype.setFinalizer(): argument must be Pointer to a function");
 
   JsciPointer *finptr = (JsciPointer *) JS_GetPrivate(cx, arg);
@@ -115,10 +121,13 @@ static JSBool Pointer_proto_setFinalizer(JSContext *cx, JSObject *obj, uintN arg
 }
 
 
-static JSBool Pointer_proto_string(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_string(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
+  JSObject* obj = JS_THIS_OBJECT(cx, vp);
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   JSString* str;
-  if(JSVAL_IS_INT(argv[0])) {
+  if(argc >= 1 && JSVAL_IS_INT(argv[0])) {
     str = JS_NewStringCopyN(cx, (char *) ptr->ptr, JSVAL_TO_INT(argv[0]));
   } else {
     str = JS_NewStringCopyZ(cx, (char *) ptr->ptr);
@@ -128,7 +137,9 @@ static JSBool Pointer_proto_string(JSContext *cx, JSObject *obj, uintN argc, jsv
 }
 
 
-static JSBool Pointer_proto_valueOf(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_valueOf(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  JSObject* obj = JS_THIS_OBJECT(cx, vp);
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
   jsdouble val = (jsdouble) (long) ptr->ptr;
   JS_NewNumberValue(cx, val, rval);
@@ -137,10 +148,13 @@ static JSBool Pointer_proto_valueOf(JSContext *cx, JSObject *obj, uintN argc, js
 
 
 // Read a field from a struct/union that this pointer points to (without converting the entire struct into a javascript ibject)
-static JSBool Pointer_proto_field(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Pointer_proto_field(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   if(argc != 1 || !JSVAL_IS_STRING(argv[0]))
     return JSX_ReportException(cx, "Pointer.prototype.field(): must be passed a single argument, of type string");
 
+  JSObject* obj = JS_THIS_OBJECT(cx, vp);
   JsciPointer *ptr = (JsciPointer *) JS_GetPrivate(cx, obj);
 
   JsciTypeStructUnion *sutype = dynamic_cast<JsciTypeStructUnion*>(ptr->type);
@@ -190,16 +204,16 @@ static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 
 jsval make_Pointer(JSContext *cx, JSObject *obj) {
   static struct JSFunctionSpec staticfunc[]={
-    JS_FS("malloc", Pointer_malloc, 1, 0, 0),
+    JS_FN("malloc", Pointer_malloc, 0, 1, 0),
     {0,0,0,0,0}
   };
 
   static struct JSFunctionSpec memberfunc[]={
-    JS_FS("cast", Pointer_proto_cast, 1, 0, 0),
-    JS_FS("field", Pointer_proto_field, 1, 0, 0),
-    JS_FS("string", Pointer_proto_string, 1, 0, 0),
-    JS_FS("valueOf", Pointer_proto_valueOf, 0, 0, 0),
-    JS_FS("setFinalizer", Pointer_proto_setFinalizer, 1, 0, 0),
+    JS_FN("cast", Pointer_proto_cast, 0, 1, 0),
+    JS_FN("field", Pointer_proto_field, 0, 1, 0),
+    JS_FN("string", Pointer_proto_string, 0, 1, 0),
+    JS_FN("valueOf", Pointer_proto_valueOf, 0, 0, 0),
+    JS_FN("setFinalizer", Pointer_proto_setFinalizer, 0, 1, 0),
     {0,0,0,0,0}
   };
 
