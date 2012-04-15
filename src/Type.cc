@@ -31,7 +31,9 @@ static JSBool WrapType(JSContext *cx, JsciType *t, jsval *rval) {
 }
 
 
-static JSBool Type_function(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_function(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   JsciType *rt = jsval_to_JsciType(cx, argv[0]);
   if(!rt) return JSX_ReportException(cx, "Type.function(): the first argument must be a Type instance");
   if(!JSVAL_IS_OBJECT(argv[1]) || !JS_IsArrayObject(cx, JSVAL_TO_OBJECT(argv[1]))) return JSX_ReportException(cx, "Type.function(): the second arg must be an array");
@@ -71,7 +73,9 @@ static JSBool JSX_NewTypeStructUnion(JSContext *cx, int nMember, jsval *member, 
 }
 
 
-static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_replace_members(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   JsciType *t = jsval_to_JsciType(cx, argv[0]);
   if(!t) return JSX_ReportException(cx, "Type.replace_members(): the first argument must be a struct/union Type instance");
   JsciTypeStructUnion *tsu = dynamic_cast<JsciTypeStructUnion*>(t);
@@ -82,7 +86,9 @@ static JSBool Type_replace_members(JSContext *cx, JSObject *obj, uintN argc, jsv
 }
 
 
-static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_pointer(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   JsciType *t = jsval_to_JsciType(cx, argv[0]);
   if(!(t || argv[0] == JSVAL_VOID)) return JSX_ReportException(cx, "Type.pointer(): argument must be undefined, or a Type instance");
   return WrapType(cx, new JsciTypePointer(t ? t : gTypeVoid), rval)
@@ -90,7 +96,9 @@ static JSBool Type_pointer(JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 }
 
 
-static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_array(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   JsciType *t = jsval_to_JsciType(cx, argv[0]);
   if(!t) return JSX_ReportException(cx, "Type.array(): first argument must be a Type instance");
   int len = JSVAL_IS_INT(argv[1]) ? JSVAL_TO_INT(argv[1]) : -1;
@@ -99,7 +107,9 @@ static JSBool Type_array(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv,
 }
 
 
-static JSBool Type_bitfield(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_bitfield(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   JsciType *t = jsval_to_JsciType(cx, argv[0]);
   if(!t) return JSX_ReportException(cx, "Type.bitfield(): first argument must be a Type instance");
   int len = JSVAL_IS_INT(argv[1]) ? JSVAL_TO_INT(argv[1]) : -1;
@@ -160,17 +170,23 @@ static void Type__finalize(JSContext *cx,  JSObject *obj) {
 }
 
 
-static JSBool Type_struct(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_struct(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   return JSX_NewTypeStructUnion(cx, argc, argv, rval, new JsciTypeStruct);
 }
 
 
-static JSBool Type_union(JSContext *cx,  JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_union(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   return JSX_NewTypeStructUnion(cx, argc, argv, rval, new JsciTypeUnion);
 }
 
 
-static JSBool Type_sizeof(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Type_sizeof(JSContext *cx, uintN argc, jsval* vp) {
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  jsval* argv = JS_ARGV(cx, vp);
   JsciType *t = jsval_to_JsciType(cx, argv[0]);
   if(!t) return JSX_ReportException(cx, "Type.sizeof(): the argument must be a Type instance");
   int size = t->SizeInBytes();
@@ -184,14 +200,14 @@ jsval make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeproto;
 
   static struct JSFunctionSpec staticfunc[] = {
-    JS_FS("array", Type_array, 2, 0, 0),
-    JS_FS("bitfield", Type_bitfield, 2, 0, 0),
-    JS_FS("function", Type_function, 2, 0, 0),
-    JS_FS("pointer", Type_pointer, 1, 0, 0),
-    JS_FS("struct", Type_struct, 1, 0, 0),
-    JS_FS("union", Type_union, 1, 0, 0),
-    JS_FS("sizeof", Type_sizeof, 1, 0, 0),
-    JS_FS("replace_members", Type_replace_members, 1, 0, 0),
+    JS_FN("array", Type_array, 0, 2, 0),
+    JS_FN("bitfield", Type_bitfield, 0, 2, 0),
+    JS_FN("function", Type_function, 0, 2, 0),
+    JS_FN("pointer", Type_pointer, 0, 1, 0),
+    JS_FN("struct", Type_struct, 0, 1, 0),
+    JS_FN("union", Type_union, 0, 1, 0),
+    JS_FN("sizeof", Type_sizeof, 0, 1, 0),
+    JS_FN("replace_members", Type_replace_members, 0, 1, 0),
     {0,0,0,0,0}
   };
 
