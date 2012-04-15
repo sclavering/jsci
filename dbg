@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# This script runs the jsext interpreter from the development source tree,
+# avoiding pre-installed libraries.
+
+cd `dirname $0`
+dn=`pwd`
+cd - > /dev/null
+[ "$JSEXT_INI" ] || export JSEXT_INI="$dn/global/0-init.js"
+export JSX_HOME="$dn"
+gdb $dn/build-Linux/jsext $*
