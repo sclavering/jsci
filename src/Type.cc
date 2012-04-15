@@ -49,7 +49,7 @@ static JSBool Type_function(JSContext *cx, uintN argc, jsval* vp) {
   JS_SetReservedSlot(cx, retobj, 0, argv[0]);
   JS_SetReservedSlot(cx, retobj, 1, argv[1]);
 
-  for(int i = 0; i < nParam; i++) {
+  for(unsigned i = 0; i < nParam; i++) {
     jsval tmp;
     JS_GetElement(cx, paramobj, i, &tmp);
     JsciType *pt = jsval_to_JsciType(cx, tmp);
