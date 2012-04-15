@@ -6,8 +6,8 @@
 
 static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
 static void Dl_finalize(JSContext *cx, JSObject *obj);
-static JSBool Dl_proto_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval);
-static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval);
+static JSBool Dl_proto_symbolExists(JSContext *cx, uintN argc, jsval *vp);
+static JSBool Dl_proto_pointer(JSContext *cx, uintN argc, jsval *vp);
 
 static JSClass JSEXT_dl_class = {
     "Dl",
@@ -26,8 +26,8 @@ static JSClass JSEXT_dl_class = {
 jsval make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
-    JS_FS("symbolExists", Dl_proto_symbolExists, 1, 0, 0),
-    JS_FS("pointer", Dl_proto_pointer, 2, 0, 0),
+    JS_FN("symbolExists", Dl_proto_symbolExists, 0, 1, 0),
+    JS_FN("pointer", Dl_proto_pointer, 0, 2, 0),
     {0,0,0,0,0}
   };
 
@@ -73,11 +73,14 @@ static JSBool Dl_new(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsva
 }
 
 
-static JSBool Dl_proto_symbolExists(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Dl_proto_symbolExists(JSContext *cx, uintN argc, jsval *vp) {
   if(argc != 1) return JSX_ReportException(cx, "Wrong number of arguments");
   char *symbol;
-  if(!JS_ConvertArguments(cx, argc, argv, "s", &symbol)) return JS_FALSE;
-  *rval = dlsym((void *) JS_GetPrivate(cx, obj), symbol) != 0 ? JSVAL_TRUE : JSVAL_FALSE;
+  if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &symbol)) return false;
+  JSObject* obj = JS_THIS_OBJECT(cx, vp);
+  if(!obj) return JSX_ReportException(cx, "Dl.prototype.symbolExists(): null this")
+  bool exists = dlsym((void *) JS_GetPrivate(cx, obj), symbol) != 0;
+  JS_SET_RVAL(cx, vp, exists ? JSVAL_TRUE : JSVAL_FALSE);
   return JS_TRUE;
 }
 
@@ -88,13 +91,20 @@ static void Dl_finalize(JSContext *cx, JSObject *obj) {
 }
 
 
-static JSBool Dl_proto_pointer(JSContext *cx, JSObject *dl, uintN argc, jsval *argv, jsval *rval) {
+static JSBool Dl_proto_pointer(JSContext *cx, uintN argc, jsval *vp) {
+  if(argc != 2) return JSX_ReportException(cx, "Dl.prototype.pointer(): must pass two arguments");
+  jsval* argv = JS_ARGV(cx, vp);
   if(!JSVAL_IS_STRING(argv[0])) return JSX_ReportException(cx, "Dl.prototype.pointer(): first argument must be a string");
   JsciType *t = jsval_to_JsciType(cx, argv[1]);
   if(!t) return JSX_ReportException(cx, "Dl.prototype.pointer(): second argument must be a Type instance");
 
-  void *sym = dlsym(JS_GetPrivate(cx, dl), JS_GetStringBytes(JSVAL_TO_STRING(argv[0])));
+  JSObject* obj = JS_THIS_OBJECT(cx, vp);
+  if(!obj) return JSX_ReportException(cx, "Dl.prototype.pointer(): null this")
+  void *sym = dlsym(JS_GetPrivate(cx, obj), JS_GetStringBytes(JSVAL_TO_STRING(argv[0])));
   if(!sym) return JSX_ReportException(cx, "Dl.prototype.pointer(): couldn't resolve symbol");
 
-  return WrapPointerAndSaveType(cx, new JsciPointer(t, sym), rval, argv[1]);
+  JsciPointer* p = new JsciPointer(t, sym);
+  jsval* rval = JSX_RVAL_ADDR(vp);
+  if(!WrapPointer(cx, p, rval)) return false;
+  return JS_SetReservedSlot(cx, JSVAL_TO_OBJECT(*rval), 0, argv[1]);
 }

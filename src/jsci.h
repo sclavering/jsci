@@ -212,12 +212,6 @@ static inline JSBool WrapPointer(JSContext *cx, JsciPointer *p, jsval *rval) {
 }
 
 
-// Used when we need to save a Type instance from GC, because we're sharing its JsciType*
-static inline JSBool WrapPointerAndSaveType(JSContext *cx, JsciPointer *p, jsval *rval, jsval typeobj) {
-  return WrapPointer(cx, p, rval) && JS_SetReservedSlot(cx, JSVAL_TO_OBJECT(*rval), 0, typeobj);
-}
-
-
 static inline JsciPointer *jsval_to_JsciPointer(JSContext *cx, jsval v) {
   if(!JSVAL_IS_OBJECT(v)) return 0;
   return (JsciPointer*) JS_GetInstancePrivate(cx, JSVAL_TO_OBJECT(v), JSX_GetPointerClass(), 0);
