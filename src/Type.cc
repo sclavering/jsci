@@ -184,14 +184,14 @@ jsval make_Type(JSContext *cx, JSObject *obj) {
   JSObject *typeproto;
 
   static struct JSFunctionSpec staticfunc[] = {
-    {"array", Type_array, 2, 0, 0},
-    {"bitfield", Type_bitfield, 2, 0, 0},
-    {"function", Type_function, 2, 0, 0},
-    {"pointer", Type_pointer, 1, 0, 0},
-    {"struct", Type_struct, 1, 0, 0},
-    {"union", Type_union, 1, 0, 0},
-    {"sizeof", Type_sizeof, 1, 0, 0},
-    {"replace_members", Type_replace_members, 1, 0, 0},
+    JS_FS("array", Type_array, 2, 0, 0),
+    JS_FS("bitfield", Type_bitfield, 2, 0, 0),
+    JS_FS("function", Type_function, 2, 0, 0),
+    JS_FS("pointer", Type_pointer, 1, 0, 0),
+    JS_FS("struct", Type_struct, 1, 0, 0),
+    JS_FS("union", Type_union, 1, 0, 0),
+    JS_FS("sizeof", Type_sizeof, 1, 0, 0),
+    JS_FS("replace_members", Type_replace_members, 1, 0, 0),
     {0,0,0,0,0}
   };
 

@@ -190,16 +190,16 @@ static JSBool Pointer__call(JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 
 jsval make_Pointer(JSContext *cx, JSObject *obj) {
   static struct JSFunctionSpec staticfunc[]={
-    {"malloc", Pointer_malloc, 1, 0, 0},
+    JS_FS("malloc", Pointer_malloc, 1, 0, 0),
     {0,0,0,0,0}
   };
 
   static struct JSFunctionSpec memberfunc[]={
-    {"cast", Pointer_proto_cast, 1, 0, 0},
-    {"field", Pointer_proto_field, 1, 0, 0},
-    {"string", Pointer_proto_string, 1, 0, 0},
-    {"valueOf", Pointer_proto_valueOf, 0, 0, 0},
-    {"setFinalizer", Pointer_proto_setFinalizer, 1, 0, 0},
+    JS_FS("cast", Pointer_proto_cast, 1, 0, 0),
+    JS_FS("field", Pointer_proto_field, 1, 0, 0),
+    JS_FS("string", Pointer_proto_string, 1, 0, 0),
+    JS_FS("valueOf", Pointer_proto_valueOf, 0, 0, 0),
+    JS_FS("setFinalizer", Pointer_proto_setFinalizer, 1, 0, 0),
     {0,0,0,0,0}
   };
 

@@ -26,8 +26,8 @@ static JSClass JSEXT_dl_class = {
 jsval make_Dl(JSContext *cx, JSObject *glob) {
   JSObject *JSEXT_dl_proto=0;
   static struct JSFunctionSpec memberfunc[]={
-    {"symbolExists", Dl_proto_symbolExists, 1, 0, 0},
-    {"pointer", Dl_proto_pointer, 2, 0, 0},
+    JS_FS("symbolExists", Dl_proto_symbolExists, 1, 0, 0),
+    JS_FS("pointer", Dl_proto_pointer, 2, 0, 0),
     {0,0,0,0,0}
   };
 
