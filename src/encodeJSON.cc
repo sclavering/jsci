@@ -129,7 +129,15 @@ static JSBool object_to_JSON(struct JSON *s) {
   len=id->length;
 
   i=0;
+  bool need_comma = false;
   if (i<len) for (;;) {
+    // Note: don't try replacing this with something "clever" like comparing |i| to |len|, because that's wrong when we skip output for properties with |undefined| as their value.
+    if(need_comma) {
+      expand_buf(s, 1);
+      *(s->p++) = ',';
+    }
+    need_comma = true;
+
     jschar *rewind=s->p;
     jschar *before;
 
@@ -154,15 +162,9 @@ static JSBool object_to_JSON(struct JSON *s) {
     if (!value_to_JSON(s))
       return JS_FALSE;
 
-    if (s->p==before)
+    if (s->p==before) {
       s->p=rewind;
-
-    i++;
-    if (i==len) break;
-
-    if (s->p!=rewind) {
-      expand_buf(s, 1);
-      *(s->p++)=',';
+      need_comma = false;
     }
   }
 
