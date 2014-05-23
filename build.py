@@ -1,11 +1,11 @@
-#!/usr/bin/env python2.5
+#!/usr/bin/env python
 
 from fabricate import *
 
 
 import os
 os_arch = os.uname()[0] # "Darwin" or "Linux"
-OBJDIR = 'build-' + os_arch
+OBJDIR = 'build-' + os_arch + '-' + os.uname()[4]
 JS_SRC_DIR = 'spidermonkey18'
 JS_OS_CFLAGS = ""
 if os_arch == "Linux":
@@ -43,8 +43,7 @@ def js():
   # build jsautocfg.h
   run('gcc -o %s/jscpucfg %s/jscpucfg.c' % (OBJDIR, JS_SRC_DIR))
   run('%s/jscpucfg > %s/jsautocfg.h' % (OBJDIR, OBJDIR))
-  # xxx need to append JS_OS_CFLAGS
-  for s in js_C: run('gcc -c %s -o %s/%s.o %s/%s.c' % (js_CFLAGS, OBJDIR, s, JS_SRC_DIR, s))
+  for s in js_C: run('gcc -c %s %s -o %s/%s.o %s/%s.c' % (js_CFLAGS, JS_OS_CFLAGS, OBJDIR, s, JS_SRC_DIR, s))
 
 
 jsx_CC = ['jsext', 'Dl', 'Pointer', 'Type', 'encodeJSON', 'decodeJSON', 'encodeUTF8', 'decodeUTF8', 'stringifyHTML', 'JsciType', 'JsciPointer', 'JsciPointerAlloc', 'JsciCallback']
@@ -56,7 +55,7 @@ def jsx():
 
 def link():
   objects = ' '.join([OBJDIR + '/' + s + '.o' for s in js_C + jsx_CC])
-  run('g++ -lm -pthread -rdynamic -ldl -lffi -o %s/jsext %s' % (OBJDIR, objects))
+  run('g++ -Wl,--no-as-needed -lm -ldl -lffi -pthread -rdynamic -o %s/jsext %s' % (OBJDIR, objects))
 
 
 def clib_wrapper():

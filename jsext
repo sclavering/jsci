@@ -8,4 +8,4 @@ dn=`pwd`
 cd - > /dev/null
 [ "$JSEXT_INI" ] || export JSEXT_INI="$dn/global/0-init.js"
 export JSX_HOME="$dn"
-exec $dn/build-Linux/jsext $*
+exec $dn/build-Linux-x86_64/jsext $*
