@@ -49,23 +49,19 @@ Type.bitfield(type, length)
 Creates a new Type object representing a bitfield.  The first argument is the base integer type and the second is the number of bits.
 
 
-Type.function(returnType, params [, elipsis] [, callConv])
+Type.function(returnType, params)
 ----------------------------------------------------------
 
 Creates a new Type object representing a function.
 
 * returnType: A Type object
-* params: an rray of Type objects
-* elipsis: ignored (formerly: boolean, default false, indicating a C function with a variable number of arguments)
-* callConv: unused (formerly 'cdecl' (default), 'stdcall' or undefined)
+* params: an array of Type objects
 
 Types created with this function have read-only numeric properties containing the argument objects passed to this function.  There is also a .returnType property;
 
-You have to write Type['function'] rather than Type.function in javascript code, because "function" is a reserved word.
+All function types are assumed to be cdecl (rather than e.g. stdcall).
 
-Pass a zero-length array for "params" to represent a 0-parameter C function (which is written as "int myfunc(void);" in C).
-
-Pass a zero-length array for .params and |true| for .elipsis to represent a C function with an undefined paramater list (e.g. "int myfunc();"), which can be called with a variable number of arguments
+If params is an empty array that represents a zero-argument C function (e.g "int myfunc(void);"), not a varags function (which are not supported).
 
 
 Type.pointer(t)

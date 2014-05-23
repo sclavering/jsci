@@ -311,6 +311,7 @@ JSBool JsciTypePointer::JStoC(JSContext *cx, char *data, jsval v) {
   // Copy a string to a void* (same as char* in this context)
   if(JSVAL_IS_STRING(v)) {
     if(this->direct != gTypeVoid && this->direct != gTypeChar) return JSX_ReportException(cx, "Cannot convert JS string to C non-char non-void pointer type");
+    // xxx this is very dangerous - the result of JS_GetStringBytes() *must* not be modified (per the SpiderMonkey docs - probably because it's generated once and then cached in the JSString).  Really we should strdup() it somehow, but it's not obvious how to free() it afterwards.
     *(char **)data = JS_GetStringBytes(JSVAL_TO_STRING(v));
     return JS_TRUE;
   }
